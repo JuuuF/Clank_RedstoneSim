@@ -37,8 +37,9 @@ src/redsim/
 │   ├── engine.py          tick phases as steps, actions, snapshots
 │   └── timeline.py        history: keyframes + action log, rewind/replay
 ├── io/save.py             JSON save/load of the complete engine state (mid-tick safe)
-├── editor/                editing without Qt: Document (engine + sections + undo + files),
-│                          player-like placement orientation, section annotations
+├── editor/                editing without Qt: Document (engine + timeline + annotations +
+│                          files), player-like placement, sections, clipboard/prefabs (regions,
+│                          rotation), groups with exposed ports
 └── ui/                    PySide6 application: viewport (camera, picking, renderer), panels,
                            main window, app entry point (`python -m redsim`)
 tests/                     pytest suites (core, world, sim); tests/sim/probe.py = test-only blocks
@@ -137,7 +138,12 @@ BETWEEN_TICKS ──apply(Action)──▶ BETWEEN_TICKS   (player/command input
   - `setblock` → `SetBlockCommand` (replace mode): `BlockInput.place` with flags 258
     (state adjusted by neighbor shapes, explicit properties re-applied), then
     `updateNeighboursOnBlockSet`;
-  - `set_block` → raw `Level.setBlock` with explicit flags (editor tool, not vanilla).
+  - `set_block` → raw `Level.setBlock` with explicit flags (editor tool, not vanilla);
+  - `fill` → `FillCommand` (replace mode): `/setblock`-style placement of a box (x fastest,
+    then y, z), then `updateNeighboursOnBlockSet` for every changed position;
+  - `clone` → placement half of `CloneCommands.clone` (replace mode): blocks grouped solid →
+    block entities → others, barrier placeholders, flags 2, block-entity data, reverse-order
+    neighbor updates. Used for paste; scheduled ticks are not copied (ADR-015).
 - `snapshot()` / `restore()` capture the whole engine (level clone, phase, step index,
   block-entity iteration index). Restoring and re-running reproduces the same steps
   (tested).
@@ -202,6 +208,18 @@ with `execute if block`. Details: [[experiments/index]], [[implementation-notes]
   yaw/pitch clicking that face would get.
 - `annotations.py`: named sections with colors, purely visual, saved in the file's `extra`.
 
+## Contraptions (`redsim.editor.clipboard`, `redsim.editor.groups`)
+
+- `Region` (two corners, `/clone` iteration order), `Prefab` (all positions of a region,
+  relative, with state strings and block-entity data; JSON format `redsim-prefab`).
+  `Prefab.rotated(n)` rotates offsets and states (`redsim.world.rotation`).
+- Paste = `Action("clone")` at the target, so it is recorded in the timeline (undo/replay).
+  Delete = `Action("fill")` with air.
+- Groups name a region and expose ports (named input/output positions). They are
+  annotations only: the circuit inside still simulates block by block with unchanged timing
+  (ADR-016). The panel shows live port readings and can use an input port's block.
+- Prefab library and groups are saved in the document's `extra`.
+
 ## Persistence (`redsim.io.save`)
 
 One JSON document (`format: redsim-save`, `version: 1`) with a block palette, block
@@ -226,7 +244,9 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 Controls (owner-confirmed, Minecraft-like): WASD/Space/Shift fly (Ctrl faster); hold the
 right button and drag to look; left click breaks; right click places, or uses a usable block
 (Shift+right click always places); middle click picks; Ctrl+left click selects for the
-inspector; 1–9 hotbar; P run/pause, T step tick, E step event; Ctrl+Z/Ctrl+Y undo/redo.
+inspector; 1–9 hotbar; P run/pause, T step tick, E step event, Shift+T/Shift+E back;
+B mark selection corners, Ctrl+C/Ctrl+V copy/paste, R rotate clipboard, Del clear
+selection; Ctrl+Z/Ctrl+Y undo/redo.
 
 The viewport targets the block under the mouse cursor (an editor convenience; the game
 uses the screen center). The renderer never writes world state.

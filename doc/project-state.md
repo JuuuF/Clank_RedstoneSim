@@ -18,7 +18,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   (analog source), the redstone block, and simple and non-conducting blocks. Open: a
   container analog source (barrel with inventory).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 20 recorded scenarios match ([[experiments/index]]).
+  tick. All 22 recorded scenarios match ([[experiments/index]]).
 - **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, fly camera,
   cursor picking, place/break/use with player-like orientation, block palette and hotbar,
   inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
@@ -32,7 +32,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - **Playback and history (M6):** done. An event-sourced timeline (keyframes + action log +
   deterministic replay) supports step back, tick back, a timeline slider for seeking and
   replaying, warp mode, and undo/redo of edits as rewinds. Exact replay is tested.
-- **Contraptions (M7):** not started.
+- **Contraptions (M7):** done for the core scope. Box selection, copy/paste with `/clone`
+  semantics (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
+  a prefab library (save, import/export JSON), and groups with exposed input/output ports and
+  live readings. Abstract (black-box) group models are deferred (ADR-016).
 
 ## What exists, module by module
 
@@ -54,7 +57,8 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.sim.engine` | Tick phases as steps; player and command actions; snapshots | done | `tests/sim/test_scheduling.py` |
 | `redsim.sim.timeline` | History: keyframes, action log, seek/rewind/replay | done | `tests/sim/test_timeline.py` |
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
-| `redsim.editor` | Document, placement orientation, sections, undo | done | `tests/editor/test_editor.py` |
+| `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
+| `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
 | `redsim.ui` | PySide6 editor (viewport, panels, main window) | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
@@ -80,9 +84,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **124 tests pass** (2026-10-11), including the JDK oracle, the 20
+- `python -m pytest`: **133 tests pass** (2026-10-11), including the JDK oracle, the 22
   game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 20 of 20 scenarios match.
+- Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
 ## Known limitations (current)
@@ -105,12 +109,16 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-1. Contraptions (M7): selection boxes, copy/paste, reusable prefabs (within one world first),
-   then grouping with exposed inputs/outputs.
-2. Diagnostics polish: an interactive causal trace tree, "why did this change?" for the
-   selected block, sub-step scrubbing of block changes inside a step.
-3. Piston follow-ups: scheduled-tick-driven 0-tick scenarios; observers (later scope).
-4. Small M4 follow-up: barrel/container analog source with `/item replace` scenarios.
+All seven roadmap milestones have a working core. Suggested next steps:
+
+1. **Owner review on the real desktop:** run `python -m redsim`, build the simple circuits,
+   and report what feels wrong. The UI has only been exercised offscreen.
+2. **Diagnostics polish:** interactive causal trace tree, "why did this block change?" for
+   the selected block, scrubbing through block changes inside a step.
+3. **Mechanics coverage:** scheduled-tick-driven piston 0-tick scenarios, observers, target
+   block, note blocks, containers (barrel/hopper) as comparator sources, then rails.
+4. **Scale:** profile larger builds (the engine is pure Python), and cache meshes per chunk
+   in the renderer.
 
 ## How to resume
 

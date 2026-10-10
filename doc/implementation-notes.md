@@ -65,6 +65,9 @@ python -m tools.gameserver.run and_gate   # selected scenarios
   Remember that `/setblock redstone_wire` makes a dot unless a neighbor makes it connect.
 - Inputs: `inputs[t]` is applied after `t` ticks, between ticks. Prefer redstone blocks
   placed and removed as inputs, since levers can't be pulled without a player.
+- Region commands: `commands[t]` holds `("fill", a, b, state)` or `("clone", a, b, dest)`
+  (relative positions), sent as `/fill`/`/clone` in game. Clone only regions without
+  pending scheduled ticks (the simulator's paste does not copy ticks).
 - Watch every block whose state matters; the comparison checks full states.
 - A recording becomes stale when the scenario changes (fingerprint check): re-run the server.
 

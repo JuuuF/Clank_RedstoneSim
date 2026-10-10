@@ -20,7 +20,8 @@ accepted the Minecraft EULA for that sandbox. Experiments run automatically thro
   `/time query gametime` has advanced. Commands run between ticks, like player actions.
 - **Inputs:** `/setblock` commands (mostly redstone blocks placed/removed). The simulator
   mirrors them with `Action("setblock")`, a port of `SetBlockCommand.setBlock` +
-  `BlockInput.place` + `ServerLevel.updateNeighboursOnBlockSet`.
+  `BlockInput.place` + `ServerLevel.updateNeighboursOnBlockSet`. Scenarios can also issue
+  `/fill` and `/clone`, mirrored by `Action("fill")` and `Action("clone")`.
 - **Observation:** after every tick, the simulator's predicted full state of each watched
   block is tested in game with `execute if block`. A failed test is resolved by testing
   each candidate block and property value, so the report shows the game's real state.
@@ -60,6 +61,8 @@ reading and unit tests only.
 | EXP-018 | `piston_door`: 1×2 QC door; the top piston's update wakes the bottom one in the same tick | 14 | match | 2026-10-11 |
 | EXP-019 | `slime_branch_push`: slime drags attached stone (top and side), honey stays; pulled back together | 12 | match | 2026-10-11 |
 | EXP-020 | `piston_pops_components`: dust on a pushed block pops, a torch in the push line is destroyed | 6 | match | 2026-10-11 |
+| EXP-021 | `clone_inverter`: a torch inverter copied with `/clone`; the copy settles and reacts like the original | 14 | match | 2026-10-11 |
+| EXP-022 | `fill_removes_line`: `/fill` air cuts a powered wire line; the rest depowers, the torch relights | 8 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 

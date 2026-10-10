@@ -184,3 +184,31 @@ Short records. Each one states the context, the decision, and its trade-offs.
   aiming with the cursor is faster.
 - **Decision:** Hover/target follows the mouse cursor; looking around needs a right-drag.
   Placement orientation still uses the camera's yaw/pitch like the game's player view.
+
+## ADR-015
+
+**Paste follows `/clone`, delete follows `/fill`**
+
+- **Context:** Copying circuits needs defined update behavior. Inventing a placement order
+  would produce states the game never produces.
+- **Decision:** Paste ports the placement half of `CloneCommands.clone` (replace mode, not
+  strict): grouping, barrier placeholders, flags, block-entity data and reverse-order
+  neighbor updates. Delete uses `FillCommand` with air. Both are recorded as timeline
+  actions. Verified in game (EXP-021, EXP-022).
+- **Trade-offs:** `/clone` also copies pending scheduled ticks; prefabs do not (they are
+  stored snapshots that can be pasted much later), so paste circuits at rest. Rotation has
+  no `/clone` equivalent: a rotated prefab behaves as if captured from a rotated copy of the
+  region (z/y/x order of the rotated positions).
+
+## ADR-016
+
+**Groups are annotations; abstract (black-box) models are deferred**
+
+- **Context:** The brief asks for grouping with exposed inputs/outputs, without hiding
+  internal behavior or changing timing unless the user explicitly chooses an abstract model.
+- **Decision:** A group is a named region with named input/output ports. The simulation
+  is unaffected. The UI shows live port readings and can toggle input ports that hold a
+  usable block.
+- **Future option:** An explicit "abstract model" could replace a group's internals with a
+  declared truth table and delay. That would change timing semantics, so it needs its own
+  design and opt-in. Not implemented.

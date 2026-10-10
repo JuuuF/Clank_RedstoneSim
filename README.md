@@ -6,8 +6,9 @@ game's server-side update logic (neighbor updates, scheduled ticks, block events
 entities) and is checked tick by tick against the real game.
 
 Status: simulation core, the core components (lever, buttons, lamp, torch, wire, repeater,
-comparator), pistons (with slime/honey) and a 3D editor work; behavior is verified tick by
-tick against the real game (20 scenarios). Rewind/replay of the simulation works; contraptions (copy/paste, prefabs) are next. Details: [`doc/project-state.md`](doc/project-state.md).
+comparator), pistons (with slime/honey) and a 3D editor with rewind/replay, copy/paste and
+prefabs work; behavior is verified tick by tick against the real game (22 scenarios).
+Details: [`doc/project-state.md`](doc/project-state.md).
 
 ## Quick start
 
@@ -30,4 +31,6 @@ in [`doc/`](doc/README.md), which is also an Obsidian vault.
 WASD/Space/Shift fly (Ctrl faster) · right-drag look · left click break · right click place
 or use · Shift+right click place · middle click pick · Ctrl+click inspect · 1–9 hotbar ·
 P run/pause · T step tick · E step event · Shift+T tick back · Shift+E step back · timeline
-slider to rewind/replay · Ctrl+Z/Ctrl+Y undo/redo (rewinds to before the last edit) · F1 help.
+slider to rewind/replay · B mark selection corners · Ctrl+C/Ctrl+V copy/paste · R rotate
+clipboard · Del clear selection · Ctrl+Z/Ctrl+Y undo/redo (rewinds to before the last edit) ·
+F1 help.
