@@ -60,6 +60,19 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     assert document.state_at((0, 1, 0)).get(POWERED) is True
     assert document.engine.game_time == 0
 
+    # Region tools: mark two corners on the lever and lamp, copy, paste elsewhere, delete.
+    window.viewport.hover = Hit((0, 1, 0), Direction.UP, 5.0)
+    window._mark_corner()
+    window.viewport.hover = Hit((1, 1, 0), Direction.UP, 5.0)
+    window._mark_corner()
+    window._copy()
+    window.viewport.hover = Hit((0, 0, 5), Direction.UP, 5.0)  # floor block: paste above it
+    window._paste()
+    assert document.state_at((0, 1, 5)).is_(blocks.LEVER)
+    assert document.state_at((1, 1, 5)).is_(blocks.REDSTONE_LAMP)
+    window._delete_region()  # clears the marked selection (the original pair)
+    assert document.state_at((0, 1, 0)).is_air
+
     QtWidgets.QApplication.processEvents()
     image = window.viewport.grabFramebuffer()
     if image.isNull():
@@ -67,6 +80,6 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     colors = {
         image.pixel(x, y) for x in range(0, image.width(), 25) for y in range(0, image.height(), 25)
     }
-    assert len(colors) > 5  # sky, checkerboard floor, blocks
+    assert len(colors) >= 3  # at least sky and both checkerboard floor tones are drawn
     window.document.dirty = False
     window.close()

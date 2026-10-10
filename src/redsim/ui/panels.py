@@ -439,3 +439,134 @@ def controls_help() -> QLabel:
     label.setAlignment(Qt.AlignmentFlag.AlignTop)
     label.setMargin(8)
     return label
+
+
+class ContraptionsPanel(QTabWidget):
+    """Prefab library and groups with exposed ports."""
+
+    save_prefab = Signal()
+    load_prefab = Signal(str)
+    delete_prefab = Signal(str)
+    import_prefab = Signal()
+    export_prefab = Signal(str)
+    create_group = Signal()
+    add_port = Signal(str)
+    toggle_port = Signal(str, int)
+    delete_group = Signal(str)
+
+    def __init__(self) -> None:
+        super().__init__()
+        prefab_page = QWidget()
+        prefab_layout = QVBoxLayout(prefab_page)
+        self.prefab_list = QListWidget()
+        self.prefab_list.itemDoubleClicked.connect(lambda item: self.load_prefab.emit(item.text()))
+        prefab_layout.addWidget(self.prefab_list)
+        row = QHBoxLayout()
+        for text, slot in (
+            ("Save selection…", self.save_prefab.emit),
+            ("To clipboard", lambda: self._with_prefab(self.load_prefab)),
+            ("Delete", lambda: self._with_prefab(self.delete_prefab)),
+        ):
+            button = QPushButton(text)
+            button.clicked.connect(slot)
+            row.addWidget(button)
+        prefab_layout.addLayout(row)
+        row = QHBoxLayout()
+        for text, slot in (
+            ("Import…", self.import_prefab.emit),
+            ("Export…", lambda: self._with_prefab(self.export_prefab)),
+        ):
+            button = QPushButton(text)
+            button.clicked.connect(slot)
+            row.addWidget(button)
+        prefab_layout.addLayout(row)
+        hint = QLabel(
+            "B: mark selection corners · Ctrl+C copy · Ctrl+V paste (like /clone) · "
+            "R rotate clipboard · Del clear selection (like /fill air)"
+        )
+        hint.setWordWrap(True)
+        prefab_layout.addWidget(hint)
+        self.addTab(prefab_page, "Prefabs")
+
+        group_page = QWidget()
+        group_layout = QVBoxLayout(group_page)
+        self.group_list = QListWidget()
+        group_layout.addWidget(self.group_list)
+        row = QHBoxLayout()
+        create = QPushButton("Group selection…")
+        create.clicked.connect(self.create_group.emit)
+        row.addWidget(create)
+        port = QPushButton("Add port…")
+        port.setToolTip("Expose the inspected block (Ctrl+click) as an input or output port")
+        port.clicked.connect(lambda: self._with_group(self.add_port))
+        row.addWidget(port)
+        remove = QPushButton("Delete")
+        remove.clicked.connect(lambda: self._with_group(self.delete_group))
+        row.addWidget(remove)
+        group_layout.addLayout(row)
+        self.ports = QListWidget()
+        self.ports.setToolTip("Double-click an input port to use (toggle) its block")
+        self.ports.itemDoubleClicked.connect(self._port_clicked)
+        group_layout.addWidget(self.ports)
+        note = QLabel(
+            "Groups only name parts of a circuit and expose ports; the internals still "
+            "simulate block by block with unchanged timing."
+        )
+        note.setWordWrap(True)
+        group_layout.addWidget(note)
+        self.group_list.currentTextChanged.connect(lambda _: self._refresh_ports())
+        self.addTab(group_page, "Groups")
+        self._document: Document | None = None
+
+    def _with_prefab(self, signal: Any) -> None:
+        item = self.prefab_list.currentItem()
+        if item is not None:
+            signal.emit(item.text())
+
+    def _with_group(self, signal: Any) -> None:
+        item = self.group_list.currentItem()
+        if item is not None:
+            signal.emit(item.text())
+
+    def _port_clicked(self, item: QListWidgetItem) -> None:
+        group = self.group_list.currentItem()
+        if group is not None:
+            self.toggle_port.emit(group.text(), self.ports.row(item))
+
+    def show_document(self, document: Document) -> None:
+        from redsim.editor.groups import port_reading
+
+        self._document = document
+        current_prefab = self.prefab_list.currentItem()
+        selected = current_prefab.text() if current_prefab else None
+        self.prefab_list.clear()
+        for name in sorted(document.prefabs):
+            self.prefab_list.addItem(name)
+            if name == selected:
+                self.prefab_list.setCurrentRow(self.prefab_list.count() - 1)
+        current_group = self.group_list.currentItem()
+        group_name = current_group.text() if current_group else None
+        self.group_list.blockSignals(True)
+        self.group_list.clear()
+        for name in sorted(document.groups.groups):
+            self.group_list.addItem(name)
+            if name == group_name:
+                self.group_list.setCurrentRow(self.group_list.count() - 1)
+        self.group_list.blockSignals(False)
+        self._refresh_ports(port_reading)
+
+    def _refresh_ports(self, reading: Any = None) -> None:
+        from redsim.editor.groups import port_reading
+
+        reading = reading or port_reading
+        self.ports.clear()
+        item = self.group_list.currentItem()
+        if self._document is None or item is None:
+            return
+        group = self._document.groups.groups.get(item.text())
+        if group is None:
+            return
+        for port in group.ports:
+            arrow = "→ in " if port.role == "input" else "out →"
+            value = reading(self._document.level, port)
+            self.ports.addItem(f"{arrow} {port.name} {port.pos}: {value}")

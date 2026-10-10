@@ -2,20 +2,31 @@
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
-from PySide6.QtWidgets import QDockWidget, QFileDialog, QMainWindow, QMessageBox, QWidget
+from PySide6.QtWidgets import (
+    QDockWidget,
+    QFileDialog,
+    QInputDialog,
+    QMainWindow,
+    QMessageBox,
+    QWidget,
+)
 
 from redsim.core.pos import Pos, offset
+from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
+from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
 from redsim.ui.geometry import Hit
 from redsim.ui.panels import (
     HOTBAR,
+    ContraptionsPanel,
     DiagnosticsPanel,
     InspectorPanel,
     PalettePanel,
@@ -54,6 +65,9 @@ class MainWindow(QMainWindow):
         inspector_dock = self._dock("Inspector", self.inspector, right)
         sections_dock = self._dock("Sections", self.sections, right)
         self.tabifyDockWidget(inspector_dock, sections_dock)
+        self.contraptions = ContraptionsPanel()
+        contraptions_dock = self._dock("Contraptions", self.contraptions, right)
+        self.tabifyDockWidget(sections_dock, contraptions_dock)
         inspector_dock.raise_()
         self.diagnostics_dock = self._dock(
             "Diagnostics", self.diagnostics, Qt.DockWidgetArea.BottomDockWidgetArea
@@ -61,6 +75,8 @@ class MainWindow(QMainWindow):
         self.resizeDocks([blocks_dock, simulation_dock], [210, 320], Qt.Orientation.Horizontal)
         self.resizeDocks([self.diagnostics_dock], [190], Qt.Orientation.Vertical)
 
+        self._corner: Pos | None = None
+        self._corner_done = False
         self.play_timer = QTimer(self)
         self.play_timer.timeout.connect(self._play_tick)
         self._connect()
@@ -92,6 +108,15 @@ class MainWindow(QMainWindow):
         self.simulation.tick_back.connect(self._tick_back)
         self.simulation.step_back.connect(self._step_back)
         self.simulation.seek_requested.connect(self._seek)
+        self.contraptions.save_prefab.connect(self._save_prefab)
+        self.contraptions.load_prefab.connect(self._load_prefab)
+        self.contraptions.delete_prefab.connect(self._delete_prefab)
+        self.contraptions.import_prefab.connect(self._import_prefab)
+        self.contraptions.export_prefab.connect(self._export_prefab)
+        self.contraptions.create_group.connect(self._create_group)
+        self.contraptions.add_port.connect(self._add_port)
+        self.contraptions.toggle_port.connect(self._toggle_port)
+        self.contraptions.delete_group.connect(self._delete_group)
         self.simulation.speed_changed.connect(self._speed)
 
     def _action(
@@ -124,6 +149,12 @@ class MainWindow(QMainWindow):
         self._action(sim_menu, "Step event", self._step_event, "E")
         self._action(sim_menu, "Tick back", self._tick_back, "Shift+T")
         self._action(sim_menu, "Step back", self._step_back, "Shift+E")
+        region_menu = bar.addMenu("&Region")
+        self._action(region_menu, "Mark selection corner", self._mark_corner, "B")
+        self._action(region_menu, "Copy selection", self._copy, QKeySequence.StandardKey.Copy)
+        self._action(region_menu, "Paste at target", self._paste, QKeySequence.StandardKey.Paste)
+        self._action(region_menu, "Rotate clipboard 90°", self._rotate_clipboard, "R")
+        self._action(region_menu, "Clear selection (fill with air)", self._delete_region, "Del")
         view_menu = bar.addMenu("&View")
         for dock in self.findChildren(QDockWidget):
             view_menu.addAction(dock.toggleViewAction())
@@ -145,6 +176,7 @@ class MainWindow(QMainWindow):
         self.inspector.show_block(self.document, self.viewport.selection)
         self.simulation.show_status(self.document)
         self.sections.refresh()
+        self.contraptions.show_document(self.document)
         if self.diagnostics_dock.isVisible():
             self.diagnostics.show_state(self.document, self.last_steps)
         name = self.document.path.name if self.document.path else "untitled"
@@ -216,6 +248,129 @@ class MainWindow(QMainWindow):
     def _redo(self) -> None:
         if not self.document.redo():
             self._message("Nothing to redo.")
+        self._changed()
+
+    # ------------------------------------------------------------------ regions
+    def _mark_corner(self) -> None:
+        hit = self.viewport.hover
+        if hit is None:
+            self._message("Point at a block to mark a selection corner.")
+            return
+        if self._corner is None or self.viewport.region is not None and self._corner_done:
+            self._corner = hit.pos
+            self._corner_done = False
+            self.viewport.region = Region.from_corners(hit.pos, hit.pos)
+            self._message(f"Selection corner 1 at {hit.pos}; press B again for corner 2.")
+        else:
+            self.viewport.region = Region.from_corners(self._corner, hit.pos)
+            self._corner_done = True
+            size = self.viewport.region.size
+            self._message(f"Selected {size[0]}×{size[1]}×{size[2]} blocks.")
+        self.viewport.update()
+
+    def _region(self) -> Region | None:
+        if self.viewport.region is None:
+            self._message("No selection: press B on two corner blocks first.", error=True)
+        return self.viewport.region
+
+    def _copy(self) -> None:
+        region = self._region()
+        if region is not None:
+            prefab = self.document.copy(region)
+            self._message(f"Copied {prefab.non_air_count} blocks (with air: {len(prefab.blocks)}).")
+
+    def _paste(self) -> None:
+        hit = self.viewport.hover
+        if hit is None:
+            self._message("Point at the place to paste.", error=True)
+            return
+        self._edit(self.document.paste, offset(hit.pos, hit.face))
+
+    def _rotate_clipboard(self) -> None:
+        if self.document.clipboard is None:
+            self._message("The clipboard is empty.")
+            return
+        self.document.rotate_clipboard(1)
+        self._message("Clipboard rotated 90° clockwise.")
+
+    def _delete_region(self) -> None:
+        region = self._region()
+        if region is not None:
+            self._edit(self.document.fill, region, blocks.AIR.default_state)
+
+    def _save_prefab(self) -> None:
+        region = self._region()
+        if region is None:
+            return
+        name, ok = QInputDialog.getText(self, "Save prefab", "Name:")
+        if ok and name:
+            self.document.save_prefab(name, region)
+            self._changed()
+
+    def _load_prefab(self, name: str) -> None:
+        self.document.clipboard = self.document.prefabs[name]
+        self._message(f"Prefab '{name}' is in the clipboard: Ctrl+V to paste.")
+
+    def _delete_prefab(self, name: str) -> None:
+        self.document.prefabs.pop(name, None)
+        self._changed()
+
+    def _import_prefab(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Import prefab", "", "Prefabs (*.json)")
+        if path:
+            try:
+                prefab = Prefab.from_json(json.loads(Path(path).read_text()))
+            except (OSError, ValueError, KeyError) as exc:
+                QMessageBox.critical(self, "Cannot import prefab", str(exc))
+                return
+            self.document.prefabs[prefab.name] = prefab
+            self._changed()
+
+    def _export_prefab(self, name: str) -> None:
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export prefab", f"{name}.prefab.json", "Prefabs (*.json)"
+        )
+        if path:
+            Path(path).write_text(
+                json.dumps(self.document.prefabs[name].to_json(), indent=1) + "\n"
+            )
+
+    def _create_group(self) -> None:
+        region = self._region()
+        if region is None:
+            return
+        name, ok = QInputDialog.getText(self, "New group", "Name:")
+        if ok and name:
+            self.document.groups.add(Group(name, region))
+            self._changed()
+
+    def _add_port(self, group_name: str) -> None:
+        pos = self.viewport.selection
+        if pos is None:
+            self._message("Ctrl+click the block to expose as a port first.", error=True)
+            return
+        role, ok = QInputDialog.getItem(self, "Port", "Role:", ["input", "output"], 0, False)
+        if not ok:
+            return
+        name, ok = QInputDialog.getText(self, "Port", "Port name:")
+        if ok and name:
+            self.document.groups.groups[group_name].ports.append(
+                Port(name, pos, "input" if role == "input" else "output")
+            )
+            self._changed()
+
+    def _toggle_port(self, group_name: str, index: int) -> None:
+        port = self.document.groups.groups[group_name].ports[index]
+        if port.role != "input":
+            return
+        state = self.document.state_at(port.pos)
+        if Document.is_usable(state.block):
+            self._edit(self.document.use, port.pos)
+        else:
+            self._message(f"{state.block.name} at {port.pos} cannot be used directly.")
+
+    def _delete_group(self, name: str) -> None:
+        self.document.groups.remove(name)
         self._changed()
 
     # ------------------------------------------------------------------ simulation

@@ -21,6 +21,7 @@ from PySide6.QtWidgets import QWidget
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
+from redsim.editor.clipboard import Region
 from redsim.editor.document import Document
 from redsim.ui.camera import Camera
 from redsim.ui.geometry import Hit, block_outline, box_lines, build_mesh, pick
@@ -46,6 +47,7 @@ class Viewport(QOpenGLWidget):
         self.renderer: Renderer | None = None
         self.hover: Hit | None = None
         self.selection: Pos | None = None
+        self.region: Region | None = None
         self._mesh_revision = -1
         self._keys: set[int] = set()
         self._press_pos: QPoint | None = None
@@ -99,6 +101,20 @@ class Viewport(QOpenGLWidget):
             color = _hex_color(section.color)
             for pos in section.positions:
                 parts.append(box_lines(pos, (pos[0] + 1, pos[1] + 1, pos[2] + 1), color, 0.01))
+        for group in self.document.groups.groups.values():
+            low, high = group.region.low, group.region.high
+            parts.append(
+                box_lines(low, (high[0] + 1, high[1] + 1, high[2] + 1), (1, 1, 1, 1), 0.03)
+            )
+            for port in group.ports:
+                color = (0.2, 0.5, 1.0, 1.0) if port.role == "input" else (1.0, 0.5, 0.1, 1.0)
+                p = port.pos
+                parts.append(box_lines(p, (p[0] + 1, p[1] + 1, p[2] + 1), color, 0.05))
+        if self.region is not None:
+            low, high = self.region.low, self.region.high
+            parts.append(
+                box_lines(low, (high[0] + 1, high[1] + 1, high[2] + 1), (0.0, 0.9, 0.9, 1.0), 0.02)
+            )
         if self.selection is not None:
             parts.append(block_outline(level, self.selection, (1.0, 0.85, 0.1, 1.0)))
         if self.hover is not None:
