@@ -2,11 +2,11 @@
  "scenario": "repeater_pulse_extension",
  "description": "A 1-tick input pulse into a delay-4 repeater becomes an 8-tick output pulse.",
  "origin": [
-  24,
+  192,
   0,
   0
  ],
- "start_time": 31,
+ "start_time": 497,
  "fingerprint": "8c009f17e0fd505c",
  "game_version": "26.3",
  "ticks": 24,

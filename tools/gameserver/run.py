@@ -23,7 +23,10 @@ def main(argv: list[str]) -> int:
     selected = [s for s in scenarios.ALL if not argv or s.name in argv]
     failures = 0
     with GameServer(fresh_world=True) as server:
-        server.command("forceload add -16 -16 191 47")
+        # Force-load every scenario area (each ≤ 18 blocks wide, spaced SPACING apart).
+        max_x = len(selected) * SPACING + 32
+        for x0 in range(-16, max_x, 256):
+            server.command(f"forceload add {x0} -16 {min(x0 + 255, max_x)} 47")
         for index, scenario in enumerate(selected):
             origin = (index * SPACING, 0, 0)
             result = compare(server, scenario, origin)

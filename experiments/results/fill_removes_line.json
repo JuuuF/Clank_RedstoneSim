@@ -2,11 +2,11 @@
  "scenario": "fill_removes_line",
  "description": "/fill with air deletes the middle of a powered wire line: the rest depowers and a torch fed by the line's end turns back on.",
  "origin": [
-  24,
+  504,
   0,
   0
  ],
- "start_time": 15,
+ "start_time": 685,
  "fingerprint": "bd888403f8a01f0f",
  "game_version": "26.3",
  "ticks": 8,

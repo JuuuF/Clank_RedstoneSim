@@ -2,11 +2,11 @@
  "scenario": "repeater_chain",
  "description": "Three delay-1 repeaters in a row add 2 ticks each.",
  "origin": [
-  72,
+  240,
   0,
   0
  ],
- "start_time": 69,
+ "start_time": 535,
  "fingerprint": "3ed10a62aeb1ad89",
  "game_version": "26.3",
  "ticks": 20,

@@ -2,11 +2,11 @@
  "scenario": "piston_pops_components",
  "description": "A piston pushes a stone carrying dust and a wall torch on its far side; the dust pops when its support starts moving and the torch is destroyed by the push line.",
  "origin": [
-  24,
+  456,
   0,
   0
  ],
- "start_time": 13,
+ "start_time": 665,
  "fingerprint": "4e14e35ef44060f7",
  "game_version": "26.3",
  "ticks": 6,

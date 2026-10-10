@@ -2,11 +2,11 @@
  "scenario": "sticky_short_pulses",
  "description": "Sticky pistons fed 1-, 2- and 3-tick pulses (placed/removed between ticks). A pulse that ends while the pushed block is still moving leaves it behind (event 2, open question OQ-3); longer pulses pull it back.",
  "origin": [
-  24,
+  360,
   0,
   0
  ],
- "start_time": 15,
+ "start_time": 617,
  "fingerprint": "861e6e61960eef78",
  "game_version": "26.3",
  "ticks": 12,

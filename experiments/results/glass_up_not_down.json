@@ -2,11 +2,11 @@
  "scenario": "glass_up_not_down",
  "description": "Wire climbs onto glass from one side but cannot descend on the other side.",
  "origin": [
-  0,
+  144,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 463,
  "fingerprint": "2afffcb3cbf0178d",
  "game_version": "26.3",
  "ticks": 4,

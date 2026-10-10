@@ -210,12 +210,30 @@ def _parse_rel(key: str) -> Pos:
     return (x, y, z)
 
 
+FATAL_OUTPUT = ("not loaded", "Unknown", "Incorrect argument", "Expected", "Invalid")
+
+
+def check_outputs(results: list[Any]) -> None:
+    """Fail loudly if the game rejected a command (unloaded area, syntax, unknown block).
+
+    "Could not set the block" is not an error: it means "no change", which the simulator
+    reproduces as a no-op too."""
+    for result in results:
+        if any(marker in result.text for marker in FATAL_OUTPUT):
+            raise RuntimeError(f"game rejected {result.command!r}: {result.text.strip()[:200]}")
+
+
 def run_game(
     server: GameServer, scenario: Scenario, origin: Pos, sim_frames: list[dict[str, str]]
 ) -> list[dict[str, str]]:
     prepare_area(server, origin, scenario.size)
-    server.run(
-        [f"setblock {' '.join(map(str, absolute(origin, rel)))} {s}" for rel, s in scenario.setup]
+    check_outputs(
+        server.run(
+            [
+                f"setblock {' '.join(map(str, absolute(origin, rel)))} {s}"
+                for rel, s in scenario.setup
+            ]
+        )
     )
     frames = [observe_game(server, sim_frames[0], origin)]
     for tick in range(scenario.ticks):
@@ -225,7 +243,7 @@ def run_game(
         ]
         commands += [game_command(origin, c) for c in scenario.commands.get(tick, [])]
         if commands:
-            server.run(commands)
+            check_outputs(server.run(commands))
         server.step(1)
         frames.append(observe_game(server, sim_frames[tick + 1], origin))
     return frames

@@ -2,11 +2,11 @@
  "scenario": "comparator_side_torch",
  "description": "A lit torch beside a subtracting comparator is not a side input (only direct signal counts); a powered wire in the same place is.",
  "origin": [
-  144,
+  312,
   0,
   0
  ],
- "start_time": 125,
+ "start_time": 591,
  "fingerprint": "4ffb82a945b06684",
  "game_version": "26.3",
  "ticks": 12,
