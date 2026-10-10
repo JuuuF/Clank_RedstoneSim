@@ -1,0 +1,127 @@
+{
+ "scenario": "lamp_redstone_block",
+ "description": "Lamp turns on instantly next to a redstone block and off 4 ticks after removal.",
+ "origin": [
+  0,
+  0,
+  0
+ ],
+ "start_time": 1,
+ "fingerprint": "b51003886f4e0643",
+ "game_version": "26.3",
+ "ticks": 10,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  }
+ ]
+}

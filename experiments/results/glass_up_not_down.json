@@ -1,0 +1,87 @@
+{
+ "scenario": "glass_up_not_down",
+ "description": "Wire climbs onto glass from one side but cannot descend on the other side.",
+ "origin": [
+  0,
+  0,
+  0
+ ],
+ "start_time": 1,
+ "fingerprint": "2afffcb3cbf0178d",
+ "game_version": "26.3",
+ "ticks": 4,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=none,east=up,south=none,west=side,power=0]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=0]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=0]"
+   },
+   "game": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=none,east=up,south=none,west=side,power=0]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=0]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=none,east=up,south=none,west=side,power=0]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=15]"
+   },
+   "game": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=none,east=up,south=none,west=side,power=0]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=none,east=up,south=none,west=side,power=0]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=15]"
+   },
+   "game": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=none,east=up,south=none,west=side,power=0]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=side,east=up,south=none,west=none,power=15]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=0]"
+   },
+   "game": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=side,east=up,south=none,west=none,power=15]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=side,east=up,south=none,west=none,power=15]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=0]"
+   },
+   "game": {
+    "(0, 1, 0)": "minecraft:redstone_wire[north=side,east=up,south=none,west=none,power=15]",
+    "(1, 2, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 0)": "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=0]"
+   },
+   "mismatches": []
+  }
+ ]
+}

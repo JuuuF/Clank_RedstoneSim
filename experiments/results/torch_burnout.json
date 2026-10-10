@@ -1,0 +1,3149 @@
+{
+ "scenario": "torch_burnout",
+ "description": "Self-oscillating wall torch: it strongly powers the block above it, which powers a dust dot on the torch's own support block. 8 turn-offs within 60 ticks burn it out; it re-lights 160 ticks later (RedstoneTorchBlock.tick / isToggledTooFrequently).",
+ "origin": [
+  96,
+  0,
+  0
+ ],
+ "start_time": 63,
+ "fingerprint": "8ae35c4f18631150",
+ "game_version": "26.3",
+ "ticks": 260,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 15,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 16,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 17,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 18,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 19,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 20,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 21,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 22,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 23,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 24,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 25,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 26,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 27,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 28,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 29,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=true]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=15]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 30,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 31,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 32,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 33,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 34,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 35,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 36,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 37,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 38,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 39,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 40,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 41,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 42,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 43,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 44,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 45,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 46,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 47,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 48,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 49,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 50,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 51,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 52,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 53,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 54,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 55,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 56,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 57,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 58,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 59,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 60,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 61,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 62,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 63,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 64,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 65,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 66,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 67,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 68,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 69,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 70,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 71,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 72,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 73,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 74,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 75,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 76,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 77,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 78,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 79,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 80,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 81,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 82,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 83,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 84,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 85,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 86,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 87,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 88,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 89,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 90,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 91,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 92,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 93,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 94,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 95,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 96,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 97,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 98,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 99,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 100,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 101,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 102,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 103,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 104,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 105,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 106,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 107,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 108,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 109,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 110,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 111,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 112,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 113,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 114,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 115,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 116,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 117,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 118,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 119,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 120,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 121,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 122,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 123,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 124,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 125,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 126,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 127,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 128,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 129,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 130,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 131,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 132,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 133,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 134,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 135,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 136,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 137,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 138,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 139,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 140,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 141,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 142,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 143,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 144,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 145,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 146,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 147,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 148,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 149,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 150,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 151,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 152,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 153,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 154,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 155,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 156,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 157,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 158,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 159,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 160,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 161,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 162,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 163,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 164,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 165,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 166,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 167,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 168,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 169,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 170,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 171,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 172,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 173,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 174,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 175,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 176,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 177,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 178,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 179,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 180,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 181,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 182,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 183,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 184,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 185,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 186,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 187,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 188,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 189,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 190,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 191,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 192,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 193,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 194,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 195,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 196,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 197,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 198,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 199,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 200,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 201,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 202,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 203,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 204,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 205,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 206,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 207,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 208,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 209,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 210,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 211,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 212,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 213,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 214,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 215,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 216,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 217,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 218,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 219,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 220,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 221,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 222,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 223,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 224,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 225,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 226,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 227,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 228,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 229,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 230,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 231,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 232,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 233,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 234,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 235,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 236,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 237,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 238,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 239,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 240,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 241,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 242,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 243,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 244,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 245,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 246,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 247,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 248,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 249,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 250,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 251,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 252,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 253,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 254,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 255,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 256,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 257,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 258,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 259,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 260,
+   "sim": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:redstone_wall_torch[facing=east,lit=false]",
+    "(1, 2, 1)": "minecraft:redstone_wire[north=none,east=none,south=none,west=none,power=0]"
+   },
+   "mismatches": []
+  }
+ ]
+}
