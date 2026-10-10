@@ -1,6 +1,9 @@
 # Do not track data files
 data/
 
+# Obsidian files
+.obsidian/
+
 
 # Python build and tool caches
 __pycache__/
