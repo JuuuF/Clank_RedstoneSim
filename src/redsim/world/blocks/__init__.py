@@ -1,0 +1,91 @@
+"""Block registry: one instance per block id, like ``net/minecraft/world/level/block/Blocks``.
+
+Component modules import this module lazily (inside functions) to refer to other blocks,
+which avoids import cycles.
+"""
+
+from __future__ import annotations
+
+from redsim.world.block import Block, BlockState, PushReaction
+from redsim.world.blocks.simple import (
+    AirBlock,
+    HoneyBlock,
+    RedstoneBlock,
+    SimpleBlock,
+    SlabBlock,
+    full_cube,
+    immovable,
+    non_conductor,
+)
+
+REGISTRY: dict[str, Block] = {}
+
+
+def register(block: Block) -> Block:
+    if block.id in REGISTRY:
+        raise ValueError(f"duplicate block id {block.id}")
+    REGISTRY[block.id] = block
+    return block
+
+
+def get(block_id: str) -> Block:
+    if ":" not in block_id:
+        block_id = "minecraft:" + block_id
+    return REGISTRY[block_id]
+
+
+def parse_state(text: str) -> BlockState:
+    """Parse ``id[prop=value,...]`` (the ``/setblock`` syntax) into a block state."""
+    name, _, rest = text.partition("[")
+    block = get(name.strip())
+    state = block.default_state
+    if rest:
+        for assignment in rest.rstrip("]").split(","):
+            if not assignment.strip():
+                continue
+            key, _, value = assignment.partition("=")
+            prop = next(p for p in block.properties if p.name == key.strip())
+            state = state.with_(prop, prop.parse(value.strip()))
+    return state
+
+
+# --- basic blocks ----------------------------------------------------------------------
+AIR = register(AirBlock())
+STONE = register(full_cube("minecraft:stone", destroy_speed=1.5))
+SMOOTH_STONE = register(full_cube("minecraft:smooth_stone", destroy_speed=2.0))
+COBBLESTONE = register(full_cube("minecraft:cobblestone", destroy_speed=2.0))
+OAK_PLANKS = register(full_cube("minecraft:oak_planks", destroy_speed=2.0))
+WHITE_WOOL = register(full_cube("minecraft:white_wool", destroy_speed=0.8))
+WHITE_CONCRETE = register(full_cube("minecraft:white_concrete", destroy_speed=1.8))
+GLASS = register(non_conductor("minecraft:glass", destroy_speed=0.3))
+GLOWSTONE = register(non_conductor("minecraft:glowstone", destroy_speed=0.3))
+OBSIDIAN = register(immovable("minecraft:obsidian", destroy_speed=50.0))
+BEDROCK = register(SimpleBlock("minecraft:bedrock", destroy_speed=-1.0))
+SLIME_BLOCK = register(full_cube("minecraft:slime_block", destroy_speed=0.0))
+HONEY_BLOCK = register(HoneyBlock())
+SMOOTH_STONE_SLAB = register(SlabBlock("minecraft:smooth_stone_slab"))
+REDSTONE_BLOCK = register(RedstoneBlock())
+
+__all__ = [
+    "AIR",
+    "BEDROCK",
+    "COBBLESTONE",
+    "GLASS",
+    "GLOWSTONE",
+    "HONEY_BLOCK",
+    "OAK_PLANKS",
+    "OBSIDIAN",
+    "REDSTONE_BLOCK",
+    "REGISTRY",
+    "SLIME_BLOCK",
+    "SMOOTH_STONE",
+    "SMOOTH_STONE_SLAB",
+    "STONE",
+    "WHITE_CONCRETE",
+    "WHITE_WOOL",
+    "PushReaction",
+    "SimpleBlock",
+    "get",
+    "parse_state",
+    "register",
+]

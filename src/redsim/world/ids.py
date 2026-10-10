@@ -1,0 +1,13 @@
+"""Block ids referenced by engine code (Java's ``state.is(Blocks.X)`` checks)."""
+
+REDSTONE_WIRE = "minecraft:redstone_wire"
+REDSTONE_BLOCK = "minecraft:redstone_block"
+COMPARATOR = "minecraft:comparator"
+REPEATER = "minecraft:repeater"
+PISTON = "minecraft:piston"
+STICKY_PISTON = "minecraft:sticky_piston"
+PISTON_HEAD = "minecraft:piston_head"
+MOVING_PISTON = "minecraft:moving_piston"
+SLIME_BLOCK = "minecraft:slime_block"
+HONEY_BLOCK = "minecraft:honey_block"
+HOPPER = "minecraft:hopper"
