@@ -16,6 +16,15 @@ if TYPE_CHECKING:
     from redsim.world.block import BlockState
 
 
+#: Registered block-entity classes by ``type_id`` (for loading saves).
+BLOCK_ENTITY_TYPES: dict[str, type[BlockEntity]] = {}
+
+
+def register_block_entity(cls: type[BlockEntity]) -> type[BlockEntity]:
+    BLOCK_ENTITY_TYPES[cls.type_id] = cls
+    return cls
+
+
 class BlockEntity:
     type_id: str = "block_entity"
     #: Block ids this entity type is valid for (``BlockEntityType.isValid``).

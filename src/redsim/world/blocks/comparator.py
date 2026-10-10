@@ -16,7 +16,7 @@ from redsim.core.direction import Direction
 from redsim.core.pos import Pos, offset
 from redsim.world import ids
 from redsim.world.block import BlockState, PlacementContext, UpdateFlags
-from redsim.world.block_entity import BlockEntity
+from redsim.world.block_entity import BlockEntity, register_block_entity
 from redsim.world.blocks.diode import DiodeBlock, facing
 from redsim.world.properties import HORIZONTAL_FACING, MODE_COMPARATOR, POWERED
 from redsim.world.tick_priority import TickPriority
@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from redsim.sim.level import Level
 
 
+@register_block_entity
 class ComparatorBlockEntity(BlockEntity):
     type_id = "comparator"
     valid_blocks = frozenset({ids.COMPARATOR})

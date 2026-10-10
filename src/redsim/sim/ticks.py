@@ -94,6 +94,11 @@ class LevelTicks:
             collected += 1
         return collected
 
+    def restore_collected(self, tick: ScheduledTick) -> None:
+        """Re-add a tick already collected for the current tick (loading a save)."""
+        self.to_run.append(tick)
+        self._to_run_keys.add(tick.key)
+
     def pop_next(self) -> ScheduledTick | None:
         """Next tick of ``runCollectedTicks`` (removed before it runs, like ``poll``)."""
         if not self.to_run:
