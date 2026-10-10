@@ -12,6 +12,7 @@ from redsim.world.blocks.cake import CakeBlock
 from redsim.world.blocks.comparator import ComparatorBlock
 from redsim.world.blocks.diode import RepeaterBlock
 from redsim.world.blocks.lamp import RedstoneLampBlock
+from redsim.world.blocks.piston import MovingPistonBlock, PistonBaseBlock, PistonHeadBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
     AirBlock,
@@ -93,6 +94,10 @@ REDSTONE_WIRE = register(RedstoneWireBlock())
 REPEATER = register(RepeaterBlock())
 COMPARATOR = register(ComparatorBlock())
 CAKE = register(CakeBlock())
+PISTON = register(PistonBaseBlock(sticky=False))
+STICKY_PISTON = register(PistonBaseBlock(sticky=True))
+PISTON_HEAD = register(PistonHeadBlock())
+MOVING_PISTON = register(MovingPistonBlock())
 
 __all__ = [
     "AIR",
@@ -110,9 +115,13 @@ __all__ = [
     "REDSTONE_WALL_TORCH",
     "REDSTONE_WIRE",
     "REPEATER",
+    "STICKY_PISTON",
     "STONE_BUTTON",
     "OAK_PLANKS",
+    "MOVING_PISTON",
     "OBSIDIAN",
+    "PISTON",
+    "PISTON_HEAD",
     "REDSTONE_BLOCK",
     "REGISTRY",
     "SLIME_BLOCK",
