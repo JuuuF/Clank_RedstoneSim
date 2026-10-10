@@ -19,8 +19,12 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   container analog source (barrel with inventory).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick. All 14 recorded scenarios match ([[experiments/index]]).
-- **UI (M2):** not started. The framework is chosen (PySide6 + QOpenGLWidget,
-  [[decisions]] ADR-002) and a GL prototype rendered successfully.
+- **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, fly camera,
+  cursor picking, place/break/use with player-like orientation, block palette and hotbar,
+  inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
+  step tick, step event, speed), diagnostics (scheduled ticks, block events, last-step
+  trace), undo/redo for edits, and JSON save/open of the complete engine state. Launch with
+  `python -m redsim`.
 - **Pistons (M5), history/playback UI (M6), contraptions (M7):** not started. The engine
   already supports snapshot/restore, which M6 will build on.
 
@@ -42,8 +46,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.sim.ticks` | `LevelTicks` port (collect-then-run, dedup, priorities) | done | `tests/sim/test_scheduling.py` |
 | `redsim.sim.trace` | Causal trace records | done (basic) | used in component tests |
 | `redsim.sim.engine` | Tick phases as steps; player and command actions; snapshots | done | `tests/sim/test_scheduling.py` |
-| `redsim.io` | Save/load | **not started** | — |
-| `redsim.ui` | PySide6 editor | **not started** | — |
+| `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
+| `redsim.editor` | Document, placement orientation, sections, undo | done | `tests/editor/test_editor.py` |
+| `redsim.ui` | PySide6 editor (viewport, panels, main window) | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
 
@@ -67,8 +72,8 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **72 tests pass** (2026-10-11), including the JDK oracle and the 14
-  game-recording replays. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
+- `python -m pytest`: **95 tests pass** (2026-10-11), including the JDK oracle, the 14
+  game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
 - Real-game comparisons (`python -m tools.gameserver.run`): 14 of 14 scenarios match.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 

@@ -157,3 +157,27 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Decision:** [[project-state]] is the handoff page, updated after every slice together with
   [[roadmap]], [[architecture]], mechanics pages and the experiment log. New sessions start
   from [[README]].
+
+## ADR-013
+
+**Editor edits are engine actions; inspector edits use /setblock semantics**
+
+- **Context:** The editor needs both "play like a player" and "set this exact state". A raw
+  state write without updates would create states the game never produces.
+- **Decision:** Viewport clicks map to the player actions (`place`, `break`, `use`), with
+  orientation ported from `BlockPlaceContext`. Inspector property edits use `/setblock`
+  semantics, which is a vanilla, documented behavior and the same one the game harness
+  uses. All edits happen between ticks. Undo restores engine snapshots, so simulation steps
+  are not undone by edit-undo. Rewind is milestone 6.
+- **Trade-offs:** A `/setblock` edit can leave components un-updated, exactly as in the game
+  (for example, setting a lever to `powered=true` does not update the attached block's
+  neighbors). The tooltip says so.
+
+## ADR-014
+
+**Cursor targeting instead of a crosshair**
+
+- **Context:** Minecraft targets the screen center. In an editor with free mouse movement,
+  aiming with the cursor is faster.
+- **Decision:** Hover/target follows the mouse cursor; looking around needs a right-drag.
+  Placement orientation still uses the camera's yaw/pitch like the game's player view.

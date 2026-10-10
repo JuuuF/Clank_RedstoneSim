@@ -35,8 +35,11 @@ src/redsim/
 │   ├── ticks.py           LevelTicks port (ScheduledTick, TickPriority)
 │   ├── trace.py           causal trace records
 │   └── engine.py          tick phases as steps, actions, snapshots
-├── io/                    (planned) save/load
-└── ui/                    (planned) PySide6 application
+├── io/save.py             JSON save/load of the complete engine state (mid-tick safe)
+├── editor/                editing without Qt: Document (engine + sections + undo + files),
+│                          player-like placement orientation, section annotations
+└── ui/                    PySide6 application: viewport (camera, picking, renderer), panels,
+                           main window, app entry point (`python -m redsim`)
 tests/                     pytest suites (core, world, sim); tests/sim/probe.py = test-only blocks
 tools/
 ├── java_oracle/           HashOrderOracle.java (real-JVM check for javahash)
@@ -45,7 +48,7 @@ experiments/results/       JSON recordings from the real game (evidence, replaye
 doc/                       this documentation (Obsidian vault)
 ```
 
-Dependency direction is strictly downward: `ui → io → sim → world → core`. `tools` and
+Dependency direction is strictly downward: `ui → editor → io → sim → world → core`. `tools` and
 `tests` may import anything. The simulation never imports Qt and never reads rendering
 state. Section colors and labels will be stored as annotations next to the world, never
 inside block states.
@@ -167,14 +170,47 @@ The game harness ([[decisions]] ADR-008) runs the supplied server in `.sandbox/g
 with `/tick step 1`, and checks the simulator's predicted full state of every watched block
 with `execute if block`. Details: [[experiments/index]], [[implementation-notes]].
 
-## User interface (planned, M2)
+## Editor layer (`redsim.editor`, no Qt)
 
-PySide6 (Qt Widgets) main window with a `QOpenGLWidget` viewport using PySide6's own
-OpenGL wrappers (no PyOpenGL). Picking uses a CPU voxel ray cast against the world model.
-Meshes are rebuilt from the world by a renderer that only reads state. Controls are
-Minecraft-like: WASD plus mouse look while the right button is held, left-click breaks,
-right-click places, middle-click picks a block (confirmed by the owner). Under Wayland the
-app uses `QT_QPA_PLATFORM=xcb` (ADR-002).
+- `Document` owns the `Engine`, the `Sections` annotations, the file path, a revision counter
+  (the UI rebuilds meshes when it changes) and a snapshot-based undo/redo stack for edits.
+- Edits are engine actions and are only allowed between ticks, as in the game:
+  `place` (player placement), `break`, `use` (right click), and inspector edits as `setblock`
+  (`/setblock` semantics, stated in the UI tooltip) ([[decisions]] ADR-013).
+- `placement.py` ports `Direction.orderedByNearest`,
+  `BlockPlaceContext.getNearestLookingDirections` and the per-block placement rules
+  (face-attached, torch item, diodes), so the editor produces the states a player at that
+  yaw/pitch clicking that face would get.
+- `annotations.py`: named sections with colors, purely visual, saved in the file's `extra`.
+
+## Persistence (`redsim.io.save`)
+
+One JSON document (`format: redsim-save`, `version: 1`) with a block palette, block
+entities, pending and collected scheduled ticks, block events, ticker wrappers (identity
+preserved), counters, torch toggles, flags and the engine position, plus editor `extra`
+(sections). Loading a save made mid-tick and continuing reproduces the original steps
+(tested).
+
+## User interface (`redsim.ui`)
+
+| Module | Role |
+|---|---|
+| `style.py` | Block → colored boxes in pixels by functional category (no textures); wire color uses the game's power formula; orientation transforms |
+| `geometry.py` | Mesh building (face culling between full cubes, separate translucent buffer, checkerboard tint) and CPU picking (voxel traversal + ray/box tests on the same boxes) |
+| `camera.py` | Fly camera with Minecraft yaw/pitch conventions; view/projection matrices; cursor rays |
+| `renderer.py` | One shader, three streams (opaque, translucent, lines) through PySide6's GL wrappers |
+| `viewport.py` | `QOpenGLWidget`: input handling, hover, selection; emits edit signals only |
+| `panels.py` | Palette (with hotbar), inspector, simulation controls, diagnostics, sections, controls help |
+| `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run timer |
+| `app.py` | Entry point; selects `xcb` under Wayland; requests an OpenGL 3.3 core context |
+
+Controls (owner-confirmed, Minecraft-like): WASD/Space/Shift fly (Ctrl faster); hold the
+right button and drag to look; left click breaks; right click places, or uses a usable block
+(Shift+right click always places); middle click picks; Ctrl+left click selects for the
+inspector; 1–9 hotbar; P run/pause, T step tick, E step event; Ctrl+Z/Ctrl+Y undo/redo.
+
+The viewport targets the block under the mouse cursor (an editor convenience; the game
+uses the screen center). The renderer never writes world state.
 
 ## Related
 
