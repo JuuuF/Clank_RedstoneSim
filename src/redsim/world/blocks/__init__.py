@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from redsim.world.block import Block, BlockState, PushReaction
 from redsim.world.blocks.attached import ButtonBlock, LeverBlock
+from redsim.world.blocks.cake import CakeBlock
+from redsim.world.blocks.comparator import ComparatorBlock
+from redsim.world.blocks.diode import RepeaterBlock
 from redsim.world.blocks.lamp import RedstoneLampBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
@@ -87,10 +90,15 @@ REDSTONE_LAMP = register(RedstoneLampBlock())
 REDSTONE_TORCH = register(RedstoneTorchBlock())
 REDSTONE_WALL_TORCH = register(RedstoneWallTorchBlock())
 REDSTONE_WIRE = register(RedstoneWireBlock())
+REPEATER = register(RepeaterBlock())
+COMPARATOR = register(ComparatorBlock())
+CAKE = register(CakeBlock())
 
 __all__ = [
     "AIR",
     "BEDROCK",
+    "CAKE",
+    "COMPARATOR",
     "COBBLESTONE",
     "GLASS",
     "GLOWSTONE",
@@ -101,6 +109,7 @@ __all__ = [
     "REDSTONE_TORCH",
     "REDSTONE_WALL_TORCH",
     "REDSTONE_WIRE",
+    "REPEATER",
     "STONE_BUTTON",
     "OAK_PLANKS",
     "OBSIDIAN",
