@@ -6,14 +6,14 @@ relevant server algorithms from the supplied decompiled source.
 ## Navigation
 
 - **Project:** [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]]
-- **Research:** [[research/repository-report]] · [[research/source-map]]
+- **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]
 
 ## Current status
 
-Milestone 0 (reconnaissance) is complete; Milestone 1 (mechanics reference) is in progress.
-No application code exists yet.
+Milestones 0 (reconnaissance) and 1 (mechanics reference) are complete for the initial
+scope. No application code exists yet; next is the world model and simulation core.
 
 ## Open questions for the owner
 
