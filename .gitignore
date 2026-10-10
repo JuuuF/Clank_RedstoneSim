@@ -11,3 +11,6 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
+
+# Sandboxed game server for behavior comparison (never committed)
+.sandbox/
