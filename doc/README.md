@@ -17,9 +17,9 @@ against the real game.
 
 - Milestones 0, 1, 3 and 4 are done for the initial scope: lever, buttons, lamp, torch
   (with burnout), wire, repeater, comparator and cake work.
-- 72 tests pass. A sandboxed 26.3 server confirms 14 of 14 recorded scenarios tick for
+- 95 tests pass. A sandboxed 26.3 server confirms 14 of 14 recorded scenarios tick for
   tick, including a same-tick repeater priority race and comparator subtract mode.
-- No user interface yet: the editor (M2) is next, then pistons (M5).
+- The 3D editor works (`python -m redsim`); pistons (M5) are next.
 - Work happens on branch `feat/sim-core`; nothing has been pushed.
 
 ## Owner decisions on record

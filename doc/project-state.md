@@ -89,23 +89,25 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - Overdue scheduled ticks (more than 65 536 due in one tick) are reported but not merged
   per chunk (cannot occur in scope).
 - Experimental redstone (`redstone_experiments`) is out of scope (ADR-006).
-- Trace records are not yet exposed in any UI and have no size cap.
+- The trace grows without a cap; the UI shows only the last step's records.
+- The editor has no rewind yet (M6); undo covers edits only.
+- The GUI was verified offscreen (smoke test and screenshots), not on the owner's desktop.
 
 ## Next steps (in order)
 
-1. Minimal 3D editor (M2): viewport, camera, picking, place/break/use, inspector, section
-   colors, JSON save/load (`redsim.io`).
-2. Pistons (M5): sliding piston, doors, QC/BUD and 0-tick cases with game scenarios (the
+1. Pistons (M5): sliding piston, doors, QC/BUD and 0-tick cases with game scenarios (the
    owner's first targets: "a simple door, a sliding piston").
-3. Playback and history UI (M6) on top of `Engine.snapshot()`.
-4. Small M4 follow-up: barrel/container analog source (inventory fill formula in 32-bit
+2. Playback and history UI (M6) on top of `Engine.snapshot()`: rewind, event scrubbing,
+   a trace view with causal tree, warp.
+3. Small M4 follow-up: barrel/container analog source (inventory fill formula in 32-bit
    float), with `/item replace`-driven game scenarios.
 
 ## How to resume
 
 ```sh
 git switch feat/sim-core
-python -m pytest                       # all tests, ~1 s, no server needed
+python -m redsim                       # start the editor
+python -m pytest                       # all tests, ~2 s, no server needed
 python -m tools.gameserver.run         # re-run game comparisons (~1-2 min, sandboxed server)
 ```
 

@@ -17,7 +17,8 @@ structure in [[architecture]], the current state in [[project-state]].
 ## Everyday commands
 
 ```sh
-python -m pytest                          # all tests (~1 s); pythonpath = src and repo root
+python -m redsim                          # start the editor (PYTHONPATH=src if not installed)
+python -m pytest                          # all tests (~2 s); pythonpath = src and repo root
 ruff check src tests tools                # lint
 ruff format src tests tools               # format (line length 100)
 mypy src tools                            # types
