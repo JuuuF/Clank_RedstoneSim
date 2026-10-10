@@ -30,12 +30,18 @@ class Phase(Enum):
     BLOCK_ENTITIES = "block entities"
 
 
-ActionKind = Literal["place", "break", "use", "set_block"]
+ActionKind = Literal["place", "break", "use", "setblock", "set_block"]
 
 
 @dataclass(frozen=True)
 class Action:
-    """A player input, applied between ticks. ``state`` uses ``id[prop=value]`` syntax."""
+    """An input applied between ticks. ``state`` uses ``id[prop=value]`` syntax.
+
+    * ``place``/``break``/``use``: what a player does (``BlockItem.place``,
+      ``ServerPlayerGameMode.destroyBlock``, ``useWithoutItem``).
+    * ``setblock``: the ``/setblock`` command in replace mode (``SetBlockCommand.setBlock``).
+    * ``set_block``: a raw ``Level.setBlock`` with explicit flags (editor tool, not vanilla).
+    """
 
     kind: ActionKind
     pos: Pos
@@ -243,6 +249,10 @@ class Engine:
                 state = level.get_block_state(action.pos)
                 if not state.block.use_without_item(state, level, action.pos):
                     info.detail["info"] = "use: no effect"
+            elif action.kind == "setblock":
+                assert action.state is not None
+                if not self._setblock_command(action.pos, action.state):
+                    info.detail["info"] = "setblock: no change"
             elif action.kind == "set_block":
                 assert action.state is not None
                 level.set_block(action.pos, parse_state(action.state), action.flags)
@@ -268,6 +278,27 @@ class Engine:
         placed = level.get_block_state(pos)
         if placed.is_(state.block):
             placed.block.set_placed_by(level, pos, placed)
+
+    def _setblock_command(self, pos: Pos, text: str) -> bool:
+        """``SetBlockCommand.setBlock`` (replace mode, not strict): ``BlockInput.place`` with
+        flags 2|256 (shape-adjusted state, explicit properties re-applied), then
+        ``updateNeighboursOnBlockSet``."""
+        from redsim.world.blocks import parse_state_explicit
+
+        level = self.level
+        state, explicit = parse_state_explicit(text)
+        old_state = level.get_block_state(pos)
+        placed = level.update_from_neighbour_shapes(state, pos)
+        if placed.is_air:
+            placed = state
+        if placed is not state:
+            for prop in explicit:
+                placed = placed.with_(prop, state.get(prop))
+        flags = UpdateFlags.CLIENTS | UpdateFlags.SKIP_BLOCK_ENTITY_SIDEEFFECTS
+        if not level.set_block(pos, placed, flags):
+            return False  # "Could not set the block": no neighbor updates either
+        level.update_neighbours_on_block_set(pos, old_state)
+        return True
 
     def _break(self, pos: Pos) -> None:
         """``ServerPlayerGameMode.destroyBlock`` (L286)."""

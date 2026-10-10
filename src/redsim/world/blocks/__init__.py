@@ -7,6 +7,9 @@ which avoids import cycles.
 from __future__ import annotations
 
 from redsim.world.block import Block, BlockState, PushReaction
+from redsim.world.blocks.attached import ButtonBlock, LeverBlock
+from redsim.world.blocks.lamp import RedstoneLampBlock
+from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
     AirBlock,
     HoneyBlock,
@@ -17,6 +20,8 @@ from redsim.world.blocks.simple import (
     immovable,
     non_conductor,
 )
+from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
+from redsim.world.properties import Property
 
 REGISTRY: dict[str, Block] = {}
 
@@ -36,9 +41,16 @@ def get(block_id: str) -> Block:
 
 def parse_state(text: str) -> BlockState:
     """Parse ``id[prop=value,...]`` (the ``/setblock`` syntax) into a block state."""
+    return parse_state_explicit(text)[0]
+
+
+def parse_state_explicit(text: str) -> tuple[BlockState, list[Property]]:
+    """Like ``parse_state``, also returning the properties written out explicitly
+    (``BlockInput.properties``, used by ``overwriteWithDefinedProperties``)."""
     name, _, rest = text.partition("[")
     block = get(name.strip())
     state = block.default_state
+    explicit: list[Property] = []
     if rest:
         for assignment in rest.rstrip("]").split(","):
             if not assignment.strip():
@@ -46,7 +58,8 @@ def parse_state(text: str) -> BlockState:
             key, _, value = assignment.partition("=")
             prop = next(p for p in block.properties if p.name == key.strip())
             state = state.with_(prop, prop.parse(value.strip()))
-    return state
+            explicit.append(prop)
+    return state, explicit
 
 
 # --- basic blocks ----------------------------------------------------------------------
@@ -66,6 +79,15 @@ HONEY_BLOCK = register(HoneyBlock())
 SMOOTH_STONE_SLAB = register(SlabBlock("minecraft:smooth_stone_slab"))
 REDSTONE_BLOCK = register(RedstoneBlock())
 
+# --- redstone components ---------------------------------------------------------------
+LEVER = register(LeverBlock())
+STONE_BUTTON = register(ButtonBlock("minecraft:stone_button", 20))
+OAK_BUTTON = register(ButtonBlock("minecraft:oak_button", 30))
+REDSTONE_LAMP = register(RedstoneLampBlock())
+REDSTONE_TORCH = register(RedstoneTorchBlock())
+REDSTONE_WALL_TORCH = register(RedstoneWallTorchBlock())
+REDSTONE_WIRE = register(RedstoneWireBlock())
+
 __all__ = [
     "AIR",
     "BEDROCK",
@@ -73,6 +95,13 @@ __all__ = [
     "GLASS",
     "GLOWSTONE",
     "HONEY_BLOCK",
+    "LEVER",
+    "OAK_BUTTON",
+    "REDSTONE_LAMP",
+    "REDSTONE_TORCH",
+    "REDSTONE_WALL_TORCH",
+    "REDSTONE_WIRE",
+    "STONE_BUTTON",
     "OAK_PLANKS",
     "OBSIDIAN",
     "REDSTONE_BLOCK",
@@ -87,5 +116,6 @@ __all__ = [
     "SimpleBlock",
     "get",
     "parse_state",
+    "parse_state_explicit",
     "register",
 ]

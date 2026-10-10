@@ -109,6 +109,8 @@ class Level:
         self.tickers_by_pos: dict[Pos, TickerWrapper] = {}
         self.ticking_block_entities = False
         self.handling_tick = False
+        #: ``RedstoneTorchBlock.RECENT_TOGGLES`` for this level: (pos, gameTime) entries.
+        self.torch_toggles: list[tuple[Pos, int]] = []
         self.trace = trace if trace is not None else Trace()
         self.neighbor_updater = CollectingNeighborUpdater(self, max_chained_neighbor_updates)
 
@@ -207,6 +209,15 @@ class Level:
         if self.get_block_state(pos).is_air:
             return False
         return self.set_block(pos, self.air, UpdateFlags.ALL, limit)
+
+    def update_neighbours_on_block_set(self, pos: Pos, old_state: BlockState) -> None:
+        """``ServerLevel.updateNeighboursOnBlockSet`` (used by ``/setblock`` and ``/fill``)."""
+        state = self.get_block_state(pos)
+        if not old_state.is_(state.block):
+            old_state.affect_neighbors_after_removal(self, pos, False)
+        self.update_neighbors_at(pos, state.block)
+        if state.has_analog_output_signal():
+            self.update_neighbour_for_output_signal(pos, state.block)
 
     def update_or_destroy(
         self, old: BlockState, new: BlockState, pos: Pos, flags: int, limit: int = 512
@@ -535,6 +546,7 @@ class Level:
         other.block_events = dict(self.block_events)
         other.ticking_block_entities = self.ticking_block_entities
         other.handling_tick = self.handling_tick
+        other.torch_toggles = list(self.torch_toggles)
         other.trace = Trace(enabled=self.trace.enabled)
         other.neighbor_updater = CollectingNeighborUpdater(other, self.neighbor_updater.max_chained)
         return other
