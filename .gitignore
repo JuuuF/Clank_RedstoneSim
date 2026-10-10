@@ -1,3 +1,13 @@
 # Do not track data files
 data/
 
+
+# Python build and tool caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
