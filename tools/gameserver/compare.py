@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -92,8 +93,17 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
 
 
 def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, str]:
+    """Full block states, plus ``<rel>#output`` for comparators (block-entity data)."""
     level = engine.level
-    return {str(rel): repr(level.get_block_state(absolute(origin, rel))) for rel in scenario.watch}
+    frame: dict[str, str] = {}
+    for rel in scenario.watch:
+        pos = absolute(origin, rel)
+        state = level.get_block_state(pos)
+        frame[str(rel)] = repr(state)
+        if state.block.id == "minecraft:comparator":
+            be = level.get_block_entity(pos, create=False)
+            frame[f"{rel}#output"] = str(getattr(be, "output", 0))
+    return frame
 
 
 # ---------------------------------------------------------------- game side
@@ -110,13 +120,30 @@ def prepare_area(server: GameServer, origin: Pos, size: tuple[int, int], margin:
 
 
 def observe_game(server: GameServer, expected: dict[str, str], origin: Pos) -> dict[str, str]:
-    keys = list(expected)
+    data_keys = [key for key in expected if "#" in key]
+    observed_data = {
+        key: read_block_data(server, absolute(origin, _parse_rel(key.split("#")[0])), key)
+        for key in data_keys
+    }
+    keys = [key for key in expected if "#" not in key]
     positions = [absolute(origin, _parse_rel(key)) for key in keys]
     verdicts = server.test_blocks(list(zip(positions, [expected[k] for k in keys], strict=True)))
     observed: dict[str, str] = {}
     for key, pos, ok in zip(keys, positions, verdicts, strict=True):
         observed[key] = expected[key] if ok else discover_state(server, pos)
+    observed.update(observed_data)
     return observed
+
+
+DATA_PATHS = {"output": "OutputSignal"}
+
+
+def read_block_data(server: GameServer, pos: Pos, key: str) -> str:
+    """Read one block-entity field with ``data get block`` (e.g. comparator output)."""
+    path = DATA_PATHS[key.split("#")[1]]
+    text = server.command(f"data get block {pos[0]} {pos[1]} {pos[2]} {path}").text
+    match = re.search(r"has the following block data: (-?\d+)", text)
+    return match.group(1) if match else f"<no data: {text.strip()[:80]}>"
 
 
 def discover_state(server: GameServer, pos: Pos) -> str:

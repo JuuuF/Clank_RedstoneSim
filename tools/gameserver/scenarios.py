@@ -118,6 +118,132 @@ GLASS_UP_NOT_DOWN = Scenario(
     inputs={0: [((3, 1, 0), RB)], 2: [((3, 1, 0), AIR), ((0, 1, -1), RB)]},
 )
 
+REPEATER_DELAYS = Scenario(
+    name="repeater_delays",
+    description="Repeaters with delay 1-4 (2/4/6/8 ticks) light lamps; rows spaced apart.",
+    size=(4, 7),
+    setup=[((1, 1, 2 * d), f"minecraft:repeater[facing=west,delay={d + 1}]") for d in range(4)]
+    + [((2, 1, 2 * d), "minecraft:redstone_lamp") for d in range(4)],
+    watch=[(1, 1, 2 * d) for d in range(4)] + [(2, 1, 2 * d) for d in range(4)],
+    ticks=30,
+    inputs={
+        0: [((0, 1, 2 * d), RB) for d in range(4)],
+        12: [((0, 1, 2 * d), AIR) for d in range(4)],
+    },
+)
+
+REPEATER_PULSE_EXTENSION = Scenario(
+    name="repeater_pulse_extension",
+    description="A 1-tick input pulse into a delay-4 repeater becomes an 8-tick output pulse.",
+    size=(4, 1),
+    setup=[
+        ((1, 1, 0), "minecraft:repeater[facing=west,delay=4]"),
+        ((2, 1, 0), "minecraft:redstone_lamp"),
+    ],
+    watch=[(1, 1, 0), (2, 1, 0)],
+    ticks=24,
+    inputs={0: [((0, 1, 0), RB)], 1: [((0, 1, 0), AIR)]},
+)
+
+REPEATER_LOCK_PRIORITY = Scenario(
+    name="repeater_lock_priority",
+    description=(
+        "Race in one game tick: repeater L (scheduled second) locks repeater M. L outputs into "
+        "a diode's side, so it ticks at EXTREMELY_HIGH and wins against M's HIGH: M stays off "
+        "until L turns off again."
+    ),
+    size=(4, 3),
+    setup=[
+        ((2, 1, 1), "minecraft:repeater[facing=north,delay=1]"),
+        ((2, 1, 2), "minecraft:repeater[facing=west,delay=1]"),
+        ((3, 1, 2), "minecraft:redstone_lamp"),
+    ],
+    watch=[(2, 1, 1), (2, 1, 2), (3, 1, 2)],
+    ticks=14,
+    inputs={0: [((1, 1, 2), RB), ((2, 1, 0), RB)], 6: [((2, 1, 0), AIR)]},
+)
+
+REPEATER_CHAIN = Scenario(
+    name="repeater_chain",
+    description="Three delay-1 repeaters in a row add 2 ticks each.",
+    size=(6, 1),
+    setup=[((x, 1, 0), "minecraft:repeater[facing=west,delay=1]") for x in (1, 2, 3)]
+    + [((4, 1, 0), "minecraft:redstone_lamp")],
+    watch=[(1, 1, 0), (2, 1, 0), (3, 1, 0), (4, 1, 0)],
+    ticks=20,
+    inputs={0: [((0, 1, 0), RB)], 8: [((0, 1, 0), AIR)]},
+)
+
+COMPARATOR_MODES = Scenario(
+    name="comparator_modes",
+    description=(
+        "Cake (14 - 2*bites) behind a comparator, wire side input 13: compare, then side > rear, "
+        "then subtract mode (set by /setblock), then side removed."
+    ),
+    size=(4, 6),
+    setup=[
+        ((0, 1, 1), "minecraft:cake"),
+        ((1, 1, 1), "minecraft:comparator[facing=west]"),
+        ((2, 1, 1), "minecraft:redstone_wire"),
+        ((3, 1, 1), "minecraft:redstone_wire"),
+        ((1, 1, 2), "minecraft:redstone_wire"),
+        ((1, 1, 3), "minecraft:redstone_wire"),
+        ((1, 1, 4), "minecraft:redstone_wire"),
+    ],
+    watch=[(1, 1, 1), (2, 1, 1), (3, 1, 1), (1, 1, 2)],
+    ticks=20,
+    inputs={
+        0: [((1, 1, 5), RB)],
+        4: [((0, 1, 1), "minecraft:cake[bites=1]")],
+        8: [((1, 1, 1), "minecraft:comparator[facing=west,mode=subtract]")],
+        10: [((0, 1, 1), "minecraft:cake[bites=0]")],
+        14: [((1, 1, 5), AIR)],
+    },
+)
+
+COMPARATOR_THROUGH_BLOCK = Scenario(
+    name="comparator_through_block",
+    description=(
+        "Comparator reads cake through a stone block; a torch under the stone gives the stone "
+        "strong power 15, which skips the through-block lookup (open question OQ-6)."
+    ),
+    size=(4, 3),
+    setup=[
+        ((0, 1, 1), "minecraft:cake"),
+        ((1, 1, 1), "minecraft:stone"),
+        ((2, 1, 1), "minecraft:comparator[facing=west]"),
+        ((3, 1, 1), "minecraft:redstone_wire"),
+    ],
+    watch=[(2, 1, 1), (3, 1, 1)],
+    ticks=16,
+    inputs={
+        4: [((0, 1, 1), "minecraft:cake[bites=3]")],
+        8: [((1, 0, 1), "minecraft:redstone_torch")],
+        12: [((1, 0, 1), "minecraft:stone")],
+    },
+)
+
+COMPARATOR_SIDE_TORCH = Scenario(
+    name="comparator_side_torch",
+    description=(
+        "A lit torch beside a subtracting comparator is not a side input (only direct signal "
+        "counts); a powered wire in the same place is."
+    ),
+    size=(3, 5),
+    setup=[
+        ((0, 1, 1), RB),
+        ((1, 1, 1), "minecraft:comparator[facing=west,mode=subtract]"),
+        ((2, 1, 1), "minecraft:redstone_wire"),
+    ],
+    watch=[(1, 1, 1), (2, 1, 1), (1, 1, 2)],
+    ticks=12,
+    inputs={
+        0: [((1, 1, 2), "minecraft:redstone_torch")],
+        4: [((1, 1, 2), "minecraft:redstone_wire")],
+        6: [((1, 1, 3), RB)],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -126,6 +252,13 @@ ALL = [
     TORCH_BURNOUT,
     TORCH_BURNOUT_UPDATE,
     GLASS_UP_NOT_DOWN,
+    REPEATER_DELAYS,
+    REPEATER_PULSE_EXTENSION,
+    REPEATER_LOCK_PRIORITY,
+    REPEATER_CHAIN,
+    COMPARATOR_MODES,
+    COMPARATOR_THROUGH_BLOCK,
+    COMPARATOR_SIDE_TORCH,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

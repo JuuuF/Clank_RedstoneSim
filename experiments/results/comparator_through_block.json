@@ -1,0 +1,255 @@
+{
+ "scenario": "comparator_through_block",
+ "description": "Comparator reads cake through a stone block; a torch under the stone gives the stone strong power 15, which skips the through-block lookup (open question OQ-6).",
+ "origin": [
+  120,
+  0,
+  0
+ ],
+ "start_time": 109,
+ "fingerprint": "b27310df94080170",
+ "game_version": "26.3",
+ "ticks": 16,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 1)#output": "0",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=0]",
+    "(2, 1, 1)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 1)#output": "0",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=0]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=0]",
+    "(2, 1, 1)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "14",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 1)#output": "14"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "14",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 1)#output": "14"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "14",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 1)#output": "14"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "14",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "(2, 1, 1)#output": "14"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "15",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]",
+    "(2, 1, 1)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "15",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]",
+    "(2, 1, 1)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "15",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]",
+    "(2, 1, 1)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "15",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=15]",
+    "(2, 1, 1)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 15,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 16,
+   "sim": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 1)#output": "8",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 1)": "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "(2, 1, 1)#output": "8"
+   },
+   "mismatches": []
+  }
+ ]
+}

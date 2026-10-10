@@ -1,0 +1,761 @@
+{
+ "scenario": "repeater_delays",
+ "description": "Repeaters with delay 1-4 (2/4/6/8 ticks) light lamps; rows spaced apart.",
+ "origin": [
+  0,
+  0,
+  0
+ ],
+ "start_time": 1,
+ "fingerprint": "00a79e4710aa98ca",
+ "game_version": "26.3",
+ "ticks": 30,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 15,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=true]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 16,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 17,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=true]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 18,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 19,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=true]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 20,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 21,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 22,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 23,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 24,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 25,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 26,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 27,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 28,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 29,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 30,
+   "sim": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(1, 1, 2)": "minecraft:repeater[facing=west,delay=2,locked=false,powered=false]",
+    "(1, 1, 4)": "minecraft:repeater[facing=west,delay=3,locked=false,powered=false]",
+    "(1, 1, 6)": "minecraft:repeater[facing=west,delay=4,locked=false,powered=false]",
+    "(2, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 4)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  }
+ ]
+}
