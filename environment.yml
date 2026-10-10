@@ -1,0 +1,21 @@
+# Conda environment for the redstone simulator.
+#
+#   conda env create -f environment.yml
+#   conda activate redsim
+#   pip install -e . --no-deps      # makes `redsim` and `python -m redsim` available
+#
+# Python comes from conda-forge; Python packages come from pip (the PySide6 wheel is the
+# build the project was tested with, see doc/implementation-notes.md).
+name: redsim
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - numpy>=2.0
+      - PySide6==6.9.2
+      - pytest>=8
+      - ruff>=0.4
+      - mypy>=1.10
