@@ -1,1 +1,25 @@
-Add the documentation in this directory
+# Redstone simulator documentation
+
+A Python simulator for Minecraft **Java Edition 26.3** redstone, built by porting the
+relevant server algorithms from the supplied decompiled source.
+
+## Navigation
+
+- **Project:** [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]]
+- **Research:** [[research/repository-report]] · [[research/source-map]]
+- **Mechanics:** [[mechanics/index]] · [[quirks]]
+- **Experiments:** [[experiments/index]]
+
+## Current status
+
+Milestone 0 (reconnaissance) is complete; Milestone 1 (mechanics reference) is in progress.
+No application code exists yet.
+
+## Open questions for the owner
+
+1. **In-game comparison:** the agent cannot run the Minecraft client. Experiments in
+   [[experiments/index]] need you to run them in a clean 26.3 test world.
+2. **Torch burnout:** the brief calls burnout "random", but the source
+   (`RedstoneTorchBlock.tick`, `isToggledTooFrequently`) shows it is deterministic: 8 toggles
+   within 60 game ticks turn a torch off for 160 ticks. It stays out of scope for now as
+   briefed. Should it be added later as a deterministic mechanic?
