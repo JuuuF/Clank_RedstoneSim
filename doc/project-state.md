@@ -112,6 +112,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
+Owner feedback of 2026-10-11 ([[ui-direction]]) comes first: real-time speed (the renderer
+rebuilds the whole mesh every tick), then the interaction redesign (modes, orbit camera,
+Axiom-like selections, analog source block).
+
 All seven roadmap milestones have a working core. Suggested next steps:
 
 1. **Owner review on the real desktop:** run `python -m redsim`, build the simple circuits,

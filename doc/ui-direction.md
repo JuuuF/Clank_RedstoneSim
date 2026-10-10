@@ -1,0 +1,49 @@
+# UI and product direction (owner feedback)
+
+Feedback from the first hands-on session (2026-10-11), recorded as design input.
+Implementation status is tracked in [[roadmap]] and [[project-state]].
+
+## Interaction
+
+- **Modes, vim-like.** Separate a *build* mode (placing/breaking blocks only there) from a
+  mode for selections and settings. Today's single mode with click overloading
+  (left = break, right = place or use) is not liked.
+- **Shortcuts must not collide with camera keys.** Shift+T (tick back) also moved the camera
+  down, because Shift is "down". Camera keys and command keys need separate namespaces.
+- **Selections like Axiom** (the Minecraft building mod): box selections, moving and copying
+  selections in place, with visible handles.
+
+## Camera
+
+- Replace the fly camera with an **orbit ("trackball") camera around a visible pivot**, a mix
+  of Blender and Trackmania's editor:
+  - the pivot point is highlighted;
+  - mouse wheel moves the pivot up and down;
+  - dragging the mouse moves it horizontally;
+  - Ctrl+wheel zooms in and out, as does middle-click dragging.
+- Still open: which input orbits (rotates) around the pivot.
+
+## Looks
+
+- Later, not now: the final product should look like a **technical version of Minecraft**,
+  cleaner than the current colored boxes. Functionality comes first.
+- The UI panels need work, but that is not a current priority.
+
+## Analog signal sources
+
+- Cake as the comparator source feels odd. Wanted: a **generic "signal strength source"**
+  in the palette that maps to a real block (lectern, hopper, composter, container, …) and
+  can be **hot-swapped** between them, with tooltips explaining how they differ
+  (pushability, block entity, update behavior, value range). The real block underneath
+  keeps the simulation faithful.
+
+## Performance
+
+- The simulation must easily run in **real time (20 ticks/s)**; the owner saw about half that.
+- Measured (2026-10-11): the engine runs about 950–1 300 ticks/s on the busy example world.
+  The bottleneck is the renderer: `build_mesh` rebuilds the whole world mesh (~51 ms for
+  1 067 blocks) after every tick, so with the 50 ms run timer only about 10 ticks/s happen.
+- Plan, as the game client does it: mesh per 16³ section with dirty tracking (only changed
+  sections rebuilt), vectorized geometry, and rendering decoupled from simulation (simulate
+  at the target rate; draw at most once per frame). Show the achieved ticks/s in the UI.
+  Trace detail can stay on: it costs about 30 % of engine time, which is not the bottleneck.

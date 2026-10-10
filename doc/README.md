@@ -9,7 +9,7 @@ To click through the simulator: [[tour]].
 
 ## Navigation
 
-- **Project:** [[project-state]] · [[tour]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]]
+- **Project:** [[project-state]] · [[tour]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]
