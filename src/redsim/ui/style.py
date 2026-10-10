@@ -18,10 +18,13 @@ from redsim.world.properties import (
     ATTACH_FACE,
     BITES,
     DELAY,
+    EXTENDED,
+    FACING,
     HORIZONTAL_FACING,
     LIT,
     LOCKED,
     MODE_COMPARATOR,
+    PISTON_TYPE,
     POWER,
     POWERED,
     SLAB_TYPE,
@@ -89,6 +92,9 @@ _ROT_Y = {  # rotate a north-facing model to face the given horizontal direction
 _FLOOR_TO_WALL = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
 #: floor model → ceiling model
 _FLOOR_TO_CEILING = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+#: north-facing model → up / down facing (for six-way FACING blocks such as pistons)
+_NORTH_TO_UP = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+_NORTH_TO_DOWN = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]])
 
 
 def transform(boxes: list[Box], matrix: np.ndarray) -> list[Box]:
@@ -106,6 +112,15 @@ def transform(boxes: list[Box], matrix: np.ndarray) -> list[Box]:
 
 def face_horizontally(boxes: list[Box], facing: Direction) -> list[Box]:
     return transform(boxes, _ROT_Y[facing])
+
+
+def face_any(boxes: list[Box], facing: Direction) -> list[Box]:
+    """Rotate a north-facing model to any of the six directions."""
+    if facing is Direction.UP:
+        return transform(boxes, _NORTH_TO_UP)
+    if facing is Direction.DOWN:
+        return transform(boxes, _NORTH_TO_DOWN)
+    return face_horizontally(boxes, facing)
 
 
 def attach(boxes: list[Box], face: str, facing: Direction) -> list[Box]:
@@ -160,6 +175,13 @@ def block_boxes(state: BlockState) -> list[Box]:
         depth = 1 if state.get(POWERED) else 2
         model = [Box((5, 0, 6), (11, depth, 10), color)]
         return attach(model, state.get(ATTACH_FACE), state.get(HORIZONTAL_FACING))
+    if block_id in ("minecraft:piston", "minecraft:sticky_piston"):
+        sticky = block_id == "minecraft:sticky_piston"
+        return face_any(_piston_base(state.get(EXTENDED), sticky), state.get(FACING))
+    if block_id == "minecraft:piston_head":
+        return face_any(_piston_head(state.get(PISTON_TYPE) == "sticky"), state.get(FACING))
+    if block_id == "minecraft:moving_piston":
+        return []  # drawn from its block entity (see moving_boxes)
     if block_id == "minecraft:cake":
         bites = int(state.get(BITES))
         return [Box((1 + 2 * bites, 0, 1), (15, 8, 15), rgb(0.95, 0.90, 0.88))]
@@ -230,6 +252,35 @@ def _comparator(state: BlockState) -> list[Box]:
         Box((11, 2, 2), (13, 7, 4), back),
         Box((7, 2, 11), (9, 5, 13), LIT_RED if subtract else UNLIT_RED),
     ]
+
+
+PISTON_BODY = rgb(0.47, 0.47, 0.45)
+PISTON_WOOD = rgb(0.70, 0.56, 0.36)
+PISTON_SLIME = rgb(0.47, 0.78, 0.35)
+
+
+def _piston_base(extended: bool, sticky: bool) -> list[Box]:
+    # Facing north: the push side is z = 0.
+    if extended:
+        return [Box((0, 0, 4), (16, 16, 16), PISTON_BODY)]
+    face = PISTON_SLIME if sticky else PISTON_WOOD
+    return [Box((0, 0, 4), (16, 16, 16), PISTON_BODY), Box((0, 0, 0), (16, 16, 4), face)]
+
+
+def _piston_head(sticky: bool) -> list[Box]:
+    face = PISTON_SLIME if sticky else PISTON_WOOD
+    return [Box((0, 0, 0), (16, 16, 4), face), Box((6, 6, 4), (10, 10, 16), PISTON_WOOD)]
+
+
+def moving_boxes(moved: BlockState, direction: Direction, extended_progress: float) -> list[Box]:
+    """Boxes of a block being moved by a piston, shifted to its current progress."""
+    shift = np.array(direction.step, dtype=float) * extended_progress * 16.0
+    out = []
+    for box in block_boxes(moved):
+        lo = tuple(float(v) for v in np.array(box.lo) + shift)
+        hi = tuple(float(v) for v in np.array(box.hi) + shift)
+        out.append(Box(lo, hi, box.color, box.translucent))  # type: ignore[arg-type]
+    return out
 
 
 def _lever(powered: bool) -> list[Box]:

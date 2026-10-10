@@ -15,7 +15,10 @@ import numpy.typing as npt
 from redsim.core.direction import ALL, Direction
 from redsim.core.pos import Pos, offset
 from redsim.sim.level import Level
-from redsim.ui.style import Box, Color, block_boxes
+from redsim.ui.style import Box, Color, block_boxes, moving_boxes
+from redsim.world import blocks
+from redsim.world.blocks.piston import PistonMovingBlockEntity
+from redsim.world.properties import EXTENDED, FACING, PISTON_TYPE
 
 FloatArray = npt.NDArray[np.float32]
 
@@ -64,9 +67,30 @@ def is_full_opaque(boxes: list[Box]) -> bool:
     )
 
 
+def boxes_at(level: Level, pos: Pos) -> list[Box]:
+    """Visual boxes of the block at ``pos``; moving pistons show what they move."""
+    state = level.get_block_state(pos)
+    if state.block.id != "minecraft:moving_piston":
+        return block_boxes(state)
+    entity = level.get_block_entity(pos, create=False)
+    if not isinstance(entity, PistonMovingBlockEntity):
+        return []
+    progress = entity.extended_progress(entity.progress)
+    moved = entity.moved_state
+    if entity.is_source and not entity.extending:
+        # A retracting piston base: the extended base stays, its head slides back in.
+        piston_type = "sticky" if moved.block.id == "minecraft:sticky_piston" else "normal"
+        head = blocks.PISTON_HEAD.default_state.with_(FACING, entity.direction).with_(
+            PISTON_TYPE, piston_type
+        )
+        base = block_boxes(moved.with_(EXTENDED, True))
+        return base + moving_boxes(head, entity.direction, progress)
+    return moving_boxes(moved, entity.direction, progress)
+
+
 def build_mesh(level: Level) -> Mesh:
     states = level.blocks
-    models: dict[Pos, list[Box]] = {pos: block_boxes(state) for pos, state in states.items()}
+    models: dict[Pos, list[Box]] = {pos: boxes_at(level, pos) for pos in states}
     full_opaque = {pos for pos, boxes in models.items() if is_full_opaque(boxes)}
     opaque: list[np.ndarray] = []
     translucent: list[np.ndarray] = []
@@ -122,7 +146,7 @@ def box_lines(
 
 def block_outline(level: Level, pos: Pos, color: Color) -> FloatArray:
     """Outline of a block's visual boxes (a full cube outline for empty space)."""
-    boxes = block_boxes(level.get_block_state(pos))
+    boxes = boxes_at(level, pos)
     if not boxes:
         return box_lines(pos, (pos[0] + 1, pos[1] + 1, pos[2] + 1), color)
     lo = np.min([b.lo for b in boxes], axis=0) / 16.0 + np.array(pos)
@@ -198,7 +222,7 @@ def pick(
         state = level.blocks.get(pos)
         if state is not None:
             best: tuple[float, int] | None = None
-            for box in block_boxes(state):
+            for box in boxes_at(level, pos):
                 lo = np.array(pos, dtype=np.float64) + np.array(box.lo) / 16.0
                 hi = np.array(pos, dtype=np.float64) + np.array(box.hi) / 16.0
                 hit = _ray_box(o, d, lo, hi)

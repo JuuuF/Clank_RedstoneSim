@@ -45,6 +45,8 @@ PALETTE: list[tuple[str, list[str]]] = [
             "minecraft:redstone_block",
             "minecraft:stone_button",
             "minecraft:oak_button",
+            "minecraft:piston",
+            "minecraft:sticky_piston",
             "minecraft:cake",
         ],
     ),
@@ -81,7 +83,7 @@ HOTBAR = [
     "minecraft:lever",
     "minecraft:redstone_lamp",
     "minecraft:redstone_block",
-    "minecraft:glass",
+    "minecraft:sticky_piston",
 ]
 
 
@@ -386,7 +388,7 @@ Shift + right click: always place<br>
 Middle click: pick the block type<br>
 Ctrl + left click: select a block for the inspector; Esc clears<br>
 1-9: hotbar (stone, dust, torch, repeater, comparator, lever, lamp, redstone block,
-glass)<br><br>
+sticky piston)<br><br>
 <b>Simulation</b><br>
 P: run/pause &nbsp; T: step tick &nbsp; E: step event &nbsp; Ctrl+Z / Ctrl+Y: undo / redo edits<br>
 Edits are only possible between ticks, like player actions in the game.
