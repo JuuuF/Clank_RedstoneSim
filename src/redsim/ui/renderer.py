@@ -97,7 +97,8 @@ class Renderer:
         gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         gl.glEnable(GL_DEPTH_TEST)
         self.program.bind()
-        self.program.setUniformValue("mvp", QMatrix4x4(*mvp.astype(np.float32).flatten()))
+        location = self.program.uniformLocation("mvp")
+        self.program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
         if self.opaque.count:
             self.opaque.vao.bind()
             gl.glDrawArrays(GL_TRIANGLES, 0, self.opaque.count)

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import (
@@ -50,14 +51,14 @@ class MainWindow(QMainWindow):
         self.viewport = Viewport(self.document)
         self.setCentralWidget(self.viewport)
 
-        self.palette = PalettePanel()
+        self.block_palette = PalettePanel()
         self.inspector = InspectorPanel()
         self.simulation = SimulationPanel()
         self.diagnostics = DiagnosticsPanel()
         self.sections = SectionsPanel(self.document)
         left = Qt.DockWidgetArea.LeftDockWidgetArea
         right = Qt.DockWidgetArea.RightDockWidgetArea
-        blocks_dock = self._dock("Blocks", self.palette, left)
+        blocks_dock = self._dock("Blocks", self.block_palette, left)
         self.help_dock = self._dock("Controls", controls_help(), left)
         self.tabifyDockWidget(blocks_dock, self.help_dock)
         blocks_dock.raise_()
@@ -81,7 +82,7 @@ class MainWindow(QMainWindow):
         self.play_timer.timeout.connect(self._play_tick)
         self._connect()
         self._build_menus()
-        self.viewport.look_at((0, 1, 0))
+        self._apply_saved_camera()
         self._changed()
 
     # ------------------------------------------------------------------ setup
@@ -93,7 +94,7 @@ class MainWindow(QMainWindow):
         return dock
 
     def _connect(self) -> None:
-        self.palette.block_chosen.connect(self._choose_block)
+        self.block_palette.block_chosen.connect(self._choose_block)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
         self.viewport.break_requested.connect(self._break)
@@ -120,7 +121,11 @@ class MainWindow(QMainWindow):
         self.simulation.speed_changed.connect(self._speed)
 
     def _action(
-        self, menu: Any, text: str, slot: Any, shortcut: str | QKeySequence | None = None
+        self,
+        menu: Any,
+        text: str,
+        slot: Any,
+        shortcut: str | QKeySequence | QKeySequence.StandardKey | None = None,
     ) -> QAction:
         action = QAction(text, self)
         if shortcut is not None:
@@ -164,7 +169,7 @@ class MainWindow(QMainWindow):
             self._action(
                 hotbar_menu,
                 f"{index}: {block.name}",
-                lambda _=False, b=block: self.palette.select_block(b),
+                lambda _=False, b=block: self.block_palette.select_block(b),
                 str(index),
             )
         help_menu = bar.addMenu("&Help")
@@ -226,7 +231,7 @@ class MainWindow(QMainWindow):
         block = self.document.state_at(pos).block
         if isinstance(block, RedstoneWallTorchBlock):
             block = blocks.REDSTONE_TORCH
-        self.palette.select_block(block)
+        self.block_palette.select_block(block)
 
     def _select(self, pos: Pos | None) -> None:
         self.viewport.selection = pos
@@ -433,7 +438,27 @@ class MainWindow(QMainWindow):
         self.last_steps = []
         self.viewport.set_document(document)
         self.sections.set_document(document)
+        self._apply_saved_camera()
         self._changed()
+
+    def _apply_saved_camera(self) -> None:
+        """Restore the camera stored in the file (``extra["camera"]``), else a default view."""
+        camera = self.document.extra.get("camera")
+        if not camera:
+            self.viewport.look_at((0, 1, 0))
+            return
+        self.viewport.camera.position = np.array(camera["position"], dtype=float)
+        self.viewport.camera.yaw = float(camera["yaw"])
+        self.viewport.camera.pitch = float(camera["pitch"])
+        self.viewport.update()
+
+    def _store_camera(self) -> None:
+        camera = self.viewport.camera
+        self.document.extra["camera"] = {
+            "position": [round(float(v), 3) for v in camera.position],
+            "yaw": round(camera.yaw, 2),
+            "pitch": round(camera.pitch, 2),
+        }
 
     def _new(self) -> None:
         if self._confirm_discard():
@@ -456,6 +481,7 @@ class MainWindow(QMainWindow):
         if self.document.path is None:
             self._save_as()
             return
+        self._store_camera()
         self._edit(self.document.save)
         self._message(f"Saved {self.document.path}")
 
@@ -464,6 +490,7 @@ class MainWindow(QMainWindow):
             self, "Save world", "circuit.redsim.json", FILE_FILTER
         )
         if path:
+            self._store_camera()
             self._edit(self.document.save, Path(path))
             self._message(f"Saved {path}")
 

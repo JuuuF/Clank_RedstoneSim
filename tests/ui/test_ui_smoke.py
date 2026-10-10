@@ -33,9 +33,9 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     QtWidgets.QApplication.processEvents()
 
     # Right click on the floor with a lever selected, then a lamp next to it.
-    window.palette.select_block(blocks.LEVER)
+    window.block_palette.select_block(blocks.LEVER)
     window._place(Hit((0, 0, 0), Direction.UP, 5.0), False)
-    window.palette.select_block(blocks.REDSTONE_LAMP)
+    window.block_palette.select_block(blocks.REDSTONE_LAMP)
     window._place(Hit((1, 0, 0), Direction.UP, 5.0), False)
     # Right click on the lever uses it (no Shift): the lamp lights immediately.
     window._place(Hit((0, 1, 0), Direction.UP, 5.0), False)
