@@ -5,12 +5,16 @@ structure in [[architecture]], the current state in [[project-state]].
 
 ## Environment
 
-- Python 3.12 (Anaconda base interpreter). PySide6 6.9.2, numpy, pytest, ruff and mypy are
-  already installed there, so no virtual environment or extra dependency is needed.
-  `pyproject.toml` declares the dependencies for other setups (`pip install -e .[dev]`).
+- Conda environment `redsim` (owner-approved, 2026-10-11): `conda env create -f
+  environment.yml`, then `pip install -e . --no-deps`. Python 3.12 comes from conda-forge
+  (avoiding the Anaconda defaults channel's terms prompt). numpy, PySide6 (pinned to the
+  tested 6.9.2 wheel), pytest, ruff and mypy come from pip.
+- The base Anaconda interpreter also works (same PySide6 wheel). Code must type-check with
+  both mypy 1.19 (base) and 2.x (env).
 - Java: the game needs Java 25 (`/usr/lib/jvm/java-25-openjdk`). It is used by the hash
   oracle test and the game server harness; `REDSIM_JDK_HOME` overrides the location.
-- Under Wayland the UI will set `QT_QPA_PLATFORM=xcb` unless set, because this PySide6
+- Under Wayland the UI sets `QT_QPA_PLATFORM=xcb` unless set (verified on the owner's
+  desktop: XWayland, OpenGL 3.3), because this PySide6
   build cannot create an OpenGL context with the native Wayland plugin. Headless rendering
   works with `QT_QPA_PLATFORM=offscreen`.
 
