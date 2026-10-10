@@ -84,9 +84,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **133 tests pass** (2026-10-11), including the JDK oracle, the 22
+- `python -m pytest`: **137 tests pass** (2026-10-11), including the JDK oracle, the 22
   game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match.
+- Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match in one
+  fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
 ## Known limitations (current)
