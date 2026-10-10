@@ -23,6 +23,16 @@ Implementation status is tracked in [[roadmap]] and [[project-state]].
   - Ctrl+wheel zooms in and out, as does middle-click dragging.
 - Still open: which input orbits (rotates) around the pivot.
 
+## Decisions (owner, 2026-10-11)
+
+| Topic | Decision |
+|---|---|
+| Camera | Blender-style orbit around a visible pivot: **middle-drag orbits**, **Shift+middle-drag pans** the pivot horizontally, **Ctrl+wheel moves the pivot up/down**, plain wheel zooms. All bindings live in a **user-editable keymap** (rebindable later). |
+| Modes | **NORMAL** (Esc): inspect, use levers, run/step. **BUILD** (B): place/break only here. **SELECT** (V): Axiom-like boxes, move/copy/paste, groups. Mode badge in the viewport. |
+| Build clicks | Minecraft-style: **left breaks, right places**, middle picks the block type. |
+| Selection | Left-drag draws box selections in SELECT mode. |
+| Signal sources | Hot-swappable source block backed by real blocks: **container (barrel/chest)** and **lectern** first; cake stays available. |
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,
