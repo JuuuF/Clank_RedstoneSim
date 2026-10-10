@@ -25,6 +25,7 @@ from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
 from redsim.ui.geometry import Hit
+from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panels import (
     HOTBAR,
     ContraptionsPanel,
@@ -40,6 +41,11 @@ from redsim.world import blocks
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
 
 FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
+#: Run loop: timer period, the longest it may simulate in one go (keeps the UI responsive),
+#: and how often the side panels refresh while running.
+PLAY_INTERVAL_MS = 5
+RUN_BUDGET_SECONDS = 0.035
+PANEL_REFRESH_SECONDS = 0.1
 
 
 class MainWindow(QMainWindow):
@@ -79,7 +85,11 @@ class MainWindow(QMainWindow):
         self._corner: Pos | None = None
         self._corner_done = False
         self.play_timer = QTimer(self)
+        self.play_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self.play_timer.timeout.connect(self._play_tick)
+        self.pacer = TickPacer(self.simulation.speed.value())
+        self.tick_rate = RateMeter()
+        self._panels_refreshed = 0.0
         self._connect()
         self._build_menus()
         self._apply_saved_camera()
@@ -102,7 +112,7 @@ class MainWindow(QMainWindow):
         self.viewport.select_requested.connect(self._select)
         self.inspector.apply_requested.connect(self._apply_state)
         self.inspector.section_requested.connect(self._assign_section)
-        self.sections.changed.connect(self._changed)
+        self.sections.changed.connect(lambda: self._changed())
         self.simulation.play_toggled.connect(self._play)
         self.simulation.step_tick.connect(self._step_tick)
         self.simulation.step_event.connect(self._step_event)
@@ -176,8 +186,14 @@ class MainWindow(QMainWindow):
         self._action(help_menu, "Controls", lambda: self.help_dock.setVisible(True), "F1")
 
     # ------------------------------------------------------------------ refresh
-    def _changed(self) -> None:
+    def _changed(self, running: bool = False) -> None:
+        """Refresh views after any change; while running, panels refresh at a lower rate."""
+        self.viewport.overlay_text = self._overlay_text(self.play_timer.isActive())
         self.viewport.refresh()
+        now = time.monotonic()
+        if running and now - self._panels_refreshed < PANEL_REFRESH_SECONDS:
+            return
+        self._panels_refreshed = now
         self.inspector.show_block(self.document, self.viewport.selection)
         self.simulation.show_status(self.document)
         self.sections.refresh()
@@ -188,6 +204,20 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(
             f"Redstone Simulator (Java 26.3) — {name}{' *' if self.document.dirty else ''}"
         )
+
+    def _overlay_text(self, running: bool) -> list[str]:
+        game_time = self.document.engine.game_time
+        if not running:
+            return [f"paused · game time {game_time}"]
+        now = time.monotonic()
+        if self.simulation.warp.isChecked():
+            target = "warp"
+        else:
+            target = f"target {self.simulation.speed.value()}"
+        return [
+            f"running · {self.tick_rate.rate(now):5.1f} ticks/s ({target})",
+            f"game time {game_time} · {self.viewport.frame_rate.rate(now):3.0f} frames/s",
+        ]
 
     def _message(self, text: str, error: bool = False) -> None:
         self.statusBar().showMessage(text, 6000 if error else 3000)
@@ -381,22 +411,39 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------ simulation
     def _play(self, on: bool) -> None:
         if on:
-            self.play_timer.start(max(1, int(1000 / self.simulation.speed.value())))
+            now = time.monotonic()
+            self.pacer.rate = self.simulation.speed.value()
+            self.pacer.start(now)
+            self.tick_rate.reset(now)
+            self.viewport.frame_rate.reset(now)
+            self.play_timer.start(PLAY_INTERVAL_MS)
         else:
             self.play_timer.stop()
+            self._changed()
 
     def _speed(self, tps: int) -> None:
-        if self.play_timer.isActive():
-            self.play_timer.start(max(1, int(1000 / tps)))
+        self.pacer.set_rate(tps, time.monotonic())
 
     def _play_tick(self) -> None:
-        if self.simulation.warp.isChecked():
-            deadline = time.monotonic() + 0.04
-            while time.monotonic() < deadline:
-                self.last_steps = self.document.run_tick()
-        else:
+        """Run the ticks that are due by the wall clock (decoupled from drawing).
+
+        Rendering happens at most once per frame afterwards, however many ticks ran, so the
+        simulation keeps its rate even when drawing is slow.
+        """
+        start = time.monotonic()
+        warp = self.simulation.warp.isChecked()
+        due = 1 << 30 if warp else self.pacer.due(start)
+        ran = 0
+        while ran < due:
             self.last_steps = self.document.run_tick()
-        self._changed()
+            ran += 1
+            if time.monotonic() - start > RUN_BUDGET_SECONDS:
+                break
+        if not warp:
+            self.pacer.ran(ran)
+        if ran:  # nothing changed otherwise: no repaint
+            self.tick_rate.record(time.monotonic(), ran)
+            self._changed(running=True)
 
     def _step_tick(self) -> None:
         self.last_steps = self.document.run_tick()

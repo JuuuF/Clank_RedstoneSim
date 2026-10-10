@@ -83,3 +83,24 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     assert len(colors) >= 3  # at least sky and both checkerboard floor tones are drawn
     window.document.dirty = False
     window.close()
+
+
+def test_run_loop_keeps_real_time(app: object) -> None:
+    import time
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.show()
+    start = window.document.engine.game_time
+    window.simulation.play.setChecked(True)
+    deadline = time.monotonic() + 0.5
+    while time.monotonic() < deadline:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(0.002)
+    window.simulation.play.setChecked(False)
+    ticks = window.document.engine.game_time - start
+    assert 5 <= ticks <= 12, ticks  # 20 ticks/s for 0.5 s, with slack for slow machines
+    assert window.viewport.overlay_text[0].startswith("paused")
+    window.document.dirty = False
+    window.close()
