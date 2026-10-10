@@ -6,8 +6,8 @@ game's server-side update logic (neighbor updates, scheduled ticks, block events
 entities) and is checked tick by tick against the real game.
 
 Status: simulation core, the core components (lever, buttons, lamp, torch, wire, repeater,
-comparator) and a 3D editor work; behavior is verified tick by tick against the real game.
-Pistons are next. Details: [`doc/project-state.md`](doc/project-state.md).
+comparator), pistons (with slime/honey) and a 3D editor work; behavior is verified tick by
+tick against the real game (20 scenarios). Playback and rewind are next. Details: [`doc/project-state.md`](doc/project-state.md).
 
 ## Quick start
 

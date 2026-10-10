@@ -54,6 +54,12 @@ reading and unit tests only.
 | EXP-012 | `comparator_modes`: cake input, wire side input, compare → side wins → subtract | 20 | match | 2026-10-11 |
 | EXP-013 | `comparator_through_block`: reads cake through stone; strong power 15 on the stone skips the lookup | 16 | match | 2026-10-11 |
 | EXP-014 | `comparator_side_torch`: a lit torch beside it is not a side input; powered wire is | 12 | match | 2026-10-11 |
+| EXP-015 | `piston_push_pull`: normal and sticky piston push a block; only the sticky one pulls it back | 14 | match | 2026-10-11 |
+| EXP-016 | `sticky_short_pulses`: 1- and 2-tick pulses leave the block behind, a 3-tick pulse pulls it back | 12 | match | 2026-10-11 |
+| EXP-017 | `piston_qc_bud`: QC-powered piston extends only after a later neighbor update | 10 | match | 2026-10-11 |
+| EXP-018 | `piston_door`: 1×2 QC door; the top piston's update wakes the bottom one in the same tick | 14 | match | 2026-10-11 |
+| EXP-019 | `slime_branch_push`: slime drags attached stone (top and side), honey stays; pulled back together | 12 | match | 2026-10-11 |
+| EXP-020 | `piston_pops_components`: dust on a pushed block pops, a torch in the push line is destroyed | 6 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 
@@ -96,6 +102,25 @@ M then turns on at tick 10. The game shows exactly this.
   (tick 10).
 - The comparator's stored output (block-entity data) is compared via
   `data get block … OutputSignal`.
+
+### EXP-015…020 notes: pistons
+
+- Moving blocks (`moving_piston`) are compared with their block-entity `progress` tag,
+  which stores `progressO` (`PistonMovingBlockEntity.saveAdditional`).
+- Timing confirmed: an input applied between ticks extends the piston in the next tick's
+  block-event phase. The pushed block and head become real two ticks later, in the
+  block-entity phase (progress 0 → 0.5 → 1, then finalize).
+
+### EXP-016 finding: a 2-tick pulse also spits the block
+
+The wiki says sticky pistons drop their block for pulses "shorter than 1.5 ticks". For an
+input removed between ticks, the source gives a wider window. `checkIfExtend` chooses
+event 2 (drop) if the moving block's `progressO < 0.5` **or** `gameTime == lastTicked` **or**
+`isHandlingTick`. After a 2-tick pulse, progressO is already 0.5, but the block entity was
+ticked in the same game tick (`lastTicked == gameTime`), so the block is dropped anyway. The
+simulator predicted this before the game run confirmed it. A 3-tick pulse arrives after the
+move finished and pulls the block back. Open question OQ-3 is resolved for
+between-tick inputs; scheduled-tick inputs (`isHandlingTick`) remain to be tested.
 
 ## Template for manual experiments
 

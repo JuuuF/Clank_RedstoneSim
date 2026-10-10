@@ -15,12 +15,13 @@ against the real game.
 
 ## Current status (2026-10-11)
 
-- Milestones 0, 1, 3 and 4 are done for the initial scope: lever, buttons, lamp, torch
-  (with burnout), wire, repeater, comparator and cake work.
-- 95 tests pass. A sandboxed 26.3 server confirms 14 of 14 recorded scenarios tick for
-  tick, including a same-tick repeater priority race and comparator subtract mode.
-- The 3D editor works (`python -m redsim`); pistons (M5) are next.
-- Work happens on branch `feat/sim-core`; nothing has been pushed.
+- Milestones 0–4 are done for the initial scope, and pistons (M5) work: lever, buttons,
+  lamp, torch (with burnout), wire, repeater, comparator, cake, pistons, sticky pistons,
+  slime and honey.
+- 110 tests pass. A sandboxed 26.3 server confirms 20 of 20 recorded scenarios tick for
+  tick, including a repeater priority race, comparator modes, QC doors and block spitting.
+- The 3D editor works (`python -m redsim`); playback and rewind (M6) are next.
+- Work happens on feature branches (latest: `feat/pistons`); nothing has been pushed.
 
 ## Owner decisions on record
 

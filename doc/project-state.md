@@ -18,15 +18,19 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   (analog source), the redstone block, and simple and non-conducting blocks. Open: a
   container analog source (barrel with inventory).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 14 recorded scenarios match ([[experiments/index]]).
+  tick. All 20 recorded scenarios match ([[experiments/index]]).
 - **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, fly camera,
   cursor picking, place/break/use with player-like orientation, block palette and hotbar,
   inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
   step tick, step event, speed), diagnostics (scheduled ticks, block events, last-step
   trace), undo/redo for edits, and JSON save/open of the complete engine state. Launch with
   `python -m redsim`.
-- **Pistons (M5), history/playback UI (M6), contraptions (M7):** not started. The engine
-  already supports snapshot/restore, which M6 will build on.
+- **Pistons (M5):** done for the core scope. Normal and sticky pistons, heads, moving blocks
+  with their block entity, structure resolution (12-block limit, slime/honey branching),
+  quasi-connectivity, BUD behavior and short-pulse block dropping, all confirmed in game.
+  Open: retraction triggered from scheduled ticks (repeater-driven 0-tick setups), observers.
+- **History/playback UI (M6), contraptions (M7):** not started. The engine already supports
+  snapshot/restore, which M6 will build on.
 
 ## What exists, module by module
 
@@ -68,13 +72,14 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | redstone wire | `redstone_wire.py` | decay, step up/down, glass, dot, weak power, hash order | EXP-002…EXP-004, EXP-007 |
 | repeater | `diode.py` | placement delay 1, priorities, no lock from wire/torch, axis connection | EXP-008…EXP-011 |
 | comparator (+ block entity) | `comparator.py` | mode click refresh, double front update | EXP-012…EXP-014 |
+| piston, sticky piston, head, moving piston (+ block entity) | `piston.py` | push limit, immovables, popping, slime/honey, pull, head removal | EXP-015…EXP-020 |
 | cake (analog source) | `cake.py` | via comparator tests | EXP-012, EXP-013 |
 
 ## Verification status
 
-- `python -m pytest`: **95 tests pass** (2026-10-11), including the JDK oracle, the 14
+- `python -m pytest`: **110 tests pass** (2026-10-11), including the JDK oracle, the 20
   game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 14 of 14 scenarios match.
+- Real-game comparisons (`python -m tools.gameserver.run`): 20 of 20 scenarios match.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
 ## Known limitations (current)
@@ -95,10 +100,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-1. Pistons (M5): sliding piston, doors, QC/BUD and 0-tick cases with game scenarios (the
-   owner's first targets: "a simple door, a sliding piston").
-2. Playback and history UI (M6) on top of `Engine.snapshot()`: rewind, event scrubbing,
-   a trace view with causal tree, warp.
+1. Playback and history (M6) on top of `Engine.snapshot()`: rewind ticks and steps, event
+   scrubbing with a causal trace view, warp, saving at intermediate points from the UI.
+2. Piston follow-ups: game scenarios with scheduled-tick-driven retraction (repeater 0-tick
+   pulses); then observers (later scope).
 3. Small M4 follow-up: barrel/container analog source (inventory fill formula in 32-bit
    float), with `/item replace`-driven game scenarios.
 

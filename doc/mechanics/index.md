@@ -11,7 +11,7 @@
 | [[comparator]] | Compare/subtract, side inputs, analog input | researched | implemented (containers pending) | unit tests; game EXP-012…014 |
 | [[redstone-torch]] | Inversion, timing, burnout | researched | implemented (incl. burnout) | unit tests; game EXP-002, 004, 005, 006 |
 | [[manual-sources]] | Lever, buttons, redstone block, lamp | researched | implemented | unit tests; game (lamp, redstone block) |
-| [[pistons]] | Extension/retraction, QC, moved blocks | researched | **not implemented** | — |
+| [[pistons]] | Extension/retraction, QC, moved blocks | researched | implemented (`world/blocks/piston.py`) | unit tests; game EXP-015…020 |
 
 Source locations for all of these: [[research/source-map]]. Quirks: [[quirks]]. Overall
 state: [[project-state]].

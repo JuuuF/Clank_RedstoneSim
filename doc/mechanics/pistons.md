@@ -1,6 +1,6 @@
 # Pistons and sticky pistons
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `world/blocks/piston.py`; unit-tested; confirmed in game (EXP-015 to EXP-020).
 - **Summary:** A piston decides to move in `neighborChanged`, but moves in a **block event**.
   Moving blocks become `moving_piston` blocks with block entities that finish in the
   block-entity phase two ticks later. Quasi-connectivity, block-update detection, and the
@@ -92,7 +92,10 @@ entity**.
 - [[quirks]] Q-PISTON-BUD: a QC-powered piston only reacts when it receives a neighbor
   update, so it can stay retracted while "powered".
 - [[quirks]] Q-PISTON-SPIT: a sticky piston that retracts before its push has completed
-  leaves the block behind (0-tick and short pulses).
+  leaves the block behind (0-tick and short pulses). For between-tick inputs this includes
+  2-tick pulses (`lastTicked == gameTime`, EXP-016).
+- [[quirks]] Q-PISTON-SLIME-FLOOR: a slime block resting on pushable blocks drags them too,
+  which often exceeds the 12-block limit.
 - [[quirks]] Q-PISTON-EVENT-RECHECK: power is re-checked when the block event runs, so a
   pulse that ends between `neighborChanged` and the event never extends.
 - [[quirks]] Q-PISTON-HASHMAP: the order of the air placements in `moveBlocks` depends on
@@ -102,15 +105,21 @@ entity**.
 
 ## Tests
 
-Planned: `tests/sim/test_piston.py`: extend/retract timing per phase, QC activation and BUD
-state, push limit 12, immovable blocks, popping wire, sticky pull, block spitting on a
-short pulse, slime branch, honey/slime non-adhesion.
+- `tests/sim/test_pistons.py`: 12-block limit (13 fails), immovable blockers (obsidian,
+  bedrock, extended piston), popping in the push line, block entities not pushed, slime
+  branching with honey not sticking, slime on the floor grabbing the floor, sticky vs. normal
+  retraction, breaking the head removes the base, dust on a pushed block pops.
+- Game: EXP-015 (push/pull with block-entity progress), EXP-016 (1-/2-/3-tick sticky
+  pulses), EXP-017 (QC + BUD), EXP-018 (QC door), EXP-019 (slime branching, honey),
+  EXP-020 (popping).
 
 ## Unknowns
 
-- `pistonEntity.getProgress(0.0F) < 0.5F` uses `progressO`; reasoning is complete, but an
-  in-game timing experiment is planned to confirm the event-2 window ([[experiments/index]]).
+- Event-2 window confirmed for between-tick inputs (EXP-016); retractions triggered from
+  scheduled ticks (`isHandlingTick`) still need a game scenario (repeater-driven pulses).
 - Entity pushing is out of scope.
+- Observers (BUD-free piston detection) and 0-tick contraptions driven by observers are
+  later scope.
 
 ## Related
 

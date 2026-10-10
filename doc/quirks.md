@@ -54,8 +54,10 @@ Evidence: **S** = verified by reading the 26.3 source; **T** = covered by a simu
 
 | ID | Quirk | Evidence | Source |
 |---|---|---|---|
-| Q-PISTON-QC | Pistons also check power around the block above them. | S | `PistonBaseBlock.getNeighborSignal` |
-| Q-PISTON-BUD | Pistons only re-check power on updates, so they can stay in a stale state. | S | `PistonBaseBlock.neighborChanged` |
-| Q-PISTON-SPIT | A sticky piston retracting before its push completes leaves the block behind. | S | `PistonBaseBlock.checkIfExtend`/`triggerEvent` (event 2) |
+| Q-PISTON-QC | Pistons also check power around the block above them. | S G | `PistonBaseBlock.getNeighborSignal`; EXP-017, EXP-018 |
+| Q-PISTON-BUD | Pistons only re-check power on updates, so they can stay in a stale state. | S G | `PistonBaseBlock.neighborChanged`; EXP-017 |
+| Q-PISTON-SPIT | A sticky piston retracting before its push completes leaves the block behind; for between-tick inputs even after a 2-tick pulse. | S G | `PistonBaseBlock.checkIfExtend`/`triggerEvent` (event 2); EXP-016 |
+| Q-PISTON-SLIME-FLOOR | Slime resting on pushable blocks drags them (often past the 12-block limit). | S T | `PistonStructureResolver.addBranchingBlocks`; `test_slime_on_the_floor_grabs_the_floor` |
+| Q-PISTON-POP-ON-MOVE | Dust on a block that starts moving pops at once: the `moving_piston` has no support until its block entity exists. | S G | `PistonBaseBlock.moveBlocks` (flags 324 shape updates before `setBlockEntity`); EXP-020 |
 | Q-PISTON-EVENT-RECHECK | Power is re-checked when the block event runs. | S | `PistonBaseBlock.triggerEvent` |
 | Q-PISTON-HASHMAP | Air placement order after a push follows `HashMap<BlockPos>` order. | S | `PistonBaseBlock.moveBlocks` |
