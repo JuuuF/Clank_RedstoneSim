@@ -83,3 +83,19 @@ def test_rejects_foreign_or_newer_files() -> None:
     data["version"] = 999
     with pytest.raises(ValueError):
         engine_from_json(data)
+
+
+@pytest.mark.parametrize("ticks_before_save", [1, 2, 7, 8])
+def test_round_trip_with_pistons_in_motion(ticks_before_save: int) -> None:
+    """Save while blocks are moving (extension after 1-2 ticks, retraction after 7-8)."""
+    engine, scenario = scenario_engine("piston_push_pull")
+    for tick in range(ticks_before_save):
+        for rel, state in scenario.inputs.get(tick, []):
+            engine.apply(Action("setblock", absolute((0, 0, 0), rel), state))
+        engine.run_tick()
+    moving = [p for p, s in engine.level.blocks.items() if s.block.id == "minecraft:moving_piston"]
+    assert moving, "the save must happen while blocks are moving"
+    restored = engine_from_json(json.loads(json.dumps(engine_to_json(engine))))
+    assert world_signature(restored) == world_signature(engine)
+    assert run_steps(restored, 30) == run_steps(engine, 30)
+    assert world_signature(restored) == world_signature(engine)
