@@ -29,8 +29,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   with their block entity, structure resolution (12-block limit, slime/honey branching),
   quasi-connectivity, BUD behavior and short-pulse block dropping, all confirmed in game.
   Open: retraction triggered from scheduled ticks (repeater-driven 0-tick setups), observers.
-- **History/playback UI (M6), contraptions (M7):** not started. The engine already supports
-  snapshot/restore, which M6 will build on.
+- **Playback and history (M6):** done. An event-sourced timeline (keyframes + action log +
+  deterministic replay) supports step back, tick back, a timeline slider for seeking and
+  replaying, warp mode, and undo/redo of edits as rewinds. Exact replay is tested.
+- **Contraptions (M7):** not started.
 
 ## What exists, module by module
 
@@ -50,6 +52,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.sim.ticks` | `LevelTicks` port (collect-then-run, dedup, priorities) | done | `tests/sim/test_scheduling.py` |
 | `redsim.sim.trace` | Causal trace records | done (basic) | used in component tests |
 | `redsim.sim.engine` | Tick phases as steps; player and command actions; snapshots | done | `tests/sim/test_scheduling.py` |
+| `redsim.sim.timeline` | History: keyframes, action log, seek/rewind/replay | done | `tests/sim/test_timeline.py` |
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
 | `redsim.editor` | Document, placement orientation, sections, undo | done | `tests/editor/test_editor.py` |
 | `redsim.ui` | PySide6 editor (viewport, panels, main window) | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
@@ -77,7 +80,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **110 tests pass** (2026-10-11), including the JDK oracle, the 20
+- `python -m pytest`: **124 tests pass** (2026-10-11), including the JDK oracle, the 20
   game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
 - Real-game comparisons (`python -m tools.gameserver.run`): 20 of 20 scenarios match.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
@@ -94,18 +97,20 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - Overdue scheduled ticks (more than 65 536 due in one tick) are reported but not merged
   per chunk (cannot occur in scope).
 - Experimental redstone (`redstone_experiments`) is out of scope (ADR-006).
-- The trace grows without a cap; the UI shows only the last step's records.
-- The editor has no rewind yet (M6); undo covers edits only.
+- The trace keeps the last 200 000 records; the UI shows the last step's records as an
+  indented causal list (no interactive tree yet).
+- Saves contain the current state only, not the timeline history.
+- Section edits are not part of undo/rewind.
 - The GUI was verified offscreen (smoke test and screenshots), not on the owner's desktop.
 
 ## Next steps (in order)
 
-1. Playback and history (M6) on top of `Engine.snapshot()`: rewind ticks and steps, event
-   scrubbing with a causal trace view, warp, saving at intermediate points from the UI.
-2. Piston follow-ups: game scenarios with scheduled-tick-driven retraction (repeater 0-tick
-   pulses); then observers (later scope).
-3. Small M4 follow-up: barrel/container analog source (inventory fill formula in 32-bit
-   float), with `/item replace`-driven game scenarios.
+1. Contraptions (M7): selection boxes, copy/paste, reusable prefabs (within one world first),
+   then grouping with exposed inputs/outputs.
+2. Diagnostics polish: an interactive causal trace tree, "why did this change?" for the
+   selected block, sub-step scrubbing of block changes inside a step.
+3. Piston follow-ups: scheduled-tick-driven 0-tick scenarios; observers (later scope).
+4. Small M4 follow-up: barrel/container analog source with `/item replace` scenarios.
 
 ## How to resume
 

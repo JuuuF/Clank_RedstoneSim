@@ -18,10 +18,11 @@ against the real game.
 - Milestones 0–4 are done for the initial scope, and pistons (M5) work: lever, buttons,
   lamp, torch (with burnout), wire, repeater, comparator, cake, pistons, sticky pistons,
   slime and honey.
-- 110 tests pass. A sandboxed 26.3 server confirms 20 of 20 recorded scenarios tick for
+- 124 tests pass. A sandboxed 26.3 server confirms 20 of 20 recorded scenarios tick for
   tick, including a repeater priority race, comparator modes, QC doors and block spitting.
-- The 3D editor works (`python -m redsim`); playback and rewind (M6) are next.
-- Work happens on feature branches (latest: `feat/pistons`); nothing has been pushed.
+- The 3D editor works (`python -m redsim`), including rewind/replay of the simulation (M6).
+  Contraptions (M7) are next.
+- Work happens on feature branches (latest: `feat/playback`); nothing has been pushed.
 
 ## Owner decisions on record
 

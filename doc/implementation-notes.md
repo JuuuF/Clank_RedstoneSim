@@ -92,3 +92,13 @@ python -m tools.gameserver.run and_gate   # selected scenarios
   matters for cycling.
 - A wire's input ignores its connections; only its output checks them (via a live
   `getConnectionState`).
+
+## History and the trace
+
+- Every edit goes through `Document` → `Timeline.apply`; never call `engine.apply` directly
+  from UI code, or the history cannot replay it.
+- `Timeline.seek` restores a keyframe and re-executes, so code that runs during steps must
+  stay deterministic (no wall clock, no randomness, no iteration over unordered Python sets
+  where order matters).
+- Trace record ids are global (`Trace.base_id + index`); use `Trace.get`/`Trace.after`
+  instead of indexing `records` with an id.

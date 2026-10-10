@@ -63,6 +63,8 @@ Short records. Each one states the context, the decision, and its trade-offs.
   (as with undo).
 - **Trade-offs:** Rewinding far back costs re-simulation time instead of memory. Full
   snapshots are cheap here because block states are interned and immutable.
+- **Implemented (2026-10-11):** `redsim.sim.timeline.Timeline`. Undo/redo of edits uses the
+  same timeline (ADR-013 updated). Saves store only the current state, not the history.
 
 ## ADR-005
 
@@ -167,8 +169,9 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Decision:** Viewport clicks map to the player actions (`place`, `break`, `use`), with
   orientation ported from `BlockPlaceContext`. Inspector property edits use `/setblock`
   semantics, which is a vanilla, documented behavior and the same one the game harness
-  uses. All edits happen between ticks. Undo restores engine snapshots, so simulation steps
-  are not undone by edit-undo. Rewind is milestone 6.
+  uses. All edits happen between ticks. Undo rewinds the timeline to just before the most
+  recent edit (including any simulation steps after it); redo replays forward. Section
+  annotations are not part of the timeline.
 - **Trade-offs:** A `/setblock` edit can leave components un-updated, exactly as in the game
   (for example, setting a lever to `powered=true` does not update the attached block's
   neighbors). The tooltip says so.

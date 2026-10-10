@@ -33,8 +33,9 @@ src/redsim/
 │   ├── level.py           Level: setBlock pipeline, signals, scheduling, events, block entities
 │   ├── neighbor_updater.py CollectingNeighborUpdater port
 │   ├── ticks.py           LevelTicks port (ScheduledTick, TickPriority)
-│   ├── trace.py           causal trace records
-│   └── engine.py          tick phases as steps, actions, snapshots
+│   ├── trace.py           causal trace records (capped, stable ids)
+│   ├── engine.py          tick phases as steps, actions, snapshots
+│   └── timeline.py        history: keyframes + action log, rewind/replay
 ├── io/save.py             JSON save/load of the complete engine state (mid-tick safe)
 ├── editor/                editing without Qt: Document (engine + sections + undo + files),
 │                          player-like placement orientation, section annotations
@@ -140,6 +141,24 @@ BETWEEN_TICKS ──apply(Action)──▶ BETWEEN_TICKS   (player/command input
 - `snapshot()` / `restore()` capture the whole engine (level clone, phase, step index,
   block-entity iteration index). Restoring and re-running reproduces the same steps
   (tested).
+
+### Timeline (`sim/timeline.py`): history, rewind, replay
+
+Implements [[decisions]] ADR-004. Every engine step and every action advances
+`Engine.step_index`. The timeline stores keyframe snapshots (at the start, before every
+action, and every `keyframe_interval` steps, thinned when there are more than 400), the action
+applied at each step index, and the indices of tick starts.
+
+- `step()`/`run_tick()` advance; inside the recorded range they re-apply recorded actions.
+- `apply(action)` records a new action; doing so before the recorded end drops the future
+  (a new branch).
+- `seek(i)` restores the nearest keyframe ≤ i and re-executes. `step_back()`, `tick_back()`
+  (previous tick boundary), and undo/redo targets (just before / after an action) build on it.
+- On rewind the trace is truncated to steps before the target. Replay regenerates identical
+  records with identical ids.
+
+Tested: seeking to random points reproduces the recorded world state exactly (keyframe
+intervals 1, 7, 200), and replay after rewind reproduces the trace.
 
 ### What counts as "sub-tick"
 
