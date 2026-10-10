@@ -352,6 +352,41 @@ PISTON_POPS_COMPONENTS = Scenario(
     inputs={0: [((0, 1, 1), RB)]},
 )
 
+CLONE_INVERTER = Scenario(
+    name="clone_inverter",
+    description=(
+        "A powered torch inverter (wire into a block, torch on top, lamp) at rest is copied "
+        "with /clone; the copy settles, then its input is removed and both are compared."
+    ),
+    size=(5, 7),
+    setup=[
+        ((0, 1, 1), RB),
+        ((1, 1, 1), "minecraft:redstone_wire"),
+        ((2, 1, 1), "minecraft:stone"),
+        ((2, 2, 1), "minecraft:redstone_torch"),
+        ((3, 2, 1), "minecraft:redstone_lamp"),
+    ],
+    watch=[(1, 1, z) for z in (1, 5)] + [(2, 2, z) for z in (1, 5)] + [(3, 2, z) for z in (1, 5)],
+    ticks=14,
+    commands={3: [("clone", (0, 1, 0), (3, 2, 2), (0, 1, 4))]},
+    inputs={8: [((0, 1, 5), AIR)]},
+)
+
+FILL_REMOVES_LINE = Scenario(
+    name="fill_removes_line",
+    description=(
+        "/fill with air deletes the middle of a powered wire line: the rest depowers and a "
+        "torch fed by the line's end turns back on."
+    ),
+    size=(9, 3),
+    setup=[((0, 1, 1), RB)]
+    + [((x, 1, 1), "minecraft:redstone_wire") for x in range(1, 7)]
+    + [((7, 1, 1), "minecraft:stone"), ((7, 2, 1), "minecraft:redstone_torch")],
+    watch=[(x, 1, 1) for x in range(1, 7)] + [(7, 2, 1)],
+    ticks=8,
+    commands={3: [("fill", (3, 1, 1), (4, 1, 1), "minecraft:air")]},
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -373,6 +408,8 @@ ALL = [
     PISTON_DOOR,
     SLIME_BRANCH_PUSH,
     PISTON_POPS_COMPONENTS,
+    CLONE_INVERTER,
+    FILL_REMOVES_LINE,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

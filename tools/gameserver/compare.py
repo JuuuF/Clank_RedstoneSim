@@ -41,12 +41,24 @@ class Scenario:
     watch: list[Pos]
     ticks: int
     inputs: dict[int, list[tuple[Pos, str]]] = field(default_factory=dict)
+    #: Region commands after ``t`` ticks (applied after ``inputs``):
+    #: ``("fill", rel_a, rel_b, state)`` or ``("clone", rel_a, rel_b, rel_destination)``.
+    #: The cloned area must have no pending scheduled ticks (the simulator's paste does
+    #: not copy ticks, ``/clone`` does).
+    commands: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
 
     def fingerprint(self) -> str:
         """Hash of everything that determines the run (recordings go stale if it changes)."""
-        payload = json.dumps(
-            [self.size, self.setup, self.watch, self.ticks, sorted(self.inputs.items())]
-        )
+        parts: list[Any] = [
+            self.size,
+            self.setup,
+            self.watch,
+            self.ticks,
+            sorted(self.inputs.items()),
+        ]
+        if self.commands:
+            parts.append(sorted(self.commands.items()))
+        payload = json.dumps(parts)
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
@@ -87,9 +99,32 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
     for tick in range(scenario.ticks):
         for rel, state in scenario.inputs.get(tick, []):
             engine.apply(Action("setblock", absolute(origin, rel), state))
+        for command in scenario.commands.get(tick, []):
+            engine.apply(sim_command(engine, origin, command))
         engine.run_tick()
         frames.append(observe_sim(engine, scenario, origin))
     return frames
+
+
+def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action:
+    from redsim.editor.clipboard import Prefab, Region
+
+    kind, rel_a, rel_b, last = command
+    a, b = absolute(origin, rel_a), absolute(origin, rel_b)
+    if kind == "fill":
+        return Action("fill", a, last, payload={"to": list(b)})
+    prefab = Prefab.capture(engine.level, Region.from_corners(a, b))
+    return Action("clone", absolute(origin, last), payload=prefab.payload())
+
+
+def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
+    kind, rel_a, rel_b, last = command
+    a, b = absolute(origin, rel_a), absolute(origin, rel_b)
+    corners = f"{a[0]} {a[1]} {a[2]} {b[0]} {b[1]} {b[2]}"
+    if kind == "fill":
+        return f"fill {corners} {last}"
+    d = absolute(origin, last)
+    return f"clone {corners} {d[0]} {d[1]} {d[2]}"
 
 
 def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, str]:
@@ -188,6 +223,7 @@ def run_game(
             f"setblock {' '.join(map(str, absolute(origin, rel)))} {s}"
             for rel, s in scenario.inputs.get(tick, [])
         ]
+        commands += [game_command(origin, c) for c in scenario.commands.get(tick, [])]
         if commands:
             server.run(commands)
         server.step(1)
