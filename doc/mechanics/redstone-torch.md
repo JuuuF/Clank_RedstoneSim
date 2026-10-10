@@ -1,9 +1,9 @@
 # Redstone torch
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `world/blocks/torch.py` including deterministic burnout (owner decision, ADR-010); unit-tested; confirmed in game (EXP-002, EXP-004, EXP-005, EXP-006).
 - **Summary:** An inverter with a 2-tick delay at NORMAL priority. Its state change sends a
   large number of neighbor updates, and it strongly powers the block above it.
-- **Scope:** Standing and wall torches. Burnout is out of initial scope (see Unknowns).
+- **Scope:** Standing and wall torches, including burnout.
 
 ## Source
 
@@ -40,14 +40,18 @@ L43, `hasNeighborSignal` L75, `getSignal` L81. `BaseTorchBlock.java` (`canSurviv
 
 ## Tests
 
-Planned: `tests/sim/test_torch.py`: inversion timing, wall torch input, strong power upward,
-torch tower timing, notification order.
+- `tests/sim/test_components.py`: strong power into the block above but not the support;
+  wall torch input from the attached block and 2-tick inversion; burnout counter (8 entries
+  within the window).
+- Game: EXP-002 (inverter), EXP-004 (AND gate), EXP-005 (burnout that stays out),
+  EXP-006 (burnout reset by a later update).
 
 ## Unknowns
 
-- Burnout: out of scope by the brief. The source shows a global per-level list
-  (`RECENT_TOGGLES`) shared by all torches and pruned only during torch ticks. Implementing
-  it is a scope decision for the owner ([[README]]).
+- None for the implemented paths. Burnout state (`RECENT_TOGGLES`) is one list per level,
+  pruned only when a torch ticks; the simulator keeps it in `Level.torch_toggles`.
+- [[quirks]] Q-TORCH-BURNOUT-STUCK: a burnt-out torch can stay out forever when its own
+  cascade re-schedules it before the 160-tick restart is requested (EXP-005).
 
 ## Related
 

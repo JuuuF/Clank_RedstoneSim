@@ -1,6 +1,6 @@
 # Tick phases, scheduled ticks, block events, block entities
 
-- **Status:** researched (source). Simulator status is tracked in [[mechanics/index]].
+- **Status:** researched; implemented in `sim/engine.py`, `sim/ticks.py`, `sim/level.py`; unit-tested; timings confirmed in game (all EXPs).
 - **Summary:** One game tick runs fixed phases. Redstone timing comes from three of them:
   scheduled block ticks, block events, and block-entity ticks. Player actions arrive
   between ticks.
@@ -102,8 +102,14 @@ block events, no block-entity ticks. Player actions still run their immediate up
 
 ## Tests
 
-Planned: `tests/sim/test_scheduled_ticks.py`, `tests/sim/test_block_events.py`,
-`tests/sim/test_engine_phases.py`. See [[mechanics/index]] for status.
+- `tests/sim/test_scheduling.py`: delay counted from the current game time, priority then
+  scheduling order, duplicate dropped but sub-tick consumed, ticks scheduled during the phase
+  wait for the next tick (even delay 0), `willTickThisTick`/`hasScheduledTick`, block-type
+  mismatch skip, block events FIFO/dedup/same-phase cascade, phase order, actions only
+  between ticks, snapshot/restore replay.
+- In game: every scenario in [[experiments/index]] depends on these timings (lamp 4,
+  torch 2, button 20/30 not testable without a player).
+- Block-entity ticker order is implemented but untested until moving pistons exist.
 
 ## Unknowns
 

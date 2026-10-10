@@ -1,6 +1,6 @@
 # Power queries: weak, strong, and "wire-weak" power
 
-- **Status:** researched (source).
+- **Status:** researched; implemented as `Level` signal methods; unit-tested; confirmed in game through every scenario.
 - **Summary:** The game asks two questions of an emitter: `getSignal` (power into an
   adjacent block or component) and `getDirectSignal` (strong power into the block it
   touches). A conductor block re-emits the maximum strong power it receives as an ordinary
@@ -65,9 +65,9 @@ This is the in-code definition of "weakly powered".
 
 ## Tests
 
-Planned: `tests/sim/test_power_queries.py`: strong vs weak power through stone, glass
-non-conduction, torch strong-power upward, wire-powered block not powering wire, comparator
-side-input table.
+- `tests/sim/test_components.py`: lever strong power only into the attached block; torch
+  strong power upward only; wire-powered block activates a lamp but not other wire.
+- Comparator side-input cases follow when the comparator is implemented.
 
 ## Related
 

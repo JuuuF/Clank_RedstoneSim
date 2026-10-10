@@ -1,6 +1,6 @@
 # Block properties that matter mechanically
 
-- **Status:** researched (source).
+- **Status:** researched; implemented for the initial block set (`world/shape.py`, `world/blocks/simple.py`); glass non-conduction confirmed in game (EXP-007).
 - **Summary:** "Solid" is not one property in the game. Redstone conduction, support for
   attached components, piston mobility, and signal emission are separate, independently
   overridable properties.
@@ -59,8 +59,9 @@
 
 ## Tests
 
-Planned: `tests/world/test_block_properties.py` (table above as parametrized assertions),
-`tests/world/test_shapes.py` (support types).
+- Shapes and support types are exercised by the component tests (wire/torch/lever support,
+  popping) and by every game scenario's floor. Dedicated per-block property tests are still
+  to do (`tests/world/`).
 
 ## Unknowns
 

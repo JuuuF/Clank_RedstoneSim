@@ -1,20 +1,93 @@
 # Implementation notes
 
-Practical notes for working on the code. Design rationale lives in [[decisions]].
+Practical notes for working on the code. Design rationale lives in [[decisions]], the
+structure in [[architecture]], the current state in [[project-state]].
 
 ## Environment
 
-- Python 3.12 (Anaconda base interpreter); PySide6 6.9.2, numpy, pytest, ruff, mypy are
-  already installed there, so no virtual environment or extra dependency is required.
-- Under Wayland, the app sets `QT_QPA_PLATFORM=xcb` unless the variable is already set,
-  because this PySide6 build cannot create an OpenGL context with the native Wayland plugin
-  ([[research/repository-report]]).
-- Headless rendering for tests: `QT_QPA_PLATFORM=offscreen`.
+- Python 3.12 (Anaconda base interpreter). PySide6 6.9.2, numpy, pytest, ruff and mypy are
+  already installed there, so no virtual environment or extra dependency is needed.
+  `pyproject.toml` declares the dependencies for other setups (`pip install -e .[dev]`).
+- Java: the game needs Java 25 (`/usr/lib/jvm/java-25-openjdk`). It is used by the hash
+  oracle test and the game server harness; `REDSIM_JDK_HOME` overrides the location.
+- Under Wayland the UI will set `QT_QPA_PLATFORM=xcb` unless set, because this PySide6
+  build cannot create an OpenGL context with the native Wayland plugin. Headless rendering
+  works with `QT_QPA_PLATFORM=offscreen`.
+
+## Everyday commands
+
+```sh
+python -m pytest                          # all tests (~1 s); pythonpath = src and repo root
+ruff check src tests tools                # lint
+ruff format src tests tools               # format (line length 100)
+mypy src tools                            # types
+python -m tools.gameserver.run            # all game comparisons (sandboxed 26.3 server)
+python -m tools.gameserver.run and_gate   # selected scenarios
+```
+
+`python -m tools.gameserver.run` needs `PYTHONPATH=src` unless the package is installed.
 
 ## Conventions
 
-- Source citations use paths relative to `data/minecraft_src/client-src/` plus class, method
-  and decompile line, e.g. `CollectingNeighborUpdater.addAndRun` L68.
-- Python methods that port a Java method say so in their docstring
-  (`Port of DiodeBlock.checkTickOnNeighbor`).
+- Source citations use paths relative to `data/minecraft_src/client-src/` plus class,
+  method and decompile line, for example `CollectingNeighborUpdater.addAndRun` L68. The
+  server tree is identical for shared classes.
+- Python methods that port Java methods keep the Java name in snake_case and say so in the
+  docstring. Control flow, iteration order and flags stay as in Java, even where a shortcut
+  would look equivalent.
+- `orientation` parameters (experimental redstone) are dropped; they are always null in
+  default worlds.
 - Never import Qt in `redsim.core`, `redsim.world`, `redsim.sim` or `redsim.io`.
+- Engine code that needs Java's `state.is(Blocks.X)` uses ids from `redsim.world.ids`.
+  Component modules import `redsim.world.blocks` lazily (inside functions) to avoid
+  import cycles.
+- Commits: small and verified, on feature branches (`feat/...`), with docs updated in the
+  same slice ([[decisions]] ADR-012). Nothing is pushed without the owner's request.
+
+## Checklist: adding a block
+
+1. Research the class: hooks, properties (value order from `BlockStateProperties`),
+   `Blocks.java` registration (collision, push reaction, conductor override, destroy speed).
+2. Implement it in `src/redsim/world/blocks/<name>.py` as a line-by-line port with citations.
+3. Register it in `blocks/__init__.py`; add an id to `ids.py` if engine code checks it.
+4. Unit tests in `tests/sim/test_components.py` (or a new file) using `tests/sim/bench.py`.
+5. Game scenario(s) in `tools/gameserver/scenarios.py`, run `python -m tools.gameserver.run
+   <name>`, commit the JSON in `experiments/results/`, and log it in [[experiments/index]].
+6. Update the mechanics page (Status, Tests), [[mechanics/index]], [[quirks]] and
+   [[project-state]].
+
+## Checklist: adding a game scenario
+
+- Positions are relative: y=1 is the first layer above the stone floor (absolute y=-60).
+  Keep inside `size` (the floor footprint); the runner spaces scenarios 24 blocks apart.
+- Build with `/setblock` strings (`minecraft:id[prop=value]`), not player placement.
+  Remember that `/setblock redstone_wire` makes a dot unless a neighbor makes it connect.
+- Inputs: `inputs[t]` is applied after `t` ticks, between ticks. Prefer redstone blocks
+  placed and removed as inputs, since levers can't be pulled without a player.
+- Watch every block whose state matters; the comparison checks full states.
+- A recording becomes stale when the scenario changes (fingerprint check): re-run the server.
+
+## Game server harness details
+
+- Sandbox: `.sandbox/gameserver/` (gitignored). The bundler extracts `libraries/` and
+  `versions/` there on first start; `fresh_world=True` deletes only the sandbox world.
+- Properties: offline, `server-ip=127.0.0.1`, port 25599, RCON/query/status/management
+  off, peaceful, flat, `pause-when-empty-seconds=0`, `max-tick-time=-1`.
+- Synchronization: every command is followed by
+  `scoreboard players set #sync redsim_sync <n>`; output lines are collected until that
+  marker's feedback appears. Feedback lines arrive as `System chat: …`.
+- Tick control: `tick freeze` once at startup; `tick step 1` and then poll
+  `time query gametime` until it advances.
+- State checks: `execute if block x y z <state>` gives "Test passed"/"Test failed".
+
+## Gotchas found so far
+
+- `/setblock` is not player placement: no `getStateForPlacement`/`setPlacedBy`, flags
+  2|256, then `updateNeighboursOnBlockSet` (the source block of those updates is the *new*
+  block).
+- In `setBlock`'s own neighbor updates, the source block is the *old* block
+  (`updateNeighborsAt(pos, oldState.getBlock())`).
+- `BlockStateProperties.FACING` lists N, E, S, W, U, D, which is not ordinal order. It
+  matters for cycling.
+- A wire's input ignores its connections; only its output checks them (via a live
+  `getConnectionState`).

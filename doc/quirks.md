@@ -2,27 +2,39 @@
 
 One searchable list of non-obvious behaviors. IDs are stable; mechanic pages link here.
 Evidence: **S** = verified by reading the 26.3 source; **T** = covered by a simulator test;
-**G** = confirmed in game (see [[experiments/index]]).
+**G** = confirmed in the real game ([[experiments/index]]).
 
-| ID | Quirk | Evidence | Source |
+## Engine: updates and scheduling
+
+| ID | Quirk | Evidence | Source / test |
 |---|---|---|---|
-| Q-UPD-ORDER | Neighbor updates go W, E, D, U, N, S; shape updates go W, E, N, S, D, U. | S | `NeighborUpdater.UPDATE_ORDER`, `BlockBehaviour.UPDATE_SHAPE_ORDER` |
-| Q-UPD-DFS | Updates emitted by a handler run after it returns, depth-first, before the handler's remaining siblings. | S | `CollectingNeighborUpdater.addAndRun`/`runUpdates` |
-| Q-UPD-ONPLACE | `onPlace` runs on every state change (unless flag 512), not only on placement. | S | `LevelChunk.setBlockState` |
-| Q-UPD-SHAPE-NOUPD | State changes caused by shape updates emit no neighbor updates (flag 1 cleared). | S | `Level.setBlock` (`updateFlags & -34`), `Block.updateOrDestroy` |
-| Q-SCHED-COLLECT | Scheduled ticks are collected once per tick before any run; ticks scheduled during the phase wait for the next tick. | S | `LevelTicks.tick` |
-| Q-SCHED-DEDUP | A tick request for a (pos, block) that is still pending is dropped, including its priority. | S | `LevelChunkTicks.schedule` |
-| Q-SCHED-SUBTICK | The sub-tick counter advances on every request, even rejected ones. | S | `LevelAccessor.createTick` |
-| Q-SCHED-OVERDUE | Overdue ticks (from an overflowing or non-ticking earlier tick) merge across chunks by priority only. Not reproduced: cannot arise in scope. | S | `LevelTicks.drainContainers` |
+| Q-UPD-ORDER | Neighbor updates go W, E, D, U, N, S; shape updates go W, E, N, S, D, U. | S T | `NeighborUpdater.UPDATE_ORDER`, `BlockBehaviour.UPDATE_SHAPE_ORDER`; `test_update_order_is_w_e_d_u_n_s`, `test_flags_3_neighbor_updates_then_shape_updates` |
+| Q-UPD-DFS | Updates emitted by a handler run after it returns, depth-first, before the handler's remaining siblings. | S T | `CollectingNeighborUpdater.addAndRun`/`runUpdates`; `test_handler_finishes_before_emitted_updates` |
+| Q-UPD-ONPLACE | `onPlace` runs on every state change (unless flag 512), not only on placement. | S T | `LevelChunk.setBlockState`; `test_on_place_runs_for_property_changes_without_removal` |
+| Q-UPD-SHAPE-NOUPD | State changes caused by shape updates emit no neighbor updates (flag 1 cleared). | S T | `Level.setBlock` (`updateFlags & -34`), `Block.updateOrDestroy`; `test_shape_change_from_shape_update_sends_no_neighbor_updates` |
+| Q-UPD-OLDSOURCE | `setBlock`'s neighbor updates name the *old* block as their source; `/setblock`'s follow-up updates name the *new* block. | S | `Level.setBlock` L245, `ServerLevel.updateNeighboursOnBlockSet` |
+| Q-SCHED-COLLECT | Scheduled ticks are collected once per tick before any run; ticks scheduled during the phase wait for the next tick. | S T | `LevelTicks.tick`; `test_ticks_scheduled_during_the_phase_wait_for_next_tick` |
+| Q-SCHED-DEDUP | A tick request for a (pos, block) that is still pending is dropped, including its delay and priority. | S T G | `LevelChunkTicks.schedule`; `test_duplicate_request_is_dropped_but_consumes_a_sub_tick`; EXP-005 |
+| Q-SCHED-SUBTICK | The sub-tick counter advances on every request, even rejected ones. | S T | `LevelAccessor.createTick` |
+| Q-SCHED-OVERDUE | Overdue ticks (from an overflowing earlier tick) merge across chunks by priority only. Not reproduced: cannot arise in scope. | S | `LevelTicks.drainContainers` |
 | Q-BE-ORDER | Block entities tick in level-wide registration order; a replaced entity keeps its wrapper's place in the list. | S | `LevelChunk.updateBlockEntityTicker` |
-| Q-EVT-SAMETICK | Block events queued during the block-event phase run in the same phase. Identical queued events are merged. | S | `ServerLevel.runBlockEvents` |
-| Q-PROP-GLASS | Glass and glowstone carry components but are not conductors. | S | `Blocks.GLASS`/`GLOWSTONE` (`isRedstoneConductor(never)`) |
+| Q-EVT-SAMETICK | Block events queued during the block-event phase run in the same phase; identical queued events are merged. | S T | `ServerLevel.runBlockEvents`; `test_block_events_fifo_dedup_and_same_phase_cascade` |
+| Q-SETBLOCK-DOT | `/setblock redstone_wire` with nothing to connect to creates a dot; it reshapes when neighbors change. | S G | `BlockInput.place` + `updateFromNeighbourShapes`; EXP-002 tick 0 |
+
+## Blocks and power
+
+| ID | Quirk | Evidence | Source / test |
+|---|---|---|---|
+| Q-PROP-GLASS | Glass and glowstone carry components but are not conductors. | S T G | `Blocks.GLASS`/`GLOWSTONE`; EXP-007 |
 | Q-PROP-REDBLOCK | The redstone block is a signal source but not a conductor. | S | `Blocks.REDSTONE_BLOCK`, `PoweredBlock` |
-| Q-POW-TORCH-SIDE | Torches, levers and buttons beside a comparator are not side inputs (only direct signal counts). | S | `SignalGetter.getControlInputSignal`, `RedstoneTorchBlock.getDirectSignal` |
+| Q-POW-TORCH-SIDE | Torches, levers and buttons beside a comparator are not side inputs (only direct signal counts). | S | `SignalGetter.getControlInputSignal` |
 | Q-POW-WIRE-SIDE | Any wire beside a comparator is a side input at full POWER, regardless of its shape. | S | `SignalGetter.getControlInputSignal` |
-| Q-WIRE-HASH | Wire power changes update positions in `HashSet<BlockPos>` order (coordinate dependent). | S | `DefaultRedstoneWireEvaluator.updatePowerStrength` |
-| Q-WIRE-INSTANT | Wire never schedules ticks; it settles within one update cascade. | S | `RedstoneWireBlock.neighborChanged` |
-| Q-WIRE-REDUNDANT | A depowering wire line passes through intermediate power levels, each firing a full update burst. | S | `DefaultRedstoneWireEvaluator`, `RedstoneWireEvaluator.getIncomingWireSignal` |
+| Q-WIRE-HASH | Wire power changes update positions in `HashSet<BlockPos>` order (coordinate dependent). | S T | `DefaultRedstoneWireEvaluator.updatePowerStrength`; `test_wire_update_burst_follows_java_hashset_order` (+ JDK oracle) |
+| Q-WIRE-INSTANT | Wire never schedules ticks; it settles within one update cascade. | S G | `RedstoneWireBlock.neighborChanged`; EXP-003 |
+| Q-WIRE-REDUNDANT | A depowering wire line passes through intermediate power levels, each firing a full update burst. | S | `RedstoneWireEvaluator.getIncomingWireSignal` |
+| Q-WIRE-GLASS-UP | Signals climb onto glass/glowstone but never descend from them (one-way staircase). | S T G | `RedstoneWireEvaluator.getIncomingWireSignal`; `test_glass_lets_power_climb_but_not_descend`; EXP-007 |
+| Q-WIRE-INPUT-ANY | A wire's input ignores its connections (a dot still receives); only its output checks them. | S T G | `getIncomingWireSignal`, `RedstoneWireBlock.getSignal`; `test_dot_powers_only_the_block_below`; EXP-005 |
+| Q-WIRE-WEAK | Dust-powered blocks activate components but never power other dust (the `shouldSignal` mute). | S T | `RedstoneWireBlock.getBlockSignal`; `test_wire_powered_block_does_not_power_other_wire` |
 | Q-REP-PRIORITY | Repeater ticks: −3 if outputting into a diode not facing back, −2 when turning off, −1 when turning on. | S | `DiodeBlock.checkTickOnNeighbor`, `shouldPrioritize` |
 | Q-REP-PULSE-EXTEND | Pulses shorter than the delay are extended to the delay. | S | `DiodeBlock.tick` |
 | Q-REP-PLACE-DELAY1 | A repeater placed with input powers on after 1 tick (NORMAL), not after its delay. | S | `DiodeBlock.setPlacedBy` |
@@ -30,10 +42,16 @@ Evidence: **S** = verified by reading the 26.3 source; **T** = covered by a simu
 | Q-COMP-DOUBLE-FRONT | A comparator changing POWERED updates its front twice. | S | `ComparatorBlock.refreshOutputState`, `DiodeBlock.onPlace` |
 | Q-COMP-COMPARE-UPDATES | In compare mode every comparator tick updates the front, even without change. | S | `ComparatorBlock.refreshOutputState` |
 | Q-COMP-OUTPUT-NO-STATE | Output strength lives in the block entity; strength-only changes cause no shape updates. | S | `ComparatorBlock.refreshOutputState` |
-| Q-TORCH-STRONG-UP | Torches strongly power the block above them. | S | `RedstoneTorchBlock.getDirectSignal` |
-| Q-TORCH-BURNOUT-DET | Torch burnout is deterministic (8 toggles in 60 ticks). Out of initial scope. | S | `RedstoneTorchBlock.tick`, `isToggledTooFrequently` |
-| Q-LEVER-DOUBLE | A lever toggle updates its own neighbors twice. | S | `LeverBlock.pull` |
-| Q-LAMP-ASYM | Lamps turn on instantly and off after 4 ticks; toggles send no neighbor updates. | S | `RedstoneLampBlock.neighborChanged` |
+| Q-TORCH-STRONG-UP | Torches strongly power the block above them. | S T G | `RedstoneTorchBlock.getDirectSignal`; EXP-005 |
+| Q-TORCH-BURNOUT-DET | Torch burnout is deterministic (8 turn-offs within 60 ticks, 160-tick re-check). | S T G | `RedstoneTorchBlock.tick`, `isToggledTooFrequently`; EXP-005 |
+| Q-TORCH-BURNOUT-STUCK | A burnt-out torch whose own cascade re-schedules it loses the 160-tick restart (dedup) and stays out until a later update. | S G | EXP-005, EXP-006 |
+| Q-LEVER-DOUBLE | A lever toggle updates its own neighbors twice. | S T | `LeverBlock.pull`; `test_lever_toggle_updates_its_own_neighbors_twice` |
+| Q-LAMP-ASYM | Lamps turn on instantly and off after 4 ticks; toggles send no neighbor updates. | S T G | `RedstoneLampBlock.neighborChanged`; EXP-001 |
+
+## Pistons
+
+| ID | Quirk | Evidence | Source |
+|---|---|---|---|
 | Q-PISTON-QC | Pistons also check power around the block above them. | S | `PistonBaseBlock.getNeighborSignal` |
 | Q-PISTON-BUD | Pistons only re-check power on updates, so they can stay in a stale state. | S | `PistonBaseBlock.neighborChanged` |
 | Q-PISTON-SPIT | A sticky piston retracting before its push completes leaves the block behind. | S | `PistonBaseBlock.checkIfExtend`/`triggerEvent` (event 2) |

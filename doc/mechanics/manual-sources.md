@@ -1,6 +1,6 @@
 # Manual sources and simple outputs: lever, buttons, redstone block, lamp
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `world/blocks/attached.py`, `lamp.py`, `simple.py`; unit-tested; lamp and redstone block confirmed in game. Levers and buttons need a player and are not testable on the dedicated server.
 - **Summary:** Inputs used to drive test circuits, plus the lamp as a simple output.
 - **Scope:** Lever, stone and wooden buttons (no arrows), redstone block, redstone lamp.
 
@@ -43,8 +43,10 @@
 
 ## Tests
 
-Planned: `tests/sim/test_sources.py` (lever weak/strong power by face, button duration,
-lamp on/off timing).
+- `tests/sim/test_components.py`: lever strong/weak power, lever through a block lights a
+  lamp, lever double update, stone 20 / oak 30 tick buttons, pressing a pressed button,
+  popping without support.
+- Game: EXP-001 (lamp on/off timing), redstone block as input in all scenarios.
 
 ## Related
 

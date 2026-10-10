@@ -1,6 +1,6 @@
 # Neighbor updates, shape updates, and the setBlock pipeline
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `sim/level.py` and `sim/neighbor_updater.py`; unit-tested.
 - **Summary:** A block change notifies neighbors through two distinct channels:
   *neighbor updates* (`neighborChanged`, what redstone components react to) and *shape
   updates* (`updateShape`, what connection and support logic reacts to). Both go through the
@@ -107,8 +107,14 @@ further shape updates (and `onPlace`).
 
 ## Tests
 
-Planned: `tests/sim/test_neighbor_updater.py` (order, depth-first behavior, chain limit),
-`tests/sim/test_set_block.py` (flags pipeline).
+- `tests/sim/test_neighbor_updater.py`: W/E/D/U/N/S order, except-from-facing,
+  handler-finishes-first (distinguishes the collecting updater from recursion and from a FIFO
+  queue), emission order with depth-first cascades, multi-update resumption, synchronous
+  top-level calls, chain limit.
+- `tests/sim/test_set_block.py`: flags 3 (neighbor then shape updates, old block as
+  source), shape direction, flags 2, flag 16, no-op on equal state, `onPlace` on property
+  change, removal side effects (flags 1/64), shape-caused changes without neighbor
+  updates, world bounds.
 
 ## Unknowns
 

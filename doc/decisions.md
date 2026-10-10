@@ -98,3 +98,62 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Decision:** Build the shared world model first, then the editor and the engine on top of
   it, so the editor never relies on a throwaway model. The milestone deliverables stay the
   same.
+
+## ADR-008
+
+**Compare against the real game with a sandboxed dedicated server**
+
+- **Context:** Unit tests alone only check the simulator against its own reading of the
+  source. The brief asks for in-game comparison, and the agent cannot run the client.
+- **Decision:** With the owner's approval and EULA acceptance (2026-10-10), run the supplied
+  `server.jar` headlessly in `.sandbox/gameserver/`: offline, 127.0.0.1, no remote
+  endpoints, fresh superflat world, used for behavior testing only. `tools/gameserver`
+  drives it through the console and compares every watched block state after every tick.
+  Recordings go to `experiments/results/` and are replayed by tests.
+- **Trade-offs:** Only tick-boundary states are observable, and only command-driven inputs
+  are possible (no player to pull levers). Each run takes about 10 s of startup plus about
+  0.1 s per tick per scenario.
+
+## ADR-009
+
+**Command-driven inputs mirrored exactly in the simulator**
+
+- **Context:** A game comparison needs identical inputs. `/setblock` is not the same as a
+  player placing a block: it skips `getStateForPlacement` and `setPlacedBy`, and it uses
+  flags 258 plus `updateNeighboursOnBlockSet`.
+- **Decision:** Port `SetBlockCommand` (replace mode) as `Action("setblock")` and use it for
+  scenario setup and inputs on both sides. Player actions (`place`, `use`, `break`) remain
+  separate, faithful ports for the editor.
+- **Trade-offs:** Scenario states can differ from hand-built ones. For example,
+  `/setblock redstone_wire` creates a dot when nothing connects. This is intended: it is what
+  the game does.
+
+## ADR-010
+
+**Torch burnout is simulated**
+
+- **Context:** The brief listed "random burnout" as out of scope. The 26.3 source shows
+  burnout is deterministic (8 turn-offs of one position within 60 game ticks; 160-tick
+  restart; a per-level toggle list shared by all torches).
+- **Decision:** The owner approved implementing it (2026-10-10). The toggle list lives in
+  `Level.torch_toggles`, so snapshots and future saves include it. Verified in game
+  (EXP-005, EXP-006).
+
+## ADR-011
+
+**Wiki pages are hints, the source is proof**
+
+- **Context:** The owner supplied stripped Minecraft Wiki pages in `data/wiki/` (redstone
+  components, quasi-connectivity, instant repeaters, redstone tutorial).
+- **Decision:** Use them to find test ideas and known quirks, and confirm every claim in the
+  26.3 source or in game before relying on it. See [[research/wiki-hints]].
+
+## ADR-012
+
+**Repository docs are the project's long-term memory**
+
+- **Context:** Work spans many sessions; the owner asked for project state and
+  architecture to live in the docs, and for agent-side notes to stay minimal.
+- **Decision:** [[project-state]] is the handoff page, updated after every slice together with
+  [[roadmap]], [[architecture]], mechanics pages and the experiment log. New sessions start
+  from [[README]].

@@ -1,6 +1,6 @@
 # Redstone wire (dust)
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `world/blocks/redstone_wire.py`; unit-tested; hash order checked with a JDK; confirmed in game (EXP-002, EXP-003, EXP-004, EXP-007).
 - **Summary:** Wire recomputes its power instantly (no scheduled ticks) whenever it receives a
   neighbor update. On a change it emits a large, location-dependent burst of neighbor
   updates. Connections (the NORTH/EAST/SOUTH/WEST properties) are maintained through shape
@@ -82,15 +82,25 @@ distinction). It never powers upward. A dot powers only the block below it.
 - [[quirks]] Q-WIRE-REDUNDANT: a falling wire line first decreases step by step and can
   briefly hold intermediate values; each step fires the full burst (the classic
   "redstone lag" pattern). The order of these intermediate states is fully deterministic.
+- [[quirks]] Q-WIRE-GLASS-UP: power climbs onto glass/glowstone but never descends from it,
+  because a lower wire looks *below* a non-conductive neighbor, never on top of it
+  (confirmed in game, EXP-007).
+- [[quirks]] Q-WIRE-INPUT-ANY: a wire's input ignores its own connections; a dot still
+  receives power from every side.
 - Wire power changes use flags 2, so the change itself sends shape updates (observers can see
   it) but no neighbor updates from `setBlock`; all neighbor updates come from the explicit
   burst.
 
 ## Tests
 
-Planned: `tests/sim/test_wire.py`: decay along a line, step up/down with conductor and
-non-conductor tops, glass step-down, dot vs cross output, hash-order trace at two different
-coordinates, removal cascades.
+- `tests/sim/test_components.py`: decay and step up/down, conductor above cuts the step-up,
+  glass lets power climb but not descend, wire-powered block does not power wire, dot powers
+  only the block below, update burst equals Java `HashSet` order at several coordinates and
+  differs between locations.
+- `tests/core/test_javahash.py`: the 7-position update set at 100 random coordinates
+  iterates identically to a real `java.util.HashMap` (JDK 25).
+- Game: EXP-003 (15-wire line), EXP-007 (glass one-way), dot/line shapes from `/setblock`
+  (EXP-002).
 
 ## Unknowns
 
