@@ -57,3 +57,7 @@ Implementation status is tracked in [[roadmap]] and [[project-state]].
   sections rebuilt), vectorized geometry, and rendering decoupled from simulation (simulate
   at the target rate; draw at most once per frame). Show the achieved ticks/s in the UI.
   Trace detail can stay on: it costs about 30 % of engine time, which is not the bottleneck.
+- **Done (2026-10-11):** 8³ chunk meshes with dirty tracking, vectorized geometry, a
+  wall-clock-paced run loop and a ticks/s + frames/s overlay. Measured on the owner's
+  desktop: 19.9 ticks/s at target 20, paint about 2 ms. Details in [[architecture]]
+  ("Rendering and the run loop") and [[decisions]] ADR-017.

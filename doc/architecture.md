@@ -198,7 +198,7 @@ with `execute if block`. Details: [[experiments/index]], [[implementation-notes]
 ## Editor layer (`redsim.editor`, no Qt)
 
 - `Document` owns the `Engine`, the `Sections` annotations, the file path, a revision counter
-  (the UI rebuilds meshes when it changes) and a snapshot-based undo/redo stack for edits.
+  (the UI updates the changed mesh chunks when it changes) and a snapshot-based undo/redo stack for edits.
 - Edits are engine actions and are only allowed between ticks, as in the game:
   `place` (player placement), `break`, `use` (right click), and inspector edits as `setblock`
   (`/setblock` semantics, stated in the UI tooltip) ([[decisions]] ADR-013).
@@ -233,12 +233,13 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | Module | Role |
 |---|---|
 | `style.py` | Block → colored boxes in pixels by functional category (no textures); wire color uses the game's power formula; orientation transforms |
-| `geometry.py` | Mesh building (face culling between full cubes, separate translucent buffer, checkerboard tint) and CPU picking (voxel traversal + ray/box tests on the same boxes) |
+| `geometry.py` | Vectorized mesh building per 8³ chunk with dirty tracking (`Mesher`, `ChunkedMesh`: face culling between full cubes, separate translucent buffer, checkerboard tint) and CPU picking (voxel traversal + ray/box tests on the same boxes) |
 | `camera.py` | Fly camera with Minecraft yaw/pitch conventions; view/projection matrices; cursor rays |
-| `renderer.py` | One shader, three streams (opaque, translucent, lines) through PySide6's GL wrappers |
+| `renderer.py` | One shader through PySide6's GL wrappers; an opaque and a translucent buffer per chunk, plus one line buffer |
+| `pacing.py` | Real-time run pacing (`TickPacer`) and rate measurement (`RateMeter`), no Qt |
 | `viewport.py` | `QOpenGLWidget`: input handling, hover, selection; emits edit signals only |
 | `panels.py` | Palette (with hotbar), inspector, simulation controls, diagnostics, sections, controls help |
-| `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run timer |
+| `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run loop |
 | `app.py` | Entry point; selects `xcb` under Wayland; requests an OpenGL 3.3 core context |
 
 Controls (owner-confirmed, Minecraft-like): WASD/Space/Shift fly (Ctrl faster); hold the
@@ -250,6 +251,26 @@ selection; Ctrl+Z/Ctrl+Y undo/redo.
 
 The viewport targets the block under the mouse cursor (an editor convenience; the game
 uses the screen center). The renderer never writes world state.
+
+### Rendering and the run loop ([[decisions]] ADR-017)
+
+- **Chunked meshes.** The world mesh is split into 8³-block chunks. Before drawing, when the
+  document revision changed, `ChunkedMesh.update` diffs the block map against the last one
+  it saw (so timeline seeks, which swap in a restored level, need no special case). A
+  changed block dirties its chunk and its 6 neighbors' chunks (culling looks across
+  borders). Only dirty chunks are rebuilt and re-uploaded. Chunks with moving pistons are
+  rebuilt on every update, because their look follows the block entity's progress.
+- **Vectorized geometry.** Each distinct face (box, direction, color) is a cached template of
+  6 vertices; a block state maps to its template ids. Building a chunk is one lookup per
+  block, then a numpy gather plus offset.
+- **Decoupled simulation.** A precise 5 ms timer asks `TickPacer` how many ticks are due by
+  the wall clock and runs them (at most 35 ms per call, so input stays responsive), then
+  requests a single repaint. Falling more than 0.25 s behind drops the backlog instead of
+  racing. Panels refresh at most 10 times per second while running. The viewport overlay
+  shows the achieved ticks/s and frames/s.
+- Measured on the example world (2026-10-11, owner's desktop): 19.9 ticks/s at target 20,
+  paint 1.9 ms mean; full mesh build 9 ms (was 51 ms); one tick plus incremental mesh update
+  0.17 ms; warp on the idle world about 160 000 ticks/s.
 
 ## Related
 

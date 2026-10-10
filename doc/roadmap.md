@@ -20,8 +20,8 @@ engine depend on it ([[decisions]] ADR-007).
 
 ## Next steps (after owner feedback, see [[ui-direction]])
 
-0. **Real-time speed:** chunked, dirty-tracked meshes; simulation decoupled from rendering;
-   ticks/s display.
+0. ☑ **Real-time speed:** chunked, dirty-tracked meshes; simulation decoupled from
+   rendering; ticks/s display (ADR-017).
 0. **Interaction redesign:** vim-like modes, orbit camera around a visible pivot, Axiom-like
    selections, hot-swappable analog source block.
 

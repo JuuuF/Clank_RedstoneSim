@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, branch `feat/sim-core`.*
+*Last updated: 2026-10-11, branch `feat/realtime-render` (merged into `main`).*
 
 ## Summary
 
@@ -32,6 +32,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - **Playback and history (M6):** done. An event-sourced timeline (keyframes + action log +
   deterministic replay) supports step back, tick back, a timeline slider for seeking and
   replaying, warp mode, and undo/redo of edits as rewinds. Exact replay is tested.
+- **Real-time rendering:** done. Meshes are built per 8³ chunk and only where blocks
+  changed; the run loop is paced by the wall clock and decoupled from drawing; the viewport
+  shows the achieved ticks/s. Measured 19.9 ticks/s at target 20 on the owner's desktop
+  (ADR-017).
 - **Contraptions (M7):** done for the core scope. Box selection, copy/paste with `/clone`
   semantics (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
   a prefab library (save, import/export JSON), and groups with exposed input/output ports and
@@ -59,7 +63,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
 | `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
 | `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
-| `redsim.ui` | PySide6 editor (viewport, panels, main window) | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
+| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes, run pacing | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_pacing.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
 
@@ -84,8 +88,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **139 tests pass** (2026-10-11), including the JDK oracle, the 22
-  game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
+- `python -m pytest`: **148 tests pass** (2026-10-11), including the JDK oracle, the 22
+  game-recording replays, save round trips, chunked-mesh consistency, run pacing and
+  offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
 - Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match in one
   fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
@@ -112,9 +117,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-Owner feedback of 2026-10-11 ([[ui-direction]]) comes first: real-time speed (the renderer
-rebuilds the whole mesh every tick), then the interaction redesign (modes, orbit camera,
-Axiom-like selections, analog source block).
+Owner feedback of 2026-10-11 ([[ui-direction]]) comes first. Real-time speed is done
+(ADR-017); next is the interaction redesign: a rebindable keymap, the orbit camera, modes
+(NORMAL/BUILD/SELECT), then Axiom-like selections and the analog source block.
 
 All seven roadmap milestones have a working core. Suggested next steps:
 
@@ -124,15 +129,16 @@ All seven roadmap milestones have a working core. Suggested next steps:
    the selected block, scrubbing through block changes inside a step.
 3. **Mechanics coverage:** scheduled-tick-driven piston 0-tick scenarios, observers, target
    block, note blocks, containers (barrel/hopper) as comparator sources, then rails.
-4. **Scale:** profile larger builds (the engine is pure Python), and cache meshes per chunk
-   in the renderer.
+4. **Scale:** profile larger builds (the engine is pure Python). The renderer already meshes
+   per chunk; beyond about 50 000 blocks, replace the block-map diff with a change journal
+   (ADR-017).
 
 ## How to resume
 
 ```sh
 conda activate redsim                  # environment.yml; see implementation-notes
 redsim examples/showcase.redsim.json   # example world, see [[tour]]
-git switch feat/sim-core
+git switch main
 python -m pytest                       # all tests, ~2 s, no server needed
 python -m tools.gameserver.run         # re-run game comparisons (~1-2 min, sandboxed server)
 ```

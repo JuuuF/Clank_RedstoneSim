@@ -212,3 +212,23 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Future option:** An explicit "abstract model" could replace a group's internals with a
   declared truth table and delay. That would change timing semantics, so it needs its own
   design and opt-in. Not implemented.
+
+## ADR-017
+
+**Real-time rendering: chunked dirty meshes, simulation paced by the wall clock**
+
+- **Context:** The owner saw about half speed. The engine ran about 1 000 ticks/s; the
+  renderer rebuilt the whole world mesh (51 ms) after every tick, and the run timer ran one
+  tick per timeout, so drawing set the tick rate.
+- **Decision:** As the game client does it: per-chunk meshes with dirty tracking and
+  rendering decoupled from ticking. Chunks are 8³ rather than the game's 16³ sections,
+  because a Python rebuild of a dense 16³ section would take several milliseconds. Changes
+  are found by diffing the block map (0.04 ms for 1 000 blocks, 2.3 ms for 50 000), not by a
+  change journal in `Level`. The diff needs no hook in the simulation hot path and also
+  covers timeline restores, loads and direct test writes. The run loop computes due ticks
+  from the wall clock (`redsim.ui.pacing.TickPacer`) and repaints once afterwards.
+- **Trade-offs:** Blocks carried by a moving piston are never treated as full cubes for face
+  culling, so a few hidden faces are drawn while something moves. If worlds grow far beyond
+  50 000 blocks, a journal in `Level._chunk_set_block_state` can replace the diff. Vertices
+  are world-space float32, which loses precision at very large coordinates (chunk-relative
+  vertices plus a per-chunk offset would fix that).

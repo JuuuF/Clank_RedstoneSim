@@ -34,6 +34,9 @@ Shift; hold the right mouse button and drag to look around.
    turn-offs, and stays out ([[quirks]] Q-TORCH-BURNOUT-STUCK). Place a block next to it to
    wake it up.
 
+The top-left corner of the viewport shows whether the simulation runs, the achieved ticks
+per second and frames per second. It should hold the target rate (20 by default).
+
 ## Looking under the hood
 
 - **Step event (E)** runs one engine step at a time. The **Diagnostics** panel shows the
