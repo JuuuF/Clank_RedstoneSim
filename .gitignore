@@ -4,6 +4,8 @@ data/
 # Obsidian files
 .obsidian/
 
+# VSCode files
+.vscode
 
 # Python build and tool caches
 __pycache__/
