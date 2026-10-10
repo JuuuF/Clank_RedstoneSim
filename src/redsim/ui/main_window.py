@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
 
@@ -88,6 +89,9 @@ class MainWindow(QMainWindow):
         self.simulation.play_toggled.connect(self._play)
         self.simulation.step_tick.connect(self._step_tick)
         self.simulation.step_event.connect(self._step_event)
+        self.simulation.tick_back.connect(self._tick_back)
+        self.simulation.step_back.connect(self._step_back)
+        self.simulation.seek_requested.connect(self._seek)
         self.simulation.speed_changed.connect(self._speed)
 
     def _action(
@@ -118,6 +122,8 @@ class MainWindow(QMainWindow):
         self._action(sim_menu, "Run / pause", self.simulation.play.toggle, "P")
         self._action(sim_menu, "Step tick", self._step_tick, "T")
         self._action(sim_menu, "Step event", self._step_event, "E")
+        self._action(sim_menu, "Tick back", self._tick_back, "Shift+T")
+        self._action(sim_menu, "Step back", self._step_back, "Shift+E")
         view_menu = bar.addMenu("&View")
         for dock in self.findChildren(QDockWidget):
             view_menu.addAction(dock.toggleViewAction())
@@ -162,10 +168,13 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"{hit.pos}  {state!r}")
 
     def _edit(self, function: Any, *args: Any) -> None:
+        self.document.notice = ""
         try:
             function(*args)
         except EditError as exc:
             self._message(str(exc), error=True)
+        if self.document.notice:
+            self._message(self.document.notice)
         self._changed()
 
     def _place(self, hit: Hit, force: bool) -> None:
@@ -199,8 +208,9 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _undo(self) -> None:
+        self.simulation.play.setChecked(False)
         if not self.document.undo():
-            self._message("Nothing to undo (or a tick is in progress).")
+            self._message("Nothing to undo.")
         self._changed()
 
     def _redo(self) -> None:
@@ -220,7 +230,12 @@ class MainWindow(QMainWindow):
             self.play_timer.start(max(1, int(1000 / tps)))
 
     def _play_tick(self) -> None:
-        self.last_steps = self.document.run_tick()
+        if self.simulation.warp.isChecked():
+            deadline = time.monotonic() + 0.04
+            while time.monotonic() < deadline:
+                self.last_steps = self.document.run_tick()
+        else:
+            self.last_steps = self.document.run_tick()
         self._changed()
 
     def _step_tick(self) -> None:
@@ -229,6 +244,25 @@ class MainWindow(QMainWindow):
 
     def _step_event(self) -> None:
         self.last_steps = [self.document.step()]
+        self._changed()
+
+    def _rewound(self, moved: bool) -> None:
+        self.simulation.play.setChecked(False)
+        self.last_steps = []
+        if not moved:
+            self._message("Already at the start of the recorded history.")
+        self._changed()
+
+    def _tick_back(self) -> None:
+        self._rewound(self.document.tick_back())
+
+    def _step_back(self) -> None:
+        self._rewound(self.document.step_back())
+
+    def _seek(self, step_index: int) -> None:
+        self.simulation.play.setChecked(False)
+        self.document.seek(step_index)
+        self.last_steps = []
         self._changed()
 
     # ------------------------------------------------------------------ files

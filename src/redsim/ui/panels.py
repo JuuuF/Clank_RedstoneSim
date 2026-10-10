@@ -7,6 +7,7 @@ from typing import Any
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QFormLayout,
@@ -17,6 +18,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
+    QSlider,
     QSpinBox,
     QTableWidget,
     QTableWidgetItem,
@@ -209,11 +211,24 @@ class SimulationPanel(QWidget):
     play_toggled = Signal(bool)
     step_tick = Signal()
     step_event = Signal()
+    tick_back = Signal()
+    step_back = Signal()
+    seek_requested = Signal(int)
     speed_changed = Signal(int)
 
     def __init__(self) -> None:
         super().__init__()
         layout = QVBoxLayout(self)
+        back_row = QHBoxLayout()
+        tick_back = QPushButton("⏮ Tick back")
+        tick_back.setToolTip("Rewind to the previous tick boundary (Shift+T)")
+        tick_back.clicked.connect(self.tick_back.emit)
+        back_row.addWidget(tick_back)
+        step_back = QPushButton("◀ Step back")
+        step_back.setToolTip("Rewind one engine step (Shift+E)")
+        step_back.clicked.connect(self.step_back.emit)
+        back_row.addWidget(step_back)
+        layout.addLayout(back_row)
         row = QHBoxLayout()
         self.play = QPushButton("▶ Run")
         self.play.setCheckable(True)
@@ -239,7 +254,16 @@ class SimulationPanel(QWidget):
         self.speed.setValue(20)
         self.speed.valueChanged.connect(self.speed_changed.emit)
         speed_row.addWidget(self.speed)
+        self.warp = QCheckBox("Warp")
+        self.warp.setToolTip("Run as many ticks as possible (normal event order is kept)")
+        speed_row.addWidget(self.warp)
         layout.addLayout(speed_row)
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider.setToolTip(
+            "Timeline of engine steps: drag to rewind or replay (deterministic re-execution)"
+        )
+        self.slider.valueChanged.connect(self._slider_moved)
+        layout.addWidget(self.slider)
         self.status = QLabel("")
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
@@ -248,13 +272,24 @@ class SimulationPanel(QWidget):
         self.play.setText("⏸ Pause" if on else "▶ Run")
         self.play_toggled.emit(on)
 
+    def _slider_moved(self, value: int) -> None:
+        if not self.slider.signalsBlocked():
+            self.seek_requested.emit(value)
+
     def show_status(self, document: Document) -> None:
         engine = document.engine
+        history = document.history
+        self.slider.blockSignals(True)
+        self.slider.setRange(history.start, history.end)
+        self.slider.setValue(history.position)
+        self.slider.blockSignals(False)
+        ahead = history.end - history.position
+        future = f" ({ahead} recorded steps ahead)" if ahead else ""
         self.status.setText(
             f"Game time: <b>{engine.game_time}</b><br>"
             f"Phase: {engine.phase.value}<br>"
             f"Next step: {engine.peek_next_step()}<br>"
-            f"Engine steps so far: {engine.step_index}"
+            f"Engine step: {history.position} of {history.end}{future}"
         )
 
 
@@ -292,13 +327,13 @@ class DiagnosticsPanel(QTabWidget):
         for pos, block_id, b0, b1 in level.block_events:
             self.events.addItem(f"{block_id[10:]} at {pos}: ({b0}, {b1})")
         lines: list[str] = []
-        records = level.trace.records
+        trace = level.trace
         for step in last_steps[-40:]:
             lines.append(step.describe())
             if step.record is None:
                 continue
             depth = {step.record: 0}
-            for record in records[step.record + 1 :]:
+            for record in trace.after(step.record):
                 if record.step != step.index:
                     break
                 level_depth = depth.get(record.parent, 0) + 1 if record.parent is not None else 1
@@ -390,8 +425,11 @@ Ctrl + left click: select a block for the inspector; Esc clears<br>
 1-9: hotbar (stone, dust, torch, repeater, comparator, lever, lamp, redstone block,
 sticky piston)<br><br>
 <b>Simulation</b><br>
-P: run/pause &nbsp; T: step tick &nbsp; E: step event &nbsp; Ctrl+Z / Ctrl+Y: undo / redo edits<br>
-Edits are only possible between ticks, like player actions in the game.
+P: run/pause &nbsp; T: step tick &nbsp; E: step event<br>
+Shift+T: tick back &nbsp; Shift+E: step back &nbsp; timeline slider: rewind/replay<br>
+Ctrl+Z / Ctrl+Y: undo / redo the last edit (rewinds to just before it)<br>
+Edits are only possible between ticks, like player actions in the game. Editing after a
+rewind discards the recorded future.
 """
 
 

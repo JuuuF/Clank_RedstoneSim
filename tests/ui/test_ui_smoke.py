@@ -49,8 +49,16 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     assert document.state_at((1, 1, 0)).get(LIT) is False
     assert document.engine.game_time == 4
 
-    window._undo()  # undoes the last edit, not the simulation steps
+    window._tick_back()  # rewind one tick: the lamp is still lit at game time 3
+    assert document.engine.game_time == 3
+    assert document.state_at((1, 1, 0)).get(LIT) is True
+    window._seek(document.history.end)  # replay to the end of the recorded history
+    assert document.engine.game_time == 4
+    assert document.state_at((1, 1, 0)).get(LIT) is False
+
+    window._undo()  # rewinds to just before the last edit (the lever turned off)
     assert document.state_at((0, 1, 0)).get(POWERED) is True
+    assert document.engine.game_time == 0
 
     QtWidgets.QApplication.processEvents()
     image = window.viewport.grabFramebuffer()
