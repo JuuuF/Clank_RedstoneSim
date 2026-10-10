@@ -1,0 +1,349 @@
+{
+ "scenario": "piston_door",
+ "description": "A 1x2 door: two stacked sticky pistons hold stone blocks. One redstone block powers the top piston directly and the bottom piston through quasi-connectivity; the top piston's own update wakes the bottom one in the same block-event phase.",
+ "origin": [
+  72,
+  0,
+  0
+ ],
+ "start_time": 37,
+ "fingerprint": "4b8ae70561425397",
+ "game_version": "26.3",
+ "ticks": 14,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 1, 1)#progress": "0.0",
+    "(3, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 1, 1)#progress": "0.0",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 2, 1)#progress": "0.0",
+    "(3, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 2, 1)#progress": "0.0"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(3, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(3, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 1, 1)#progress": "0.0",
+    "(3, 1, 1)#progress": "0.0",
+    "(2, 2, 1)#progress": "0.0",
+    "(3, 2, 1)#progress": "0.0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 1, 1)#progress": "0.5",
+    "(3, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 1, 1)#progress": "0.5",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 2, 1)#progress": "0.5",
+    "(3, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 2, 1)#progress": "0.5"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(3, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(3, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 1, 1)#progress": "0.5",
+    "(3, 1, 1)#progress": "0.5",
+    "(2, 2, 1)#progress": "0.5",
+    "(3, 2, 1)#progress": "0.5"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 1, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 1, 1)": "minecraft:stone",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=true]",
+    "(2, 2, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(3, 2, 1)": "minecraft:stone"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(1, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(1, 1, 1)#progress": "0.0",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 1, 1)#progress": "0.0",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(1, 2, 1)#progress": "0.0",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 2, 1)#progress": "0.0",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 2, 1)": "minecraft:air",
+    "(1, 1, 1)#progress": "0.0",
+    "(2, 1, 1)#progress": "0.0",
+    "(1, 2, 1)#progress": "0.0",
+    "(2, 2, 1)#progress": "0.0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(1, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(1, 1, 1)#progress": "0.5",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 1, 1)#progress": "0.5",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(1, 2, 1)#progress": "0.5",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 2, 1)#progress": "0.5",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 1, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 2, 1)": "minecraft:air",
+    "(1, 1, 1)#progress": "0.5",
+    "(2, 1, 1)#progress": "0.5",
+    "(1, 2, 1)#progress": "0.5",
+    "(2, 2, 1)#progress": "0.5"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 1, 1)": "minecraft:stone",
+    "(3, 1, 1)": "minecraft:air",
+    "(1, 2, 1)": "minecraft:sticky_piston[facing=east,extended=false]",
+    "(2, 2, 1)": "minecraft:stone",
+    "(3, 2, 1)": "minecraft:air"
+   },
+   "mismatches": []
+  }
+ ]
+}

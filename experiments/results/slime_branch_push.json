@@ -1,0 +1,357 @@
+{
+ "scenario": "slime_branch_push",
+ "description": "Sticky piston (in the air) pushes a slime block that drags a stone on top and one at the side; a honey block beside the slime stays. Retraction pulls the group back.",
+ "origin": [
+  0,
+  0,
+  0
+ ],
+ "start_time": 1,
+ "fingerprint": "ef4309f4d871572e",
+ "game_version": "26.3",
+ "ticks": 12,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 3, 1)#progress": "0.0",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 1)#progress": "0.0",
+    "(3, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 4, 1)#progress": "0.0",
+    "(3, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 2)#progress": "0.0",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 0)": "minecraft:air",
+    "(2, 3, 1)#progress": "0.0",
+    "(3, 3, 1)#progress": "0.0",
+    "(3, 4, 1)#progress": "0.0",
+    "(3, 3, 2)#progress": "0.0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 3, 1)#progress": "0.5",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 1)#progress": "0.5",
+    "(3, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 4, 1)#progress": "0.5",
+    "(3, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 2)#progress": "0.5",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=sticky]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(3, 3, 0)": "minecraft:air",
+    "(2, 3, 1)#progress": "0.5",
+    "(3, 3, 1)#progress": "0.5",
+    "(3, 4, 1)#progress": "0.5",
+    "(3, 3, 2)#progress": "0.5"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(2, 3, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:slime_block",
+    "(3, 4, 1)": "minecraft:stone",
+    "(3, 3, 2)": "minecraft:stone",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:slime_block",
+    "(3, 4, 1)": "minecraft:stone",
+    "(3, 3, 2)": "minecraft:stone",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(2, 3, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:slime_block",
+    "(3, 4, 1)": "minecraft:stone",
+    "(3, 3, 2)": "minecraft:stone",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:slime_block",
+    "(3, 4, 1)": "minecraft:stone",
+    "(3, 3, 2)": "minecraft:stone",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(2, 3, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:slime_block",
+    "(3, 4, 1)": "minecraft:stone",
+    "(3, 3, 2)": "minecraft:stone",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:piston_head[facing=east,type=sticky,short=false]",
+    "(2, 4, 1)": "minecraft:air",
+    "(2, 3, 2)": "minecraft:air",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:slime_block",
+    "(3, 4, 1)": "minecraft:stone",
+    "(3, 3, 2)": "minecraft:stone",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 1)#progress": "0.0",
+    "(2, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 4, 1)#progress": "0.0",
+    "(2, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 2)#progress": "0.0",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air",
+    "(2, 3, 1)#progress": "0.0",
+    "(2, 4, 1)#progress": "0.0",
+    "(2, 3, 2)#progress": "0.0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 1)#progress": "0.5",
+    "(2, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 4, 1)#progress": "0.5",
+    "(2, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 2)#progress": "0.5",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 4, 1)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 2)": "minecraft:moving_piston[facing=east,type=normal]",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air",
+    "(2, 3, 1)#progress": "0.5",
+    "(2, 4, 1)#progress": "0.5",
+    "(2, 3, 2)#progress": "0.5"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "game": {
+    "(2, 3, 1)": "minecraft:slime_block",
+    "(2, 4, 1)": "minecraft:stone",
+    "(2, 3, 2)": "minecraft:stone",
+    "(2, 3, 0)": "minecraft:honey_block",
+    "(3, 3, 1)": "minecraft:air",
+    "(3, 4, 1)": "minecraft:air",
+    "(3, 3, 2)": "minecraft:air",
+    "(3, 3, 0)": "minecraft:air"
+   },
+   "mismatches": []
+  }
+ ]
+}

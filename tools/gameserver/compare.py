@@ -100,9 +100,12 @@ def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, st
         pos = absolute(origin, rel)
         state = level.get_block_state(pos)
         frame[str(rel)] = repr(state)
+        be = level.get_block_entity(pos, create=False)
         if state.block.id == "minecraft:comparator":
-            be = level.get_block_entity(pos, create=False)
             frame[f"{rel}#output"] = str(getattr(be, "output", 0))
+        elif state.block.id == "minecraft:moving_piston" and be is not None:
+            # The saved "progress" tag is progressO (PistonMovingBlockEntity.saveAdditional).
+            frame[f"{rel}#progress"] = str(float(be.progress_o))  # type: ignore[attr-defined]
     return frame
 
 
@@ -135,15 +138,18 @@ def observe_game(server: GameServer, expected: dict[str, str], origin: Pos) -> d
     return observed
 
 
-DATA_PATHS = {"output": "OutputSignal"}
+DATA_PATHS = {"output": "OutputSignal", "progress": "progress"}
 
 
 def read_block_data(server: GameServer, pos: Pos, key: str) -> str:
     """Read one block-entity field with ``data get block`` (e.g. comparator output)."""
     path = DATA_PATHS[key.split("#")[1]]
     text = server.command(f"data get block {pos[0]} {pos[1]} {pos[2]} {path}").text
-    match = re.search(r"has the following block data: (-?\d+)", text)
-    return match.group(1) if match else f"<no data: {text.strip()[:80]}>"
+    match = re.search(r"has the following block data: (-?[\d.]+)([fdbsL]?)", text)
+    if not match:
+        return f"<no data: {text.strip()[:80]}>"
+    number = match.group(1)
+    return str(float(number)) if match.group(2) in ("f", "d") or "." in number else number
 
 
 def discover_state(server: GameServer, pos: Pos) -> str:

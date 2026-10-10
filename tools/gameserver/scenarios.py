@@ -244,6 +244,114 @@ COMPARATOR_SIDE_TORCH = Scenario(
     },
 )
 
+PISTON_PUSH_PULL = Scenario(
+    name="piston_push_pull",
+    description=(
+        "Sliding piston: a normal piston (row z=0) and a sticky piston (row z=2) push a stone "
+        "block and retract; only the sticky one pulls it back. Moving blocks are compared "
+        "including their block-entity progress."
+    ),
+    size=(5, 3),
+    setup=[
+        ((1, 1, 0), "minecraft:piston[facing=east]"),
+        ((2, 1, 0), "minecraft:stone"),
+        ((1, 1, 2), "minecraft:sticky_piston[facing=east]"),
+        ((2, 1, 2), "minecraft:stone"),
+    ],
+    watch=[(x, 1, z) for z in (0, 2) for x in (1, 2, 3)],
+    ticks=14,
+    inputs={0: [((0, 1, 0), RB), ((0, 1, 2), RB)], 6: [((0, 1, 0), AIR), ((0, 1, 2), AIR)]},
+)
+
+STICKY_SHORT_PULSES = Scenario(
+    name="sticky_short_pulses",
+    description=(
+        "Sticky pistons fed 1-, 2- and 3-tick pulses (placed/removed between ticks). A pulse "
+        "that ends while the pushed block is still moving leaves it behind (event 2, open "
+        "question OQ-3); longer pulses pull it back."
+    ),
+    size=(5, 5),
+    setup=[((1, 1, z), "minecraft:sticky_piston[facing=east]") for z in (0, 2, 4)]
+    + [((2, 1, z), "minecraft:stone") for z in (0, 2, 4)],
+    watch=[(x, 1, z) for z in (0, 2, 4) for x in (1, 2, 3)],
+    ticks=12,
+    inputs={
+        0: [((0, 1, 0), RB), ((0, 1, 2), RB), ((0, 1, 4), RB)],
+        1: [((0, 1, 0), AIR)],
+        2: [((0, 1, 2), AIR)],
+        3: [((0, 1, 4), AIR)],
+    },
+)
+
+PISTON_QC_BUD = Scenario(
+    name="piston_qc_bud",
+    description=(
+        "Quasi-connectivity: a redstone block diagonally above a piston powers it, but the "
+        "piston only notices after a neighbor update (a block placed beside it later)."
+    ),
+    size=(4, 3),
+    setup=[((1, 1, 1), "minecraft:piston[facing=east]")],
+    watch=[(1, 1, 1), (2, 1, 1)],
+    ticks=10,
+    inputs={0: [((0, 2, 1), RB)], 4: [((1, 1, 0), "minecraft:stone")]},
+)
+
+PISTON_DOOR = Scenario(
+    name="piston_door",
+    description=(
+        "A 1x2 door: two stacked sticky pistons hold stone blocks. One redstone block powers "
+        "the top piston directly and the bottom piston through quasi-connectivity; the top "
+        "piston's own update wakes the bottom one in the same block-event phase."
+    ),
+    size=(5, 3),
+    setup=[
+        ((1, 1, 1), "minecraft:sticky_piston[facing=east]"),
+        ((1, 2, 1), "minecraft:sticky_piston[facing=east]"),
+        ((2, 1, 1), "minecraft:stone"),
+        ((2, 2, 1), "minecraft:stone"),
+    ],
+    watch=[(x, y, 1) for y in (1, 2) for x in (1, 2, 3)],
+    ticks=14,
+    inputs={0: [((0, 2, 1), RB)], 6: [((0, 2, 1), AIR)]},
+)
+
+SLIME_BRANCH_PUSH = Scenario(
+    name="slime_branch_push",
+    description=(
+        "Sticky piston (in the air) pushes a slime block that drags a stone on top and one at "
+        "the side; a honey block beside the slime stays. Retraction pulls the group back."
+    ),
+    size=(5, 4),
+    setup=[
+        ((1, 3, 1), "minecraft:sticky_piston[facing=east]"),
+        ((2, 3, 1), "minecraft:slime_block"),
+        ((2, 4, 1), "minecraft:stone"),
+        ((2, 3, 2), "minecraft:stone"),
+        ((2, 3, 0), "minecraft:honey_block"),
+    ],
+    watch=[(x, y, z) for x in (2, 3) for y, z in ((3, 1), (4, 1), (3, 2), (3, 0))],
+    ticks=12,
+    inputs={0: [((0, 3, 1), RB)], 5: [((0, 3, 1), AIR)]},
+)
+
+PISTON_POPS_COMPONENTS = Scenario(
+    name="piston_pops_components",
+    description=(
+        "A piston pushes a stone carrying dust and a wall torch on its far side; the dust "
+        "pops when its support starts moving and the torch is destroyed by the push line."
+    ),
+    size=(6, 3),
+    setup=[
+        ((1, 1, 1), "minecraft:piston[facing=east]"),
+        ((2, 1, 1), "minecraft:stone"),
+        ((2, 2, 1), "minecraft:redstone_wire"),
+        ((3, 1, 1), "minecraft:redstone_wall_torch[facing=east]"),
+    ],
+    watch=[(2, 1, 1), (3, 1, 1), (2, 2, 1), (3, 2, 1)],
+    ticks=6,
+    inputs={0: [((0, 1, 1), RB)]},
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -259,6 +367,12 @@ ALL = [
     COMPARATOR_MODES,
     COMPARATOR_THROUGH_BLOCK,
     COMPARATOR_SIDE_TORCH,
+    PISTON_PUSH_PULL,
+    STICKY_SHORT_PULSES,
+    PISTON_QC_BUD,
+    PISTON_DOOR,
+    SLIME_BRANCH_PUSH,
+    PISTON_POPS_COMPONENTS,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}
