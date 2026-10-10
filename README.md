@@ -12,14 +12,17 @@ Details: [`doc/project-state.md`](doc/project-state.md).
 
 ## Quick start
 
-Requires Python 3.12 with numpy and PySide6 (`pip install -e .[dev]` installs everything).
-
 ```sh
-python -m redsim                      # start the editor (PYTHONPATH=src unless installed)
+conda env create -f environment.yml   # once: Python 3.12 + PySide6 6.9.2, numpy, dev tools
+conda activate redsim
+pip install -e . --no-deps            # once: provides the `redsim` command
+redsim examples/showcase.redsim.json  # open the example world (guided tour: doc/tour.md)
 python -m pytest                      # run the test suite (~2 s)
 python -m tools.gameserver.run        # optional: compare against a sandboxed 26.3 server
-                                      # (needs Java 25 and the JARs in data/; PYTHONPATH=src)
+                                      # (needs Java 25 and the JARs in data/)
 ```
+
+Without conda: Python 3.12 with `pip install -e .[dev]`.
 
 ## Documentation
 

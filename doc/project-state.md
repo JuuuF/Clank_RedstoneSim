@@ -84,7 +84,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **137 tests pass** (2026-10-11), including the JDK oracle, the 22
+- `python -m pytest`: **139 tests pass** (2026-10-11), including the JDK oracle, the 22
   game-recording replays, save round trips and an offscreen UI smoke test. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
 - Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match in one
   fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
@@ -106,7 +106,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   indented causal list (no interactive tree yet).
 - Saves contain the current state only, not the timeline history.
 - Section edits are not part of undo/rewind.
-- The GUI was verified offscreen (smoke test and screenshots), not on the owner's desktop.
+- The GUI was verified offscreen (smoke test) and launched once on the owner's desktop
+  (XWayland, OpenGL 3.3) with the example world; it has not yet been used interactively by
+  the owner.
 
 ## Next steps (in order)
 
@@ -124,8 +126,9 @@ All seven roadmap milestones have a working core. Suggested next steps:
 ## How to resume
 
 ```sh
+conda activate redsim                  # environment.yml; see implementation-notes
+redsim examples/showcase.redsim.json   # example world, see [[tour]]
 git switch feat/sim-core
-python -m redsim                       # start the editor
 python -m pytest                       # all tests, ~2 s, no server needed
 python -m tools.gameserver.run         # re-run game comparisons (~1-2 min, sandboxed server)
 ```
