@@ -23,7 +23,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from redsim.core.direction import ALL, HORIZONTAL, Direction
-from redsim.core.pos import Pos, above, below, offset
+from redsim.core.pos import Pos, offset
 from redsim.sim import trace as tr
 from redsim.sim.neighbor_updater import MAX_CHAINED_NEIGHBOR_UPDATES, CollectingNeighborUpdater
 from redsim.sim.ticks import LevelTicks, ScheduledTick, TickPriority
@@ -557,9 +557,3 @@ class Level:
         other.trace = Trace(enabled=self.trace.enabled)
         other.neighbor_updater = CollectingNeighborUpdater(other, self.neighbor_updater.max_chained)
         return other
-
-    def above(self, pos: Pos) -> Pos:
-        return above(pos)
-
-    def below(self, pos: Pos) -> Pos:
-        return below(pos)

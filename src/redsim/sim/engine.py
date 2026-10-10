@@ -95,7 +95,6 @@ class Engine:
         self.phase = Phase.BETWEEN_TICKS
         self.step_index = 0
         self.be_index = 0
-        self.history_hook: list[Any] = []
 
     # ------------------------------------------------------------------ inspection
     @property
@@ -279,8 +278,6 @@ class Engine:
                 raise ActionError(f"unknown action {action.kind}")
         finally:
             self._end_step()
-        for hook in self.history_hook:
-            hook(action)
         return info
 
     def _place(self, pos: Pos, requested: BlockState) -> None:
