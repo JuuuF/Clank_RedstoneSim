@@ -15,7 +15,15 @@ import time
 
 import numpy as np
 from PySide6.QtCore import QPoint, Qt, QTimer, Signal
-from PySide6.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QWheelEvent
+from PySide6.QtGui import (
+    QColor,
+    QFocusEvent,
+    QFontDatabase,
+    QKeyEvent,
+    QMouseEvent,
+    QPainter,
+    QWheelEvent,
+)
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QWidget
 
@@ -24,7 +32,8 @@ from redsim.core.pos import Pos
 from redsim.editor.clipboard import Region
 from redsim.editor.document import Document
 from redsim.ui.camera import Camera
-from redsim.ui.geometry import Hit, block_outline, box_lines, build_mesh, pick
+from redsim.ui.geometry import ChunkedMesh, Hit, block_outline, box_lines, pick
+from redsim.ui.pacing import RateMeter
 from redsim.ui.renderer import Renderer
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
@@ -48,7 +57,11 @@ class Viewport(QOpenGLWidget):
         self.hover: Hit | None = None
         self.selection: Pos | None = None
         self.region: Region | None = None
+        self.world_mesh = ChunkedMesh()
         self._mesh_revision = -1
+        #: Lines of text drawn over the top-left corner (run status, achieved rates).
+        self.overlay_text: list[str] = []
+        self.frame_rate = RateMeter()
         self._keys: set[int] = set()
         self._press_pos: QPoint | None = None
         self._press_button: Qt.MouseButton | None = None
@@ -66,7 +79,7 @@ class Viewport(QOpenGLWidget):
     def set_document(self, document: Document) -> None:
         self.document = document
         self.selection = None
-        self._mesh_revision = -1
+        self._mesh_revision = -1  # the diff against the old world drops what is gone
         self.update()
 
     def refresh(self) -> None:
@@ -78,21 +91,48 @@ class Viewport(QOpenGLWidget):
         # Called again whenever Qt recreates the context (e.g. on re-parenting), so all GPU
         # data must be uploaded again.
         self.renderer = Renderer()
+        self.world_mesh.reset()
         self._mesh_revision = -1
 
     def paintGL(self) -> None:
-        if self.renderer is None:
+        renderer = self.renderer
+        if renderer is None:
             return
         if self._mesh_revision != self.document.revision:
-            mesh = build_mesh(self.document.level)
-            self.renderer.upload_mesh(mesh.opaque, mesh.translucent)
+            # Only chunks whose blocks (or neighbors) changed are rebuilt and re-uploaded.
+            chunks = self.world_mesh.chunks
+            for key in self.world_mesh.update(self.document.level):
+                mesh = chunks.get(key)
+                if mesh is None:
+                    renderer.remove_chunk(key)
+                else:
+                    renderer.set_chunk(key, mesh.opaque, mesh.translucent)
+            for stale in [stale for stale in renderer.chunks if stale not in chunks]:
+                renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
-        self.renderer.upload_lines(self._overlay_lines())
+        renderer.upload_lines(self._overlay_lines())
         ratio = self.devicePixelRatioF()
         width, height = int(self.width() * ratio), int(self.height() * ratio)
         aspect = max(width, 1) / max(height, 1)
         mvp = self.camera.projection_matrix(aspect) @ self.camera.view_matrix()
-        self.renderer.draw(mvp, width, height, BACKGROUND)
+        renderer.draw(mvp, width, height, BACKGROUND)
+        self.frame_rate.record(time.monotonic())
+        if self.overlay_text:
+            self._draw_overlay_text()
+
+    def _draw_overlay_text(self) -> None:
+        painter = QPainter(self)
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        painter.setFont(font)
+        metrics = painter.fontMetrics()
+        line_height = metrics.height()
+        width = max(metrics.horizontalAdvance(line) for line in self.overlay_text) + 12
+        height = line_height * len(self.overlay_text) + 8
+        painter.fillRect(6, 6, width, height, QColor(0, 0, 0, 120))
+        painter.setPen(QColor(255, 255, 255))
+        for index, line in enumerate(self.overlay_text):
+            painter.drawText(12, 10 + metrics.ascent() + index * line_height, line)
+        painter.end()
 
     def _overlay_lines(self) -> np.ndarray:
         level = self.document.level

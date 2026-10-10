@@ -1,8 +1,9 @@
 """OpenGL drawing with PySide6's own GL wrappers (no PyOpenGL; doc/decisions.md ADR-002).
 
-Three vertex streams share one shader: opaque triangles, translucent triangles (drawn after,
-without depth writes) and lines (outlines, sections, grid). Vertices are
-``x, y, z, r, g, b, a`` float32.
+One shader draws three kinds of vertex streams: opaque triangles, translucent triangles
+(drawn after, without depth writes) and lines (outlines, sections, grid). The world mesh is
+split into chunks (``redsim.ui.geometry.ChunkedMesh``), each with its own buffers, so a change
+re-uploads only the chunks it touched. Vertices are ``x, y, z, r, g, b, a`` float32.
 """
 
 from __future__ import annotations
@@ -28,6 +29,9 @@ GL_DEPTH_BUFFER_BIT = 0x0100
 GL_FALSE = 0
 GL_TRUE = 1
 GL_POLYGON_OFFSET_FILL = 0x8037
+GL_SCISSOR_TEST = 0x0C11
+GL_STENCIL_TEST = 0x0B90
+GL_CULL_FACE = 0x0B44
 
 VERTEX_SHADER = """#version 330 core
 layout(location = 0) in vec3 position;
@@ -63,6 +67,10 @@ class _Stream:
         program.setAttributeBuffer(1, GL_FLOAT, 12, 4, 28)
         self.vao.release()
 
+    def destroy(self) -> None:
+        self.vbo.destroy()
+        self.vao.destroy()
+
 
 class Renderer:
     """Owns GL resources; must be created and used with the widget's context current."""
@@ -77,14 +85,23 @@ class Renderer:
         if not self.program.link():
             raise RuntimeError(self.program.log())
         self.program.bind()
-        self.opaque = _Stream()
-        self.translucent = _Stream()
+        #: Chunk key → (opaque, translucent) streams.
+        self.chunks: dict[object, tuple[_Stream, _Stream]] = {}
         self.lines = _Stream()
 
-    def upload_mesh(self, opaque: np.ndarray, translucent: np.ndarray) -> None:
+    def set_chunk(self, key: object, opaque: np.ndarray, translucent: np.ndarray) -> None:
+        streams = self.chunks.get(key)
+        if streams is None:
+            streams = self.chunks[key] = (_Stream(), _Stream())
         self.program.bind()
-        self.opaque.upload(self.program, opaque)
-        self.translucent.upload(self.program, translucent)
+        streams[0].upload(self.program, opaque)
+        streams[1].upload(self.program, translucent)
+
+    def remove_chunk(self, key: object) -> None:
+        streams = self.chunks.pop(key, None)
+        if streams is not None:
+            for stream in streams:
+                stream.destroy()
 
     def upload_lines(self, lines: np.ndarray) -> None:
         self.program.bind()
@@ -92,6 +109,12 @@ class Renderer:
 
     def draw(self, mvp: np.ndarray, width: int, height: int, background: tuple[float, ...]) -> None:
         gl = self.gl
+        # A QPainter overlay drawn after us may leave any of these changed.
+        gl.glDisable(GL_SCISSOR_TEST)
+        gl.glDisable(GL_STENCIL_TEST)
+        gl.glDisable(GL_CULL_FACE)
+        gl.glDisable(GL_BLEND)
+        gl.glDepthMask(GL_TRUE)
         gl.glViewport(0, 0, width, height)
         gl.glClearColor(*background)
         gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -99,17 +122,21 @@ class Renderer:
         self.program.bind()
         location = self.program.uniformLocation("mvp")
         self.program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
-        if self.opaque.count:
-            self.opaque.vao.bind()
-            gl.glDrawArrays(GL_TRIANGLES, 0, self.opaque.count)
+        for opaque, _ in self.chunks.values():
+            if opaque.count:
+                opaque.vao.bind()
+                gl.glDrawArrays(GL_TRIANGLES, 0, opaque.count)
         if self.lines.count:
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
-        if self.translucent.count:
+        translucent = [stream for _, stream in self.chunks.values() if stream.count]
+        if translucent:
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             gl.glDepthMask(GL_FALSE)
-            self.translucent.vao.bind()
-            gl.glDrawArrays(GL_TRIANGLES, 0, self.translucent.count)
+            for stream in translucent:
+                stream.vao.bind()
+                gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
+        self.lines.vao.release()

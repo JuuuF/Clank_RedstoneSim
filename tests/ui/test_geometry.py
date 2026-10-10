@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import random
+
 import numpy as np
 
 from redsim.core.direction import Direction
 from redsim.sim.level import Level
-from redsim.ui.geometry import build_mesh, pick
+from redsim.ui.geometry import ChunkedMesh, Mesh, build_mesh, chunk_of, pick
 from redsim.ui.style import block_boxes, wire_color
 from redsim.world import blocks
 
@@ -59,3 +61,60 @@ def test_translucent_blocks_go_to_their_own_buffer() -> None:
     mesh = build_mesh(level)
     assert len(mesh.opaque) == 0 and len(mesh.translucent) == 36
     assert np.all(mesh.translucent[:, 6] < 1.0)
+
+
+def _faces(meshes: list[Mesh]) -> tuple[list[bytes], list[bytes]]:
+    def rows(arrays: list[np.ndarray]) -> list[bytes]:
+        joined = np.vstack(arrays) if arrays else np.zeros((0, 7), np.float32)
+        return sorted(face.tobytes() for face in np.round(joined.reshape(-1, 6, 7), 4))
+
+    return rows([m.opaque for m in meshes]), rows([m.translucent for m in meshes])
+
+
+def test_chunks_rebuild_only_where_blocks_changed() -> None:
+    level = Level()
+    level.blocks[(0, 0, 0)] = blocks.STONE.default_state
+    level.blocks[(40, 0, 0)] = blocks.STONE.default_state
+    chunks = ChunkedMesh()
+    assert chunk_of((40, 0, 0)) in chunks.update(level)
+    assert chunks.update(level) == set()  # nothing changed
+    level.blocks[(1, 0, 0)] = blocks.STONE.default_state
+    dirty = chunks.update(level)
+    assert chunk_of((0, 0, 0)) in dirty and chunk_of((40, 0, 0)) not in dirty
+    del level.blocks[(40, 0, 0)]
+    chunks.update(level)
+    assert chunk_of((40, 0, 0)) not in chunks.chunks
+
+
+def test_faces_are_culled_across_chunk_borders() -> None:
+    level = Level()
+    level.blocks[(7, 0, 0)] = blocks.STONE.default_state  # last block of chunk 0
+    chunks = ChunkedMesh()
+    chunks.update(level)
+    assert chunks.chunks[chunk_of((7, 0, 0))].vertex_count == 36
+    level.blocks[(8, 0, 0)] = blocks.STONE.default_state  # first block of chunk 1
+    chunks.update(level)
+    assert chunk_of((7, 0, 0)) != chunk_of((8, 0, 0))
+    assert chunks.chunks[chunk_of((7, 0, 0))].vertex_count == 30  # east face now hidden
+
+
+def test_incremental_chunks_equal_a_full_rebuild() -> None:
+    rng = random.Random(7)
+    pool = [
+        blocks.STONE.default_state,
+        blocks.GLASS.default_state,
+        blocks.SLIME_BLOCK.default_state,
+        blocks.REDSTONE_WIRE.cross_state,
+        blocks.parse_state("repeater[delay=2,facing=east]"),
+    ]
+    level = Level()
+    chunks = ChunkedMesh()
+    for _ in range(12):
+        for _ in range(60):
+            pos = (rng.randrange(-10, 10), rng.randrange(0, 6), rng.randrange(-10, 10))
+            if rng.random() < 0.3:
+                level.blocks.pop(pos, None)
+            else:
+                level.blocks[pos] = rng.choice(pool)
+        chunks.update(level)
+        assert _faces(list(chunks.chunks.values())) == _faces([build_mesh(level)])
