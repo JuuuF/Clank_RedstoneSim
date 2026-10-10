@@ -12,12 +12,13 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - **Simulation core (M3):** done. It ports the server's setBlock pipeline, the collecting
   neighbor updater, scheduled ticks, block events and block-entity tickers, behind a
   steppable engine with snapshots.
-- **Components (M4):** in progress. Done: lever, stone/oak buttons, redstone lamp,
-  redstone torch and wall torch (including deterministic burnout), redstone wire, the
-  redstone block, and simple and non-conducting blocks. Not started: repeater, comparator,
-  containers.
+- **Components (M4):** done for the initial scope: lever, stone/oak buttons, redstone
+  lamp, redstone torch and wall torch (including deterministic burnout), redstone wire,
+  repeater, comparator (block entity, compare/subtract, side inputs, analog input), cake
+  (analog source), the redstone block, and simple and non-conducting blocks. Open: a
+  container analog source (barrel with inventory).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 7 recorded scenarios match ([[experiments/index]]).
+  tick. All 14 recorded scenarios match ([[experiments/index]]).
 - **UI (M2):** not started. The framework is chosen (PySide6 + QOpenGLWidget,
   [[decisions]] ADR-002) and a GL prototype rendered successfully.
 - **Pistons (M5), history/playback UI (M6), contraptions (M7):** not started. The engine
@@ -33,8 +34,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.world.properties` | Block-state properties with the game's value order | done | indirectly |
 | `redsim.world.shape` | 16³ voxel shapes; FULL/CENTER/RIGID support checks | done | indirectly (support rules in component tests) |
 | `redsim.world.block` | `Block` (BlockBehaviour hooks), interned `BlockState`, update flags | done | all sim tests |
-| `redsim.world.block_entity` | Block-entity base | done (no concrete entities yet) | — |
-| `redsim.world.blocks.*` | Block registry and behaviors | partial (see block table) | `tests/sim/test_components.py`, game recordings |
+| `redsim.world.block_entity` | Block-entity base | done (comparator entity uses it) | `tests/sim/test_diodes.py` |
+| `redsim.world.tick_priority` | `TickPriority` | done | scheduling tests |
+| `redsim.world.blocks.*` | Block registry and behaviors | initial scope done (see block table) | `tests/sim/test_components.py`, game recordings |
 | `redsim.sim.level` | `Level`: setBlock pipeline, signal queries, ticks, events, block entities, clone | done | `tests/sim/test_set_block.py` and others |
 | `redsim.sim.neighbor_updater` | `CollectingNeighborUpdater` port | done | `tests/sim/test_neighbor_updater.py` |
 | `redsim.sim.ticks` | `LevelTicks` port (collect-then-run, dedup, priorities) | done | `tests/sim/test_scheduling.py` |
@@ -59,12 +61,15 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | redstone lamp | `lamp.py` | timing | EXP-001, EXP-003, EXP-004 |
 | redstone torch, wall torch | `torch.py` | inversion, strong power, burnout counter | EXP-002, EXP-004, EXP-005, EXP-006 |
 | redstone wire | `redstone_wire.py` | decay, step up/down, glass, dot, weak power, hash order | EXP-002…EXP-004, EXP-007 |
+| repeater | `diode.py` | placement delay 1, priorities, no lock from wire/torch, axis connection | EXP-008…EXP-011 |
+| comparator (+ block entity) | `comparator.py` | mode click refresh, double front update | EXP-012…EXP-014 |
+| cake (analog source) | `cake.py` | via comparator tests | EXP-012, EXP-013 |
 
 ## Verification status
 
-- `python -m pytest`: **59 tests pass** (2026-10-11), including the JDK oracle and the 7
+- `python -m pytest`: **72 tests pass** (2026-10-11), including the JDK oracle and the 14
   game-recording replays. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 7 of 7 scenarios match.
+- Real-game comparisons (`python -m tools.gameserver.run`): 14 of 14 scenarios match.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
 ## Known limitations (current)
@@ -83,13 +88,13 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-1. Repeater, then comparator with a container/analog test provider (M4), each with unit
-   tests and game scenarios (repeater chains, locking, compare/subtract).
-2. Minimal 3D editor (M2): viewport, camera, picking, place/break/use, inspector, section
+1. Minimal 3D editor (M2): viewport, camera, picking, place/break/use, inspector, section
    colors, JSON save/load (`redsim.io`).
-3. Pistons (M5): sliding piston, doors, QC/BUD and 0-tick cases with game scenarios (the
+2. Pistons (M5): sliding piston, doors, QC/BUD and 0-tick cases with game scenarios (the
    owner's first targets: "a simple door, a sliding piston").
-4. Playback and history UI (M6) on top of `Engine.snapshot()`.
+3. Playback and history UI (M6) on top of `Engine.snapshot()`.
+4. Small M4 follow-up: barrel/container analog source (inventory fill formula in 32-bit
+   float), with `/item replace`-driven game scenarios.
 
 ## How to resume
 

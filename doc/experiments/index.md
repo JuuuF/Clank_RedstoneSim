@@ -47,6 +47,13 @@ reading and unit tests only.
 | EXP-005 | `torch_burnout`: self-oscillating torch burns out after 8 turn-offs and **stays out** | 260 | match | 2026-10-11 |
 | EXP-006 | `torch_burnout_update`: an update more than 60 ticks later relights it; it burns out again | 140 | match | 2026-10-11 |
 | EXP-007 | `glass_up_not_down`: wire climbs onto glass from either side, never descends | 4 | match | 2026-10-11 |
+| EXP-008 | `repeater_delays`: delays 1–4 give 2/4/6/8 ticks on and off | 30 | match | 2026-10-11 |
+| EXP-009 | `repeater_pulse_extension`: a 1-tick pulse into a delay-4 repeater becomes 8 ticks | 24 | match | 2026-10-11 |
+| EXP-010 | `repeater_lock_priority`: same-tick race; the locking repeater (scheduled second) wins by priority | 14 | match | 2026-10-11 |
+| EXP-011 | `repeater_chain`: three delay-1 repeaters add 2 ticks each | 20 | match | 2026-10-11 |
+| EXP-012 | `comparator_modes`: cake input, wire side input, compare → side wins → subtract | 20 | match | 2026-10-11 |
+| EXP-013 | `comparator_through_block`: reads cake through stone; strong power 15 on the stone skips the lookup | 16 | match | 2026-10-11 |
+| EXP-014 | `comparator_side_torch`: a lit torch beside it is not a side input; powered wire is | 12 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 
@@ -72,6 +79,23 @@ A lower wire only looks *below* a non-conductive neighbor for wire, and never on
 so power climbs onto glass but cannot come down (`RedstoneWireEvaluator.getIncomingWireSignal`).
 Both sides were tested by moving the source from east to west. See [[quirks]]
 Q-WIRE-GLASS-UP.
+
+### EXP-010 finding: priorities decide same-tick races
+
+Both repeaters get their input in the same between-tick gap: M (main, delay 1) first, then
+L (locks M from the side, delay 1). Both ticks are due in the same game tick. L outputs
+into a diode's side, so `DiodeBlock.shouldPrioritize` gives it `EXTREMELY_HIGH` (−3); M
+turning on gets `HIGH` (−1). L therefore runs first despite the later sub-tick order, and M
+finds itself locked and never turns on (`LOCKED=true`, lamp off) until L turns off at tick 8.
+M then turns on at tick 10. The game shows exactly this.
+
+### EXP-012/013 notes
+
+- A comparator mode set by `/setblock` (EXP-012, tick 8) changes nothing by itself. No
+  neighbor update reaches the comparator, so it re-evaluates only when an input changes
+  (tick 10).
+- The comparator's stored output (block-entity data) is compared via
+  `data get block … OutputSignal`.
 
 ## Template for manual experiments
 

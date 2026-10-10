@@ -1,6 +1,6 @@
 # Comparator
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `world/blocks/comparator.py` (block + block entity) with cake as analog source (`cake.py`); unit-tested; confirmed in game (EXP-012 to EXP-014). Container (inventory) input not implemented yet.
 - **Summary:** A diode with a fixed 2-tick delay that outputs an analog signal stored in its
   block entity. It reads containers and other analog blocks directly or through one
   conductor, and compares or subtracts its side inputs.
@@ -57,9 +57,15 @@ Shared diode logic: [[repeater]] (`DiodeBlock`).
 
 ## Tests
 
-Planned: `tests/sim/test_comparator.py`: compare and subtract truth table, side input
-sources (wire, redstone block, repeater, torch → 0), reading a container directly and through
-a conductor, 2-tick delay with NORMAL/HIGH priority, mode toggle without delay.
+- `tests/sim/test_diodes.py`: mode toggle refreshes the output during the click; a
+  POWERED change updates the front twice.
+- Game: EXP-012 (compare, side > rear → 0, subtract), EXP-013 (through a block; strong
+  power 15 wins over the far analog block, resolving OQ-6), EXP-014 (torch not a side input,
+  wire is).
+- Analog input interface: `Block.has_analog_output_signal` and
+  `get_analog_output_signal(state, level, pos, direction)`. Cake provides it from block
+  state. A container block (barrel, inventory fill formula with 32-bit float rounding) is
+  the next provider.
 
 ## Related
 

@@ -15,11 +15,11 @@ against the real game.
 
 ## Current status (2026-10-11)
 
-- Milestones 0, 1 and 3 are done. Milestone 4 is in progress: lever, buttons, lamp,
-  torch (with burnout) and wire work; repeater and comparator are next.
-- 59 tests pass. A sandboxed 26.3 server confirms 7 of 7 recorded scenarios tick for tick
-  (lamp, inverter, wire line, AND gate, torch burnout ×2, glass staircase).
-- No user interface yet (M2 is next after the diodes).
+- Milestones 0, 1, 3 and 4 are done for the initial scope: lever, buttons, lamp, torch
+  (with burnout), wire, repeater, comparator and cake work.
+- 72 tests pass. A sandboxed 26.3 server confirms 14 of 14 recorded scenarios tick for
+  tick, including a same-tick repeater priority race and comparator subtract mode.
+- No user interface yet: the editor (M2) is next, then pistons (M5).
 - Work happens on branch `feat/sim-core`; nothing has been pushed.
 
 ## Owner decisions on record

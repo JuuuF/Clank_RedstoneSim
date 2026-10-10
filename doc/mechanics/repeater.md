@@ -1,6 +1,6 @@
 # Repeater
 
-- **Status:** researched (source).
+- **Status:** researched; implemented in `world/blocks/diode.py`; unit-tested; confirmed in game (EXP-008 to EXP-011).
 - **Summary:** A diode with a delay of 2, 4, 6 or 8 game ticks. It turns on and off through
   scheduled ticks with priorities that depend on what it outputs into. Side inputs from
   other diodes lock it.
@@ -64,8 +64,11 @@ L170, `updateNeighborsInFront` L176, `shouldPrioritize` L196.
 
 ## Tests
 
-Planned: `tests/sim/test_repeater.py`: delays 1–4, pulse extension, priority classes,
-locking by a side repeater, lock ignored for wire/torch on the side, placement delay 1.
+- `tests/sim/test_diodes.py`: placement with input turns on after 1 tick (NORMAL), priority
+  per situation (HIGH on, VERY_HIGH off, EXTREMELY_HIGH into a diode), wire/torch beside
+  the repeater do not lock it, wire connects only along the axis.
+- Game: EXP-008 (delays 1–4), EXP-009 (pulse extension 1 → 8 ticks), EXP-010 (lock race
+  decided by priority), EXP-011 (chain).
 
 ## Related
 

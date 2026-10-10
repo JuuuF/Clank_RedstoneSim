@@ -27,20 +27,22 @@ Evidence: **S** = verified by reading the 26.3 source; **T** = covered by a simu
 |---|---|---|---|
 | Q-PROP-GLASS | Glass and glowstone carry components but are not conductors. | S T G | `Blocks.GLASS`/`GLOWSTONE`; EXP-007 |
 | Q-PROP-REDBLOCK | The redstone block is a signal source but not a conductor. | S | `Blocks.REDSTONE_BLOCK`, `PoweredBlock` |
-| Q-POW-TORCH-SIDE | Torches, levers and buttons beside a comparator are not side inputs (only direct signal counts). | S | `SignalGetter.getControlInputSignal` |
-| Q-POW-WIRE-SIDE | Any wire beside a comparator is a side input at full POWER, regardless of its shape. | S | `SignalGetter.getControlInputSignal` |
+| Q-POW-TORCH-SIDE | Torches, levers and buttons beside a comparator are not side inputs (only direct signal counts). | S G | `SignalGetter.getControlInputSignal`; EXP-014 (torch) |
+| Q-POW-WIRE-SIDE | Any wire beside a comparator is a side input at full POWER, regardless of its shape. | S G | `SignalGetter.getControlInputSignal` |
 | Q-WIRE-HASH | Wire power changes update positions in `HashSet<BlockPos>` order (coordinate dependent). | S T | `DefaultRedstoneWireEvaluator.updatePowerStrength`; `test_wire_update_burst_follows_java_hashset_order` (+ JDK oracle) |
 | Q-WIRE-INSTANT | Wire never schedules ticks; it settles within one update cascade. | S G | `RedstoneWireBlock.neighborChanged`; EXP-003 |
 | Q-WIRE-REDUNDANT | A depowering wire line passes through intermediate power levels, each firing a full update burst. | S | `RedstoneWireEvaluator.getIncomingWireSignal` |
 | Q-WIRE-GLASS-UP | Signals climb onto glass/glowstone but never descend from them (one-way staircase). | S T G | `RedstoneWireEvaluator.getIncomingWireSignal`; `test_glass_lets_power_climb_but_not_descend`; EXP-007 |
 | Q-WIRE-INPUT-ANY | A wire's input ignores its connections (a dot still receives); only its output checks them. | S T G | `getIncomingWireSignal`, `RedstoneWireBlock.getSignal`; `test_dot_powers_only_the_block_below`; EXP-005 |
 | Q-WIRE-WEAK | Dust-powered blocks activate components but never power other dust (the `shouldSignal` mute). | S T | `RedstoneWireBlock.getBlockSignal`; `test_wire_powered_block_does_not_power_other_wire` |
-| Q-REP-PRIORITY | Repeater ticks: −3 if outputting into a diode not facing back, −2 when turning off, −1 when turning on. | S | `DiodeBlock.checkTickOnNeighbor`, `shouldPrioritize` |
-| Q-REP-PULSE-EXTEND | Pulses shorter than the delay are extended to the delay. | S | `DiodeBlock.tick` |
-| Q-REP-PLACE-DELAY1 | A repeater placed with input powers on after 1 tick (NORMAL), not after its delay. | S | `DiodeBlock.setPlacedBy` |
-| Q-REP-LOCKED-STALE | The `LOCKED` property is display state; ticking uses the live side input. | S | `DiodeBlock.tick`, `RepeaterBlock.isLocked`/`updateShape` |
-| Q-COMP-DOUBLE-FRONT | A comparator changing POWERED updates its front twice. | S | `ComparatorBlock.refreshOutputState`, `DiodeBlock.onPlace` |
+| Q-REP-PRIORITY | Repeater ticks: −3 if outputting into a diode not facing back, −2 when turning off, −1 when turning on. | S T G | `DiodeBlock.checkTickOnNeighbor`, `shouldPrioritize`; `test_repeater_priorities_by_situation`; EXP-010 |
+| Q-REP-PULSE-EXTEND | Pulses shorter than the delay are extended to the delay. | S G | `DiodeBlock.tick`; EXP-009 |
+| Q-REP-PLACE-DELAY1 | A repeater placed with input powers on after 1 tick (NORMAL), not after its delay. | S T | `DiodeBlock.setPlacedBy`; `test_placed_repeater_with_input_turns_on_after_one_tick` |
+| Q-REP-LOCKED-STALE | The `LOCKED` property is display state; ticking uses the live side input. | S G (LOCKED updates, EXP-010) | `DiodeBlock.tick`, `RepeaterBlock.isLocked`/`updateShape` |
+| Q-COMP-DOUBLE-FRONT | A comparator changing POWERED updates its front twice. | S T | `ComparatorBlock.refreshOutputState`, `DiodeBlock.onPlace`; `test_comparator_power_change_updates_front_twice` |
 | Q-COMP-COMPARE-UPDATES | In compare mode every comparator tick updates the front, even without change. | S | `ComparatorBlock.refreshOutputState` |
+| Q-COMP-THROUGH-15 | A comparator reads an analog block through a conductor only if the conductor's own signal is below 15. | S G | `ComparatorBlock.getInputSignal`; EXP-013 |
+| Q-COMP-SETBLOCK-MODE | Changing a comparator's mode with `/setblock` does not re-evaluate it; only input changes or clicks do. | S G | `SetBlockCommand`, `DiodeBlock.onPlace`; EXP-012 |
 | Q-COMP-OUTPUT-NO-STATE | Output strength lives in the block entity; strength-only changes cause no shape updates. | S | `ComparatorBlock.refreshOutputState` |
 | Q-TORCH-STRONG-UP | Torches strongly power the block above them. | S T G | `RedstoneTorchBlock.getDirectSignal`; EXP-005 |
 | Q-TORCH-BURNOUT-DET | Torch burnout is deterministic (8 turn-offs within 60 ticks, 160-tick re-check). | S T G | `RedstoneTorchBlock.tick`, `isToggledTooFrequently`; EXP-005 |
