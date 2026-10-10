@@ -5,8 +5,10 @@ player in the game (``Action("place" | "break" | "use")``). Inspector edits use
 ``/setblock`` semantics (``Action("setblock")``), as documented in the UI. Edits are only
 possible between ticks, like player input in the game.
 
-Undo/redo stores engine snapshots taken before each edit. Simulation steps are not undoable
-here; rewinding the simulation belongs to the playback history (milestone 6).
+History is one linear timeline (``redsim.sim.timeline``): every step and every edit is
+recorded, and the user can seek to any earlier step. Undo rewinds to just before the most
+recent edit; redo replays forward through the next one. Editing at an earlier point starts
+a new branch (the old future is dropped). Section annotations are not part of the timeline.
 """
 
 from __future__ import annotations
@@ -19,8 +21,9 @@ from redsim.core.pos import Pos
 from redsim.editor.annotations import Sections
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
-from redsim.sim.engine import Action, ActionError, Engine, EngineSnapshot, StepInfo
+from redsim.sim.engine import Action, ActionError, Engine, StepInfo
 from redsim.sim.level import Level
+from redsim.sim.timeline import Timeline
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 
@@ -32,13 +35,6 @@ class EditError(Exception):
 
 
 @dataclass
-class _UndoEntry:
-    snapshot: EngineSnapshot
-    sections: dict[str, Any]
-    label: str
-
-
-@dataclass
 class Document:
     engine: Engine = field(default_factory=Engine)
     sections: Sections = field(default_factory=Sections)
@@ -46,19 +42,28 @@ class Document:
     dirty: bool = False
     revision: int = 0
     extra: dict[str, Any] = field(default_factory=dict)
-    _undo: list[_UndoEntry] = field(default_factory=list)
-    _redo: list[_UndoEntry] = field(default_factory=list)
+    timeline: Timeline | None = None
+    notice: str = ""
+
+    def __post_init__(self) -> None:
+        if self.timeline is None:
+            self.timeline = Timeline(self.engine)
+
+    @property
+    def history(self) -> Timeline:
+        assert self.timeline is not None
+        return self.timeline
 
     # ------------------------------------------------------------------ creation
     @staticmethod
     def new_flat(floor_block: str = "minecraft:smooth_stone") -> Document:
         """A new world with a 32×32 floor at y=0 (placed without updates, like terrain)."""
-        document = Document()
+        engine = Engine()
         state = blocks.parse_state(floor_block)
         for x in range(-FLOOR_HALF_SIZE, FLOOR_HALF_SIZE):
             for z in range(-FLOOR_HALF_SIZE, FLOOR_HALF_SIZE):
-                document.engine.level.blocks[(x, 0, z)] = state
-        return document
+                engine.level.blocks[(x, 0, z)] = state
+        return Document(engine=engine)
 
     @property
     def level(self) -> Level:
@@ -75,13 +80,12 @@ class Document:
     def _apply(self, action: Action, label: str) -> None:
         if not self.can_edit:
             raise EditError("Finish the current tick before editing (edits happen between ticks).")
-        entry = _UndoEntry(self.engine.snapshot(), self.sections.to_json(), label)
+        discarded = self.history.end - self.history.position
         try:
-            self.engine.apply(action)
+            self.history.apply(action)
         except ActionError as exc:
             raise EditError(str(exc)) from exc
-        self._undo.append(entry)
-        self._redo.clear()
+        self.notice = f"Discarded {discarded} recorded later steps." if discarded else ""
         self._changed()
 
     def place(self, pos: Pos, block: Block, request: PlaceRequest) -> None:
@@ -111,35 +115,56 @@ class Document:
 
     # ------------------------------------------------------------------ undo
     def undo(self) -> bool:
-        if not self._undo or not self.can_edit:
+        """Rewind to just before the most recent edit (simulation steps after it go too)."""
+        target = self.history.undo_target()
+        if target is None:
             return False
-        entry = self._undo.pop()
-        self._redo.append(_UndoEntry(self.engine.snapshot(), self.sections.to_json(), entry.label))
-        self.engine.restore(entry.snapshot)
-        self.sections = Sections.from_json(entry.sections)
+        self.history.seek(target)
         self._changed()
         return True
 
     def redo(self) -> bool:
-        if not self._redo or not self.can_edit:
+        """Replay forward through the next recorded edit."""
+        target = self.history.redo_target()
+        if target is None:
             return False
-        entry = self._redo.pop()
-        self._undo.append(_UndoEntry(self.engine.snapshot(), self.sections.to_json(), entry.label))
-        self.engine.restore(entry.snapshot)
-        self.sections = Sections.from_json(entry.sections)
+        self.history.seek(target)
         self._changed()
         return True
 
     # ------------------------------------------------------------------ simulation
     def step(self) -> StepInfo:
-        info = self.engine.step()
+        info = self.history.step()
         self._changed(dirty=True)
         return info
 
     def run_tick(self) -> list[StepInfo]:
-        steps = self.engine.run_tick()
+        steps = self.history.run_tick() if self.can_edit else self.history.finish_tick()
         self._changed(dirty=True)
         return steps
+
+    def run_ticks(self, count: int) -> None:
+        for _ in range(count):
+            self.history.run_tick()
+        self._changed(dirty=True)
+
+    def step_back(self) -> bool:
+        if not self.history.can_step_back():
+            return False
+        self.history.step_back()
+        self._changed()
+        return True
+
+    def tick_back(self) -> bool:
+        if not self.history.can_step_back():
+            return False
+        self.history.tick_back()
+        self._changed()
+        return True
+
+    def seek(self, step_index: int) -> None:
+        self.history.seek(step_index)
+        self._changed()
 
     # ------------------------------------------------------------------ files
     def save(self, path: Path | None = None) -> None:

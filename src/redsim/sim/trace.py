@@ -58,12 +58,23 @@ class TraceRecord:
         return f"{self.kind}{where} {d}"
 
 
+#: Records kept in memory; older ones are dropped (ids stay stable through ``base_id``).
+MAX_RECORDS = 200_000
+KEEP_AFTER_TRIM = 150_000
+
+
 class Trace:
-    """Append-only record list with a cause stack."""
+    """Append-only record list with a cause stack.
+
+    Record ids are global: ``records[i]`` has id ``base_id + i``. When the list exceeds
+    ``MAX_RECORDS`` the oldest records are dropped and ``base_id`` advances, so ids (and
+    parent links to records still kept) remain valid.
+    """
 
     def __init__(self, enabled: bool = True) -> None:
         self.enabled = enabled
         self.records: list[TraceRecord] = []
+        self.base_id = 0
         self._cause: list[int | None] = []
         self.game_time = 0
         self.step = 0
@@ -83,7 +94,9 @@ class Trace:
         """Append a record. ``parent=True`` means "the current cause"."""
         if not self.enabled:
             return None
-        record_id = len(self.records)
+        if len(self.records) >= MAX_RECORDS:
+            self._trim()
+        record_id = self.base_id + len(self.records)
         actual_parent = self.current_cause if parent is True else parent
         self.records.append(
             TraceRecord(
@@ -98,6 +111,30 @@ class Trace:
         )
         return record_id
 
+    def _trim(self) -> None:
+        dropped = len(self.records) - KEEP_AFTER_TRIM
+        del self.records[:dropped]
+        self.base_id += dropped
+
+    def get(self, record_id: int | None) -> TraceRecord | None:
+        if record_id is None:
+            return None
+        index = record_id - self.base_id
+        return self.records[index] if 0 <= index < len(self.records) else None
+
+    def after(self, record_id: int) -> list[TraceRecord]:
+        """Records emitted after ``record_id`` (kept ones only)."""
+        return self.records[max(0, record_id - self.base_id + 1) :]
+
+    def truncate_from_step(self, step: int) -> None:
+        """Drop the records of engine steps ``>= step`` (used when rewinding)."""
+        cut = len(self.records)
+        for i, record in enumerate(self.records):
+            if record.step >= step:
+                cut = i
+                break
+        del self.records[cut:]
+
     def push(self, record_id: int | None) -> None:
         self._cause.append(record_id)
 
@@ -105,6 +142,7 @@ class Trace:
         self._cause.pop()
 
     def clear(self) -> None:
+        self.base_id += len(self.records)
         self.records.clear()
         self._cause.clear()
 

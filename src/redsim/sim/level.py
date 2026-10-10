@@ -329,8 +329,9 @@ class Level:
         self.trace.push(record)
         try:
             new_state = current.update_shape(self, pos, direction, neighbor_pos, neighbor_state)
-            if record is not None:
-                self.trace.records[record].detail["changed"] = new_state is not current
+            emitted = self.trace.get(record)
+            if emitted is not None:
+                emitted.detail["changed"] = new_state is not current
             self.update_or_destroy(current, new_state, pos, flags, limit)
         finally:
             self.trace.pop()
