@@ -30,7 +30,7 @@ class Phase(Enum):
     BLOCK_ENTITIES = "block entities"
 
 
-ActionKind = Literal["place", "break", "use", "setblock", "set_block"]
+ActionKind = Literal["place", "break", "use", "setblock", "set_block", "fill", "clone"]
 
 
 @dataclass(frozen=True)
@@ -41,20 +41,33 @@ class Action:
       ``ServerPlayerGameMode.destroyBlock``, ``useWithoutItem``).
     * ``setblock``: the ``/setblock`` command in replace mode (``SetBlockCommand.setBlock``).
     * ``set_block``: a raw ``Level.setBlock`` with explicit flags (editor tool, not vanilla).
+    * ``fill``: ``/fill <pos> <payload["to"]> <state>`` in replace mode (``FillCommand``).
+    * ``clone``: place a captured region at ``pos`` like ``/clone`` (replace mode, not strict)
+      would place it (``CloneCommands.clone``); ``payload`` holds the blocks (see
+      ``redsim.editor.clipboard``). Scheduled ticks are not copied.
     """
 
     kind: ActionKind
     pos: Pos
     state: str | None = None
     flags: int = UpdateFlags.ALL
+    payload: Any = None  # JSON-compatible data for fill/clone
 
     def to_json(self) -> dict[str, Any]:
-        return {"kind": self.kind, "pos": list(self.pos), "state": self.state, "flags": self.flags}
+        return {
+            "kind": self.kind,
+            "pos": list(self.pos),
+            "state": self.state,
+            "flags": self.flags,
+            "payload": self.payload,
+        }
 
     @staticmethod
     def from_json(data: dict[str, Any]) -> Action:
         x, y, z = data["pos"]
-        return Action(data["kind"], (x, y, z), data.get("state"), data.get("flags", 3))
+        return Action(
+            data["kind"], (x, y, z), data.get("state"), data.get("flags", 3), data.get("payload")
+        )
 
 
 @dataclass
@@ -253,6 +266,12 @@ class Engine:
                 assert action.state is not None
                 if not self._setblock_command(action.pos, action.state):
                     info.detail["info"] = "setblock: no change"
+            elif action.kind == "fill":
+                assert action.state is not None
+                tx, ty, tz = action.payload["to"]
+                self._fill_command(action.pos, (tx, ty, tz), action.state)
+            elif action.kind == "clone":
+                self._clone_command(action.pos, action.payload)
             elif action.kind == "set_block":
                 assert action.state is not None
                 level.set_block(action.pos, parse_state(action.state), action.flags)
@@ -299,6 +318,78 @@ class Engine:
             return False  # "Could not set the block": no neighbor updates either
         level.update_neighbours_on_block_set(pos, old_state)
         return True
+
+    def _fill_command(self, corner_a: Pos, corner_b: Pos, text: str) -> None:
+        """``FillCommand.fillBlocks`` (replace mode, not strict): place every position like
+        ``/setblock`` (x fastest, then y, then z), then ``updateNeighboursOnBlockSet`` for all
+        changed positions in the same order."""
+        from redsim.world.blocks import parse_state_explicit
+
+        level = self.level
+        state, explicit = parse_state_explicit(text)
+        (x0, x1), (y0, y1), (z0, z1) = (sorted(p) for p in zip(corner_a, corner_b, strict=True))
+        updated: list[tuple[Pos, BlockState]] = []
+        for z in range(z0, z1 + 1):
+            for y in range(y0, y1 + 1):
+                for x in range(x0, x1 + 1):
+                    pos = (x, y, z)
+                    old_state = level.get_block_state(pos)
+                    if self._block_input_place(pos, state, explicit):
+                        updated.append((pos, old_state))
+        for pos, old_state in updated:
+            level.update_neighbours_on_block_set(pos, old_state)
+
+    def _block_input_place(self, pos: Pos, state: BlockState, explicit: list[Any]) -> bool:
+        """``BlockInput.place`` with flags 2|256 (shape-adjusted, explicit props kept)."""
+        level = self.level
+        placed = level.update_from_neighbour_shapes(state, pos)
+        if placed.is_air:
+            placed = state
+        if placed is not state:
+            for prop in explicit:
+                placed = placed.with_(prop, state.get(prop))
+        flags = UpdateFlags.CLIENTS | UpdateFlags.SKIP_BLOCK_ENTITY_SIDEEFFECTS
+        return level.set_block(pos, placed, flags)
+
+    def _clone_command(self, destination: Pos, payload: dict[str, Any]) -> None:
+        """Placement half of ``CloneCommands.clone`` (replace mode, not strict).
+
+        ``payload["blocks"]`` lists ``[dx, dy, dz, state, block_entity_data | None]`` in source
+        iteration order (z outer, then y, then x). Blocks are grouped like the command does:
+        solid (full collision), then blocks with block entities, then the rest; barriers are
+        placed first (flags 818) in reverse order; then every block is set with flags 2;
+        block-entity data is loaded (``setChanged``); finally ``updateNeighboursOnBlockSet``
+        runs for all positions in reverse order with the state found before the clone.
+        """
+        from redsim.world import blocks
+
+        level = self.level
+        solid, entities, other = [], [], []
+        for dx, dy, dz, text, entity_data in payload["blocks"]:
+            pos = (destination[0] + dx, destination[1] + dy, destination[2] + dz)
+            state = blocks.parse_state(text)
+            info = (pos, state, entity_data, level.get_block_state(pos))
+            if state.has_block_entity:
+                entities.append(info)
+            elif not state.is_collision_shape_full_block():
+                other.append(info)
+            else:
+                solid.append(info)
+        ordered = solid + entities + other
+        barrier = blocks.BARRIER.default_state
+        for pos, _, _, _ in reversed(ordered):
+            level.set_block(pos, barrier, 818)
+        for pos, state, _, _ in ordered:
+            level.set_block(pos, state, UpdateFlags.CLIENTS)
+        for pos, state, entity_data, _ in entities:
+            entity = level.get_block_entity(pos)
+            if entity_data is not None and entity is not None:
+                entity.load_json(entity_data)
+                if not state.is_air:  # BlockEntity.setChanged
+                    level.update_neighbour_for_output_signal(pos, state.block)
+            level.set_block(pos, state, UpdateFlags.CLIENTS)
+        for pos, _, _, previous in reversed(ordered):
+            level.update_neighbours_on_block_set(pos, previous)
 
     def _break(self, pos: Pos) -> None:
         """``ServerPlayerGameMode.destroyBlock`` (L286)."""

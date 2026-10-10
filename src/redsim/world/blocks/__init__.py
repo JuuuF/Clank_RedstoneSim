@@ -78,6 +78,10 @@ GLASS = register(non_conductor("minecraft:glass", destroy_speed=0.3))
 GLOWSTONE = register(non_conductor("minecraft:glowstone", destroy_speed=0.3))
 OBSIDIAN = register(immovable("minecraft:obsidian", destroy_speed=50.0))
 BEDROCK = register(SimpleBlock("minecraft:bedrock", destroy_speed=-1.0))
+#: Used by /clone as a placeholder (``CloneCommands``); invisible in game.
+BARRIER = register(
+    SimpleBlock("minecraft:barrier", destroy_speed=-1.0, push_reaction=PushReaction.IMMOVEABLE)
+)
 SLIME_BLOCK = register(full_cube("minecraft:slime_block", destroy_speed=0.0))
 HONEY_BLOCK = register(HoneyBlock())
 SMOOTH_STONE_SLAB = register(SlabBlock("minecraft:smooth_stone_slab"))
@@ -101,6 +105,7 @@ MOVING_PISTON = register(MovingPistonBlock())
 
 __all__ = [
     "AIR",
+    "BARRIER",
     "BEDROCK",
     "CAKE",
     "COMPARATOR",
