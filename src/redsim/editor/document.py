@@ -19,6 +19,8 @@ from typing import Any
 
 from redsim.core.pos import Pos
 from redsim.editor.annotations import Sections
+from redsim.editor.clipboard import Prefab, Region
+from redsim.editor.groups import Groups
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
 from redsim.sim.engine import Action, ActionError, Engine, StepInfo
@@ -44,6 +46,9 @@ class Document:
     extra: dict[str, Any] = field(default_factory=dict)
     timeline: Timeline | None = None
     notice: str = ""
+    groups: Groups = field(default_factory=Groups)
+    prefabs: dict[str, Prefab] = field(default_factory=dict)
+    clipboard: Prefab | None = None
 
     def __post_init__(self) -> None:
         if self.timeline is None:
@@ -103,6 +108,34 @@ class Document:
     def setblock(self, pos: Pos, state: BlockState) -> None:
         """Inspector edit: ``/setblock`` semantics (shape-adjusted state, neighbor updates)."""
         self._apply(Action("setblock", pos, repr(state)), f"set {state.block.name}")
+
+    # ------------------------------------------------------------------ regions
+    def copy(self, region: Region) -> Prefab:
+        """Capture a region into the clipboard (air included, block-entity data kept)."""
+        self.clipboard = Prefab.capture(self.engine.level, region)
+        return self.clipboard
+
+    def paste(self, origin: Pos, prefab: Prefab | None = None) -> None:
+        """Place a prefab with ``/clone`` semantics, its minimum corner at ``origin``."""
+        source = prefab or self.clipboard
+        if source is None:
+            raise EditError("The clipboard is empty.")
+        self._apply(Action("clone", origin, payload=source.payload()), f"paste {source.name}")
+
+    def rotate_clipboard(self, quarter_turns: int = 1) -> None:
+        if self.clipboard is not None:
+            self.clipboard = self.clipboard.rotated(quarter_turns)
+
+    def fill(self, region: Region, state: BlockState) -> None:
+        """``/fill`` in replace mode (used to delete a region with air)."""
+        action = Action("fill", region.low, repr(state), payload={"to": list(region.high)})
+        self._apply(action, f"fill {state.block.name}")
+
+    def save_prefab(self, name: str, region: Region) -> Prefab:
+        prefab = Prefab.capture(self.engine.level, region, name)
+        self.prefabs[name] = prefab
+        self._changed()
+        return prefab
 
     def assign_section(self, pos: Pos, name: str | None) -> None:
         self.sections.assign(pos, name)
@@ -173,6 +206,8 @@ class Document:
             raise EditError("No file name given.")
         extra = dict(self.extra)
         extra["sections"] = self.sections.to_json()
+        extra["groups"] = self.groups.to_json()
+        extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
         save_io.save(target, self.engine, extra)
         self.path = target
         self.dirty = False
@@ -180,10 +215,18 @@ class Document:
     @staticmethod
     def open(path: Path) -> Document:
         engine, extra = save_io.load(path)
-        sections = (
-            Sections.from_json(extra.pop("sections", {})) if "sections" in extra else Sections()
+        raw_sections = extra.pop("sections", None)
+        sections = Sections.from_json(raw_sections) if raw_sections is not None else Sections()
+        groups = Groups.from_json(extra.pop("groups", []))
+        prefabs = {name: Prefab.from_json(data) for name, data in extra.pop("prefabs", {}).items()}
+        return Document(
+            engine=engine,
+            sections=sections,
+            path=path,
+            extra=extra,
+            groups=groups,
+            prefabs=prefabs,
         )
-        return Document(engine=engine, sections=sections, path=path, extra=extra)
 
     def _changed(self, dirty: bool = True) -> None:
         self.revision += 1
