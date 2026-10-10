@@ -55,6 +55,15 @@ class Shape:
     def __or__(self, other: Shape) -> Shape:
         return self.union(other)
 
+    def offset(self, dx: int, dy: int, dz: int) -> Shape:
+        """``VoxelShape.move`` by whole pixels; the part leaving the unit cube is clipped."""
+        grid = np.zeros_like(self._grid)
+        src = [slice(max(0, -d), N - max(0, d)) for d in (dx, dy, dz)]
+        dst = [slice(max(0, d), N - max(0, -d)) for d in (dx, dy, dz)]
+        if all(s.start < s.stop for s in src):
+            grid[dst[0], dst[1], dst[2]] = self._grid[src[0], src[1], src[2]]
+        return Shape(grid)
+
     def is_empty(self) -> bool:
         return not bool(self._grid.any())
 

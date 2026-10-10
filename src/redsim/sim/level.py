@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     from redsim.world.block_entity import BlockEntity
 
 WORLD_HORIZONTAL_LIMIT = 30_000_000
+#: Default world border half-size (``WorldBorder.absoluteMaxSize``).
+WORLD_BORDER = 29_999_984
 
 BlockEventKey = tuple[Pos, str, int, int]
 
@@ -122,6 +124,10 @@ class Level:
             and -WORLD_HORIZONTAL_LIMIT <= x < WORLD_HORIZONTAL_LIMIT
             and -WORLD_HORIZONTAL_LIMIT <= z < WORLD_HORIZONTAL_LIMIT
         )
+
+    def is_within_world_border(self, pos: Pos) -> bool:
+        """``WorldBorder.isWithinBounds`` for the default, centered border."""
+        return -WORLD_BORDER <= pos[0] < WORLD_BORDER and -WORLD_BORDER <= pos[2] < WORLD_BORDER
 
     def get_block_state(self, pos: Pos) -> BlockState:
         return self.blocks.get(pos, self.air)

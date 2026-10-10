@@ -151,6 +151,11 @@ class BlockState:
     def is_face_sturdy(
         self, level: Level, pos: Pos, direction: Direction, support: SupportType = SupportType.FULL
     ) -> bool:
+        if self.block.dynamic_shape:
+            # No shape cache for dynamic shapes (BlockStateBase.initCache L510): the support
+            # shape is computed with the real level, e.g. from a moving piston's entity.
+            shape = self.block.get_dynamic_support_shape(self, level, pos)
+            return shape.is_face_sturdy(direction, support)
         return self.get_block_support_shape().is_face_sturdy(direction, support)
 
     def is_redstone_conductor(self, level: Level, pos: Pos) -> bool:
@@ -313,6 +318,12 @@ class Block:
     is_diode: bool = False
     #: ``Properties.forceSolidOn/Off``; None means "derived from the collision shape".
     force_solid: bool | None = None
+    #: ``Properties.dynamicShape``: support/collision depend on the level (no cache).
+    dynamic_shape: bool = False
+
+    def get_dynamic_support_shape(self, state: BlockState, level: Level, pos: Pos) -> Shape:
+        """Support shape of a ``dynamic_shape`` block, evaluated in the level."""
+        return state.get_block_support_shape()
 
     def new_block_entity(self, pos: Pos, state: BlockState) -> BlockEntity | None:
         return None
