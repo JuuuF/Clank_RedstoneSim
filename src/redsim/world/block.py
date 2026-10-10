@@ -156,6 +156,18 @@ class BlockState:
     def is_redstone_conductor(self, level: Level, pos: Pos) -> bool:
         return self.block.is_redstone_conductor(self, level, pos)
 
+    def is_solid(self) -> bool:
+        """``BlockStateBase.isSolid`` (``calculateSolid``, BlockBehaviour.java L483)."""
+        forced = self.block.force_solid
+        if forced is not None:
+            return forced
+        shape = self.get_collision_shape()
+        if shape.is_empty():
+            return False
+        x0, y0, z0, x1, y1, z1 = shape.bounds()
+        size = ((x1 - x0) + (y1 - y0) + (z1 - z0)) / 3 / 16
+        return size >= 0.7291666666666666 or (y1 - y0) >= 16
+
     def get_piston_push_reaction(self) -> PushReaction:
         return self.block.push_reaction
 
@@ -299,6 +311,8 @@ class Block:
     is_rail: bool = False
     #: ``DiodeBlock.isDiode`` (repeaters and comparators).
     is_diode: bool = False
+    #: ``Properties.forceSolidOn/Off``; None means "derived from the collision shape".
+    force_solid: bool | None = None
 
     def new_block_entity(self, pos: Pos, state: BlockState) -> BlockEntity | None:
         return None

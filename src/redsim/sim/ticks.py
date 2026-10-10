@@ -21,21 +21,11 @@ from __future__ import annotations
 import heapq
 from collections import deque
 from dataclasses import dataclass
-from enum import IntEnum
 
 from redsim.core.pos import Pos
+from redsim.world.tick_priority import TickPriority
 
-
-class TickPriority(IntEnum):
-    """``net/minecraft/world/ticks/TickPriority.java`` (lower runs first)."""
-
-    EXTREMELY_HIGH = -3
-    VERY_HIGH = -2
-    HIGH = -1
-    NORMAL = 0
-    LOW = 1
-    VERY_LOW = 2
-    EXTREMELY_LOW = 3
+__all__ = ["LevelTicks", "ScheduledTick", "TickPriority"]
 
 
 @dataclass(frozen=True, slots=True)

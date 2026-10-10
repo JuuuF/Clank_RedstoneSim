@@ -62,6 +62,14 @@ class Shape:
         """``Block.isShapeFullBlock``."""
         return bool(self._grid.all())
 
+    def bounds(self) -> tuple[int, int, int, int, int, int]:
+        """Bounding box in pixels ``(x0, y0, z0, x1, y1, z1)`` (``VoxelShape.bounds``)."""
+        xs, ys, zs = np.nonzero(self._grid)
+        return (
+            int(xs.min()), int(ys.min()), int(zs.min()),
+            int(xs.max()) + 1, int(ys.max()) + 1, int(zs.max()) + 1,
+        )  # fmt: skip
+
     def face_slice(self, direction: Direction) -> Grid:
         """The 2D slice of voxels touching ``direction``'s face (``getFaceShape``)."""
         axis = {Axis.X: 0, Axis.Y: 1, Axis.Z: 2}[direction.axis]
