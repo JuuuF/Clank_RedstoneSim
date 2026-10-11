@@ -39,6 +39,22 @@ drag to move, Ctrl+drag to copy, paste preview (ADR-019), and the hot-swappable 
 source backed by barrel, lectern or cake (ADR-020). Open: rotate/flip in place,
 stack/repeat.
 
+## Second round of feedback (2026-10-11, after trying selections and sources)
+
+| Topic | Request |
+|---|---|
+| Hotkeys | A panel giving a good overview of what can be done and how to navigate. |
+| Selection handles | Face dragging works well, but the handle looked like a block outline (same size and shape). Make it a distinct handle. |
+| Selection outline | Thicker, clearly different from the section/group outlines around components (which were unexplained). Visible through blocks. |
+| Bottom face | Selections starting at the ground: the lower face could not be grabbed again. |
+| Paste | Follow the camera height, not the surface under the cursor, like the Trackmania map editor, so selections can go into the air or inside blocks. |
+| Cloning | Editor cloning must not cause block updates (budded components must stay budded): it is an editor operation, not a game action. |
+| Build preview | Show the block about to be placed as a translucent preview. |
+| Info overlay | Hotkey-toggled debug view showing signal strengths on blocks (sources read by comparators, dust power), like Blender's overlay toggles. |
+| X-ray | A Blender-like X-ray toggle. |
+| Inspector | Apply edits immediately (no Set/Apply button); facing as arrow buttons; booleans as toggle buttons. |
+| Selection tools | Rotate and flip are essential (blocks inside must turn too); stack/repeat wanted. |
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,
