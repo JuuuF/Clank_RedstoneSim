@@ -3,8 +3,11 @@
 The editor's input design follows the owner's decisions in [[ui-direction]]. Every binding
 below is a default and can be changed in the keymap file (see "Rebinding").
 Code: `src/redsim/ui/keymap.py` (actions and defaults), `src/redsim/ui/viewport.py` (mouse,
-camera, modes), `src/redsim/ui/main_window.py` (menu shortcuts). The **Help → Controls**
-panel is generated from the active keymap, so it always shows the real bindings.
+camera, modes), `src/redsim/ui/main_window.py` (menu shortcuts). The **Hotkeys** panel
+(F1; right side, next to the Inspector) is generated from the active keymap, so it always
+shows the real bindings: grouped by what you are doing (getting around, modes, each mode's
+clicks, simulation, view, editing), searchable, with the current mode's section
+highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 
 ## Modes (vim-like)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QInputDialog,
     QLabel,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPlainTextEdit,
@@ -23,6 +25,7 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -32,7 +35,7 @@ from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
-from redsim.ui.keymap import Keymap
+from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 from redsim.world.properties import Property
@@ -632,31 +635,87 @@ class SectionsPanel(QWidget):
             self.refresh()
 
 
-def controls_help_html(keymap: Keymap) -> str:
-    """The controls, generated from the keymap (Settings → Edit keymap file to rebind)."""
-    from redsim.ui.keymap import ACTIONS, CATEGORIES
-
-    rows: list[str] = []
-    current = ""
-    for spec in ACTIONS:
-        category = CATEGORIES[spec.id.split(".")[0]]
-        if category != current:
-            current = category
-            rows.append(f"<br><b>{category}</b><br>")
-        rows.append(f"{keymap.describe(spec.id)}: {spec.title}<br>")
-    rows.append(
-        "<br>Edits are only possible between ticks, like player actions in the game. Editing "
-        "after a rewind discards the recorded future."
-    )
-    return "".join(rows)
+MODE_TINTS = {"normal": "#c9d8ee", "build": "#cfe8d0", "select": "#f3dcc0"}
 
 
-def controls_help(keymap: Keymap) -> QLabel:
-    label = QLabel(controls_help_html(keymap))
-    label.setWordWrap(True)
-    label.setAlignment(Qt.AlignmentFlag.AlignTop)
-    label.setMargin(8)
-    return label
+def keycaps(bindings: tuple[str, ...]) -> str:
+    """Rich text with each key drawn as a keycap; alternatives separated by "or"."""
+    if not bindings:
+        return "<i>unbound</i>"
+    cap = '<span style="background-color:#dedede; color:#111;">&nbsp;{}&nbsp;</span>'
+    shown = []
+    for binding in bindings:
+        *mods, last = binding.split("+")
+        parts = [cap.format(html.escape(part)) for part in (*mods, last)]
+        shown.append("+".join(parts))
+    return " or ".join(shown)
+
+
+class HotkeysPanel(QWidget):
+    """Every binding of the active keymap, grouped by what you are doing, searchable; the
+    section of the current mode is highlighted. Generated from ``redsim.ui.keymap``."""
+
+    def __init__(self, keymap: Keymap) -> None:
+        super().__init__()
+        layout = QVBoxLayout(self)
+        self.search = QLineEdit()
+        self.search.setPlaceholderText("Filter, e.g. rotate, paste or Ctrl")
+        self.search.setClearButtonEnabled(True)
+        self.search.textChanged.connect(lambda _text: self._render())
+        layout.addWidget(self.search)
+        self.view = QTextBrowser()
+        self.view.setOpenLinks(False)
+        layout.addWidget(self.view)
+        self._mode = "normal"
+        self._sections: list[tuple[str, str | None, list[tuple[str, tuple[str, ...]]]]] = []
+        self.set_keymap(keymap)
+
+    def set_keymap(self, keymap: Keymap) -> None:
+        self._sections = hotkey_sections(keymap)
+        self._render()
+
+    def set_mode(self, mode: str) -> None:
+        self._mode = mode
+        self._render()
+
+    def visible_rows(self) -> list[tuple[str, str]]:
+        """(section, action) pairs that pass the filter."""
+        needle = self.search.text().strip().lower()
+        rows = []
+        for title, _, entries in self._sections:
+            for action, bindings in entries:
+                haystack = f"{title} {action} {' '.join(bindings)}".lower()
+                if not needle or needle in haystack:
+                    rows.append((title, action))
+        return rows
+
+    def _render(self) -> None:
+        shown = set(self.visible_rows())
+        mode = self._mode
+        parts = [
+            f"<p>You are in <b>{mode.upper()}</b> mode (Esc / B / V switch); its section is "
+            "highlighted.</p>"
+        ]
+        for title, section_mode, entries in self._sections:
+            rows = [(a, b) for a, b in entries if (title, a) in shown]
+            if not rows:
+                continue
+            tint = MODE_TINTS.get(mode) if section_mode == mode else "#e9e9e9"
+            parts.append('<table width="100%" cellspacing="0" cellpadding="3">')
+            parts.append(
+                f'<tr><td style="background-color:{tint};"><b>{html.escape(title)}</b></td></tr>'
+            )
+            for action, bindings in rows:  # stacked, so it reads well in a narrow panel
+                parts.append(
+                    f"<tr><td>{html.escape(action)}<br>"
+                    f"&nbsp;&nbsp;&nbsp;&nbsp;{keycaps(bindings)}</td></tr>"
+                )
+            parts.append("</table><br>")
+        parts.append(
+            "<p><small>Rebind anything: Settings → Edit keymap file, then Reload keymap."
+            "</small></p>"
+        )
+        self.view.setHtml("".join(parts))
 
 
 class ContraptionsPanel(QTabWidget):

@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMessageBox,
-    QScrollArea,
     QWidget,
 )
 
@@ -34,12 +33,11 @@ from redsim.ui.panels import (
     HOTBAR,
     ContraptionsPanel,
     DiagnosticsPanel,
+    HotkeysPanel,
     InspectorPanel,
     PalettePanel,
     SectionsPanel,
     SimulationPanel,
-    controls_help,
-    controls_help_html,
 )
 from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
 from redsim.world import blocks
@@ -72,12 +70,7 @@ class MainWindow(QMainWindow):
         left = Qt.DockWidgetArea.LeftDockWidgetArea
         right = Qt.DockWidgetArea.RightDockWidgetArea
         blocks_dock = self._dock("Blocks", self.block_palette, left)
-        self.help_label = controls_help(self.keymap)
-        help_scroll = QScrollArea()  # the generated list is long: never let it size the window
-        help_scroll.setWidget(self.help_label)
-        help_scroll.setWidgetResizable(True)
-        self.help_dock = self._dock("Controls", help_scroll, left)
-        self.tabifyDockWidget(blocks_dock, self.help_dock)
+        self.hotkeys = HotkeysPanel(self.keymap)
         blocks_dock.raise_()
         simulation_dock = self._dock("Simulation", self.simulation, right)
         inspector_dock = self._dock("Inspector", self.inspector, right)
@@ -86,6 +79,8 @@ class MainWindow(QMainWindow):
         self.contraptions = ContraptionsPanel()
         contraptions_dock = self._dock("Contraptions", self.contraptions, right)
         self.tabifyDockWidget(sections_dock, contraptions_dock)
+        self.help_dock = self._dock("Hotkeys", self.hotkeys, right)
+        self.tabifyDockWidget(contraptions_dock, self.help_dock)
         inspector_dock.raise_()
         self.diagnostics_dock = self._dock(
             "Diagnostics", self.diagnostics, Qt.DockWidgetArea.BottomDockWidgetArea
@@ -136,6 +131,7 @@ class MainWindow(QMainWindow):
         self.viewport.region_stack_requested.connect(self._stack_region)
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
+        self.viewport.mode_changed.connect(self.hotkeys.set_mode)
         self.inspector.apply_requested.connect(self._apply_state)
         self.inspector.source_requested.connect(self._set_source)
         self.inspector.page_requested.connect(self._turn_page)
@@ -334,7 +330,7 @@ class MainWindow(QMainWindow):
         for keymap_id in self._actions:
             self._apply_shortcuts(keymap_id)
         self.viewport.set_keymap(keymap)
-        self.help_label.setText(controls_help_html(keymap))
+        self.hotkeys.set_keymap(keymap)
 
     # ------------------------------------------------------------------ refresh
     def _changed(self, running: bool = False) -> None:

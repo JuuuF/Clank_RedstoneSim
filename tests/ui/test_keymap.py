@@ -91,3 +91,14 @@ def test_written_defaults_round_trip(tmp_path: Path) -> None:
     keymap = Keymap.load(path)
     assert keymap.warnings == []
     assert all(keymap.bindings(a) == spec.defaults for a, spec in SPECS.items())
+
+
+def test_hotkey_sections_cover_every_action() -> None:
+    from redsim.ui.keymap import ACTIONS, hotkey_sections
+
+    sections = hotkey_sections(Keymap())
+    titles = {title for _, _, rows in sections for title, _ in rows}
+    assert {spec.title for spec in ACTIONS} <= titles
+    assert all(title != "Other" for title, _, _ in sections)  # everything has a home
+    modes = {mode for _, mode, _ in sections if mode}
+    assert modes == {"normal", "build", "select"}

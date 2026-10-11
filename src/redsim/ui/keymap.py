@@ -116,22 +116,6 @@ ACTIONS: tuple[ActionSpec, ...] = (
 )
 SPECS: dict[str, ActionSpec] = {spec.id: spec for spec in ACTIONS}
 
-#: Section titles of the controls help, by action id prefix.
-CATEGORIES = {
-    "mode": "Modes",
-    "camera": "Camera",
-    "pick": "Any mode",
-    "normal": "Normal mode",
-    "build": "Build mode",
-    "select": "Select mode",
-    "sim": "Simulation",
-    "edit": "Editing",
-    "file": "File",
-    "view": "View",
-    "help": "Help",
-    "hotbar": "Hotbar",
-}
-
 
 @dataclass(frozen=True)
 class MouseBinding:
@@ -295,3 +279,94 @@ class Keymap:
                     problems.append(f"{binding!r} is bound to both {other} and {action}")
                 seen[(context, key)] = action
         return problems
+
+
+#: The hotkeys panel's sections: (title, mode it belongs to or None, action ids).
+HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
+    (
+        "Getting around",
+        None,
+        (
+            "camera.orbit",
+            "camera.pan",
+            "camera.zoom",
+            "camera.vertical",
+            "camera.forward",
+            "camera.back",
+            "camera.left",
+            "camera.right",
+            "camera.up",
+            "camera.down",
+            "camera.focus",
+        ),
+    ),
+    ("Modes", None, ("mode.normal", "mode.build", "mode.select")),
+    ("NORMAL mode: inspect and use", "normal", ("normal.inspect", "normal.use", "pick")),
+    (
+        "BUILD mode: place and break",
+        "build",
+        (
+            "build.place",
+            "build.break",
+            "build.use",
+            "pick",
+            "edit.rotate_block",
+            "edit.rotate_block_back",
+        ),
+    ),
+    (
+        "SELECT mode: boxes and copies",
+        "select",
+        (
+            "select.block",
+            "select.extend",
+            "select.box",
+            "select.copy_drag",
+            "select.stack",
+            "edit.rotate",
+            "edit.rotate_back",
+            "edit.flip",
+            "edit.flip_depth",
+            "edit.copy",
+            "edit.paste",
+            "edit.delete",
+        ),
+    ),
+    (
+        "Simulation",
+        None,
+        ("sim.run", "sim.tick", "sim.event", "sim.tick_back", "sim.step_back"),
+    ),
+    ("View", None, ("view.info", "view.xray")),
+    (
+        "Edit and file",
+        None,
+        (
+            "edit.undo",
+            "edit.redo",
+            "file.new",
+            "file.open",
+            "file.save",
+            "file.save_as",
+            "file.quit",
+            "help.controls",
+        ),
+    ),
+    ("Hotbar", None, tuple(f"hotbar.{slot}" for slot in range(1, 10))),
+)
+
+
+def hotkey_sections(
+    keymap: Keymap,
+) -> list[tuple[str, str | None, list[tuple[str, tuple[str, ...]]]]]:
+    """Sections for the hotkeys panel: (title, mode, [(action title, bindings)]). Actions
+    not placed in ``HOTKEY_GROUPS`` end up under "Other", so new ones are never hidden."""
+    placed = {action for _, _, actions in HOTKEY_GROUPS for action in actions}
+    sections = [
+        (title, mode, [(SPECS[a].title, keymap.bindings(a)) for a in actions])
+        for title, mode, actions in HOTKEY_GROUPS
+    ]
+    rest = [(spec.title, keymap.bindings(spec.id)) for spec in ACTIONS if spec.id not in placed]
+    if rest:
+        sections.append(("Other", None, rest))
+    return sections

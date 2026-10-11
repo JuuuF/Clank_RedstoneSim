@@ -211,3 +211,20 @@ def test_inspector_controls_apply_immediately(app: object) -> None:
     assert document.state_at((2, 1, 0)).has(FACING) is False
     window.document.dirty = False
     window.close()
+
+
+def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    panel = window.hotkeys
+    assert ("SELECT mode: boxes and copies", "Drag a copy of the box (from inside it)") in set(
+        panel.visible_rows()
+    )
+    panel.search.setText("rotate")
+    rows = panel.visible_rows()
+    assert rows and all("otate" in action or "otate" in section for section, action in rows)
+    window.viewport.set_mode("build")
+    assert "You are in BUILD mode" in panel.view.toPlainText()
+    window.document.dirty = False
+    window.close()
