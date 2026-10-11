@@ -62,8 +62,13 @@ BITES = integer("bites", 0, 6)
 OPEN = boolean("open")
 SNOWY = boolean("snowy")
 HAS_BOOK = boolean("has_book")
+ENABLED = boolean("enabled")
 #: ``BlockStateProperties.FACING`` (L53) declares N, E, S, W, U, D (not ordinal order).
 FACING = Property("facing", (*HORIZONTAL, Direction.UP, Direction.DOWN))
+#: ``BlockStateProperties.FACING_HOPPER`` (L56): every direction but up, in ordinal order.
+FACING_HOPPER = Property(
+    "facing", (Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST)
+)
 HORIZONTAL_FACING = Property("facing", HORIZONTAL)  # HorizontalDirectionalBlock: N, E, S, W
 ATTACH_FACE = Property("face", ("floor", "wall", "ceiling"))
 MODE_COMPARATOR = Property("mode", ("compare", "subtract"))

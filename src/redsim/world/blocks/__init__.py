@@ -12,6 +12,7 @@ from redsim.world.blocks.cake import CakeBlock
 from redsim.world.blocks.comparator import ComparatorBlock
 from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.diode import RepeaterBlock
+from redsim.world.blocks.hopper import HopperBlock
 from redsim.world.blocks.lamp import RedstoneLampBlock
 from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.observer import ObserverBlock
@@ -114,6 +115,7 @@ RAIL = register(RailBlock())
 POWERED_RAIL = register(PoweredRailBlock("minecraft:powered_rail"))
 ACTIVATOR_RAIL = register(PoweredRailBlock("minecraft:activator_rail"))
 TARGET = register(TargetBlock())
+HOPPER = register(HopperBlock())
 PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
 PISTON_HEAD = register(PistonHeadBlock())

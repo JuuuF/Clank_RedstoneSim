@@ -138,3 +138,35 @@ def test_blender_like_jumps_through_the_history() -> None:
     assert doc.jump("end") and doc.engine.game_time == 9
     assert doc.jump("previous") and doc.engine.game_time == 7
     assert doc.jump("previous") and doc.engine.game_time == 3
+
+
+def test_hopper_points_into_the_clicked_block_or_down() -> None:
+    from redsim.world.properties import FACING_HOPPER
+
+    doc = Document.new_flat()
+    doc.place((0, 1, 0), blocks.HOPPER, PlaceRequest(Direction.UP, 0.0, 60.0))
+    assert doc.state_at((0, 1, 0)).get(FACING_HOPPER) is Direction.DOWN
+    doc.setblock((2, 1, 0), blocks.STONE.default_state)
+    # Clicking the stone's west face from (1, 1, 0): the spout points east, into the stone.
+    doc.place((1, 1, 0), blocks.HOPPER, PlaceRequest(Direction.WEST, -90.0, 0.0))
+    assert doc.state_at((1, 1, 0)).get(FACING_HOPPER) is Direction.EAST
+
+
+def test_container_slots_are_set_as_setblock_data_and_update_comparators() -> None:
+    from redsim.editor.monitor import monitor_value
+    from redsim.world.blocks.hopper import HopperBlockEntity
+
+    doc = Document.new_flat()
+    doc.setblock((0, 1, 0), blocks.parse_state("hopper[facing=down]"))
+    doc.setblock((0, 1, 1), blocks.parse_state("comparator[facing=north]"))
+    doc.set_container_slot((0, 1, 0), 2, "minecraft:ender_pearl", 40)  # capped at 16
+    doc.run_ticks(2)
+    hopper = doc.level.get_block_entity((0, 1, 0))
+    assert isinstance(hopper, HopperBlockEntity)
+    assert hopper.items[2] == ("minecraft:ender_pearl", 16)
+    assert monitor_value(doc.level, (0, 1, 0)) == 3  # one full 16-stack of 5 slots
+    assert monitor_value(doc.level, (0, 1, 1)) == 3  # the comparator saw it
+    doc.set_container_slot((0, 1, 0), None, None, 0)
+    assert hopper.is_empty()
+    with pytest.raises(EditError):
+        doc.set_container_slot((0, 1, 1), 0, "minecraft:stone", 1)

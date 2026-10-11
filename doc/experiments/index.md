@@ -78,6 +78,13 @@ reading and unit tests only.
 | EXP-035 | `rail_shapes`: plain rails: straight line, corner, a T junction switching to a curve when a redstone block powers it, a slope up a step | 10 | match | 2026-10-11 |
 | EXP-036 | `powered_rails`: 12 powered rails fed from one end power exactly 9 (8 past the first), the same for activator rails, a mixed line stops at the activator rail; all turn off when the inputs go | 12 | match | 2026-10-11 |
 | EXP-037 | `target_block`: an arrow (tick 2) and a snowball (tick 4) hit two targets' top centers: power 15 from tick 3 to 23 and from 5 to 13; dust bends into the targets, lamps follow; a target set with `power=12` reads 0. The first simulator version applied hits between ticks (one tick early); hits now land in the entity phase | 34 | match | 2026-10-11 |
+| EXP-038 | `hopper_chain`: a barrel (5 dust, 3 ender pearls) feeds three hoppers into a second barrel, the third hopper registered before the second; contents, transfer cooldowns and comparators compared every tick | 90 | match | 2026-10-11 |
+| EXP-039 | `hopper_lock`: a redstone block beside the first hopper (ticks 10-30), a 0-tick lock on the second (tick 40), a redstone block on top of the second (50-60); an observer watching the first hopper fires on each lock change | 80 | match | 2026-10-11 |
+| EXP-040 | `hopper_clock`: two hoppers facing each other pass 4 items back and forth; a barrel above a down hopper feeds a second facing pair whose lower hopper also pulls from the one above | 80 | match | 2026-10-11 |
+| EXP-041 | `hopper_item_replace`: `/item replace` of 64 dust into an idle hopper, a barrel and a hopper facing a barrel: the barrel's comparator updates at once, the idle hopper's only after a block placed beside the comparator (tick 10 → 12), the third when the hopper moves its first item | 16 | match | 2026-10-11 |
+
+Hopper recordings also compare each hopper's `Items` and `TransferCooldown` (and the
+barrels' `Items`, `watch_items`) every tick with `data get block`.
 
 Evidence files: `experiments/results/<scenario>.json`.
 
@@ -94,6 +101,14 @@ area into the superflat world's grass, so the push exceeds 12 blocks and fails; 
 simulator's terrain ended 2 blocks past the area, so the push succeeded. The harness now
 mirrors the superflat terrain (bedrock, dirt, dirt, grass) 16 blocks around each area
 (`compare.build_terrain`); both seeds match, and every earlier recording still replays.
+
+Adding hoppers to the palette found a second harness issue: in the game, components that
+pop (dust losing its support, for example) drop **item entities**, and a hopper nearby
+collected one (`fuzz_1`: a redstone item appeared in a hopper at tick 7). The simulator has
+no item entities by design, so the harness now sets `gamerule block_drops false`
+(`Block.popResource` checks it; container contents only spill when a container is removed
+with side effects, which `/setblock` skips) and kills stray items before each scenario.
+Both seeds then matched. Neither change affects redstone behavior.
 
 ### EXP-023 sensitivity
 

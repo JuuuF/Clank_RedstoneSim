@@ -239,6 +239,31 @@ def test_inspector_hits_a_target_block(app: object) -> None:
     window.close()
 
 
+def test_inspector_edits_container_slots(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.world.blocks.hopper import HopperBlockEntity
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("hopper[facing=down]"))
+    window._select((0, 1, 0))
+    inspector = window.inspector
+    assert not inspector.contents_box.isHidden()
+    assert inspector.slot_box.maximum() == 4
+    inspector.slot_box.setValue(1)
+    inspector.item_box.setCurrentIndex(inspector.item_box.findData("minecraft:redstone"))
+    inspector.count_box.setValue(7)
+    inspector.slot_set.click()
+    for _ in range(3):
+        QtWidgets.QApplication.processEvents()
+    hopper = document.level.get_block_entity((0, 1, 0))
+    assert isinstance(hopper, HopperBlockEntity)
+    assert hopper.items[1] == ("minecraft:redstone", 7)
+    assert "redstone ×7" in inspector.contents_label.text()
+    window.document.dirty = False
+    window.close()
+
+
 def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
     from redsim.ui.main_window import MainWindow
 

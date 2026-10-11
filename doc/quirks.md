@@ -48,6 +48,9 @@ Evidence: **S** = verified by reading the 26.3 source; **T** = covered by a simu
 | Q-TORCH-BURNOUT-DET | Torch burnout is deterministic (8 turn-offs within 60 ticks, 160-tick re-check). | S T G | `RedstoneTorchBlock.tick`, `isToggledTooFrequently`; EXP-005 |
 | Q-TORCH-BURNOUT-STUCK | A burnt-out torch whose own cascade re-schedules it loses the 160-tick restart (dedup) and stays out until a later update. | S G | EXP-005, EXP-006 |
 | Q-LEVER-DOUBLE | A lever toggle updates its own neighbors twice. | S T | `LeverBlock.pull`; `test_lever_toggle_updates_its_own_neighbors_twice` |
+| Q-HOPPER-ITEM-REPLACE | `/item replace` into a hopper does not update comparators (the hopper's `setItem` has no `setChanged`); moving items does. | S T G | `HopperBlockEntity.setItem`; `test_comparator_reads_a_hopper_but_item_replace_does_not_update_it`; EXP-041 |
+| Q-HOPPER-COOLDOWN-7 | An empty hopper that receives an item from a hopper that ticked no later than itself in this game tick waits 7 ticks instead of 8, so chains move one item per 8 ticks in either ticker order. | S T G | `HopperBlockEntity.tryMoveInItem`; `test_chained_hoppers_move_one_item_per_8_ticks_in_either_ticker_order`; EXP-038, EXP-040 |
+| Q-HOPPER-LOCK-COOLDOWN | A locked hopper's cooldown still counts down (to 0), so it moves on the first tick after unlocking. | S T G | `HopperBlockEntity.pushItemsTick`; EXP-039 |
 | Q-LAMP-ASYM | Lamps turn on instantly and off after 4 ticks; toggles send no neighbor updates. | S T G | `RedstoneLampBlock.neighborChanged`; EXP-001 |
 
 ## Pistons

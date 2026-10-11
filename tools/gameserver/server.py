@@ -123,6 +123,10 @@ class GameServer:
                 "gamerule advance_weather false",
                 "gamerule spawn_mobs false",
                 "gamerule log_admin_commands false",
+                # The simulator has no item entities: popped blocks must not drop items
+                # that hoppers could collect (found by fuzzing, EXP-031).
+                "gamerule block_drops false",
+                "kill @e[type=minecraft:item]",
                 "tick freeze",
             ]
         )

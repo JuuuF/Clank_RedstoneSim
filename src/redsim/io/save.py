@@ -81,6 +81,7 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
                     "state": repr(be.block_state),
                     "removed": be.removed,
                     "data": be.to_json(),
+                    **({"runtime": be.runtime_json()} if be.runtime_json() else {}),
                 }
             )
         return entity_ids[key]
@@ -161,6 +162,7 @@ def engine_from_json(data: dict[str, Any]) -> Engine:
         be = cls(_pos(entry["pos"]), blocks.parse_state(entry["state"]))
         be.removed = bool(entry["removed"])
         be.load_json(entry["data"])
+        be.load_runtime_json(entry.get("runtime", {}))
         entities.append(be)
     for key, index in raw["block_entity_map"].items():
         level.block_entities[_pos([int(v) for v in key.split(",")])] = entities[index]

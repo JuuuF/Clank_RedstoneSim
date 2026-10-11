@@ -30,6 +30,7 @@ from redsim.sim.level import Level
 from redsim.sim.timeline import Timeline
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
+from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
 from redsim.world.rotation import default_pivot2, rotated_box
 
 FLOOR_HALF_SIZE = 16
@@ -153,6 +154,22 @@ class Document:
             raise EditError(f"No target block at {pos}.")
         payload = {"strength": strength, "ticks": 20 if arrow else 8}
         self._apply(Action("projectile_hit", pos, payload=payload), "projectile hit")
+
+    def set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
+        """Set one slot of a barrel or hopper (``slot=None``: empty them all), as
+        ``/setblock`` with the block entity's data, so comparators update; a hopper keeps
+        its transfer cooldown."""
+        entity = self.level.get_block_entity(pos, create=False)
+        if not isinstance(entity, ContainerBlockEntity):
+            raise EditError(f"No container at {pos}.")
+        data = entity.to_json()
+        entries = [e for e in data["Items"] if slot is not None and e["Slot"] != slot]
+        if slot is not None and item is not None and count > 0:
+            entries.append({"Slot": slot, "id": item, "count": min(count, slot_limit(item))})
+        data["Items"] = sorted(entries, key=lambda e: int(e["Slot"]))
+        state = repr(self.state_at(pos))
+        label = "empty container" if slot is None else f"slot {slot}"
+        self._apply(Action("setblock", pos, state, payload={"nbt": data}), label)
 
     def turn_page(self, pos: Pos, page: int) -> None:
         """A player turning a lectern's page (comparator update and a 2-tick pulse)."""

@@ -151,6 +151,11 @@ lands during the next tick's entity phase and powers the target for 20 ticks (ar
 (any other projectile); a hit while it is still powered changes nothing. Details:
 [[mechanics/target-block]].
 
+**Containers** (barrels and hoppers; hoppers are in the inventory's **Items** folder) show
+a **Contents** row in the inspector: pick a slot, an item and a count and press **Set**, or
+**Empty all slots**. Each is one `/setblock` with the block-entity data, so comparators
+update and a hopper keeps its transfer cooldown. Details: [[mechanics/hopper]].
+
 ## Changing placed blocks
 
 - **Q / Shift+Q** turns the block under the cursor (repeaters, comparators, pistons facing

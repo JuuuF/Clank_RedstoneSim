@@ -383,6 +383,9 @@ class Viewport(QOpenGLWidget):
                 value = sources.strength_at(level, pos)
                 text, kind = str(value), "source"
                 height = 0.55 if block_id == "minecraft:cake" else 1.0
+            elif block_id == "minecraft:hopper":
+                value = state.block.get_analog_output_signal(state, level, pos, Direction.NORTH)
+                text, kind, height = str(value), "source", 1.0
             else:
                 continue
             point = np.array([pos[0] + 0.5, pos[1] + height, pos[2] + 0.5])

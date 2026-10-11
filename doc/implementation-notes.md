@@ -81,12 +81,20 @@ python -m tools.gameserver.run and_gate   # selected scenarios
   `versions/` there on first start; `fresh_world=True` deletes only the sandbox world.
 - Properties: offline, `server-ip=127.0.0.1`, port 25599, RCON/query/status/management
   off, peaceful, flat, `pause-when-empty-seconds=0`, `max-tick-time=-1`.
+- Game rules at startup: `random_tick_speed 0`, `advance_time false`, `advance_weather
+  false`, `spawn_mobs false`, `block_drops false` (no item entities: the simulator has none,
+  and hoppers would collect them), then `tick freeze`. `prepare_area` also kills stray item
+  entities.
 - Synchronization: every command is followed by
   `scoreboard players set #sync redsim_sync <n>`; output lines are collected until that
   marker's feedback appears. Feedback lines arrive as `System chat: …`.
 - Tick control: `tick freeze` once at startup; `tick step 1` and then poll
   `time query gametime` until it advances.
 - State checks: `execute if block x y z <state>` gives "Test passed"/"Test failed".
+- Block-entity data: `data get block x y z <path>` for comparator `OutputSignal`, a moving
+  piston's `progress`, a hopper's `TransferCooldown` and `Items` (parsed to
+  `slot:id*count …`, the same text as `ContainerBlockEntity.contents`); barrels' `Items`
+  only in scenarios with `watch_items=True` (older recordings stay valid).
 
 ## Gotchas found so far
 

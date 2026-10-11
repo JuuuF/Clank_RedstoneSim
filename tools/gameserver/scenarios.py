@@ -762,6 +762,131 @@ TARGET_BLOCK = Scenario(
     commands={2: [("hit", (2, 1, 1), "arrow")], 4: [("hit", (7, 1, 1), "snowball")]},
 )
 
+
+def _slots(*stacks: tuple[str, int]) -> dict[str, Any]:
+    return {
+        "Items": [
+            {"Slot": slot, "id": item, "count": count} for slot, (item, count) in enumerate(stacks)
+        ]
+    }
+
+
+REDSTONE = "minecraft:redstone"
+PEARL = "minecraft:ender_pearl"
+
+
+def _comparators_with_lamps(xs: tuple[int, ...]) -> list[tuple[Any, ...]]:
+    """Comparators at z=2 reading the block at z=1, lamps at z=3."""
+    return [((x, 1, 2), "minecraft:comparator[facing=north]") for x in xs] + [
+        ((x, 1, 3), "minecraft:redstone_lamp") for x in xs
+    ]
+
+
+HOPPER_CHAIN = Scenario(
+    name="hopper_chain",
+    description=(
+        "A barrel feeds a chain of three hoppers into a second barrel: 5 redstone dust, then "
+        "3 ender pearls (stack size 16), one item per 8 ticks; the third hopper ticks before "
+        "the second (placed first). Comparators read every hopper and the target barrel; "
+        "contents and cooldowns are compared every tick."
+    ),
+    size=(7, 5),
+    setup=[
+        ((1, 2, 1), "minecraft:barrel[facing=up]", _slots((REDSTONE, 5), (PEARL, 3))),
+        ((1, 1, 1), "minecraft:hopper[facing=east]"),
+        ((3, 1, 1), "minecraft:hopper[facing=east]"),
+        ((2, 1, 1), "minecraft:hopper[facing=east]"),
+        ((4, 1, 1), "minecraft:barrel[facing=up]"),
+        *_comparators_with_lamps((1, 2, 3, 4)),
+    ],
+    watch=[(1, 2, 1)] + [(x, 1, z) for z in (1, 2, 3) for x in (1, 2, 3, 4)],
+    ticks=90,
+    watch_items=True,
+)
+
+HOPPER_LOCK = Scenario(
+    name="hopper_lock",
+    description=(
+        "Redstone locks hoppers (enabled=false): a redstone block beside the first hopper from "
+        "tick 10 to 30, a 0-tick lock on the second (placed and removed at tick 40), a "
+        "redstone block on top of the second from tick 50 to 60 (it cannot pull then either). "
+        "An observer watching the first hopper sees each lock change."
+    ),
+    size=(7, 5),
+    setup=[
+        ((2, 2, 1), "minecraft:barrel[facing=up]", _slots((REDSTONE, 20))),
+        ((2, 1, 1), "minecraft:hopper[facing=east]"),
+        ((3, 1, 1), "minecraft:hopper[facing=east]"),
+        ((4, 1, 1), "minecraft:barrel[facing=up]"),
+        *_comparators_with_lamps((2, 3, 4))[:3],
+        ((1, 1, 1), "minecraft:observer[facing=east]"),
+        ((0, 1, 1), "minecraft:redstone_lamp"),
+    ],
+    watch=[(2, 2, 1), (3, 2, 1), (2, 1, 0), (3, 1, 0)]
+    + [(x, 1, z) for z in (1, 2) for x in (0, 1, 2, 3, 4)],
+    ticks=80,
+    inputs={
+        10: [((2, 1, 0), RB)],
+        30: [((2, 1, 0), AIR)],
+        40: [((3, 1, 0), RB), ((3, 1, 0), AIR)],
+        50: [((3, 2, 1), RB)],
+        60: [((3, 2, 1), AIR)],
+    },
+    watch_items=True,
+)
+
+HOPPER_CLOCK = Scenario(
+    name="hopper_clock",
+    description=(
+        "Two hoppers facing each other pass 4 items back and forth (cooldowns 7/8 by ticker "
+        "order); next to them a barrel above a down-facing hopper feeds a second facing pair, "
+        "whose lower hopper also pulls from the hopper above. Comparators and lamps follow."
+    ),
+    size=(10, 5),
+    setup=[
+        ((2, 1, 1), "minecraft:hopper[facing=east]", _slots((REDSTONE, 4))),
+        ((3, 1, 1), "minecraft:hopper[facing=west]"),
+        ((6, 3, 1), "minecraft:barrel[facing=up]", _slots((REDSTONE, 6))),
+        ((6, 2, 1), "minecraft:hopper[facing=down]"),
+        ((7, 1, 1), "minecraft:hopper[facing=west]"),
+        ((6, 1, 1), "minecraft:hopper[facing=east]"),
+        *_comparators_with_lamps((2, 3, 6, 7)),
+    ],
+    watch=[(6, 3, 1), (6, 2, 1)] + [(x, 1, z) for z in (1, 2, 3) for x in (2, 3, 6, 7)],
+    ticks=80,
+    watch_items=True,
+)
+
+HOPPER_ITEM_REPLACE = Scenario(
+    name="hopper_item_replace",
+    description=(
+        "`/item replace` puts 64 dust into an idle hopper, a barrel and a hopper facing a "
+        "barrel. The barrel's comparator updates at once (setChanged); the idle hopper's "
+        "does not (HopperBlockEntity.setItem has no setChanged) until a block placed next to "
+        "the comparator updates it; the third hopper's comparator updates when the hopper "
+        "moves its first item."
+    ),
+    size=(10, 5),
+    setup=[
+        ((1, 1, 1), "minecraft:hopper[facing=down]"),
+        ((4, 1, 1), "minecraft:barrel[facing=up]"),
+        ((7, 1, 1), "minecraft:hopper[facing=east]"),
+        ((8, 1, 1), "minecraft:barrel[facing=up]"),
+        *_comparators_with_lamps((1, 4, 7)),
+    ],
+    watch=[(x, 1, z) for z in (1, 2, 3) for x in (0, 1, 4, 7, 8)],
+    ticks=16,
+    inputs={10: [((0, 1, 2), "minecraft:stone")]},
+    commands={
+        2: [
+            ("item", (1, 1, 1), 0, (REDSTONE, 64)),
+            ("item", (4, 1, 1), 0, (REDSTONE, 64)),
+            ("item", (7, 1, 1), 0, (REDSTONE, 64)),
+        ]
+    },
+    watch_items=True,
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -799,6 +924,10 @@ ALL = [
     RAIL_SHAPES,
     POWERED_RAILS,
     TARGET_BLOCK,
+    HOPPER_CHAIN,
+    HOPPER_LOCK,
+    HOPPER_CLOCK,
+    HOPPER_ITEM_REPLACE,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

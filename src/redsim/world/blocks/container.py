@@ -12,7 +12,9 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/``):
 * ``world/Container.java`` L34-40: a slot holds at most ``min(99, item max stack size)``.
 * ``world/level/block/entity/BaseContainerBlockEntity.java`` ``setItem`` L126: store,
   ``limitSize``, ``setChanged`` (``BlockEntity.setChanged`` L198:
-  ``updateNeighbourForOutputSignal``).
+  ``updateNeighbourForOutputSignal``); ``removeItem`` L111: split, ``setChanged`` if
+  something was taken. ``ContainerBlockEntity`` ports this base; hoppers override both
+  without ``setChanged`` (``hopper.py``).
 
 Barrels have a block entity, so pistons cannot move them (``PistonBaseBlock.isPushable``).
 """
@@ -78,11 +80,15 @@ def container_signal(stacks: Sequence[Stack | None], size: int) -> int:
     return lerp_discrete(total, 0, 15)
 
 
-@register_block_entity
-class BarrelBlockEntity(BlockEntity):
-    type_id = "barrel"
-    valid_blocks = frozenset({ids.BARREL})
-    SIZE = 27
+class ContainerBlockEntity(BlockEntity):
+    """``BaseContainerBlockEntity``: a fixed number of item slots.
+
+    Stacks are immutable ``(item id, count)`` tuples; ``None`` is an empty slot. Methods
+    that notify comparators do so where the game calls ``setChanged``.
+    """
+
+    SIZE = 0
+    NAME = "container"
 
     def __init__(self, pos: Pos, state: BlockState) -> None:
         super().__init__(pos, state)
@@ -91,14 +97,38 @@ class BarrelBlockEntity(BlockEntity):
     def signal(self) -> int:
         return container_signal(self.items, self.SIZE)
 
+    def is_empty(self) -> bool:
+        return all(stack is None for stack in self.items)
+
     def set_item(self, level: Level, slot: int, stack: Stack | None) -> None:
-        """``BaseContainerBlockEntity.setItem``: store, limit the count, ``setChanged``."""
+        """``BaseContainerBlockEntity.setItem`` (L126): store, limit the count, ``setChanged``."""
+        self.store(slot, stack)
+        set_changed(self, level)
+
+    def remove_item(self, level: Level, slot: int, count: int) -> Stack | None:
+        """``BaseContainerBlockEntity.removeItem`` (L111): ``ContainerHelper.removeItem``
+        (split the slot's stack), then ``setChanged`` if something was taken."""
+        taken = self.split(slot, count)
+        if taken is not None:
+            set_changed(self, level)
+        return taken
+
+    def store(self, slot: int, stack: Stack | None) -> None:
+        """Write a slot without side effects (``ItemStack.limitSize`` applied)."""
         if stack is not None and stack[1] > 0:
             stack = (stack[0], min(stack[1], slot_limit(stack[0])))
         else:
             stack = None
         self.items[slot] = stack
-        set_changed(self, level)
+
+    def split(self, slot: int, count: int) -> Stack | None:
+        """``ContainerHelper.removeItem``: ``ItemStack.split`` on the slot, no side effects."""
+        stack = self.items[slot]
+        if stack is None or count <= 0:
+            return None
+        taken = min(count, stack[1])
+        self.items[slot] = (stack[0], stack[1] - taken) if stack[1] > taken else None
+        return (stack[0], taken)
 
     def clone(self) -> BlockEntity:
         other = copy.copy(self)
@@ -122,10 +152,26 @@ class BarrelBlockEntity(BlockEntity):
             if 0 <= slot < self.SIZE and int(entry.get("count", 1)) > 0:
                 self.items[slot] = (str(entry["id"]), int(entry.get("count", 1)))
 
+    def contents(self) -> str:
+        """``slot:id*count`` for every filled slot (the harness compares this with the game)."""
+        return " ".join(
+            f"{slot}:{stack[0]}*{stack[1]}"
+            for slot, stack in enumerate(self.items)
+            if stack is not None
+        )
+
     def describe(self) -> str:
         filled = sum(1 for stack in self.items if stack is not None)
         total = sum(stack[1] for stack in self.items if stack is not None)
-        return f"barrel: {total} items in {filled} slots, signal {self.signal()}"
+        return f"{self.NAME}: {total} items in {filled} slots, signal {self.signal()}"
+
+
+@register_block_entity
+class BarrelBlockEntity(ContainerBlockEntity):
+    type_id = "barrel"
+    valid_blocks = frozenset({ids.BARREL})
+    SIZE = 27
+    NAME = "barrel"
 
 
 def set_changed(entity: BlockEntity, level: Level) -> None:

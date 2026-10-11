@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QSlider,
+    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -38,6 +39,7 @@ from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.preferences import Preferences
 from redsim.world import blocks
 from redsim.world.block import BlockState
+from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
 from redsim.world.properties import Property
 
 NO_SELECTION = "Left-click a block in NORMAL mode (Esc) to inspect it."
@@ -134,6 +136,15 @@ class _Stepper(QWidget):
         self.next.setEnabled(index < len(self.values) - 1)
 
 
+#: Items the inspector offers for barrels and hoppers (max stack size in brackets).
+CONTAINER_ITEMS = (
+    ("minecraft:redstone", "Redstone dust (64)"),
+    ("minecraft:stone", "Stone (64)"),
+    ("minecraft:ender_pearl", "Ender pearl (16)"),
+    ("minecraft:wooden_sword", "Wooden sword (1)"),
+)
+
+
 class InspectorPanel(QWidget):
     """The selected block. Every control applies at once, as a /setblock edit (one undo
     step each); widgets are updated in place while the same kind of block stays selected."""
@@ -144,6 +155,7 @@ class InspectorPanel(QWidget):
     page_requested = Signal(object, int)  # Pos, page (a player turning the page)
     monitor_requested = Signal(object)  # Pos: add/remove on the timeline monitor
     hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
+    contents_requested = Signal(object, object, object, int)  # Pos, slot|None, item|None, n
 
     def __init__(self) -> None:
         super().__init__()
@@ -234,6 +246,39 @@ class InspectorPanel(QWidget):
             self.hit_buttons[arrow] = button
         target_layout.addRow("Projectile", hit_row)
         layout.addWidget(self.target_box)
+        self.contents_box = QWidget()
+        contents_layout = QFormLayout(self.contents_box)
+        contents_layout.setContentsMargins(0, 6, 0, 0)
+        self.contents_label = QLabel("")
+        self.contents_label.setWordWrap(True)
+        contents_layout.addRow("Contents", self.contents_label)
+        slot_row = QWidget()
+        slot_layout = QHBoxLayout(slot_row)
+        slot_layout.setContentsMargins(0, 0, 0, 0)
+        self.slot_box = QSpinBox()
+        self.slot_box.setToolTip("Slot number (0-based, as in the game's NBT)")
+        self.item_box = QComboBox()
+        for item, label in CONTAINER_ITEMS:
+            self.item_box.addItem(label, item)
+        self.item_box.currentIndexChanged.connect(self._fit_count)
+        self.count_box = QSpinBox()
+        self.count_box.setToolTip("Item count (0 empties the slot)")
+        self._fit_count()
+        self.slot_set = QPushButton("Set")
+        self.slot_set.setToolTip(
+            "Put the items into the slot (/setblock with the block-entity data: comparators "
+            "update, a hopper keeps its cooldown)"
+        )
+        self.slot_set.clicked.connect(self._set_slot)
+        for widget in (self.slot_box, self.item_box, self.count_box, self.slot_set):
+            slot_layout.addWidget(widget)
+        contents_layout.addRow("Slot", slot_row)
+        self.empty_all = QPushButton("Empty all slots")
+        self.empty_all.clicked.connect(
+            lambda: self._pos is not None and self.contents_requested.emit(self._pos, None, None, 0)
+        )
+        contents_layout.addRow("", self.empty_all)
+        layout.addWidget(self.contents_box)
         section_row = QHBoxLayout()
         section_row.addWidget(QLabel("Section:"))
         self.section_box = QComboBox()
@@ -248,6 +293,7 @@ class InspectorPanel(QWidget):
         self._pos = pos
         self.source_box.setVisible(False)
         self.target_box.setVisible(False)
+        self.contents_box.setVisible(False)
         if document is None or pos is None:
             self.monitor.setVisible(False)
             self._rebuild(None)
@@ -277,6 +323,16 @@ class InspectorPanel(QWidget):
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
         self.target_box.setVisible(state.is_(blocks.TARGET))
         self.target_box.setEnabled(editable)
+        if isinstance(be, ContainerBlockEntity):
+            self.contents_box.setVisible(True)
+            self.contents_box.setEnabled(editable)
+            self.slot_box.setRange(0, be.SIZE - 1)
+            filled = [
+                f"{slot}: {stack[0].removeprefix('minecraft:')} ×{stack[1]}"
+                for slot, stack in enumerate(be.items)
+                if stack is not None
+            ]
+            self.contents_label.setText(", ".join(filled) if filled else f"empty ({be.SIZE} slots)")
         kind = sources.kind_of(state)
         if kind is not None:
             self.source_box.setVisible(True)
@@ -339,6 +395,17 @@ class InspectorPanel(QWidget):
         value = self.source_strength.value if strength is None else strength
         pos = self._pos
         _later(lambda: self.source_requested.emit(pos, kind, int(value)))
+
+    def _fit_count(self) -> None:
+        item = self.item_box.currentData()
+        self.count_box.setRange(0, slot_limit(item) if item else 64)
+        self.count_box.setValue(min(max(self.count_box.value(), 1), self.count_box.maximum()))
+
+    def _set_slot(self) -> None:
+        if self._pos is not None:
+            pos, slot = self._pos, self.slot_box.value()
+            item, count = self.item_box.currentData(), self.count_box.value()
+            _later(lambda: self.contents_requested.emit(pos, slot, item, count))
 
     def _pick_hit_strength(self, value: int) -> None:
         self.hit_strength.show_value(value)

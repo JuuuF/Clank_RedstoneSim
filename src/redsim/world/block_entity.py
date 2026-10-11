@@ -57,5 +57,13 @@ class BlockEntity:
     def load_json(self, data: dict[str, Any]) -> None:
         return None
 
+    def runtime_json(self) -> dict[str, Any]:
+        """Simulation state the game keeps in memory but does not save to NBT (it does not
+        survive ``/clone`` either); stored in simulator saves only."""
+        return {}
+
+    def load_runtime_json(self, data: dict[str, Any]) -> None:
+        return None
+
     def describe(self) -> str:
         return self.type_id

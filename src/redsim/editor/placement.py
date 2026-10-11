@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from redsim.core.direction import Direction
+from redsim.core.direction import Axis, Direction
 from redsim.core.pos import Pos
 from redsim.sim.level import Level
 from redsim.world import blocks
@@ -31,12 +31,13 @@ from redsim.world.block import Block, BlockState, PlacementContext
 from redsim.world.blocks.attached import FaceAttachedBlock
 from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.diode import DiodeBlock
+from redsim.world.blocks.hopper import HopperBlock
 from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import PistonBaseBlock
 from redsim.world.blocks.rail import BaseRailBlock
 from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
-from redsim.world.properties import ATTACH_FACE, FACING, HORIZONTAL_FACING
+from redsim.world.properties import ATTACH_FACE, FACING, FACING_HOPPER, HORIZONTAL_FACING
 
 _FROM_2D = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.EAST)
 
@@ -139,6 +140,12 @@ def placement_state(
         # direction, reversed.
         first = ordered_by_nearest(request.yaw, request.pitch)[0]
         return block.default_state.with_(FACING, first.opposite)
+    if isinstance(block, HopperBlock):
+        # HopperBlock.getStateForPlacement L58: the clicked face reversed; up becomes down.
+        facing = request.clicked_face.opposite
+        return block.default_state.with_(
+            FACING_HOPPER, Direction.DOWN if facing.axis is Axis.Y else facing
+        )
     if isinstance(block, LecternBlock):
         # LecternBlock.getStateForPlacement L74: horizontal direction, reversed.
         facing = horizontal_direction(request.yaw).opposite

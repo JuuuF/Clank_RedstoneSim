@@ -53,6 +53,8 @@ class Scenario:
     #: The cloned area must have no pending scheduled ticks (the simulator's paste does
     #: not copy ticks, ``/clone`` does).
     commands: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
+    #: Also compare barrel contents (hopper contents and cooldowns are always compared).
+    watch_items: bool = False
 
     def fingerprint(self) -> str:
         """Hash of everything that determines the run (recordings go stale if it changes)."""
@@ -65,6 +67,8 @@ class Scenario:
         ]
         if self.commands:
             parts.append(sorted(self.commands.items()))
+        if self.watch_items:
+            parts.append("watch_items")
         payload = json.dumps(parts)
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
@@ -179,7 +183,8 @@ def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
 
 
 def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, str]:
-    """Full block states, plus ``<rel>#output`` for comparators (block-entity data)."""
+    """Full block states, plus block-entity data: ``<rel>#output`` for comparators,
+    ``#items``/``#cooldown`` for hoppers (``#items`` for barrels with ``watch_items``)."""
     level = engine.level
     frame: dict[str, str] = {}
     for rel in scenario.watch:
@@ -189,6 +194,11 @@ def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, st
         be = level.get_block_entity(pos, create=False)
         if state.block.id == "minecraft:comparator":
             frame[f"{rel}#output"] = str(getattr(be, "output", 0))
+        elif state.block.id == "minecraft:hopper" and be is not None:
+            frame[f"{rel}#items"] = be.contents()  # type: ignore[attr-defined]
+            frame[f"{rel}#cooldown"] = str(be.cooldown_time)  # type: ignore[attr-defined]
+        elif state.block.id == "minecraft:barrel" and be is not None and scenario.watch_items:
+            frame[f"{rel}#items"] = be.contents()  # type: ignore[attr-defined]
         elif state.block.id == "minecraft:moving_piston" and be is not None:
             # The saved "progress" tag is progressO (PistonMovingBlockEntity.saveAdditional).
             frame[f"{rel}#progress"] = str(float(be.progress_o))  # type: ignore[attr-defined]
@@ -204,6 +214,7 @@ def prepare_area(server: GameServer, origin: Pos, size: tuple[int, int], margin:
             f"fill {x0} -63 {z0} {x1} -62 {z1} minecraft:stone strict",
             f"fill {x0} {FLOOR_Y} {z0} {x1} {FLOOR_Y} {z1} minecraft:stone strict",
             f"fill {x0} {FLOOR_Y + 1} {z0} {x1} {FLOOR_Y + 12} {z1} minecraft:air strict",
+            "kill @e[type=minecraft:item]",
         ]
     )
 
@@ -224,18 +235,40 @@ def observe_game(server: GameServer, expected: dict[str, str], origin: Pos) -> d
     return observed
 
 
-DATA_PATHS = {"output": "OutputSignal", "progress": "progress"}
+DATA_PATHS = {
+    "output": "OutputSignal",
+    "progress": "progress",
+    "cooldown": "TransferCooldown",
+    "items": "Items",
+}
 
 
 def read_block_data(server: GameServer, pos: Pos, key: str) -> str:
     """Read one block-entity field with ``data get block`` (e.g. comparator output)."""
     path = DATA_PATHS[key.split("#")[1]]
     text = server.command(f"data get block {pos[0]} {pos[1]} {pos[2]} {path}").text
+    if path == "Items":
+        return _parse_items(text)
     match = re.search(r"has the following block data: (-?[\d.]+)([fdbsL]?)", text)
     if not match:
         return f"<no data: {text.strip()[:80]}>"
     number = match.group(1)
     return str(float(number)) if match.group(2) in ("f", "d") or "." in number else number
+
+
+def _parse_items(text: str) -> str:
+    """``data get block … Items`` → ``slot:id*count …`` (``ContainerBlockEntity.contents``)."""
+    if "has the following block data" not in text:
+        return f"<no data: {text.strip()[:80]}>"
+    found = []
+    for entry in re.findall(r"\{[^{}]*\}", text.split("block data:", 1)[1]):
+        slot = re.search(r"Slot: (\d+)b", entry)
+        item = re.search(r'id: "([^"]+)"', entry)
+        count = re.search(r"count: (\d+)", entry)
+        if not (slot and item):
+            return f"<unparsed: {entry[:80]}>"
+        found.append((int(slot.group(1)), item.group(1), int(count.group(1)) if count else 1))
+    return " ".join(f"{slot}:{item}*{count}" for slot, item, count in sorted(found))
 
 
 def discover_state(server: GameServer, pos: Pos) -> str:

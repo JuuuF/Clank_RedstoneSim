@@ -427,11 +427,12 @@ class Engine:
         return True
 
     def _container_item(self, pos: Pos, payload: dict[str, Any]) -> None:
-        """``/item replace block``: ``Container.setItem`` on one slot (``setChanged``)."""
-        from redsim.world.blocks.container import BarrelBlockEntity
+        """``/item replace block``: ``Container.setItem`` on one slot (barrels call
+        ``setChanged``, hoppers do not)."""
+        from redsim.world.blocks.container import ContainerBlockEntity
 
         entity = self.level.get_block_entity(pos)
-        if not isinstance(entity, BarrelBlockEntity):
+        if not isinstance(entity, ContainerBlockEntity):
             raise ActionError(f"no container at {pos}")
         slot = int(payload["slot"])
         if not 0 <= slot < entity.SIZE:

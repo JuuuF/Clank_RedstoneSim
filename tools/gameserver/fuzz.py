@@ -1,10 +1,11 @@
 """Random circuits for differential testing against the real game (seeded, reproducible).
 
 ``fuzz_<seed>`` builds a dense random circuit from every block the simulator supports
-(dust, torches, repeaters, comparators, lamps, pistons, slime, honey, barrels, lecterns,
-redstone blocks, solid and transparent blocks) on a few layers, then toggles redstone-block
-inputs at the border at random ticks, including 0-tick pulses (placed and removed at the
-same tick boundary). Every block of the volume is compared tick by tick.
+(dust, torches, repeaters, comparators, lamps, pistons, slime, honey, barrels, hoppers,
+lecterns, observers, rails, targets, redstone blocks, solid and transparent blocks) on a
+few layers, then toggles redstone-block inputs at the border at random ticks, including
+0-tick pulses (placed and removed at the same tick boundary). Every block of the volume is
+compared tick by tick (hoppers: also their contents and cooldowns).
 
 The point is coverage of update orders no one would think of: any difference from the game
 is a bug in the simulator (or in the harness).
@@ -22,6 +23,7 @@ RB = "minecraft:redstone_block"
 AIR = "minecraft:air"
 HORIZONTAL = ("north", "east", "south", "west")
 ALL_SIX = (*HORIZONTAL, "up", "down")
+HOPPER_FACINGS = (*HORIZONTAL, "down")
 
 Entry = tuple[Any, ...]
 
@@ -29,6 +31,13 @@ Entry = tuple[Any, ...]
 def _palette(rng: random.Random) -> list[tuple[int, Callable[[], Entry | str]]]:
     def facing() -> str:
         return rng.choice(HORIZONTAL)
+
+    def hopper_items() -> dict[str, Any]:
+        items = []
+        for slot in sorted(rng.sample(range(5), rng.randint(0, 3))):
+            item, most = rng.choice((("minecraft:redstone", 64), ("minecraft:ender_pearl", 16)))
+            items.append({"Slot": slot, "id": item, "count": rng.randint(1, most)})
+        return {"Items": items}
 
     return [
         (30, lambda: "minecraft:redstone_wire"),
@@ -53,6 +62,7 @@ def _palette(rng: random.Random) -> list[tuple[int, Callable[[], Entry | str]]]:
         (4, lambda: f"minecraft:observer[facing={rng.choice(ALL_SIX)}]"),
         (3, lambda: "minecraft:rail"),
         (2, lambda: "minecraft:target"),
+        (5, lambda: (f"minecraft:hopper[facing={rng.choice(HOPPER_FACINGS)}]", hopper_items())),
         (3, lambda: "minecraft:powered_rail"),
         (2, lambda: "minecraft:activator_rail"),
         (

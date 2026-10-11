@@ -63,6 +63,11 @@ this decompiled copy and serve only to locate code; they are not part of the gam
 | Button | `net/minecraft/world/level/block/ButtonBlock.java`: `press` L92, `tick` L131, `checkPressed` L146, `updateNeighbours` L164. Stone button 20 ticks, wooden 30 (`Blocks.java`). |
 | Redstone block | `net/minecraft/world/level/block/PoweredBlock.java` (`ownSignal` 15, no direct signal). |
 | Redstone lamp | `net/minecraft/world/level/block/RedstoneLampBlock.java`: `neighborChanged` L29 (on: instant; off: 4-tick delay), `tick` L45. |
+| Observer | `net/minecraft/world/level/block/ObserverBlock.java`: `tick` L45, `updateShape` L57, `updateNeighborsInFront` L80, signals L90-112, `onPlace` L114; `Blocks.OBSERVER` `isRedstoneConductor(Blocks::never)`. See [[mechanics/observer]]. |
+| Rails | `BaseRailBlock.java`, `RailState.java`, `RailBlock.java`, `PoweredRailBlock.java` (`findPoweredRailSignal`, 8-rail limit). See [[mechanics/rails]]. |
+| Target block | `net/minecraft/world/level/block/TargetBlock.java`: `updateRedstoneOutput` L44, `getRedstoneStrength` L54, `tick` L78, `onPlace` L100. See [[mechanics/target-block]]. |
+| Hopper | `HopperBlock.java` (`checkPoweredState` L118, placement L77); `entity/HopperBlockEntity.java` (`removeItem` L74, `setItem` L80, `pushItemsTick` L97, `tryMoveItems` L106, `ejectItems` L143, `suckInItems` L218, `tryMoveInItem` L314). See [[mechanics/hopper]]. |
+| Containers | `entity/BaseContainerBlockEntity.java` (`removeItem` L111, `setItem` L126), `ContainerHelper.java`, `inventory/AbstractContainerMenu.java` `getRedstoneSignalFromContainer` L766. |
 
 ## Pistons
 

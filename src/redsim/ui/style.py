@@ -18,8 +18,10 @@ from redsim.world.properties import (
     ATTACH_FACE,
     BITES,
     DELAY,
+    ENABLED,
     EXTENDED,
     FACING,
+    FACING_HOPPER,
     HAS_BOOK,
     HORIZONTAL_FACING,
     LIT,
@@ -139,6 +141,33 @@ def full(color: Color, translucent: bool = False) -> list[Box]:
 
 
 # ---------------------------------------------------------------- models
+HOPPER_METAL = rgb(0.30, 0.30, 0.33)
+HOPPER_INSIDE = rgb(0.16, 0.16, 0.18)
+#: ``HopperBlock`` spouts by facing (the collision shape, ``hopper.py``).
+HOPPER_SPOUTS = {
+    Direction.DOWN: ((6, 0, 6), (10, 4, 10)),
+    Direction.NORTH: ((6, 4, 0), (10, 8, 4)),
+    Direction.SOUTH: ((6, 4, 12), (10, 8, 16)),
+    Direction.WEST: ((0, 4, 6), (4, 8, 10)),
+    Direction.EAST: ((12, 4, 6), (16, 8, 10)),
+}
+
+
+def _hopper(state: BlockState) -> list[Box]:
+    """Bowl, funnel and spout; a locked hopper (``enabled=false``) gets a red bowl floor."""
+    floor = HOPPER_INSIDE if state.get(ENABLED) else UNLIT_RED
+    low, high = HOPPER_SPOUTS[state.get(FACING_HOPPER)]
+    return [
+        Box((0, 11, 0), (16, 16, 2), HOPPER_METAL),
+        Box((0, 11, 14), (16, 16, 16), HOPPER_METAL),
+        Box((0, 11, 2), (2, 16, 14), HOPPER_METAL),
+        Box((14, 11, 2), (16, 16, 14), HOPPER_METAL),
+        Box((4, 4, 4), (12, 10, 12), HOPPER_METAL),
+        Box(low, high, HOPPER_METAL),
+        Box((0, 10, 0), (16, 11, 16), floor),
+    ]
+
+
 def block_boxes(state: BlockState) -> list[Box]:
     """Visual boxes (pixels) for a state; also used for picking. Air: no boxes."""
     block_id = state.block.id
@@ -190,6 +219,8 @@ def block_boxes(state: BlockState) -> list[Box]:
         return face_any(_barrel(), state.get(FACING))
     if block_id in ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail"):
         return _rail(block_id, state)
+    if block_id == "minecraft:hopper":
+        return _hopper(state)
     if block_id == "minecraft:target":
         center = LIT_RED if state.get(POWER) else rgb(0.78, 0.16, 0.14)
         body = [Box((0, 0, 0), (16, 16, 16), rgb(0.93, 0.88, 0.82))]

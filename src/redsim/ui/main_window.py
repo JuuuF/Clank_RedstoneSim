@@ -136,6 +136,7 @@ class MainWindow(QMainWindow):
         self.simulation.canvas.remove_monitor.connect(self._toggle_monitor)
         self.inspector.monitor_requested.connect(self._toggle_monitor)
         self.inspector.hit_requested.connect(self._projectile_hit)
+        self.inspector.contents_requested.connect(self._set_container_slot)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
         self.viewport.use_requested.connect(self._use)
@@ -467,6 +468,9 @@ class MainWindow(QMainWindow):
         if self.document.seek_tick(tick):
             self.last_steps = []
             self._changed()
+
+    def _set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
+        self._edit(self.document.set_container_slot, pos, slot, item, count)
 
     def _projectile_hit(self, pos: Pos, strength: int, arrow: bool) -> None:
         self._edit(self.document.projectile_hit, pos, strength, arrow)
