@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QMainWindow,
     QMessageBox,
+    QScrollArea,
     QWidget,
 )
 
@@ -69,7 +70,10 @@ class MainWindow(QMainWindow):
         right = Qt.DockWidgetArea.RightDockWidgetArea
         blocks_dock = self._dock("Blocks", self.block_palette, left)
         self.help_label = controls_help(self.keymap)
-        self.help_dock = self._dock("Controls", self.help_label, left)
+        help_scroll = QScrollArea()  # the generated list is long: never let it size the window
+        help_scroll.setWidget(self.help_label)
+        help_scroll.setWidgetResizable(True)
+        self.help_dock = self._dock("Controls", help_scroll, left)
         self.tabifyDockWidget(blocks_dock, self.help_dock)
         blocks_dock.raise_()
         simulation_dock = self._dock("Simulation", self.simulation, right)
