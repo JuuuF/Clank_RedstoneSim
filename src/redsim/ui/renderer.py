@@ -97,6 +97,7 @@ class Renderer:
         #: Selection box edges and handles (triangles): drawn normally, then again on top
         #: of everything at reduced alpha so hidden parts stay visible ("x-ray").
         self.overlay = _Stream()
+        self.volume = _Stream()  # faint translucent selection body
 
     def set_chunk(
         self, key: object, opaque: np.ndarray, translucent: np.ndarray, solid: np.ndarray
@@ -126,6 +127,10 @@ class Renderer:
     def upload_ghost(self, triangles: np.ndarray) -> None:
         self.program.bind()
         self.ghost.upload(self.program, triangles)
+
+    def upload_volume(self, triangles: np.ndarray) -> None:
+        self.program.bind()
+        self.volume.upload(self.program, triangles)
 
     def upload_overlay(self, triangles: np.ndarray) -> None:
         self.program.bind()
@@ -186,6 +191,8 @@ class Renderer:
         translucent = [stream for _, stream, _ in self.chunks.values() if stream.count]
         if self.ghost.count:
             translucent.append(self.ghost)
+        if self.volume.count:
+            translucent.append(self.volume)
         if translucent:
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)

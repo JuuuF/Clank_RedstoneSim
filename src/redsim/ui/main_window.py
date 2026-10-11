@@ -130,6 +130,7 @@ class MainWindow(QMainWindow):
         self.viewport.region_changed.connect(self._region_changed)
         self.viewport.region_move_requested.connect(self._move_region)
         self.viewport.region_stack_requested.connect(self._stack_region)
+        self.viewport.transform_requested.connect(self._gizmo_transform)
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
         self.viewport.mode_changed.connect(self.hotkeys.set_mode)
@@ -240,6 +241,9 @@ class MainWindow(QMainWindow):
             region_menu, "Clear selection (fill with air)", self._delete_region, "edit.delete"
         )
         toolbar.addAction(self._actions["edit.delete"])
+        lock = self._action(region_menu, "🔒 Lock", self._toggle_lock, "select.lock")
+        lock.setToolTip(f"{SPECS['select.lock'].title} ({self.keymap.describe('select.lock')})")
+        toolbar.addAction(lock)
         view_menu = bar.addMenu("&View")
         for attribute, text, tip in (
             (
@@ -302,6 +306,11 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------ modes and keymap
     def _mode_key(self, mode: str) -> None:
         """Mode shortcuts; the NORMAL key pressed in NORMAL mode clears the selections."""
+        if mode == NORMAL and self.viewport.region_locked:
+            self.viewport.region_locked = False
+            self.viewport.update()
+            self._message("Selection unlocked.")
+            return
         if mode == NORMAL and self.viewport.paste_preview is not None:
             self.viewport.cancel_paste()
             self._message("Paste cancelled.")
@@ -595,6 +604,24 @@ class MainWindow(QMainWindow):
             what = f"rotated {quarter_turns * 90}°" if quarter_turns else "flipped"
             self._message(f"Selection {what} in place (no block updates).")
         self._changed()
+
+    def _gizmo_transform(self, quarter_turns: int, mirror: str | None) -> None:
+        if mirror is not None:
+            self._transform(mirror=mirror)
+        else:
+            self._rotate(quarter_turns)
+
+    def _toggle_lock(self) -> None:
+        """Enter (like GIMP): lock the selection so clicks cannot replace it; rotate, flip,
+        move and stack keep working on it."""
+        viewport = self.viewport
+        if viewport.region is None:
+            self._message("Nothing to lock: select a box first (V).")
+            return
+        viewport.region_locked = not viewport.region_locked
+        viewport.update()
+        state = "locked (Enter or Esc unlocks)" if viewport.region_locked else "unlocked"
+        self._message(f"Selection {state}.")
 
     def _stack_region(self, region: Region, step: Pos, count: int) -> None:
         try:

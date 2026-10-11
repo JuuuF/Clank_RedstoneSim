@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import math
 import time
+from typing import Any
 
 import numpy as np
 from PySide6.QtCore import QPoint, Qt, QTimer, Signal
@@ -46,9 +47,9 @@ from redsim.ui.geometry import (
     ghost_mesh,
     pick,
     ray_box,
-    solid_box,
     thick_edges,
 )
+from redsim.ui.gizmos import BODY_ALPHA, Hotspot, box_faces, pick_hotspot, selection_gizmos
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.pacing import RateMeter
 from redsim.ui.preferences import Preferences
@@ -56,9 +57,7 @@ from redsim.ui.renderer import Renderer
 from redsim.ui.selection_tools import (
     Handle,
     face_center,
-    handle_hit,
     horizontal_offset,
-    knob_center,
     paste_origin,
     plane_point,
     resized,
@@ -75,7 +74,7 @@ ZOOM_PER_NOTCH = 1.15
 DRAG_THRESHOLD = 4
 PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
 SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
-HANDLE_HOVER_COLOR = (1.0, 0.85, 0.1, 1.0)
+LOCKED_COLOR = (1.0, 0.62, 0.15, 1.0)
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
 NORMAL, BUILD, SELECT = "normal", "build", "select"
@@ -136,6 +135,8 @@ class Viewport(QOpenGLWidget):
     region_changed = Signal(object)  # Region | None
     region_move_requested = Signal(object, object, bool)  # Region, offset, copy
     region_stack_requested = Signal(object, object, int)  # Region, step, count
+    transform_requested = Signal(int, object)  # quarter turns, mirror axis | None
+    gizmo_hover_changed = Signal(object)  # Hotspot | None
     paste_requested = Signal(object)  # Pos (minimum corner)
     mode_changed = Signal(str)
 
@@ -160,7 +161,10 @@ class Viewport(QOpenGLWidget):
         self.show_info = False
         self.preferences = Preferences.load()
         #: SELECT mode: the face handle under the cursor, and drags in progress.
-        self.handle_hover: Handle | None = None
+        self.gizmo_hover: Hotspot | None = None
+        self.region_locked = False  # Enter: clicks can no longer replace the selection
+        self._shift = False  # Shift held: resize arrows show their stacking look
+        self._gizmo_cache: tuple[Any, tuple[np.ndarray, list[Hotspot]]] | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
         self._move: _MoveDrag | None = None
         self._stack: _StackDrag | None = None
@@ -288,6 +292,7 @@ class Viewport(QOpenGLWidget):
             self._mesh_revision = self.document.revision
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
+        renderer.upload_volume(self._selection_body())
         renderer.upload_top_lines(self._pivot_lines())
         self._upload_ghost(renderer)
         ratio = self.devicePixelRatioF()
@@ -486,10 +491,10 @@ class Viewport(QOpenGLWidget):
         width = self._edge_width()
         if self.region is not None:
             lo, hi = _bounds(self.region)
-            parts.append(thick_edges(lo, hi, SELECTION_COLOR, width))
-            busy = self._move is not None or self._stack is not None
-            if self.mode == SELECT and not busy and self.paste_preview is None:
-                parts.extend(self._handle_pins(self.region))
+            color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
+            parts.append(thick_edges(lo, hi, color, width))
+            if self._gizmos_shown():
+                parts.append(self._gizmos()[0])
         if self._move is not None:
             lo, hi = _bounds(shifted(self._move.region, self._move.offset_pos))
             parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
@@ -510,30 +515,48 @@ class Viewport(QOpenGLWidget):
         """Selection edges keep a similar on-screen thickness at any zoom."""
         return min(0.2, max(0.035, 0.006 * self.camera.distance))
 
-    def handle_size(self) -> float:
-        """Knob size: grows with the distance to the selection, so it stays grabbable."""
+    def gizmo_unit(self) -> float:
+        """Gizmo scale: grows with the distance to the selection, so it stays usable."""
         if self.region is None:
-            return 0.15
+            return 0.1
         lo, hi = _bounds(self.region)
         distance = float(np.linalg.norm((lo + hi) / 2 - self.camera.position))
-        return min(0.8, max(0.12, 0.018 * distance))
+        return min(0.6, max(0.07, 0.017 * distance))
 
-    def _handle_pins(self, region: Region) -> list[np.ndarray]:
-        """Each face gets a pin: a thin stem from the face center to a cube knob."""
-        size = self.handle_size()
-        parts = []
-        for handle in _HANDLES:
-            hovered = handle == self.handle_hover
-            color = HANDLE_HOVER_COLOR if hovered else SELECTION_COLOR
-            knob = knob_center(region, handle, size)
-            start = face_center(region, handle)
-            stem = size * 0.25
-            lo = np.minimum(start, knob) - stem
-            hi = np.maximum(start, knob) + stem
-            parts.append(solid_box(lo, hi, color))
-            half = size * (1.25 if hovered else 1.0)
-            parts.append(solid_box(knob - half, knob + half, color))
-        return parts
+    def _gizmos_shown(self) -> bool:
+        busy = self._move is not None or self._stack is not None or self._resize is not None
+        return (
+            self.region is not None
+            and self.mode == SELECT
+            and not busy
+            and self.paste_preview is None
+        )
+
+    def _gizmos(self) -> tuple[np.ndarray, list[Hotspot]]:
+        """Gizmo triangles and hot spots for the current selection (cached)."""
+        assert self.region is not None
+        unit = self.gizmo_unit()
+        key = (self.region, round(unit, 3), round(self.camera.yaw), self._shift, self.gizmo_hover)
+        if self._gizmo_cache is None or self._gizmo_cache[0] != key:
+            built = selection_gizmos(
+                self.region, unit, self.camera.yaw, self._shift, self.gizmo_hover
+            )
+            self._gizmo_cache = (key, built)
+        return self._gizmo_cache[1]
+
+    def _gizmo_at(self, point: QPoint) -> Hotspot | None:
+        if not self._gizmos_shown():
+            return None
+        origin, direction = self._ray(point)
+        return pick_hotspot(origin, direction, self._gizmos()[1])
+
+    def _selection_body(self) -> np.ndarray:
+        """A very faint body, so it is clear which blocks are inside the selection."""
+        if self.region is None:
+            return np.zeros((0, 7), dtype=np.float32)
+        lo, hi = _bounds(self.region)
+        color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
+        return box_faces(lo, hi, (color[0], color[1], color[2], BODY_ALPHA))
 
     def _upload_ghost(self, renderer: Renderer) -> None:
         ghost = self._ghost or self._build_ghost
@@ -566,7 +589,14 @@ class Viewport(QOpenGLWidget):
         return np.array([(*row, *PIVOT_COLOR) for row in rows], dtype=np.float32)
 
     # ------------------------------------------------------------------ keyboard
+    def _track_shift(self, held: bool) -> None:
+        if held != self._shift:
+            self._shift = held
+            self.update()
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Shift:
+            self._track_shift(True)
         action = self._held_actions.get(event.key())
         if action is not None and not event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier:
             self._held.add(action)
@@ -574,6 +604,8 @@ class Viewport(QOpenGLWidget):
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Shift:
+            self._track_shift(False)
         action = self._held_actions.get(event.key())
         if action is not None and not event.isAutoRepeat():
             self._held.discard(action)
@@ -614,6 +646,7 @@ class Viewport(QOpenGLWidget):
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         point = event.position().toPoint()
         self._last_mouse = point
+        self._track_shift(bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier))
         self._update_hover(point)
         if self.paste_preview is not None:
             self._update_paste_ghost()
@@ -643,8 +676,14 @@ class Viewport(QOpenGLWidget):
         self._drag_action = None
         if drag_action is None:
             self._update_hover(event.position().toPoint())
+            spot = self.gizmo_hover
             if self.paste_preview is not None:
                 self._paste_click(button)
+            elif button == Qt.MouseButton.LeftButton and spot is not None:
+                if spot.kind == "rotate":
+                    self.transform_requested.emit(1 if spot.data == 1 else 3, None)
+                elif spot.kind == "flip":
+                    self.transform_requested.emit(0, spot.data)
             else:
                 name = _BUTTON_NAMES.get(button)
                 action = self.keymap.mouse_action(self.mode, modifiers, name, "Click")
@@ -701,6 +740,8 @@ class Viewport(QOpenGLWidget):
         if action == "normal.inspect":
             self.selection = hit.pos if hit else None
             self.select_requested.emit(self.selection)
+        elif action in ("select.block", "select.extend") and self.region_locked:
+            return  # a locked selection keeps its box
         elif action == "select.block":
             self._region_anchor = hit.pos if hit else None
             self.region = Region.from_corners(hit.pos, hit.pos) if hit else None
@@ -728,21 +769,22 @@ class Viewport(QOpenGLWidget):
         origin, direction = self._ray(start)
         block = pick(self.document.level, origin, direction)
         region = self.region
-        if region is not None and not copy:
-            handle = handle_hit(region, origin, direction, self.handle_size())
-            if handle is not None:  # handles are drawn on top, so they win over blocks
-                center = face_center(region, handle[0])
-                axis = self._screen_vector(center, center + handle[0].normal)
-                self._resize = (handle[0], region, start, axis)
-                return
+        spot = self._gizmo_at(start)
+        if region is not None and not copy and spot is not None:
+            if spot.kind == "resize":  # gizmos are drawn on top, so they win over blocks
+                handle = spot.data
+                center = face_center(region, handle)
+                axis = self._screen_vector(center, center + handle.normal)
+                self._resize = (handle, region, start, axis)
+            return  # rotate/flip gizmos act on click, not drag
         grab = self._grab_point(region, origin, direction, block)
         if region is not None and grab is not None:
             ghost = self._region_ghost(region)
             self._move = _MoveDrag(region, copy, float(grab[1]), grab, ghost)
             self._ghost = (ghost, (0, 0, 0))
             return
-        if copy:
-            return  # copy-drags start inside the selection
+        if copy or self.region_locked:
+            return  # copy-drags start inside the selection; a locked one cannot be replaced
         self._region_anchor = block.pos if block else None
         self._extend_box()
 
@@ -794,11 +836,10 @@ class Viewport(QOpenGLWidget):
         region = self.region
         if region is None:
             return
-        origin, direction = self._ray(start)
-        hit = handle_hit(region, origin, direction, self.handle_size())
-        if hit is None:
+        spot = self._gizmo_at(start)
+        if spot is None or spot.kind != "resize":
             return
-        handle = hit[0]
+        handle = spot.data
         center = face_center(region, handle)
         axis = self._screen_vector(center, center + handle.normal)
         self._stack = _StackDrag(region, handle, start, axis, self._region_ghost(region))
@@ -906,14 +947,10 @@ class Viewport(QOpenGLWidget):
 
     def _update_hover(self, point: QPoint) -> None:
         hit = self._pick_at(point)
-        handle = None
-        if self.mode == SELECT and self.region is not None and self._press is None:
-            origin, direction = self._ray(point)
-            found = handle_hit(self.region, origin, direction, self.handle_size())
-            if found is not None:
-                handle = found[0]
-        if handle != self.handle_hover:
-            self.handle_hover = handle
+        spot = self._gizmo_at(point) if self._press is None else self.gizmo_hover
+        if spot != self.gizmo_hover:
+            self.gizmo_hover = spot
+            self.gizmo_hover_changed.emit(spot)
             self.update()
         if hit != self.hover:
             self.hover = hit

@@ -29,11 +29,18 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 
 ## Selections (SELECT mode, Axiom-style)
 
-- **Draw:** click a block, Shift+click another to extend, or drag across blocks.
-- **Resize:** each face of the box has a pin handle (a stem with a cube knob, yellow when
-  under the cursor). Drag it to move that face along its axis. The selection and its
-  handles are drawn through blocks (hidden parts dimmed) and handles always win over
-  blocks under the mouse, so a face below the ground can be grabbed too.
+- **Draw:** click a block, Shift+click another to extend, or drag across blocks. Dragging
+  anywhere inside the box (blocks or air) moves it instead.
+- **Gizmos (Blender-like):** each face has a slim resize arrow, colored by axis (X red,
+  Y green, Z blue; yellow under the cursor): drag it to move that face. Holding **Shift**
+  turns the arrows into white chevrons: drag one outwards to stack copies. A ring around
+  the selection carries two arrowheads on the side facing you: click to rotate clockwise
+  or counter-clockwise. Two double-headed arrows across the top face flip the selection on
+  X or Z. Gizmos are drawn through blocks and win over blocks under the mouse, so a face
+  below the ground can be grabbed too. The selection also has a very faint body, so it is
+  clear which blocks are inside.
+- **Lock (Enter, like GIMP):** a locked selection (orange) cannot be replaced or extended by
+  clicks; moving, rotating, flipping and stacking still work. Enter or Esc unlocks.
 - **What the other outlines are:** colored single-block outlines are *sections* (Sections
   panel; e.g. blue inputs, green outputs, orange processing), white boxes are *groups*
   (Contraptions → Groups). Both are annotations; hide them under View.
