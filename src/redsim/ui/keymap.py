@@ -117,7 +117,7 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("file.save", "Save", ("Ctrl+S",)),
     ActionSpec("file.save_as", "Save as…", ("Ctrl+Shift+S",)),
     ActionSpec("file.quit", "Quit", ("Ctrl+Q",)),
-    ActionSpec("view.info", "Info overlay: signal values on blocks", ("F3",)),
+    ActionSpec("view.info", "Debug screen: world, targeted block, signal values", ("F3",)),
     ActionSpec(
         "view.xray", "X-ray: cycle off / building blocks / everything see-through", ("Alt+Z",)
     ),

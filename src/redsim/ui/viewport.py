@@ -39,6 +39,7 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.ui.camera import Camera
+from redsim.ui.debug_screen import block_lines
 from redsim.ui.geometry import (
     ChunkedMesh,
     Hit,
@@ -160,6 +161,8 @@ class Viewport(QOpenGLWidget):
         self.xray = 0  # 0 off, 1 building blocks see-through, 2 everything see-through
         self.show_info = False
         self.preferences = Preferences.load()
+        #: F3 debug screen: the left column comes from the main window (it knows the rates).
+        self.debug_left: list[str] = []
         #: SELECT mode: the face handle under the cursor, and drags in progress.
         self.gizmo_hover: Hotspot | None = None
         self.region_locked = False  # Enter: clicks can no longer replace the selection
@@ -318,9 +321,10 @@ class Viewport(QOpenGLWidget):
         painter.setFont(font)
         if self.show_info:
             self._draw_info_labels(painter)
+            self._draw_debug_columns(painter)
         metrics = painter.fontMetrics()
         line_height = metrics.height()
-        if self.overlay_text:
+        if self.overlay_text and not self.show_info:
             width = max(metrics.horizontalAdvance(line) for line in self.overlay_text) + 12
             height = line_height * len(self.overlay_text) + 8
             painter.fillRect(6, 6, width, height, QColor(0, 0, 0, 120))
@@ -385,6 +389,20 @@ class Viewport(QOpenGLWidget):
                 labels.append((distance, point, text, kind))
         labels.sort(key=lambda label: -label[0])
         return [(point, text, kind) for _, point, text, kind in labels[-INFO_LABEL_LIMIT:]]
+
+    def _draw_debug_columns(self, painter: QPainter) -> None:
+        """Minecraft-like F3 text: world state on the left, the targeted block on the right."""
+        metrics = painter.fontMetrics()
+        line_height = metrics.height() + 2
+        right = block_lines(self.document, self.hover.pos) if self.hover is not None else []
+        for lines, align_right in ((self.debug_left, False), (right, True)):
+            for index, line in enumerate(lines):
+                width = metrics.horizontalAdvance(line) + 8
+                left = self.width() - width - 6 if align_right else 6
+                top = 6 + index * line_height
+                painter.fillRect(left, top, width, line_height, QColor(0, 0, 0, 130))
+                painter.setPen(QColor(235, 235, 235))
+                painter.drawText(left + 4, top + 1 + metrics.ascent(), line)
 
     def _draw_info_labels(self, painter: QPainter) -> None:
         metrics = painter.fontMetrics()

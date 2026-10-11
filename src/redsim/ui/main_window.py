@@ -27,6 +27,7 @@ from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
 from redsim.ui.camera import Camera
+from redsim.ui.debug_screen import world_lines
 from redsim.ui.geometry import Hit
 from redsim.ui.hints import Context, HintBar, context_hints
 from redsim.ui.inventory import InventoryBar
@@ -437,6 +438,28 @@ class MainWindow(QMainWindow):
             running=self.play_timer.isActive(),
         )
         self.hint_bar.show_hints(context_hints(self.keymap, context))
+        if viewport.show_info:
+            viewport.debug_left = self._debug_lines()
+            viewport.update()
+
+    def _debug_lines(self) -> list[str]:
+        viewport, camera = self.viewport, self.viewport.camera
+        now = time.monotonic()
+        target = "warp" if self.simulation.warp.isChecked() else self.simulation.speed.value()
+        running = "running" if self.play_timer.isActive() else "paused"
+        rates = (
+            f"{running} · {self.tick_rate.rate(now):.1f} ticks/s (target {target}) · "
+            f"{viewport.frame_rate.rate(now):.0f} frames/s"
+        )
+        px, py, pz = (float(v) for v in camera.pivot)
+        facing = ("south", "west", "north", "east")[round(camera.yaw / 90) % 4]
+        view = (
+            f"Pivot: {px:.1f} / {py:.1f} / {pz:.1f} · yaw {camera.yaw:.0f} pitch "
+            f"{camera.pitch:.0f} · facing {facing} · distance {camera.distance:.1f}"
+        )
+        return world_lines(
+            self.document, rates, view, viewport.mode, viewport.region, viewport.region_locked
+        )
 
     def _scrub(self, tick: int) -> None:
         self.simulation.play.setChecked(False)
