@@ -350,6 +350,33 @@ def box_lines(
     return np.array(rows, dtype=np.float32)
 
 
+def solid_box(lo: Iterable[float], hi: Iterable[float], color: Color) -> FloatArray:
+    """A shaded, closed box as triangles (x, y, z, r, g, b, a)."""
+    a = np.array(list(lo), dtype=np.float32)
+    b = np.array(list(hi), dtype=np.float32)
+    return np.vstack([_triangles(a, b, direction, color) for direction in ALL])
+
+
+def thick_edges(lo: Iterable[float], hi: Iterable[float], color: Color, width: float) -> FloatArray:
+    """The 12 edges of a box as thin square prisms (OpenGL core profiles cannot draw wide
+    lines)."""
+    lo3 = np.array(list(lo), dtype=np.float32)
+    hi3 = np.array(list(hi), dtype=np.float32)
+    half = width / 2
+    parts = []
+    for axis in range(3):
+        others = [i for i in range(3) if i != axis]
+        for u in (lo3[others[0]], hi3[others[0]]):
+            for v in (lo3[others[1]], hi3[others[1]]):
+                a = np.zeros(3, dtype=np.float32)
+                b = np.zeros(3, dtype=np.float32)
+                a[axis], b[axis] = lo3[axis] - half, hi3[axis] + half
+                a[others[0]], b[others[0]] = u - half, u + half
+                a[others[1]], b[others[1]] = v - half, v + half
+                parts.append(solid_box(a, b, color))
+    return np.vstack(parts)
+
+
 def block_outline(level: Level, pos: Pos, color: Color) -> FloatArray:
     """Outline of a block's visual boxes (a full cube outline for empty space)."""
     boxes = boxes_at(level, pos)

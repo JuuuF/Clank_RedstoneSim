@@ -43,9 +43,12 @@ void main() { gl_Position = mvp * vec4(position, 1.0); vColor = color; }
 """
 FRAGMENT_SHADER = """#version 330 core
 in vec4 vColor;
+uniform float alphaScale;
 out vec4 fragColor;
-void main() { fragColor = vColor; }
+void main() { fragColor = vec4(vColor.rgb, vColor.a * alphaScale); }
 """
+#: Alpha of the parts of selection overlays hidden behind blocks.
+HIDDEN_OVERLAY_ALPHA = 0.4
 
 
 class _Stream:
@@ -91,6 +94,9 @@ class Renderer:
         self.lines = _Stream()
         self.top_lines = _Stream()
         self.ghost = _Stream()  # translucent preview of a moved or pasted selection
+        #: Selection box edges and handles (triangles): drawn normally, then again on top
+        #: of everything at reduced alpha so hidden parts stay visible ("x-ray").
+        self.overlay = _Stream()
 
     def set_chunk(self, key: object, opaque: np.ndarray, translucent: np.ndarray) -> None:
         streams = self.chunks.get(key)
@@ -118,6 +124,10 @@ class Renderer:
         self.program.bind()
         self.ghost.upload(self.program, triangles)
 
+    def upload_overlay(self, triangles: np.ndarray) -> None:
+        self.program.bind()
+        self.overlay.upload(self.program, triangles)
+
     def draw(self, mvp: np.ndarray, width: int, height: int, background: tuple[float, ...]) -> None:
         gl = self.gl
         # A QPainter overlay drawn after us may leave any of these changed.
@@ -133,6 +143,8 @@ class Renderer:
         self.program.bind()
         location = self.program.uniformLocation("mvp")
         self.program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
+        alpha = self.program.uniformLocation("alphaScale")
+        self.program.setUniformValue1f(alpha, 1.0)
         for opaque, _ in self.chunks.values():
             if opaque.count:
                 opaque.vao.bind()
@@ -152,6 +164,17 @@ class Renderer:
                 gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
+        if self.overlay.count:
+            self.overlay.vao.bind()
+            gl.glDrawArrays(GL_TRIANGLES, 0, self.overlay.count)  # visible parts
+            gl.glDisable(GL_DEPTH_TEST)
+            gl.glEnable(GL_BLEND)
+            gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            self.program.setUniformValue1f(alpha, HIDDEN_OVERLAY_ALPHA)
+            gl.glDrawArrays(GL_TRIANGLES, 0, self.overlay.count)  # hidden parts, dimmed
+            self.program.setUniformValue1f(alpha, 1.0)
+            gl.glDisable(GL_BLEND)
+            gl.glEnable(GL_DEPTH_TEST)
         if self.top_lines.count:
             gl.glDisable(GL_DEPTH_TEST)
             self.top_lines.vao.bind()

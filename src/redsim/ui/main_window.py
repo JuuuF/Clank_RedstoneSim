@@ -216,6 +216,29 @@ class MainWindow(QMainWindow):
             region_menu, "Clear selection (fill with air)", self._delete_region, "edit.delete"
         )
         view_menu = bar.addMenu("&View")
+        for attribute, text, tip in (
+            (
+                "show_sections",
+                "Show sections",
+                "Sections: colored outlines of single blocks (Sections panel), e.g. blue "
+                "inputs, green outputs, orange processing. Annotations only.",
+            ),
+            (
+                "show_groups",
+                "Show groups",
+                "Groups: white boxes around named contraptions with input/output ports "
+                "(Contraptions → Groups). Annotations only.",
+            ),
+        ):
+            toggle = self._action(
+                view_menu, text, lambda on, a=attribute: self._set_view_flag(a, on)
+            )
+            toggle.setCheckable(True)
+            toggle.setChecked(True)
+            toggle.setToolTip(tip)
+            toggle.setStatusTip(tip)
+        view_menu.setToolTipsVisible(True)
+        view_menu.addSeparator()
         for dock in self.findChildren(QDockWidget):
             view_menu.addAction(dock.toggleViewAction())
         hotbar_menu = bar.addMenu("&Hotbar")
@@ -254,6 +277,10 @@ class MainWindow(QMainWindow):
         """Bring the Controls dock to the front (it shares a tab group with the palette)."""
         self.help_dock.show()
         self.help_dock.raise_()
+
+    def _set_view_flag(self, attribute: str, on: bool) -> None:
+        setattr(self.viewport, attribute, on)
+        self.viewport.update()
 
     def _focus_pivot(self) -> None:
         if not self.viewport.focus_hover():

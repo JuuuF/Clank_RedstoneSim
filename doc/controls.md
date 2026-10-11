@@ -25,8 +25,13 @@ panel is generated from the active keymap, so it always shows the real bindings.
 ## Selections (SELECT mode, Axiom-style)
 
 - **Draw:** click a block, Shift+click another to extend, or drag across blocks.
-- **Resize:** each face of the box has a square handle (yellow when under the cursor). Drag
-  it to move that face along its axis.
+- **Resize:** each face of the box has a pin handle (a stem with a cube knob, yellow when
+  under the cursor). Drag it to move that face along its axis. The selection and its
+  handles are drawn through blocks (hidden parts dimmed) and handles always win over
+  blocks under the mouse, so a face below the ground can be grabbed too.
+- **What the other outlines are:** colored single-block outlines are *sections* (Sections
+  panel; e.g. blue inputs, green outputs, orange processing), white boxes are *groups*
+  (Contraptions → Groups). Both are annotations; hide them under View.
 - **Move:** drag from a block inside the box. A translucent ghost and a white box show the
   target; the wheel lifts or lowers it while dragging. Releasing runs
   `/clone <box> <target> replace move`: one undoable edit, and pending scheduled ticks move

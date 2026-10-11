@@ -38,32 +38,33 @@ def bounds(region: Region) -> tuple[np.ndarray, np.ndarray]:
     return np.array(region.low, dtype=float), np.array(region.high, dtype=float) + 1.0
 
 
-def handle_square(region: Region, handle: Handle) -> tuple[np.ndarray, float]:
-    """Center of the handle and half its edge length."""
+def face_center(region: Region, handle: Handle) -> np.ndarray:
     lo, hi = bounds(region)
     center = (lo + hi) / 2.0
     center[handle.axis] = hi[handle.axis] if handle.high else lo[handle.axis]
-    others = [hi[i] - lo[i] for i in range(3) if i != handle.axis]
-    return center, min(0.45, 0.2 + 0.1 * min(others))
+    return center
+
+
+def knob_center(region: Region, handle: Handle, size: float) -> np.ndarray:
+    """A handle is a pin: a stem out of the face center ending in a knob of ``size``."""
+    return face_center(region, handle) + handle.normal * (0.25 + 2.0 * size)
 
 
 def handle_hit(
-    region: Region, origin: np.ndarray, direction: np.ndarray
+    region: Region, origin: np.ndarray, direction: np.ndarray, size: float
 ) -> tuple[Handle, float] | None:
-    """The nearest handle the ray passes through, with its ray distance."""
+    """The nearest handle knob the ray passes (generously: 1.5 × the knob size). Handles
+    are drawn on top of the world, so blocks never hide them from the mouse either."""
     best: tuple[Handle, float] | None = None
+    unit = direction / np.linalg.norm(direction)
     for handle in HANDLES:
-        center, half = handle_square(region, handle)
-        axis = handle.axis
-        if abs(direction[axis]) < 1e-9:
-            continue
-        t = (center[axis] - origin[axis]) / direction[axis]
+        to_knob = knob_center(region, handle, size) - origin
+        t = float(to_knob @ unit)
         if t <= 0:
             continue
-        point = origin + direction * t
-        on_square = all(abs(point[i] - center[i]) <= half for i in range(3) if i != axis)
-        if on_square and (best is None or t < best[1]):
-            best = (handle, float(t))
+        miss = float(np.linalg.norm(to_knob - unit * t))
+        if miss <= 1.5 * size and (best is None or t < best[1]):
+            best = (handle, t)
     return best
 
 

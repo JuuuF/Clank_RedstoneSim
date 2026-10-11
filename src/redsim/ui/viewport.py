@@ -36,15 +36,25 @@ from redsim.core.pos import Pos, offset
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
 from redsim.ui.camera import Camera
-from redsim.ui.geometry import ChunkedMesh, Hit, block_outline, box_lines, ghost_mesh, pick
+from redsim.ui.geometry import (
+    ChunkedMesh,
+    Hit,
+    block_outline,
+    box_lines,
+    ghost_mesh,
+    pick,
+    solid_box,
+    thick_edges,
+)
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.pacing import RateMeter
 from redsim.ui.renderer import Renderer
 from redsim.ui.selection_tools import (
     Handle,
+    face_center,
     handle_hit,
-    handle_square,
     horizontal_offset,
+    knob_center,
     plane_point,
     resized,
     shifted,
@@ -57,6 +67,9 @@ ORBIT_DEGREES_PER_PIXEL = 0.3
 ZOOM_PER_NOTCH = 1.15
 DRAG_THRESHOLD = 4
 PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
+SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
+HANDLE_HOVER_COLOR = (1.0, 0.85, 0.1, 1.0)
+TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
 NORMAL, BUILD, SELECT = "normal", "build", "select"
 MODE_COLORS = {
@@ -123,6 +136,9 @@ class Viewport(QOpenGLWidget):
         self.selection: Pos | None = None
         self.region: Region | None = None
         self._region_anchor: Pos | None = None
+        #: Annotation outlines (View menu): sections (colored cells) and groups (white boxes).
+        self.show_sections = True
+        self.show_groups = True
         #: SELECT mode: the face handle under the cursor, and drags in progress.
         self.handle_hover: Handle | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
@@ -208,6 +224,7 @@ class Viewport(QOpenGLWidget):
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
         renderer.upload_lines(self._overlay_lines())
+        renderer.upload_overlay(self._overlay_triangles())
         renderer.upload_top_lines(self._pivot_lines())
         self._upload_ghost(renderer)
         ratio = self.devicePixelRatioF()
@@ -263,11 +280,13 @@ class Viewport(QOpenGLWidget):
     def _overlay_lines(self) -> np.ndarray:
         level = self.document.level
         parts = []
-        for section in self.document.sections.sections.values():
+        sections = self.document.sections.sections.values() if self.show_sections else ()
+        groups = self.document.groups.groups.values() if self.show_groups else ()
+        for section in sections:
             color = _hex_color(section.color)
             for pos in section.positions:
                 parts.append(box_lines(pos, (pos[0] + 1, pos[1] + 1, pos[2] + 1), color, 0.01))
-        for group in self.document.groups.groups.values():
+        for group in groups:
             low, high = group.region.low, group.region.high
             parts.append(
                 box_lines(low, (high[0] + 1, high[1] + 1, high[2] + 1), (1, 1, 1, 1), 0.03)
@@ -276,19 +295,6 @@ class Viewport(QOpenGLWidget):
                 color = (0.2, 0.5, 1.0, 1.0) if port.role == "input" else (1.0, 0.5, 0.1, 1.0)
                 p = port.pos
                 parts.append(box_lines(p, (p[0] + 1, p[1] + 1, p[2] + 1), color, 0.05))
-        if self.region is not None:
-            low, high = self.region.low, self.region.high
-            parts.append(
-                box_lines(low, (high[0] + 1, high[1] + 1, high[2] + 1), (0.0, 0.9, 0.9, 1.0), 0.02)
-            )
-            if self.mode == SELECT and self._move is None:
-                parts.extend(self._handle_lines(self.region))
-        if self._move is not None:
-            moved = shifted(self._move.region, self._move.offset_pos)
-            parts.append(_region_lines(moved, (1.0, 1.0, 1.0, 1.0), 0.03))
-        paste_box = self.paste_region()
-        if paste_box is not None:
-            parts.append(_region_lines(paste_box, (1.0, 1.0, 1.0, 1.0), 0.03))
         if self.selection is not None:
             parts.append(block_outline(level, self.selection, (1.0, 0.85, 0.1, 1.0)))
         if self.hover is not None:
@@ -300,18 +306,53 @@ class Viewport(QOpenGLWidget):
             return np.zeros((0, 7), dtype=np.float32)
         return np.vstack(parts)
 
-    def _handle_lines(self, region: Region) -> list[np.ndarray]:
-        """Face handles of the selection box (the hovered one larger and yellow)."""
+    def _overlay_triangles(self) -> np.ndarray:
+        """Selection box, its handles and drop targets: thick, and visible through blocks."""
+        parts = []
+        width = self._edge_width()
+        if self.region is not None:
+            lo, hi = _bounds(self.region)
+            parts.append(thick_edges(lo, hi, SELECTION_COLOR, width))
+            if self.mode == SELECT and self._move is None and self.paste_preview is None:
+                parts.extend(self._handle_pins(self.region))
+        if self._move is not None:
+            lo, hi = _bounds(shifted(self._move.region, self._move.offset_pos))
+            parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
+        paste_box = self.paste_region()
+        if paste_box is not None:
+            lo, hi = _bounds(paste_box)
+            parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
+        if not parts:
+            return np.zeros((0, 7), dtype=np.float32)
+        return np.vstack(parts)
+
+    def _edge_width(self) -> float:
+        """Selection edges keep a similar on-screen thickness at any zoom."""
+        return min(0.2, max(0.035, 0.006 * self.camera.distance))
+
+    def handle_size(self) -> float:
+        """Knob size: grows with the distance to the selection, so it stays grabbable."""
+        if self.region is None:
+            return 0.15
+        lo, hi = _bounds(self.region)
+        distance = float(np.linalg.norm((lo + hi) / 2 - self.camera.position))
+        return min(0.8, max(0.12, 0.018 * distance))
+
+    def _handle_pins(self, region: Region) -> list[np.ndarray]:
+        """Each face gets a pin: a thin stem from the face center to a cube knob."""
+        size = self.handle_size()
         parts = []
         for handle in _HANDLES:
-            center, half = handle_square(region, handle)
             hovered = handle == self.handle_hover
-            if hovered:
-                half *= 1.4
-            color = (1.0, 0.85, 0.1, 1.0) if hovered else (0.0, 0.9, 0.9, 1.0)
-            lo, hi = center - half, center + half
-            lo[handle.axis] = hi[handle.axis] = center[handle.axis]
-            parts.append(box_lines(lo, hi, color, 0.01))
+            color = HANDLE_HOVER_COLOR if hovered else SELECTION_COLOR
+            knob = knob_center(region, handle, size)
+            start = face_center(region, handle)
+            stem = size * 0.25
+            lo = np.minimum(start, knob) - stem
+            hi = np.maximum(start, knob) + stem
+            parts.append(solid_box(lo, hi, color))
+            half = size * (1.25 if hovered else 1.0)
+            parts.append(solid_box(knob - half, knob + half, color))
         return parts
 
     def _upload_ghost(self, renderer: Renderer) -> None:
@@ -498,9 +539,9 @@ class Viewport(QOpenGLWidget):
         block = pick(self.document.level, origin, direction)
         region = self.region
         if region is not None and not copy:
-            handle = handle_hit(region, origin, direction)
-            if handle is not None and (block is None or handle[1] <= block.distance + 0.01):
-                center, _ = handle_square(region, handle[0])
+            handle = handle_hit(region, origin, direction, self.handle_size())
+            if handle is not None:  # handles are drawn on top, so they win over blocks
+                center = face_center(region, handle[0])
                 axis = self._screen_vector(center, center + handle[0].normal)
                 self._resize = (handle[0], region, start, axis)
                 return
@@ -623,8 +664,8 @@ class Viewport(QOpenGLWidget):
         handle = None
         if self.mode == SELECT and self.region is not None and self._press is None:
             origin, direction = self._ray(point)
-            found = handle_hit(self.region, origin, direction)
-            if found is not None and (hit is None or found[1] <= hit.distance + 0.01):
+            found = handle_hit(self.region, origin, direction, self.handle_size())
+            if found is not None:
                 handle = found[0]
         if handle != self.handle_hover:
             self.handle_hover = handle
@@ -680,11 +721,9 @@ class _MoveDrag:
 _HANDLES = tuple(Handle(axis, high) for axis in range(3) for high in (False, True))
 
 
-def _region_lines(
-    region: Region, color: tuple[float, float, float, float], grow: float
-) -> np.ndarray:
-    high = region.high
-    return box_lines(region.low, (high[0] + 1, high[1] + 1, high[2] + 1), color, grow)
+def _bounds(region: Region) -> tuple[np.ndarray, np.ndarray]:
+    low, high = region.low, region.high
+    return np.array(low, dtype=float), np.array(high, dtype=float) + 1.0
 
 
 def _hex_color(text: str) -> tuple[float, float, float, float]:
