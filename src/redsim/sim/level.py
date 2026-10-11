@@ -514,6 +514,22 @@ class Level:
             (self.pending_tickers if self.ticking_block_entities else self.tickers).append(wrapper)
             self.tickers_by_pos[be.pos] = wrapper
 
+    # =================================================================== time
+    def shift_time(self, delta: int) -> None:
+        """Move the clock and every stored game time by ``delta``. Only differences of game
+        times matter to the simulation, so behavior is unchanged; used to put tick 0 (the
+        build) at game time 0."""
+        self.game_time += delta
+        self.trace.game_time = self.game_time
+        self.block_ticks.shift_time(delta)
+        self.torch_toggles = [(pos, time + delta) for pos, time in self.torch_toggles]
+        entities = {id(be): be for be in self.block_entities.values()}
+        for wrapper in [*self.tickers, *self.pending_tickers]:
+            if wrapper.ticker is not None:
+                entities.setdefault(id(wrapper.ticker.block_entity), wrapper.ticker.block_entity)
+        for entity in entities.values():
+            entity.shift_time(delta)
+
     # =================================================================== snapshots
     def clone(self) -> Level:
         """Deep copy of all simulation state (trace not included)."""

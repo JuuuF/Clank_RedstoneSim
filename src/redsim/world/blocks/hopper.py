@@ -129,6 +129,9 @@ class HopperBlockEntity(ContainerBlockEntity):
         super().load_json(data)
         self.cooldown_time = int(data.get("TransferCooldown", -1))
 
+    def shift_time(self, delta: int) -> None:
+        self.ticked_game_time += delta
+
     def runtime_json(self) -> dict[str, Any]:
         return {"ticked_game_time": self.ticked_game_time}
 

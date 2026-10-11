@@ -106,3 +106,29 @@ def test_trace_trimming_keeps_ids_stable(monkeypatch: pytest.MonkeyPatch) -> Non
     assert trace.get(ids[-1]) is trace.records[-1]
     assert trace.get(ids[0]) is None  # trimmed
     assert trace.records[0].id == trace.base_id
+
+
+@pytest.mark.parametrize(
+    "name", ["torch_burnout", "torch_burnout_update", "torch_tower", "piston_door", "hopper_clock"]
+)
+def test_rebasing_the_clock_changes_nothing(name: str) -> None:
+    """Rebasing shifts every stored game time (scheduled ticks, torch burnout history,
+    hopper and piston timestamps): the following ticks are identical."""
+    from tools.gameserver.compare import observe_sim, run_sim
+
+    scenario = scenarios.BY_NAME[name]
+    reference = run_sim(scenario, (0, 0, 0), 0)
+    engine = Engine()
+    build_terrain(engine, (0, 0, 0), scenario.size)
+    timeline = Timeline(engine)
+    for rel, state, *nbt in scenario.setup:
+        payload = {"nbt": nbt[0]} if nbt else None
+        timeline.apply(Action("setblock", absolute((0, 0, 0), rel), state, payload=payload))
+    for tick in range(scenario.ticks):
+        assert observe_sim(engine, scenario, (0, 0, 0)) == reference[tick], tick
+        for rel, state in scenario.inputs.get(tick, []):
+            timeline.apply(Action("setblock", absolute((0, 0, 0), rel), state))
+        if tick in (scenario.ticks // 3, 2 * scenario.ticks // 3):
+            timeline.rebase()
+            assert engine.game_time == 0
+        timeline.run_tick()

@@ -120,6 +120,19 @@ class LevelTicks:
     def count(self) -> int:
         return len(self._pending)
 
+    def shift_time(self, delta: int) -> None:
+        """Move every trigger time by ``delta`` (the order does not change)."""
+
+        def moved(tick: ScheduledTick) -> ScheduledTick:
+            return ScheduledTick(
+                tick.block_id, tick.pos, tick.trigger_tick + delta, tick.priority, tick.sub_tick
+            )
+
+        self._heap = [(moved(t).drain_order, moved(t)) for _, t in self._heap]
+        heapq.heapify(self._heap)
+        self._pending = {tick.key: tick for _, tick in self._heap}
+        self.to_run = deque(moved(t) for t in self.to_run)
+
     def clone(self) -> LevelTicks:
         other = LevelTicks()
         other._heap = list(self._heap)

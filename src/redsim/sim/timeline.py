@@ -47,6 +47,8 @@ class Timeline:
         self.input_times: dict[int, int] = {}
         self.tick_starts: list[int] = []
         self.base_time = engine.level.game_time
+        if engine.at_tick_boundary():
+            self.rebase()  # tick 0 at game time 0
 
     # ------------------------------------------------------------------ positions
     @property
@@ -155,6 +157,8 @@ class Timeline:
         """Make the current state the base (tick 0): the history before it is dropped."""
         if not self.engine.at_tick_boundary():
             raise ActionError("the base must be at a tick boundary")
+        # The clock restarts: tick 0 is game time 0 (every stored time moves along).
+        self.engine.level.shift_time(-self.engine.level.game_time)
         self.start = self.end = self.position
         self.keyframes = {self.start: self.engine.snapshot()}
         self.inputs, self.input_times, self.tick_starts = {}, {}, []

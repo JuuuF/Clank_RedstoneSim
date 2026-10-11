@@ -57,6 +57,10 @@ class BlockEntity:
     def load_json(self, data: dict[str, Any]) -> None:
         return None
 
+    def shift_time(self, delta: int) -> None:
+        """Game times kept by the entity move by ``delta`` (``Level.shift_time``)."""
+        return None
+
     def runtime_json(self) -> dict[str, Any]:
         """Simulation state the game keeps in memory but does not save to NBT (it does not
         survive ``/clone`` either); stored in simulator saves only."""

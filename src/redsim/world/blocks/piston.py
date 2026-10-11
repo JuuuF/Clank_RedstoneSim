@@ -627,6 +627,9 @@ class PistonMovingBlockEntity(BlockEntity):
         dx, dy, dz = (step * shift for step in self.direction.step)
         return head_shape | state.get_collision_shape().offset(dx, dy, dz)
 
+    def shift_time(self, delta: int) -> None:
+        self.last_ticked += delta
+
     def tick(self, level: Level, pos: Pos, state: BlockState) -> None:
         """``PistonMovingBlockEntity.tick`` L291."""
         self.last_ticked = level.game_time

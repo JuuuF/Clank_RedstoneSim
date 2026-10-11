@@ -150,10 +150,11 @@ def test_set_tick_zero_and_relative_ticks(tmp_path: Path) -> None:
     doc.run_ticks(4)
     doc.save(tmp_path / "w.redsim.json")
     again = Document.open(tmp_path / "w.redsim.json")
-    assert again.engine.game_time == 4 and again.tick == 0  # saved at game time 4
+    assert again.engine.game_time == 0 and again.tick == 0  # saved at game time 4: shifted
     doc.run_ticks(3)
     doc.set_tick_zero()
-    assert doc.tick == 0 and doc.end_tick == 0 and doc.engine.game_time == 7
+    assert doc.tick == 0 and doc.end_tick == 0 and doc.engine.game_time == 0
+    assert "game time 0 → 1" in doc.engine.peek_next_step()
 
 
 def test_set_tick_zero_after_letting_the_circuit_settle() -> None:
