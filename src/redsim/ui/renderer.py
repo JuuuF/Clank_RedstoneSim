@@ -49,6 +49,8 @@ void main() { fragColor = vec4(vColor.rgb, vColor.a * alphaScale); }
 """
 #: Alpha of the parts of selection overlays hidden behind blocks.
 HIDDEN_OVERLAY_ALPHA = 0.4
+#: Alpha of building blocks in X-ray mode.
+XRAY_ALPHA = 0.18
 
 
 class _Stream:
@@ -89,8 +91,8 @@ class Renderer:
         if not self.program.link():
             raise RuntimeError(self.program.log())
         self.program.bind()
-        #: Chunk key → (opaque, translucent) streams.
-        self.chunks: dict[object, tuple[_Stream, _Stream]] = {}
+        #: Chunk key → (opaque, translucent, solid) streams.
+        self.chunks: dict[object, tuple[_Stream, _Stream, _Stream]] = {}
         self.lines = _Stream()
         self.top_lines = _Stream()
         self.ghost = _Stream()  # translucent preview of a moved or pasted selection
@@ -98,13 +100,16 @@ class Renderer:
         #: of everything at reduced alpha so hidden parts stay visible ("x-ray").
         self.overlay = _Stream()
 
-    def set_chunk(self, key: object, opaque: np.ndarray, translucent: np.ndarray) -> None:
+    def set_chunk(
+        self, key: object, opaque: np.ndarray, translucent: np.ndarray, solid: np.ndarray
+    ) -> None:
         streams = self.chunks.get(key)
         if streams is None:
-            streams = self.chunks[key] = (_Stream(), _Stream())
+            streams = self.chunks[key] = (_Stream(), _Stream(), _Stream())
         self.program.bind()
         streams[0].upload(self.program, opaque)
         streams[1].upload(self.program, translucent)
+        streams[2].upload(self.program, solid)
 
     def remove_chunk(self, key: object) -> None:
         streams = self.chunks.pop(key, None)
@@ -128,7 +133,16 @@ class Renderer:
         self.program.bind()
         self.overlay.upload(self.program, triangles)
 
-    def draw(self, mvp: np.ndarray, width: int, height: int, background: tuple[float, ...]) -> None:
+    def draw(
+        self,
+        mvp: np.ndarray,
+        width: int,
+        height: int,
+        background: tuple[float, ...],
+        xray: bool = False,
+    ) -> None:
+        """Draw everything. ``xray``: full building blocks become see-through (alpha
+        ``XRAY_ALPHA``, no depth writes) while components stay opaque (Blender's X-ray)."""
         gl = self.gl
         # A QPainter overlay drawn after us may leave any of these changed.
         gl.glDisable(GL_SCISSOR_TEST)
@@ -145,14 +159,27 @@ class Renderer:
         self.program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
         alpha = self.program.uniformLocation("alphaScale")
         self.program.setUniformValue1f(alpha, 1.0)
-        for opaque, _ in self.chunks.values():
-            if opaque.count:
-                opaque.vao.bind()
-                gl.glDrawArrays(GL_TRIANGLES, 0, opaque.count)
+        for opaque, _, solid in self.chunks.values():
+            for stream in (opaque,) if xray else (opaque, solid):
+                if stream.count:
+                    stream.vao.bind()
+                    gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
         if self.lines.count:
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
-        translucent = [stream for _, stream in self.chunks.values() if stream.count]
+        if xray:
+            gl.glEnable(GL_BLEND)
+            gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            gl.glDepthMask(GL_FALSE)
+            self.program.setUniformValue1f(alpha, XRAY_ALPHA)
+            for _, _, solid in self.chunks.values():
+                if solid.count:
+                    solid.vao.bind()
+                    gl.glDrawArrays(GL_TRIANGLES, 0, solid.count)
+            self.program.setUniformValue1f(alpha, 1.0)
+            gl.glDepthMask(GL_TRUE)
+            gl.glDisable(GL_BLEND)
+        translucent = [stream for _, stream, _ in self.chunks.values() if stream.count]
         if self.ghost.count:
             translucent.append(self.ghost)
         if translucent:

@@ -83,6 +83,16 @@ reason the old Shift+T rewind was disliked).
 | 1–9 | hotbar |
 | F1 | controls panel |
 
+## View toggles
+
+| Keys | Toggle |
+|---|---|
+| F3 | **Info overlay:** signal values on the blocks: dust power (red), signal-source strength as a comparator reads it (purple), comparator output (dark); zeros are grey. Nearest 300 within 48 blocks. |
+| Alt+Z | **X-ray** (as in Blender): building blocks become see-through, circuit parts (dust, torches, diodes, lamps, pistons, redstone blocks, barrels, …) stay opaque. |
+
+Active toggles show as a tag above the mode badge. View → Show sections / Show groups
+hides the annotation outlines.
+
 ## Signal sources
 
 The palette's **Signal sources** section (barrel, lectern, cake; hover for how they

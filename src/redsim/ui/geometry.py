@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import numpy.typing as npt
@@ -51,14 +51,16 @@ def _face_quads(lo: np.ndarray, hi: np.ndarray, direction: Direction) -> np.ndar
 
 @dataclass
 class Mesh:
-    opaque: FloatArray  # (n, 7): x, y, z, r, g, b, a
+    opaque: FloatArray  # (n, 7): x, y, z, r, g, b, a; components and partial blocks
     translucent: FloatArray
     #: Contains moving pistons, whose look changes every tick without a block change.
     animated: bool = False
+    #: Full opaque cubes (building blocks), kept apart so X-ray can make them see-through.
+    solid: FloatArray = field(default_factory=lambda: np.zeros((0, 7), dtype=np.float32))
 
     @property
     def vertex_count(self) -> int:
-        return len(self.opaque) + len(self.translucent)
+        return len(self.opaque) + len(self.translucent) + len(self.solid)
 
 
 def is_full_opaque(boxes: list[Box]) -> bool:
@@ -108,6 +110,17 @@ def chunk_of(pos: Pos) -> ChunkKey:
 
 
 _STEPS = tuple(direction.step for direction in ALL)
+#: Full cubes that are circuit parts: X-ray keeps them opaque (they go to the opaque buffer).
+XRAY_KEEP = frozenset(
+    {
+        "minecraft:redstone_lamp",
+        "minecraft:redstone_block",
+        "minecraft:piston",
+        "minecraft:sticky_piston",
+        "minecraft:barrel",
+        "minecraft:slime_block",
+    }
+)
 _EMPTY = np.zeros((0, 7), dtype=np.float32)
 
 
@@ -185,6 +198,9 @@ class Mesher:
         o_ids: list[int] = []
         o_pos: list[Pos] = []
         o_counts: list[int] = []
+        s_ids: list[int] = []
+        s_pos: list[Pos] = []
+        s_counts: list[int] = []
         t_ids: list[int] = []
         t_pos: list[Pos] = []
         t_counts: list[int] = []
@@ -201,14 +217,16 @@ class Mesher:
             tinted = full and bool((x + y + z) & 1)
             model = models.get((state, tinted)) or self._model(state, tinted)
             if full:
-                before = len(o_ids)
+                keep = state.block.id in XRAY_KEEP
+                ids, at, counts = (o_ids, o_pos, o_counts) if keep else (s_ids, s_pos, s_counts)
+                before = len(ids)
                 for index, (dx, dy, dz) in enumerate(_STEPS):
                     neighbor = states.get((x + dx, y + dy, z + dz))
                     if neighbor is None or not is_full(neighbor):
-                        o_ids.extend(model.opaque[index])
-                if len(o_ids) > before:
-                    o_pos.append(pos)
-                    o_counts.append(len(o_ids) - before)
+                        ids.extend(model.opaque[index])
+                if len(ids) > before:
+                    at.append(pos)
+                    counts.append(len(ids) - before)
             elif model.opaque_all:
                 o_ids.extend(model.opaque_all)
                 o_pos.append(pos)
@@ -240,7 +258,8 @@ class Mesher:
                 target = translucent if box.translucent else opaque
                 for direction in ALL:
                     target.append(_triangles(lo, hi, direction, color))
-        return Mesh(_stack(opaque), _stack(translucent), animated=bool(dynamic))
+        solid = self._assemble(s_ids, s_pos, s_counts)
+        return Mesh(_stack(opaque), _stack(translucent), animated=bool(dynamic), solid=solid)
 
     def _assemble(self, ids: list[int], positions: list[Pos], counts: list[int]) -> FloatArray:
         if not ids:
@@ -258,7 +277,7 @@ def ghost_mesh(
     level = Level()
     level.blocks = {pos: state for pos, state in states.items() if not state.is_air}
     mesh = (mesher or Mesher()).build(level, level.blocks)
-    rows = np.vstack([mesh.opaque, mesh.translucent])
+    rows = np.vstack([mesh.solid, mesh.opaque, mesh.translucent])
     rows[:, 6] = np.minimum(rows[:, 6], alpha)
     return rows
 

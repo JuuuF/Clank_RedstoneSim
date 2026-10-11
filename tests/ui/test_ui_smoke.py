@@ -152,3 +152,23 @@ def test_rotate_block_under_the_cursor(app: object) -> None:
     assert document.state_at((0, 1, 0)).get(FACING) is Direction.EAST
     window.document.dirty = False
     window.close()
+
+
+def test_info_overlay_lists_signal_values(app: object) -> None:
+    from pathlib import Path
+
+    from redsim.editor.document import Document
+    from redsim.ui.main_window import MainWindow
+
+    example = Path(__file__).resolve().parents[2] / "examples" / "showcase.redsim.json"
+    window = MainWindow(Document.open(example))
+    viewport = window.viewport
+    viewport.camera.pivot = np.array([4.0, 1.0, 0.0])
+    labels = {
+        (tuple(int(v) for v in point), text, kind) for point, text, kind in viewport.info_labels()
+    }
+    assert ((6, 2, 2), "14", "source") in labels  # the barrel behind row 5's comparator
+    assert any(kind == "wire" for _, _, kind in labels)
+    assert any(kind == "comparator" for _, _, kind in labels)
+    window.document.dirty = False
+    window.close()

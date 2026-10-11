@@ -65,6 +65,7 @@ from redsim.ui.selection_tools import (
 )
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
+from redsim.world.properties import POWER
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 ORBIT_DEGREES_PER_PIXEL = 0.3
@@ -76,6 +77,12 @@ HANDLE_HOVER_COLOR = (1.0, 0.85, 0.1, 1.0)
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
 NORMAL, BUILD, SELECT = "normal", "build", "select"
+INFO_LABEL_LIMIT = 300
+INFO_COLORS = {
+    "wire": QColor(170, 20, 20, 210),
+    "source": QColor(120, 60, 160, 220),
+    "comparator": QColor(40, 40, 40, 220),
+}
 PASTE_COLOR = QColor(140, 60, 170)
 MODE_COLORS = {
     NORMAL: QColor(60, 100, 160),
@@ -144,6 +151,9 @@ class Viewport(QOpenGLWidget):
         #: Annotation outlines (View menu): sections (colored cells) and groups (white boxes).
         self.show_sections = True
         self.show_groups = True
+        #: Blender-like X-ray (building blocks see-through) and the block-info overlay.
+        self.xray = False
+        self.show_info = False
         #: SELECT mode: the face handle under the cursor, and drags in progress.
         self.handle_hover: Handle | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
@@ -266,7 +276,7 @@ class Viewport(QOpenGLWidget):
                 if mesh is None:
                     renderer.remove_chunk(key)
                 else:
-                    renderer.set_chunk(key, mesh.opaque, mesh.translucent)
+                    renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
             for stale in [stale for stale in renderer.chunks if stale not in chunks]:
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
@@ -278,7 +288,7 @@ class Viewport(QOpenGLWidget):
         width, height = int(self.width() * ratio), int(self.height() * ratio)
         aspect = max(width, 1) / max(height, 1)
         mvp = self.camera.projection_matrix(aspect) @ self.camera.view_matrix()
-        renderer.draw(mvp, width, height, BACKGROUND)
+        renderer.draw(mvp, width, height, BACKGROUND, xray=self.xray)
         self.frame_rate.record(time.monotonic())
         self._draw_overlays()
 
@@ -286,6 +296,8 @@ class Viewport(QOpenGLWidget):
         painter = QPainter(self)
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         painter.setFont(font)
+        if self.show_info:
+            self._draw_info_labels(painter)
         metrics = painter.fontMetrics()
         line_height = metrics.height()
         if self.overlay_text:
@@ -314,8 +326,66 @@ class Viewport(QOpenGLWidget):
         )
         painter.setPen(QColor(255, 255, 255))
         painter.drawText(10, top + 4 + metrics.ascent(), badge)
+        flags = [name for name, on in (("X-RAY", self.xray), ("INFO", self.show_info)) if on]
+        if flags:
+            tag = " " + " · ".join(flags) + " "
+            tag_width = metrics.horizontalAdvance(tag) + 8
+            tag_top = top - line_height - 12
+            painter.fillRect(6, tag_top, tag_width, line_height + 8, QColor(30, 30, 30, 200))
+            painter.drawText(10, tag_top + 4 + metrics.ascent(), tag)
         painter.drawText(14 + badge_width, top + 4 + metrics.ascent(), hint)
         painter.end()
+
+    def info_labels(self, max_distance: float = 48.0) -> list[tuple[np.ndarray, str, str]]:
+        """Signal values shown by the info overlay: (world point, text, kind), nearest last.
+
+        Wire: its power; signal sources (barrel, lectern, cake): the value a comparator
+        reads; comparators: their stored output signal."""
+        level = self.document.level
+        eye = self.camera.position
+        labels: list[tuple[float, np.ndarray, str, str]] = []
+        for pos, state in level.blocks.items():
+            block_id = state.block.id
+            if block_id == "minecraft:redstone_wire":
+                text, kind, height = str(state.get(POWER)), "wire", 0.1
+            elif block_id == "minecraft:comparator":
+                entity = level.get_block_entity(pos, create=False)
+                output = entity.to_json().get("OutputSignal", 0) if entity is not None else 0
+                text, kind, height = str(output), "comparator", 0.3
+            elif sources.kind_of(state) is not None:
+                value = sources.strength_at(level, pos)
+                text, kind = str(value), "source"
+                height = 0.55 if block_id == "minecraft:cake" else 1.0
+            else:
+                continue
+            point = np.array([pos[0] + 0.5, pos[1] + height, pos[2] + 0.5])
+            distance = float(np.linalg.norm(point - eye))
+            if distance <= max_distance:
+                labels.append((distance, point, text, kind))
+        labels.sort(key=lambda label: -label[0])
+        return [(point, text, kind) for _, point, text, kind in labels[-INFO_LABEL_LIMIT:]]
+
+    def _draw_info_labels(self, painter: QPainter) -> None:
+        metrics = painter.fontMetrics()
+        width, height = max(self.width(), 1), max(self.height(), 1)
+        mvp = self.camera.projection_matrix(width / height) @ self.camera.view_matrix()
+        for point, text, kind in self.info_labels():
+            clip = mvp @ np.array([*point, 1.0])
+            if clip[3] <= 0.05:
+                continue  # behind the camera
+            x = (clip[0] / clip[3] + 1) / 2 * width
+            y = (1 - clip[1] / clip[3]) / 2 * height
+            if not (0 <= x <= width and 0 <= y <= height):
+                continue
+            box_width = metrics.horizontalAdvance(text) + 8
+            box_height = metrics.height() + 2
+            left, top = int(x - box_width / 2), int(y - box_height / 2)
+            background = INFO_COLORS[kind]
+            if text == "0":
+                background = QColor(70, 70, 70, 170)
+            painter.fillRect(left, top, box_width, box_height, background)
+            painter.setPen(QColor(255, 255, 255))
+            painter.drawText(left + 4, top + 1 + metrics.ascent(), text)
 
     def paste_hint(self) -> str:
         return (

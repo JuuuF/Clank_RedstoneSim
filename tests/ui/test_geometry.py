@@ -68,7 +68,7 @@ def test_translucent_blocks_go_to_their_own_buffer() -> None:
     level = Level()
     level.blocks[(0, 0, 0)] = blocks.GLASS.default_state
     mesh = build_mesh(level)
-    assert len(mesh.opaque) == 0 and len(mesh.translucent) == 36
+    assert len(mesh.opaque) == 0 and len(mesh.solid) == 0 and len(mesh.translucent) == 36
     assert np.all(mesh.translucent[:, 6] < 1.0)
 
 
@@ -77,7 +77,8 @@ def _faces(meshes: list[Mesh]) -> tuple[list[bytes], list[bytes]]:
         joined = np.vstack(arrays) if arrays else np.zeros((0, 7), np.float32)
         return sorted(face.tobytes() for face in np.round(joined.reshape(-1, 6, 7), 4))
 
-    return rows([m.opaque for m in meshes]), rows([m.translucent for m in meshes])
+    opaque = [m.opaque for m in meshes] + [m.solid for m in meshes]
+    return rows(opaque), rows([m.translucent for m in meshes])
 
 
 def test_chunks_rebuild_only_where_blocks_changed() -> None:
@@ -127,3 +128,18 @@ def test_incremental_chunks_equal_a_full_rebuild() -> None:
                 level.blocks[pos] = rng.choice(pool)
         chunks.update(level)
         assert _faces(list(chunks.chunks.values())) == _faces([build_mesh(level)])
+
+
+def test_full_cubes_go_to_the_solid_buffer_components_stay_opaque() -> None:
+    level = Level()
+    level.blocks[(0, 0, 0)] = blocks.STONE.default_state
+    level.blocks[(0, 1, 0)] = blocks.REDSTONE_WIRE.cross_state
+    mesh = build_mesh(level)
+    assert len(mesh.solid) == 36 and len(mesh.opaque) > 0
+
+
+def test_xray_keeps_full_cube_components_opaque() -> None:
+    level = Level()
+    level.blocks[(0, 0, 0)] = blocks.REDSTONE_LAMP.default_state
+    mesh = build_mesh(level)
+    assert len(mesh.solid) == 0 and len(mesh.opaque) == 36

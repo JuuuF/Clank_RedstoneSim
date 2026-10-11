@@ -240,6 +240,15 @@ class MainWindow(QMainWindow):
             toggle.setChecked(True)
             toggle.setToolTip(tip)
             toggle.setStatusTip(tip)
+        for attribute, text, keymap_id in (
+            ("show_info", "Info overlay (signal values)", "view.info"),
+            ("xray", "X-ray", "view.xray"),
+        ):
+            toggle = self._action(
+                view_menu, text, lambda on, a=attribute: self._set_view_flag(a, on), keymap_id
+            )
+            toggle.setCheckable(True)
+            toggle.setToolTip(SPECS[keymap_id].title)
         view_menu.setToolTipsVisible(True)
         view_menu.addSeparator()
         for dock in self.findChildren(QDockWidget):

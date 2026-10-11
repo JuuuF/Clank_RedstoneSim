@@ -103,6 +103,8 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("file.save", "Save", ("Ctrl+S",)),
     ActionSpec("file.save_as", "Save as…", ("Ctrl+Shift+S",)),
     ActionSpec("file.quit", "Quit", ("Ctrl+Q",)),
+    ActionSpec("view.info", "Info overlay: signal values on blocks", ("F3",)),
+    ActionSpec("view.xray", "X-ray: building blocks see-through", ("Alt+Z",)),
     ActionSpec("help.controls", "Show the controls", ("F1",)),
     *(_hotbar(slot) for slot in range(1, 10)),
 )
@@ -119,6 +121,7 @@ CATEGORIES = {
     "sim": "Simulation",
     "edit": "Editing",
     "file": "File",
+    "view": "View",
     "help": "Help",
     "hotbar": "Hotbar",
 }
