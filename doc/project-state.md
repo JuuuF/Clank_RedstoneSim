@@ -73,7 +73,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
 | `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
 | `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
-| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes, run pacing, orbit camera, keymap and modes, inventory with block previews (`icons`), block search, timeline with keyframe rows, F3 screen, gizmos | done | `tests/ui/*` (offscreen) |
+| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes with the game's textured models (`assets`, `atlas`), run pacing, smooth orbit camera, keymap and modes, theme and pixel font, hotbar inventory, block search, timeline with keyframe rows, F3 screen, gizmos | done | `tests/ui/*` (offscreen; asset tests skip without the jar) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
 
@@ -104,7 +104,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **319 tests pass** (2026-10-11), including the JDK oracle, the 80
+- `python -m pytest`: **335 tests pass** (2026-10-11), including the JDK oracle, the 80
   game-recording replays (40 named, 40 random), save round trips, history rewriting,
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
@@ -139,11 +139,11 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-All four owner feedback rounds of 2026-10-11 ([[ui-direction]]) are done. Round 4 (this
-state): drag-placed lines, left click places / right click turns / Del removes, preview
-without flicker, inventory with block previews, recent blocks and a clickable path, quick
-block search, tick 0 as the build, edit batches, keyframe rows with move/merge/delete,
-reverse playback, the replay error fixed, stale keymap files migrated, a clearer observer.
+All six owner feedback rounds of 2026-10-11 ([[ui-direction]]) are done. Round 6 (this
+state): "Set tick 0 here" restarts the clock (every stored game time shifts), blocks are
+drawn with the game's own models and textures from the supplied jar (ADR-023), a dark
+Minecraft-meets-Blender theme with the game's pixel font, a hotbar-style inventory whose
+folder stack grows upwards, and a smooth camera (ADR-024).
 
 Suggested next steps:
 

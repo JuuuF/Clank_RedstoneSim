@@ -33,10 +33,13 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
     row. Right-click a row's label to remove it. Monitored blocks are saved; their
     recorded values are rebuilt as the simulation runs.
-- **Inventory** (like Trackmania's): folders (Redstone, Movement, Signal sources, Items,
-  Rails, Building, Special) with block previews. Number keys open a folder or pick the
-  block with that number, Backspace goes up. Every level above the current folder stays
-  visible as a compact row with the chosen folder highlighted (click there to jump back). **Recent** shows the last nine blocks you placed (kept between
+- **Inventory** (Trackmania's hierarchy, Minecraft's hotbar): the current folder is a row
+  of hotbar slots (game-style previews, the slot number in the corner like an item count,
+  folders marked red, the chosen block framed white, its name in gold above). Every folder
+  level above it stays visible as a row of tabs below the slots, the root lowest, so the
+  stack grows upwards as you open folders (click a tab to jump there). Number keys open a
+  folder or pick the block with that number, Backspace goes up. Folders: Redstone,
+  Movement, Signal sources, Items, Rails, Building, Special. **Recent** shows the last nine blocks you placed (kept between
   sessions); **🔍 Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
   search: type a few letters (fuzzy), Enter builds with the block. Picking a block enters
   BUILD mode. Signal sources show the strength box.
@@ -125,6 +128,8 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 ## Camera (orbit around a pivot)
 
 The camera orbits a pivot point, drawn as an orange cross and ring on top of everything.
+Zooming, wheel layer steps and focusing (F) glide smoothly instead of jumping; the build
+and paste layer follow the new height at once.
 
 | Input | Effect |
 |---|---|
@@ -165,6 +170,7 @@ reason the old Shift+T rewind was disliked).
 | Keys | Toggle |
 |---|---|
 | F3 | **Debug screen** (like Minecraft's): left, the engine and world (rates, game time, phase, engine step and next step, pending scheduled ticks and block events, counts, camera, mode, selection); right, the block under the cursor (id, every property, block entity, comparator reading, the strong and weak power it receives from each side, best neighbor signal, its scheduled ticks, conductor/solid/push reaction). Signal values are labeled on the blocks too: dust power (red), signal-source strength (purple), comparator output (dark); zeros grey. |
+| View → Game textures | Blocks drawn with the game's own models and textures (read from the supplied client jar; saved preference). Off, or without the jar: simple colored models. |
 | Alt+Z | **X-ray**, cycling like Minecraft's F5: off → building blocks see-through (circuit parts such as dust, torches, diodes, lamps, pistons, redstone blocks and barrels stay opaque) → everything see-through. Both transparency levels are in **Settings → Preferences** (saved in `~/.config/redsim/preferences.json`). |
 
 Active toggles show as a tag above the mode badge. View → Show sections / Show groups

@@ -47,7 +47,7 @@ from redsim.ui.panels import (
     SectionsPanel,
 )
 from redsim.ui.timeline import TimelineBar
-from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
+from redsim.ui.viewport import BUILD, MODE_COLORS, NORMAL, SELECT, Viewport
 from redsim.world import blocks
 from redsim.world.block import Block
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
@@ -273,6 +273,13 @@ class MainWindow(QMainWindow):
         toolbar.setMovable(False)
         for mode in (NORMAL, BUILD, SELECT):
             toolbar.addAction(self._mode_actions[mode])
+            button = toolbar.widgetForAction(self._mode_actions[mode])
+            if button is not None:  # checked: the mode's badge color (viewport corner)
+                color = MODE_COLORS[mode]
+                button.setStyleSheet(
+                    f"QToolButton:checked {{ background: {color.name()}; "
+                    f"border: 1px solid {color.lighter(130).name()}; color: #ffffff; }}"
+                )
         toolbar.addSeparator()
         for text, slot, keymap_id in (
             ("⟳ Rotate", lambda: self._rotate(1), "edit.rotate"),

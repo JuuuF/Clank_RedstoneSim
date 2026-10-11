@@ -347,3 +347,43 @@ Short records. Each one states the context, the decision, and its trade-offs.
   recorded length (milliseconds per hundred ticks for typical circuits). Undo states keep
   their base snapshots alive (immutable, shared). Editing the past still drops the recorded
   future, as before (ADR-004), but undo brings it back.
+
+## ADR-023
+
+**The game's block models and textures, read at runtime from the supplied jar**
+
+- **Context:** The owner asked whether the real models could be used: "using the real
+  textures and updating only some of them would make it feel way better" (sixth round,
+  [[ui-direction]]). The brief forbids modifying the supplied JARs or copying them
+  wholesale.
+- **Decision:** `redsim.ui.assets` opens `data/minecraft_jars/client.jar` (or
+  `$REDSIM_MINECRAFT_JAR`) read-only at runtime and ports the client's model pipeline:
+  blockstate variants and multipart, model parents and texture references, and face baking
+  as in `FaceBakery` (default UVs, `FaceInfo` vertex order, UV rotation, element rotation
+  with rescale, variant x-then-y rotation, cull faces, tint index, shade override).
+  `redsim.ui.atlas` packs the referenced textures into one atlas; the mesher draws model
+  quads with the game's cull faces, our corner shading and tints (dust by power). Item
+  sprites and textured block renders serve as inventory previews; the game's bitmap font
+  is used for overlays. Nothing from the jar is written into the repository.
+- **Fallback:** without the jar (or with View → Game textures off, or
+  `REDSIM_NO_GAME_ASSETS`), the colored box models of `style.py` are used, as before.
+- **Trade-offs:** `uvlock` is not applied (no in-scope block needs it); animated textures
+  show their first frame; the renderer now culls back faces like the game (flat parts show
+  one side). Simulation and game verification are unaffected (presentation only).
+
+## ADR-024
+
+**One look: Blender's dark UI with a Minecraft soul**
+
+- **Context:** "Make everything look like it belongs together … mainly a Minecraft vibe,
+  but Blender's UI in mind … a dark theme."
+- **Decision:** `redsim.ui.theme` owns the palette (charcoal panels, redstone-red accent,
+  the game's gold), one app-wide stylesheet with the Fusion style and a dark palette, and
+  the game's pixel font (drawn from the jar's font providers with the game's drop shadow).
+  Overlays in the viewport (status, mode badge, hints, F3, signal labels) use the pixel
+  font; panels use a clean sans font, like Blender. The inventory is custom painted as a
+  hotbar with tab rows for the upper folder levels (growing upwards). Mode colors are
+  shared by the toolbar buttons and the viewport badge. The camera glides (70 ms) for
+  zoom, layer steps and focus.
+- **Trade-offs:** Custom painting (inventory, timeline, overlays) needs its own tests
+  (layout order, hit testing) instead of relying on Qt widgets.

@@ -6,7 +6,7 @@ import html
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QPixmap
 from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
@@ -36,6 +36,7 @@ from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui import theme
+from redsim.ui.icons import block_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.preferences import Preferences
 from redsim.world import blocks
@@ -167,6 +168,9 @@ class InspectorPanel(QWidget):
         self._page: int | None = None
         layout = QVBoxLayout(self)
         title_row = QHBoxLayout()
+        self.icon = QLabel()
+        self.icon.setFixedSize(32, 32)
+        title_row.addWidget(self.icon)
         self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
         title_row.addWidget(self.title, 1)
@@ -300,6 +304,7 @@ class InspectorPanel(QWidget):
             self._rebuild(None)
             self._state = None
             self.title.setText(NO_SELECTION)
+            self.icon.clear()
             self.entity.setText("")
             self.note.setVisible(False)
             self.section_box.clear()
@@ -315,6 +320,7 @@ class InspectorPanel(QWidget):
             self._rebuild(state)
             self._layout_key = key
         self.title.setText(f"<b>{state.block.name}</b> at {pos}")
+        self.icon.setPixmap(block_pixmap(state.block.id, 32) if not state.is_air else QPixmap())
         for prop in state.block.properties:
             editor = self._editors[prop.name]
             editor.show_value(state.get(prop))

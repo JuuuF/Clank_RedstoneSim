@@ -126,6 +126,23 @@ one; curved rails are two concentric arcs; the observer face is plain again (arr
 "Set tick 0 here" is a button next to the transport controls (Ctrl+0, also in the
 Simulation menu and the timeline menu) and keeps later edits, shifted.
 
+## Sixth round of feedback (2026-10-11)
+
+| Topic | Request |
+|---|---|
+| Smoothness | The system should feel smoother. |
+| Coherence | Everything should look like it belongs together, not like views thrown together. |
+| Style | Minecraft vibe with Blender's UI in mind (futuristic, professional); dark theme. |
+| Models | Is it feasible to use the game's models and textures? Real textures would feel way better. |
+| Inventory | The hierarchy stack should grow upwards; a fitting, sleek design. |
+| Tick 0 | After "Set tick 0 here" the status still showed the old "game time X → Y": update the internal timers too. |
+
+Status: implemented ([[decisions]] ADR-023, ADR-024). "Set tick 0 here" now restarts the
+clock (every stored game time shifts, tested to change nothing in the simulation); blocks
+use the game's models and textures read from the supplied jar; dark theme, the game's
+pixel font for overlays and the F3 screen, a hotbar-style inventory with the folder stack
+growing upwards, a smooth camera.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

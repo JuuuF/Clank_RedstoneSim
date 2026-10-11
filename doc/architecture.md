@@ -255,6 +255,8 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | `selection_tools.py` | Selection handles, resize and drag-plane math (no Qt); the edits are `/clone` actions (ADR-019) |
 | `viewport.py` | `QOpenGLWidget`: modes, mouse gestures via the keymap, orbit camera, hover, selection box, pivot and mode badge; emits edit signals only |
 | `panels.py` | Inspector (properties, sources, container contents, target hits), diagnostics, sections, groups, hotkeys |
+| `assets.py`, `atlas.py` | The game's blockstates, models, textures and font read from the supplied client jar at runtime (ADR-023): variant/multipart selection, FaceBakery-like quad baking, a texture atlas |
+| `theme.py` | Palette, app-wide stylesheet, the game's pixel font (ADR-024) |
 | `inventory.py`, `icons.py`, `block_search.py` | Trackmania-style inventory bar (folders, path, recent blocks), isometric block previews from the block models, quick block search |
 | `timeline.py` | Blender-like transport and timeline: ruler, keyframe rows (move/merge/delete edit batches, ADR-022), monitor tracks |
 | `hints.py`, `debug_screen.py`, `gizmos.py`, `preferences.py` | Hint bar, F3 screen text, selection gizmos, saved preferences |
