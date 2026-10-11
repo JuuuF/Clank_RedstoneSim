@@ -41,7 +41,7 @@ from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.ui import theme
 from redsim.ui.assets import Assets
 from redsim.ui.atlas import Atlas
-from redsim.ui.camera import Camera
+from redsim.ui.camera import MAX_DISTANCE, MIN_DISTANCE, Camera
 from redsim.ui.debug_screen import block_lines
 from redsim.ui.geometry import (
     ChunkedMesh,
@@ -82,6 +82,8 @@ GHOST_SHRINK = 0.99
 #: Longest line placed by one drag.
 MAX_LINE = 64
 DOUBLE_SHIFT_SECONDS = 0.35
+#: Time constant of the smooth camera (seconds to cover ~63 % of the way).
+GLIDE_SECONDS = 0.07
 PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
 SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
 LOCKED_COLOR = (1.0, 0.62, 0.15, 1.0)
@@ -231,6 +233,9 @@ class Viewport(QOpenGLWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
         self.setMinimumSize(320, 240)
+        #: Smooth camera (Blender-like view transitions): wheel zoom, layer steps and focus
+        #: glide to their target pivot and distance instead of jumping.
+        self._glide: tuple[np.ndarray, float] | None = None
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick_camera)
         self._timer.start(16)
@@ -804,10 +809,42 @@ class Viewport(QOpenGLWidget):
     def focusOutEvent(self, event: QFocusEvent) -> None:
         self._held.clear()
 
+    def glide_to(self, pivot: np.ndarray | None = None, distance: float | None = None) -> None:
+        """Ease the camera towards a new pivot and/or distance over a few frames."""
+        current_pivot, current_distance = self._glide or (
+            np.asarray(self.camera.pivot, dtype=float),
+            self.camera.distance,
+        )
+        target_pivot = np.asarray(pivot if pivot is not None else current_pivot, dtype=float)
+        target_distance = current_distance if distance is None else distance
+        target_distance = max(MIN_DISTANCE, min(MAX_DISTANCE, target_distance))
+        self._glide = (target_pivot, target_distance)
+        self._camera_moved()  # the working layer follows the target at once
+
+    def _advance_glide(self, dt: float) -> bool:
+        if self._glide is None:
+            return False
+        target_pivot, target_distance = self._glide
+        alpha = 1.0 - math.exp(-dt / GLIDE_SECONDS)
+        pivot = np.asarray(self.camera.pivot, dtype=float)
+        pivot = pivot + (target_pivot - pivot) * alpha
+        distance = self.camera.distance + (target_distance - self.camera.distance) * alpha
+        if (
+            float(np.abs(target_pivot - pivot).max()) < 1e-3
+            and abs(target_distance - distance) < 1e-3
+        ):
+            pivot, distance = target_pivot, target_distance
+            self._glide = None
+        self.camera.pivot = pivot
+        self.camera.distance = distance
+        return True
+
     def _tick_camera(self) -> None:
         now = time.monotonic()
         dt = min(now - self._last_frame, 0.1)
         self._last_frame = now
+        if self._advance_glide(dt):
+            self._camera_moved()
         held = self._held
         if not held:
             return
@@ -815,10 +852,12 @@ class Viewport(QOpenGLWidget):
         forward = ("camera.forward" in held) - ("camera.back" in held)
         strafe = ("camera.right" in held) - ("camera.left" in held)
         up = ("camera.up" in held) - ("camera.down" in held)
+        before = np.asarray(self.camera.pivot, dtype=float)
         if forward or strafe:
             self.camera.pan(forward * speed, strafe * speed)
         if up:
             self.camera.raise_pivot(up * speed)
+        self._shift_glide(np.asarray(self.camera.pivot, dtype=float) - before)
         if forward or strafe or up:
             self._camera_moved()
 
@@ -901,13 +940,15 @@ class Viewport(QOpenGLWidget):
         modifiers = _modifier_names(event.modifiers())
         mode = "paste" if self.paste_preview is not None else self.mode
         action = self.keymap.mouse_action(mode, modifiers, None, "Wheel")
+        target_pivot, target_distance = self._glide or (
+            np.asarray(self.camera.pivot, dtype=float),
+            self.camera.distance,
+        )
         if action in ("camera.zoom", "paste.zoom", "build.zoom"):
-            self.camera.zoom(ZOOM_PER_NOTCH**-steps)
+            self.glide_to(distance=target_distance * ZOOM_PER_NOTCH**-steps)
         elif action in ("camera.vertical", "paste.layer", "build.layer"):
-            self.camera.raise_pivot(steps)  # one block per notch; the paste layer follows
-        else:
-            return
-        self._camera_moved()
+            # One block per notch; the build/paste layer follows the target at once.
+            self.glide_to(pivot=target_pivot + np.array([0.0, steps, 0.0]))
 
     def _drag(self, action: str, dx: int, dy: int) -> None:
         camera = self.camera
@@ -917,7 +958,9 @@ class Viewport(QOpenGLWidget):
             # The world follows the mouse: blocks per pixel at the pivot's distance.
             scale = 2 * camera.distance * math.tan(math.radians(camera.fov) / 2)
             scale /= max(self.height(), 1)
+            before = np.asarray(camera.pivot, dtype=float)
             camera.pan(dy * scale, -dx * scale)
+            self._shift_glide(np.asarray(camera.pivot, dtype=float) - before)
         elif action in ("select.box", "select.copy_drag"):
             self._continue_select_drag()
             return
@@ -1098,9 +1141,15 @@ class Viewport(QOpenGLWidget):
         origin, direction = self._ray(self._last_mouse)
         return paste_origin(origin, direction, self.working_height(), self.paste_preview.size)
 
+    def _shift_glide(self, delta: np.ndarray) -> None:
+        """A direct camera move while gliding moves the glide's target along."""
+        if self._glide is not None and np.any(delta):
+            self._glide = (self._glide[0] + delta, self._glide[1])
+
     def working_height(self) -> int:
-        """The block layer the camera pivot is in."""
-        return math.floor(float(self.camera.pivot[1]))
+        """The block layer the camera pivot is in (or is gliding to)."""
+        pivot = self._glide[0] if self._glide is not None else self.camera.pivot
+        return math.floor(float(pivot[1]))
 
     def paste_region(self) -> Region | None:
         target = self.paste_target()
@@ -1170,8 +1219,7 @@ class Viewport(QOpenGLWidget):
 
     # ------------------------------------------------------------------ helpers
     def look_at(self, target: Pos) -> None:
-        self.camera.focus(np.array(target, dtype=float) + 0.5)
-        self.update()
+        self.glide_to(pivot=np.array(target, dtype=float) + 0.5)
 
     def focus_hover(self) -> bool:
         """Move the pivot to the center of the block under the cursor."""

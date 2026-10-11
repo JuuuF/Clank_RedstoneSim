@@ -181,3 +181,24 @@ def test_pixel_font_and_theme(app: Any) -> None:
     if font is not None:  # the client jar is there: the game's font
         assert font.advance("i") < font.advance("W")  # proportional, like the game
         assert font.advance(" ") == 4
+
+
+def test_camera_glides_but_the_build_layer_jumps_at_once(app: Any) -> None:
+    import numpy as np
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    viewport = window.viewport
+    viewport.camera.pivot = np.array([0.5, 1.5, 0.5])
+    start = viewport.camera.distance
+    viewport.glide_to(pivot=np.array([0.5, 4.5, 0.5]), distance=start * 2)
+    assert viewport.working_height() == 4  # placement follows the target immediately
+    assert viewport.camera.pivot[1] == 1.5  # the view eases there
+    viewport._advance_glide(0.02)
+    assert 1.5 < viewport.camera.pivot[1] < 4.5
+    for _ in range(100):
+        viewport._advance_glide(0.02)
+    assert viewport._glide is None and viewport.camera.distance == start * 2
+    window.document.dirty = False
+    window.close()
