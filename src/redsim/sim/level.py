@@ -106,6 +106,8 @@ class Level:
         self.sub_tick_count = 0
         self.block_ticks = LevelTicks()
         self.block_events: dict[BlockEventKey, None] = {}  # insertion-ordered dedup set
+        #: Projectiles that hit target blocks in the next entity phase: (pos, strength, ticks).
+        self.projectile_hits: list[tuple[Pos, int, int]] = []
         self.tickers: list[TickerWrapper] = []
         self.pending_tickers: list[TickerWrapper] = []
         self.tickers_by_pos: dict[Pos, TickerWrapper] = {}
@@ -551,6 +553,7 @@ class Level:
         other.sub_tick_count = self.sub_tick_count
         other.block_ticks = self.block_ticks.clone()
         other.block_events = dict(self.block_events)
+        other.projectile_hits = list(self.projectile_hits)
         other.ticking_block_entities = self.ticking_block_entities
         other.handling_tick = self.handling_tick
         other.torch_toggles = list(self.torch_toggles)

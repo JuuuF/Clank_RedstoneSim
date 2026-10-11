@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         self.simulation.canvas.scrub.connect(self._scrub)
         self.simulation.canvas.remove_monitor.connect(self._toggle_monitor)
         self.inspector.monitor_requested.connect(self._toggle_monitor)
+        self.inspector.hit_requested.connect(self._projectile_hit)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
         self.viewport.use_requested.connect(self._use)
@@ -466,6 +467,10 @@ class MainWindow(QMainWindow):
         if self.document.seek_tick(tick):
             self.last_steps = []
             self._changed()
+
+    def _projectile_hit(self, pos: Pos, strength: int, arrow: bool) -> None:
+        self._edit(self.document.projectile_hit, pos, strength, arrow)
+        self._message("The projectile lands during the next tick (step a tick to see it).")
 
     def _toggle_monitor(self, pos: Pos) -> None:
         on = self.document.toggle_monitor(pos)

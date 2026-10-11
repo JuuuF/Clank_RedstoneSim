@@ -31,7 +31,8 @@
 4. **block ticks** (`blockTicks.tick(gameTime, 65536, tickBlock)`), then fluid ticks
 5. raids, chunk source (random ticks, spawning)
 6. **block events** (`runBlockEvents`)
-7. entities
+7. entities (the simulator only models projectiles landing on target blocks here,
+   `Phase.ENTITIES`; [[target-block]])
 8. **block entities** (`tickBlockEntities`)
 
 `MinecraftServer.tickChildren` ticks every level in turn. Player packets (use, place, break)

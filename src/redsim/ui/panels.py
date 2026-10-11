@@ -36,6 +36,7 @@ from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.preferences import Preferences
+from redsim.world import blocks
 from redsim.world.block import BlockState
 from redsim.world.properties import Property
 
@@ -142,6 +143,7 @@ class InspectorPanel(QWidget):
     source_requested = Signal(object, str, int)  # Pos, kind, strength
     page_requested = Signal(object, int)  # Pos, page (a player turning the page)
     monitor_requested = Signal(object)  # Pos: add/remove on the timeline monitor
+    hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
 
     def __init__(self) -> None:
         super().__init__()
@@ -211,6 +213,27 @@ class InspectorPanel(QWidget):
             page_layout.addWidget(button)
         source_layout.addRow("Player", self.page_row)
         layout.addWidget(self.source_box)
+        self.target_box = QWidget()
+        target_layout = QFormLayout(self.target_box)
+        target_layout.setContentsMargins(0, 6, 0, 0)
+        self.hit_strength = _Stepper(tuple(range(1, 16)), self._pick_hit_strength, "Hit strength")
+        self.hit_strength.show_value(15)
+        target_layout.addRow("Hit strength", self.hit_strength)
+        hit_row = QWidget()
+        hit_layout = QHBoxLayout(hit_row)
+        hit_layout.setContentsMargins(0, 0, 0, 0)
+        self.hit_buttons: dict[bool, QPushButton] = {}  # arrow? → button
+        for text, arrow, tip in (
+            ("🏹 Arrow", True, "An arrow hits the target: power for 20 ticks"),
+            ("❄ Snowball", False, "Another projectile hits the target: power for 8 ticks"),
+        ):
+            button = QPushButton(text)
+            button.setToolTip(tip + " (it lands in the next tick's entity phase)")
+            button.clicked.connect(lambda _=False, a=arrow: self._hit(a))
+            hit_layout.addWidget(button)
+            self.hit_buttons[arrow] = button
+        target_layout.addRow("Projectile", hit_row)
+        layout.addWidget(self.target_box)
         section_row = QHBoxLayout()
         section_row.addWidget(QLabel("Section:"))
         self.section_box = QComboBox()
@@ -224,6 +247,7 @@ class InspectorPanel(QWidget):
     def show_block(self, document: Document | None, pos: Pos | None) -> None:
         self._pos = pos
         self.source_box.setVisible(False)
+        self.target_box.setVisible(False)
         if document is None or pos is None:
             self.monitor.setVisible(False)
             self._rebuild(None)
@@ -251,6 +275,8 @@ class InspectorPanel(QWidget):
         self.note.setVisible(bool(state.block.properties))
         be = document.level.get_block_entity(pos, create=False)
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
+        self.target_box.setVisible(state.is_(blocks.TARGET))
+        self.target_box.setEnabled(editable)
         kind = sources.kind_of(state)
         if kind is not None:
             self.source_box.setVisible(True)
@@ -313,6 +339,14 @@ class InspectorPanel(QWidget):
         value = self.source_strength.value if strength is None else strength
         pos = self._pos
         _later(lambda: self.source_requested.emit(pos, kind, int(value)))
+
+    def _pick_hit_strength(self, value: int) -> None:
+        self.hit_strength.show_value(value)
+
+    def _hit(self, arrow: bool) -> None:
+        if self._pos is not None:
+            pos, strength = self._pos, int(self.hit_strength.value)
+            _later(lambda: self.hit_requested.emit(pos, strength, arrow))
 
     def _turn_page(self, step: int) -> None:
         if self._pos is not None and self._page is not None:

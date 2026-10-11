@@ -736,6 +736,32 @@ POWERED_RAILS = Scenario(
     },
 )
 
+# ------------------------------------------------------------------ target block
+TARGET_BLOCK = Scenario(
+    name="target_block",
+    description=(
+        "Dust passing a target block bends into it; an arrow hitting the target's top center "
+        "powers it (15) for 20 ticks, a snowball for 8; the dust line and a lamp follow. A "
+        "target placed with power is reset to 0."
+    ),
+    size=(10, 8),
+    setup=[
+        ((2, 1, 1), "minecraft:target"),
+        ((1, 1, 2), "minecraft:redstone_wire"),
+        ((2, 1, 2), "minecraft:redstone_wire"),
+        ((3, 1, 2), "minecraft:redstone_wire"),
+        ((4, 1, 2), "minecraft:redstone_lamp"),
+        ((7, 1, 1), "minecraft:target"),
+        ((7, 1, 2), "minecraft:redstone_wire"),
+        ((7, 1, 3), "minecraft:redstone_wire"),
+        ((7, 1, 4), "minecraft:redstone_lamp"),
+        ((7, 1, 6), "minecraft:target[power=12]"),
+    ],
+    watch=[(x, 1, z) for z in (1, 2, 3, 4, 6) for x in (1, 2, 3, 4, 7)],
+    ticks=34,
+    commands={2: [("hit", (2, 1, 1), "arrow")], 4: [("hit", (7, 1, 1), "snowball")]},
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -772,6 +798,7 @@ ALL = [
     OBSERVER_PUSHED,
     RAIL_SHAPES,
     POWERED_RAILS,
+    TARGET_BLOCK,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

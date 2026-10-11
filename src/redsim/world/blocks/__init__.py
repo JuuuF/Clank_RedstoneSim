@@ -29,6 +29,7 @@ from redsim.world.blocks.simple import (
     immovable,
     non_conductor,
 )
+from redsim.world.blocks.target import TargetBlock
 from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
 from redsim.world.properties import Property
 
@@ -112,6 +113,7 @@ OBSERVER = register(ObserverBlock())
 RAIL = register(RailBlock())
 POWERED_RAIL = register(PoweredRailBlock("minecraft:powered_rail"))
 ACTIVATOR_RAIL = register(PoweredRailBlock("minecraft:activator_rail"))
+TARGET = register(TargetBlock())
 PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
 PISTON_HEAD = register(PistonHeadBlock())

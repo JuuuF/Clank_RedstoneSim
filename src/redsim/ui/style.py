@@ -190,6 +190,15 @@ def block_boxes(state: BlockState) -> list[Box]:
         return face_any(_barrel(), state.get(FACING))
     if block_id in ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail"):
         return _rail(block_id, state)
+    if block_id == "minecraft:target":
+        center = LIT_RED if state.get(POWER) else rgb(0.78, 0.16, 0.14)
+        body = [Box((0, 0, 0), (16, 16, 16), rgb(0.93, 0.88, 0.82))]
+        dots = [
+            Box((5, 5, -0.2), (11, 11, 0), center), Box((5, 5, 16), (11, 11, 16.2), center),
+            Box((-0.2, 5, 5), (0, 11, 11), center), Box((16, 5, 5), (16.2, 11, 11), center),
+            Box((5, 16, 5), (11, 16.2, 11), center), Box((5, -0.2, 5), (11, 0, 11), center),
+        ]  # fmt: skip
+        return body + dots
     if block_id == "minecraft:observer":
         return face_any(_observer(state.get(POWERED)), state.get(FACING))
     if block_id == "minecraft:lectern":

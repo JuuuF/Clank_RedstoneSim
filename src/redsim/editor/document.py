@@ -146,6 +146,14 @@ class Document:
         if actual != strength:
             self.notice = f"{sources.KINDS[kind].title} cannot give {strength}; using {actual}."
 
+    def projectile_hit(self, pos: Pos, strength: int, arrow: bool) -> None:
+        """A projectile hitting a target block: it hits in the next tick's entity phase and
+        powers the target for 20 ticks (arrow) or 8 (other projectiles)."""
+        if not self.state_at(pos).is_(blocks.TARGET):
+            raise EditError(f"No target block at {pos}.")
+        payload = {"strength": strength, "ticks": 20 if arrow else 8}
+        self._apply(Action("projectile_hit", pos, payload=payload), "projectile hit")
+
     def turn_page(self, pos: Pos, page: int) -> None:
         """A player turning a lectern's page (comparator update and a 2-tick pulse)."""
         self._apply(Action("lectern_page", pos, payload={"page": page}), f"turn to page {page}")

@@ -145,6 +145,12 @@ stepper changes the value (one `/setblock` edit each, applied at once). Lecterns
 *Page ▶*, which turn the page like a player (the comparator value changes and the lectern
 sends a 2-tick pulse into the block below). Details: [[mechanics/analog-sources]].
 
+**Target blocks** (inventory: Redstone) show a **Hit strength** stepper (1-15; 15 is a hit
+at the face center) and **🏹 Arrow** / **❄ Snowball** buttons in the inspector. The hit
+lands during the next tick's entity phase and powers the target for 20 ticks (arrow) or 8
+(any other projectile); a hit while it is still powered changes nothing. Details:
+[[mechanics/target-block]].
+
 ## Changing placed blocks
 
 - **Q / Shift+Q** turns the block under the cursor (repeaters, comparators, pistons facing

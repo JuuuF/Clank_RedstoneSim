@@ -122,7 +122,8 @@ A tick is an explicit state machine, so it can stop between any two engine steps
 BETWEEN_TICKS ──step: tick_start (time+1, collect due ticks)──▶ BLOCK_TICKS
 BLOCK_TICKS   ──step: one scheduled tick──▶ … (settle when empty) ──▶ BLOCK_EVENTS
 BLOCK_EVENTS  ──step: one block event────▶ … (settle when empty: handling_tick=false,
-                                               pending tickers join) ──▶ BLOCK_ENTITIES
+                                               pending tickers join) ──▶ ENTITIES
+ENTITIES      ──step: one projectile hit──▶ … (settle when empty) ──▶ BLOCK_ENTITIES
 BLOCK_ENTITIES──step: one ticker─────────▶ … (settle when done) ──▶ BETWEEN_TICKS
 BETWEEN_TICKS ──apply(Action)──▶ BETWEEN_TICKS   (player/command input)
 ```
@@ -144,6 +145,9 @@ BETWEEN_TICKS ──apply(Action)──▶ BETWEEN_TICKS   (player/command input
   - `clone` → placement half of `CloneCommands.clone` (replace mode): blocks grouped solid →
     block entities → others, barrier placeholders, flags 2, block-entity data, reverse-order
     neighbor updates. Used for paste; scheduled ticks are not copied (ADR-015).
+  - `projectile_hit` → queues a target-block hit (strength, 20 or 8 ticks); the next
+    tick's entity phase applies `TargetBlock.updateRedstoneOutput` ([[mechanics/target-block]]).
+    The simulator has no entities otherwise.
 - `snapshot()` / `restore()` capture the whole engine (level clone, phase, step index,
   block-entity iteration index). Restoring and re-running reproduces the same steps
   (tested).

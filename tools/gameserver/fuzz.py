@@ -52,6 +52,7 @@ def _palette(rng: random.Random) -> list[tuple[int, Callable[[], Entry | str]]]:
         (1, lambda: RB),
         (4, lambda: f"minecraft:observer[facing={rng.choice(ALL_SIX)}]"),
         (3, lambda: "minecraft:rail"),
+        (2, lambda: "minecraft:target"),
         (3, lambda: "minecraft:powered_rail"),
         (2, lambda: "minecraft:activator_rail"),
         (

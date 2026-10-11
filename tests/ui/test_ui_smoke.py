@@ -214,6 +214,31 @@ def test_inspector_controls_apply_immediately(app: object) -> None:
     window.close()
 
 
+def test_inspector_hits_a_target_block(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.world.properties import POWER
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.TARGET.default_state)
+    document.setblock((2, 1, 0), blocks.STONE.default_state)
+    window._select((2, 1, 0))
+    assert window.inspector.target_box.isHidden()
+    window._select((0, 1, 0))
+    assert not window.inspector.target_box.isHidden()
+    for _ in range(5):
+        window.inspector.hit_strength.back.click()
+    window.inspector.hit_buttons[False].click()  # a snowball: 8 ticks
+    for _ in range(3):
+        QtWidgets.QApplication.processEvents()
+    document.run_ticks(1)
+    assert document.state_at((0, 1, 0)).get(POWER) == 10
+    document.run_ticks(8)
+    assert document.state_at((0, 1, 0)).get(POWER) == 0
+    window.document.dirty = False
+    window.close()
+
+
 def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
     from redsim.ui.main_window import MainWindow
 

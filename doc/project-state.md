@@ -89,6 +89,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | cake (analog source) | `cake.py` | via comparator tests | EXP-012, EXP-013 |
 | rail, powered rail, activator rail | `rail.py` | shapes, T junction, slope, 8-rail propagation | EXP-031, 035, 036 |
 | observer | `observer.py` | pulse timing, clock, non-conductor | EXP-031..034 |
+| target block | `target.py` | hit duration, entity-phase timing, dust connection | EXP-031, 037 |
 | barrel (+ block entity, 27 slots) | `container.py` | thresholds, `/item replace` updates, immovable, save | EXP-024 |
 | lectern (+ block entity) | `lectern.py` | page formula, page-turn pulse, save | EXP-025 (signals; pulse: source only) |
 

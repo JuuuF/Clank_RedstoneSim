@@ -119,6 +119,7 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
             "ticks_to_run": [_tick_to_json(t) for t in level.block_ticks.to_run],
             "overdue_collected": level.block_ticks.overdue_collected,
             "block_events": [[list(p), b, b0, b1] for p, b, b0, b1 in level.block_events],
+            "projectile_hits": [[list(p), s, t] for p, s, t in level.projectile_hits],
             "wrappers": wrappers,
             "tickers": tickers,
             "pending_tickers": pending,
@@ -171,6 +172,8 @@ def engine_from_json(data: dict[str, Any]) -> Engine:
     level.block_ticks.overdue_collected = int(raw.get("overdue_collected", 0))
     for p, block_id, b0, b1 in raw["block_events"]:
         level.block_events[(_pos(p), block_id, int(b0), int(b1))] = None
+    for p, strength, ticks in raw.get("projectile_hits", []):
+        level.projectile_hits.append((_pos(p), int(strength), int(ticks)))
 
     wrappers = [
         TickerWrapper(None if index is None else _BoundTicker(entities[index]))

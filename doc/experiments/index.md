@@ -77,6 +77,7 @@ reading and unit tests only.
 | EXP-034 | `observer_pushed`: a sticky piston moves a pulsing observer back and forth (placement and removal rules) | 24 | match | 2026-10-11 |
 | EXP-035 | `rail_shapes`: plain rails: straight line, corner, a T junction switching to a curve when a redstone block powers it, a slope up a step | 10 | match | 2026-10-11 |
 | EXP-036 | `powered_rails`: 12 powered rails fed from one end power exactly 9 (8 past the first), the same for activator rails, a mixed line stops at the activator rail; all turn off when the inputs go | 12 | match | 2026-10-11 |
+| EXP-037 | `target_block`: an arrow (tick 2) and a snowball (tick 4) hit two targets' top centers: power 15 from tick 3 to 23 and from 5 to 13; dust bends into the targets, lamps follow; a target set with `power=12` reads 0. The first simulator version applied hits between ticks (one tick early); hits now land in the entity phase | 34 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 

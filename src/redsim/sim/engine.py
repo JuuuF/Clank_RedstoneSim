@@ -29,6 +29,7 @@ class Phase(Enum):
     BETWEEN_TICKS = "between ticks"
     BLOCK_TICKS = "scheduled ticks"
     BLOCK_EVENTS = "block events"
+    ENTITIES = "entities"
     BLOCK_ENTITIES = "block entities"
 
 
@@ -45,6 +46,7 @@ ActionKind = Literal[
     "lectern_page",
     "transform_region",
     "stack_region",
+    "projectile_hit",
 ]
 
 #: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
@@ -82,6 +84,10 @@ class Action:
       move with their blocks.
     * ``stack_region``: editor tool: ``count`` copies of the region, each ``step`` further,
       as ``/clone … strict replace force`` (no block updates; ticks copied).
+    * ``projectile_hit``: a projectile that will hit a target block (``payload``: ``strength``
+      1-15, ``ticks`` 20 for arrows or 8 for others). Like a projectile summoned now, it hits
+      in the next tick's entity phase (``TargetBlock.onProjectileHit``), after block events
+      and before block entities.
     * ``lectern_page``: a player turning a lectern's book to ``payload["page"]``
       (``LecternBlockEntity.setPage``: comparator update and a 2-tick pulse). Not a command;
       there is no player on the test server, so this path is verified by source reading.
@@ -156,6 +162,9 @@ class Engine:
         if self.phase is Phase.BLOCK_EVENTS and level.block_events:
             pos, block_id, b0, b1 = next(iter(level.block_events))
             return f"block event {block_id.removeprefix('minecraft:')} at {pos} ({b0}, {b1})"
+        if self.phase is Phase.ENTITIES and level.projectile_hits:
+            pos, strength, ticks = level.projectile_hits[0]
+            return f"projectile hits the target at {pos} (strength {strength}, {ticks} ticks)"
         if self.phase is Phase.BLOCK_ENTITIES:
             for wrapper in level.tickers[self.be_index :]:
                 if not wrapper.is_removed():
@@ -207,6 +216,19 @@ class Engine:
                     info.detail["info"] = "skipped: block changed"
             finally:
                 self._end_step()
+        elif self.phase is Phase.ENTITIES:
+            from redsim.world.blocks.target import TargetBlock
+
+            pos, strength, ticks = level.projectile_hits.pop(0)
+            info = self._begin_step("projectile_hit", pos, {"strength": strength})
+            try:
+                block = level.get_block_state(pos).block
+                if not isinstance(block, TargetBlock):
+                    info.detail["info"] = "skipped: no target block"
+                elif not block.hit(level, pos, strength, ticks):
+                    info.detail["info"] = "no effect: a reset tick is pending"
+            finally:
+                self._end_step()
         else:
             wrapper = level.tickers[self.be_index]
             info = self._begin_step("block_entity", wrapper.pos, {})
@@ -231,6 +253,10 @@ class Engine:
                 if level.block_events:
                     return
                 level.handling_tick = False
+                self.phase = Phase.ENTITIES  # ServerLevel.tick: entities after block events
+            elif self.phase is Phase.ENTITIES:
+                if level.projectile_hits:
+                    return
                 # Level.tickBlockEntities L527: pending tickers join the list first.
                 level.ticking_block_entities = True
                 level.tickers.extend(level.pending_tickers)
@@ -310,6 +336,10 @@ class Engine:
                 self._container_item(action.pos, action.payload)
             elif action.kind == "lectern_page":
                 self._lectern_page(action.pos, int(action.payload["page"]))
+            elif action.kind == "projectile_hit":
+                # A projectile launched now hits during the next tick's entity phase.
+                strength, ticks = int(action.payload["strength"]), int(action.payload["ticks"])
+                level.projectile_hits.append((action.pos, strength, ticks))
             elif action.kind == "transform_region":
                 payload = action.payload
                 pivot = payload.get("pivot2")

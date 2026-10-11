@@ -48,6 +48,7 @@ INVENTORY = Folder(
                 "minecraft:observer",
                 "minecraft:redstone_lamp",
                 "minecraft:redstone_block",
+                "minecraft:target",
                 Folder(
                     "Switches",
                     ("minecraft:lever", "minecraft:stone_button", "minecraft:oak_button"),

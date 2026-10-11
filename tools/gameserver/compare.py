@@ -135,6 +135,10 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
         _, rel, slot, (item, count) = command
         payload = {"slot": slot, "item": item, "count": count}
         return Action("container_item", absolute(origin, rel), payload=payload)
+    if command[0] == "hit":  # a projectile straight down onto the top center: strength 15
+        _, rel, projectile = command
+        payload = {"strength": 15, "ticks": 20 if projectile == "arrow" else 8}
+        return Action("projectile_hit", absolute(origin, rel), payload=payload)
     kind, rel_a, rel_b, last = command
     a, b = absolute(origin, rel_a), absolute(origin, rel_b)
     if kind == "fill":
@@ -149,6 +153,10 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
 
 
 def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
+    if command[0] == "hit":
+        _, rel, projectile = command
+        x, y, z = absolute(origin, rel)
+        return f"summon {projectile} {x + 0.5} {y + 1.5} {z + 0.5} {{Motion:[0.0,-3.0,0.0]}}"
     if command[0] == "item":
         _, rel, slot, (item, count) = command
         x, y, z = absolute(origin, rel)
