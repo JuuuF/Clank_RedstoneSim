@@ -229,3 +229,51 @@ def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
     assert "You are in BUILD mode" in panel.view.toPlainText()
     window.document.dirty = False
     window.close()
+
+
+def test_cake_strength_steps_up_through_even_values(app: object) -> None:
+    """Regression: the stepper asked a cake for 9, which rounded back down to 8."""
+    from redsim.editor import sources
+    from redsim.editor.placement import PlaceRequest
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.place_source((0, 1, 0), "cake", 8, PlaceRequest(Direction.UP, 0.0, 60.0))
+    window._select((0, 1, 0))
+    for expected in (10, 12, 14):
+        window.inspector.source_strength.next.click()
+        for _ in range(3):
+            QtWidgets.QApplication.processEvents()
+        assert sources.strength_at(document.level, (0, 1, 0)) == expected
+    assert not window.inspector.source_strength.next.isEnabled()  # 14 is a cake's maximum
+    window.inventory.select_block(blocks.CAKE)
+    assert window.inventory.strength.singleStep() == 2
+    window.document.dirty = False
+    window.close()
+
+
+def test_unsaved_changes_prompt(app: object) -> None:
+    from PySide6.QtCore import QTimer
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.document.dirty = True
+    texts: list[str] = []
+
+    def answer(label: str) -> None:
+        box = QtWidgets.QApplication.activeModalWidget()
+        assert isinstance(box, QtWidgets.QMessageBox)
+        texts.append(box.text())
+        texts.extend(button.text() for button in box.buttons())
+        next(b for b in box.buttons() if b.text().replace("&", "") == label).click()
+
+    QTimer.singleShot(50, lambda: answer("Cancel"))
+    assert window._confirm_discard(closing=True) is False
+    assert "You still have unsaved changes" in texts[0]
+    assert {"Close without saving", "Save as…"} <= {t.replace("&", "") for t in texts}
+    QTimer.singleShot(50, lambda: answer("Close without saving"))
+    assert window._confirm_discard(closing=True) is True
+    window.document.dirty = False
+    window.close()

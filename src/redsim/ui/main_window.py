@@ -844,11 +844,33 @@ class MainWindow(QMainWindow):
         self._changed()
 
     # ------------------------------------------------------------------ files
-    def _confirm_discard(self) -> bool:
+    def _confirm_discard(self, closing: bool = False) -> bool:
+        """Ask before unsaved changes would be lost; True means go ahead."""
         if not self.document.dirty:
             return True
-        answer = QMessageBox.question(self, "Unsaved changes", "Discard unsaved changes?")
-        return answer == QMessageBox.StandardButton.Yes
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle("Unsaved changes")
+        box.setText("You still have unsaved changes. Do you want to save the changes?")
+        discard = box.addButton(
+            "Close without saving" if closing else "Discard changes",
+            QMessageBox.ButtonRole.DestructiveRole,
+        )
+        cancel = box.addButton(QMessageBox.StandardButton.Cancel)
+        save = box.addButton(
+            "Save" if self.document.path is not None else "Save as…",
+            QMessageBox.ButtonRole.AcceptRole,
+        )
+        box.setDefaultButton(save)
+        box.setEscapeButton(cancel)
+        box.exec()
+        clicked = box.clickedButton()
+        if clicked is discard:
+            return True
+        if clicked is save:
+            self._save()
+            return not self.document.dirty  # a cancelled "Save as" keeps the window open
+        return False
 
     def _set_document(self, document: Document) -> None:
         self.simulation.play.setChecked(False)
@@ -903,7 +925,7 @@ class MainWindow(QMainWindow):
             self._message(f"Saved {path}")
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self._confirm_discard():
+        if self._confirm_discard(closing=True):
             event.accept()
         else:
             event.ignore()

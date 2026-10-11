@@ -257,6 +257,8 @@ class InspectorPanel(QWidget):
             self.source_box.setEnabled(editable)
             for name, button in self.kind_buttons.items():
                 button.setChecked(name == kind)
+            # Step through what this block can give (a cake only makes even values).
+            self.source_strength.values = sources.KINDS[kind].strengths
             self.source_strength.show_value(sources.strength_at(document.level, pos) or 0)
             page = getattr(be, "page", None) if getattr(be, "book", None) else None
             self._page = page
