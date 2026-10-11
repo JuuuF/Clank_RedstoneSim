@@ -18,7 +18,7 @@ from typing import Any
 from redsim.core.pos import Pos
 from redsim.sim.level import Level
 from redsim.world import blocks
-from redsim.world.rotation import rotate_offset, rotate_state
+from redsim.world.rotation import mirror_state, rotate_offset, rotate_state
 
 FORMAT = "redsim-prefab"
 
@@ -90,6 +90,19 @@ class Prefab:
         sx, sy, sz = self.size
         size = (sz, sy, sx) if quarter_turns % 2 else (sx, sy, sz)
         return Prefab(self.name, size, normalized)
+
+    def mirrored(self, axis: str) -> Prefab:
+        """Mirror the prefab: ``"x"`` swaps east and west, ``"z"`` north and south."""
+        flipped = []
+        for dx, dy, dz, text, data in self.blocks:
+            if axis == "x":
+                dx = self.size[0] - 1 - dx
+            else:
+                dz = self.size[2] - 1 - dz
+            state = mirror_state(blocks.parse_state(text), axis)
+            flipped.append((dx, dy, dz, repr(state), data))
+        flipped.sort(key=lambda entry: (entry[2], entry[1], entry[0]))
+        return Prefab(self.name, self.size, flipped)
 
     def payload(self) -> dict[str, Any]:
         return {"blocks": [list(entry) for entry in self.blocks]}

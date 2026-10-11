@@ -48,6 +48,17 @@ panel is generated from the active keymap, so it always shows the real bindings.
 - **No block updates:** pasting, moving, copying and stacking are editor operations and
   cause no block updates (`/clone … strict`), so budded components stay budded
   ([[decisions]] ADR-019). Pending scheduled ticks inside a moved selection come along.
+- **Rotate:** R turns the selection 90° clockwise (seen from above), Shift+R
+  counter-clockwise, in place: blocks inside turn too (repeaters, comparators, wire
+  connections, levers, …). R then Shift+R, or R four times, returns exactly to the start.
+  While pasting, R and Shift+R turn the paste preview instead.
+- **Flip:** H mirrors the selection left/right as seen from the camera, Shift+H front/back
+  (facings and wire sides mirror too).
+- **Stack:** Shift+drag a face handle outwards: copies appear along that axis (ghosts), one
+  more for each selection length dragged; release to place them. The selection then
+  covers all copies, so a row can be stacked again into a grid.
+- The **Selection toolbar** (top) has rotate, flip, copy, paste and delete buttons.
+- Rotate, flip and stack cause no block updates either, and each is one undo step.
 - **Delete:** Del fills the box with air (`/fill`); this does update neighbors.
 
 ## Camera (orbit around a pivot)
@@ -78,7 +89,8 @@ reason the old Shift+T rewind was disliked).
 | Ctrl+Z / Ctrl+Y | undo / redo (rewinds to just before the last edit) |
 | Ctrl+C / Ctrl+V | copy the selection box / paste preview at the cursor (click places) |
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
-| R | rotate the clipboard 90° |
+| R / Shift+R | rotate the selection (or the paste preview) 90° clockwise / counter-clockwise |
+| H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |
 | Del | clear the selection box (fill with air) |
 | 1–9 | hotbar |
 | F1 | controls panel |

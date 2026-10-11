@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
     QInputDialog,
+    QLabel,
     QMainWindow,
     QMessageBox,
     QScrollArea,
@@ -43,7 +44,7 @@ from redsim.ui.panels import (
 from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
 from redsim.world import blocks
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
-from redsim.world.rotation import rotate_state
+from redsim.world.rotation import default_pivot2, rotate_state
 
 FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
 #: Run loop: timer period, the longest it may simulate in one go (keeps the UI responsive),
@@ -96,6 +97,7 @@ class MainWindow(QMainWindow):
         self.play_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self.play_timer.timeout.connect(self._play_tick)
         self.pacer = TickPacer(self.simulation.speed.value())
+        self._rotation_pivot: tuple[Region, tuple[int, int]] | None = None
         self.tick_rate = RateMeter()
         self._panels_refreshed = 0.0
         self._actions: dict[str, QAction] = {}
@@ -131,6 +133,7 @@ class MainWindow(QMainWindow):
         self.viewport.select_requested.connect(self._select)
         self.viewport.region_changed.connect(self._region_changed)
         self.viewport.region_move_requested.connect(self._move_region)
+        self.viewport.region_stack_requested.connect(self._stack_region)
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
         self.inspector.apply_requested.connect(self._apply_state)
@@ -212,12 +215,26 @@ class MainWindow(QMainWindow):
         self._action(sim_menu, "Tick back", self._tick_back, "sim.tick_back")
         self._action(sim_menu, "Step back", self._step_back, "sim.step_back")
         region_menu = bar.addMenu("&Region")
-        self._action(region_menu, "Copy selection", self._copy, "edit.copy")
-        self._action(region_menu, "Paste at target", self._paste, "edit.paste")
-        self._action(region_menu, "Rotate clipboard 90°", self._rotate_clipboard, "edit.rotate")
+        toolbar = self.addToolBar("Selection")
+        toolbar.setObjectName("Selection toolbar")
+        for text, slot, keymap_id in (
+            ("⟳ Rotate", lambda: self._rotate(1), "edit.rotate"),
+            ("⟲ Rotate", lambda: self._rotate(3), "edit.rotate_back"),
+            ("⇋ Flip", lambda: self._flip(depth=False), "edit.flip"),
+            ("⇅ Flip", lambda: self._flip(depth=True), "edit.flip_depth"),
+            ("Copy", self._copy, "edit.copy"),
+            ("Paste", self._paste, "edit.paste"),
+        ):
+            action = self._action(region_menu, text, slot, keymap_id)
+            action.setToolTip(f"{SPECS[keymap_id].title} ({self.keymap.describe(keymap_id)})")
+            toolbar.addAction(action)
+        stack_hint = QLabel("  Shift+drag a handle: stack copies  ")
+        stack_hint.setToolTip(SPECS["select.stack"].title)
+        toolbar.addWidget(stack_hint)
         self._action(
             region_menu, "Clear selection (fill with air)", self._delete_region, "edit.delete"
         )
+        toolbar.addAction(self._actions["edit.delete"])
         view_menu = bar.addMenu("&View")
         for attribute, text, tip in (
             (
@@ -496,14 +513,67 @@ class MainWindow(QMainWindow):
             self._message(f"{verb} the selection by {by[0]}, {by[1]}, {by[2]}.")
         self._changed()
 
-    def _rotate_clipboard(self) -> None:
-        if self.document.clipboard is None:
-            self._message("The clipboard is empty.")
+    def _rotate(self, quarter_turns: int) -> None:
+        """R / Shift+R: the paste preview if one is shown, else the selection in place,
+        else the clipboard."""
+        viewport, document = self.viewport, self.document
+        direction = "clockwise" if quarter_turns == 1 else "counter-clockwise"
+        if viewport.paste_preview is not None and document.clipboard is not None:
+            document.rotate_clipboard(quarter_turns)
+            viewport.begin_paste(document.clipboard)
+            self._message(f"Paste rotated 90° {direction}.")
+        elif viewport.region is not None:
+            self._transform(quarter_turns=quarter_turns)
+        elif document.clipboard is not None:
+            document.rotate_clipboard(quarter_turns)
+            self._message(f"Clipboard rotated 90° {direction}.")
+        else:
+            self._message("Nothing to rotate: select a box (V) or copy something first.")
+
+    def _flip(self, depth: bool) -> None:
+        """H: mirror left/right as seen from the camera; Shift+H: front/back."""
+        right = self.viewport.camera.right()
+        sideways = "x" if abs(right[0]) >= abs(right[2]) else "z"
+        axis = ("z" if sideways == "x" else "x") if depth else sideways
+        viewport, document = self.viewport, self.document
+        if viewport.paste_preview is not None and document.clipboard is not None:
+            document.mirror_clipboard(axis)
+            viewport.begin_paste(document.clipboard)
+            self._message("Paste flipped.")
+        elif viewport.region is not None:
+            self._transform(mirror=axis)
+        else:
+            self._message("Nothing to flip: select a box (V) first.")
+
+    def _transform(self, quarter_turns: int = 0, mirror: str | None = None) -> None:
+        region = self.viewport.region
+        if region is None:
             return
-        self.document.rotate_clipboard(1)
-        if self.viewport.paste_preview is not None:
-            self.viewport.begin_paste(self.document.clipboard)
-        self._message("Clipboard rotated 90° clockwise.")
+        # Keep turning around the same pivot while the same selection is turned again, so
+        # R then Shift+R (or R four times) returns exactly to the start.
+        last = self._rotation_pivot
+        pivot = last[1] if last is not None and last[0] == region else None
+        if pivot is None:
+            pivot = default_pivot2(region.low, region.high)
+        try:
+            moved = self.document.transform_region(region, quarter_turns, mirror, pivot)
+            self.viewport.region = moved
+            self._rotation_pivot = (moved, pivot)
+        except EditError as exc:
+            self._message(str(exc), error=True)
+        else:
+            what = f"rotated {quarter_turns * 90}°" if quarter_turns else "flipped"
+            self._message(f"Selection {what} in place (no block updates).")
+        self._changed()
+
+    def _stack_region(self, region: Region, step: Pos, count: int) -> None:
+        try:
+            self.viewport.region = self.document.stack_region(region, step, count)
+        except EditError as exc:
+            self._message(str(exc), error=True)
+        else:
+            self._message(f"Stacked {count} copies (no block updates).")
+        self._changed()
 
     def _delete_region(self) -> None:
         region = self._region()

@@ -274,6 +274,25 @@ Short records. Each one states the context, the decision, and its trade-offs.
   a selection (`/fill` with air) still updates neighbors, so blocks that lose their support
   pop as in the game.
 
+## ADR-021
+
+**Rotate, flip and stack selections in place: editor tools without block updates**
+
+- **Context:** The owner called rotating and flipping essential (blocks inside must turn
+  too) and wanted stack/repeat. The game has no command that turns a region in place.
+- **Decision:** One engine action `transform_region` captures the box (states,
+  block-entity data, pending ticks), clears it and places the transformed blocks with the
+  strict `/clone` placement passes; states turn with the ported `BlockState.rotate` /
+  `mirror` rules (`world/rotation.py`); ticks are rescheduled at their blocks' new places.
+  `stack_region` is N strict force-clones. Both are one undo step, without block updates
+  (consistent with the ADR-019 amendment).
+- **Pivot:** a quarter turn only maps cells onto cells around points whose doubled x and z
+  have equal parity. The default pivot is the box center, shifted half a block when exactly
+  one side length is odd; the editor keeps that pivot while the same selection is turned
+  again, so turning back, or four times, returns exactly to the start.
+- **Verification:** unit tests and source reading (state rules); the placement passes are
+  the game-verified strict `/clone` ones (EXP-026).
+
 ## ADR-020
 
 **One "signal source" in the UI, real blocks underneath, set with `/setblock` data**

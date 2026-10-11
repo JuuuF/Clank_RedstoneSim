@@ -21,6 +21,7 @@ from typing import Any, Literal
 from redsim.core.pos import Pos
 from redsim.sim import trace as tr
 from redsim.sim.level import Level
+from redsim.sim.ticks import ScheduledTick
 from redsim.world.block import BlockState, PlacementContext, UpdateFlags
 
 
@@ -42,6 +43,8 @@ ActionKind = Literal[
     "clone_region",
     "container_item",
     "lectern_page",
+    "transform_region",
+    "stack_region",
 ]
 
 #: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
@@ -72,6 +75,13 @@ class Action:
       copied. Used to drag selections.
     * ``container_item``: ``/item replace block <pos> container.<slot> with <item> <count>``
       (``payload``: ``slot``, ``item`` or None for empty, ``count``): ``Container.setItem``.
+    * ``transform_region``: editor tool, not vanilla: rotate (``quarter_turns`` clockwise
+      seen from above, around the box center) and/or mirror (``mirror``: ``"x"``/``"z"``) the
+      region ``payload["begin"]``-``payload["end"]`` in place, without block updates; block
+      states turn with it (``BlockState.rotate``/``mirror``) and pending scheduled ticks
+      move with their blocks.
+    * ``stack_region``: editor tool: ``count`` copies of the region, each ``step`` further,
+      as ``/clone … strict replace force`` (no block updates; ticks copied).
     * ``lectern_page``: a player turning a lectern's book to ``payload["page"]``
       (``LecternBlockEntity.setPage``: comparator update and a 2-tick pulse). Not a command;
       there is no player on the test server, so this path is verified by source reading.
@@ -300,6 +310,23 @@ class Engine:
                 self._container_item(action.pos, action.payload)
             elif action.kind == "lectern_page":
                 self._lectern_page(action.pos, int(action.payload["page"]))
+            elif action.kind == "transform_region":
+                payload = action.payload
+                pivot = payload.get("pivot2")
+                self._transform_region(
+                    tuple(payload["begin"]),
+                    tuple(payload["end"]),
+                    int(payload.get("quarter_turns", 0)),
+                    payload.get("mirror"),
+                    (int(pivot[0]), int(pivot[1])) if pivot else None,
+                )
+            elif action.kind == "stack_region":
+                payload = action.payload
+                step = tuple(payload["step"])
+                low = tuple(payload["begin"])
+                for i in range(1, int(payload["count"]) + 1):
+                    target = (low[0] + step[0] * i, low[1] + step[1] * i, low[2] + step[2] * i)
+                    self._clone_region_command(low, tuple(payload["end"]), target, "force", True)
             elif action.kind == "fill":
                 assert action.state is not None
                 tx, ty, tz = action.payload["to"]
@@ -504,6 +531,83 @@ class Engine:
         count = self._clone_place(solid, entities, other, strict)
         level.block_ticks.copy_area(low, high, offset)
         return count
+
+    def _transform_region(
+        self,
+        begin: Pos,
+        end: Pos,
+        quarter_turns: int,
+        mirror: str | None,
+        pivot2: tuple[int, int] | None = None,
+    ) -> tuple[Pos, Pos]:
+        """Rotate and/or mirror a region in place (editor tool, strict: no block updates).
+
+        Captures states, block-entity data and pending ticks; clears the box (air, flags
+        818); places the transformed blocks with the ``/clone`` placement passes in strict
+        mode; reschedules the ticks at their blocks' new places. Mirroring happens first
+        (within the box), then the clockwise rotation around ``pivot2`` (twice the x/z
+        point; default: the box center, see ``rotation.default_pivot2``). Returns the new
+        box."""
+        from redsim.world import blocks
+        from redsim.world.rotation import (
+            default_pivot2,
+            mirror_state,
+            rotate_about,
+            rotate_state,
+            rotated_box,
+        )
+
+        level = self.level
+        low = (min(begin[0], end[0]), min(begin[1], end[1]), min(begin[2], end[2]))
+        high = (max(begin[0], end[0]), max(begin[1], end[1]), max(begin[2], end[2]))
+        size = (high[0] - low[0] + 1, high[1] - low[1] + 1, high[2] - low[2] + 1)
+        if size[0] * size[1] * size[2] > MAX_BLOCK_MODIFICATIONS:
+            raise ActionError("Too many blocks in the selection (more than 32768)")
+        turns = quarter_turns % 4
+        pivot = pivot2 if pivot2 is not None else default_pivot2(low, high)
+        new_low, new_high = rotated_box(low, high, turns, pivot)
+
+        def new_pos(pos: Pos) -> Pos:
+            x, y, z = pos
+            if mirror == "x":
+                x = low[0] + high[0] - x
+            elif mirror == "z":
+                z = low[2] + high[2] - z
+            return rotate_about((x, y, z), pivot, turns)
+
+        captured = []
+        for z in range(low[2], high[2] + 1):
+            for y in range(low[1], high[1] + 1):
+                for x in range(low[0], high[0] + 1):
+                    pos = (x, y, z)
+                    state = level.get_block_state(pos)
+                    entity = level.get_block_entity(pos, create=False)
+                    data = entity.to_json() if entity is not None else None
+                    captured.append((pos, state, data))
+        ticks = level.block_ticks.take_in_box(low, high)
+        air = blocks.AIR.default_state
+        for pos, _, _ in captured:
+            level.set_block(pos, air, STRICT_FLAGS)
+        solid, entities, other = [], [], []
+        for pos, state, data in captured:
+            if mirror is not None:
+                state = mirror_state(state, mirror)
+            state = rotate_state(state, turns)
+            target = new_pos(pos)
+            info = (target, state, data, level.get_block_state(target))
+            if state.has_block_entity:
+                entities.append(info)
+            elif not state.is_collision_shape_full_block():
+                other.append(info)
+            else:
+                solid.append(info)
+        self._clone_place(solid, entities, other, strict=True)
+        for tick in ticks:
+            moved = ScheduledTick(
+                tick.block_id, new_pos(tick.pos), tick.trigger_tick, tick.priority, tick.sub_tick
+            )
+            level.block_ticks.schedule(moved)
+        return new_low, new_high
 
     def _clone_place(
         self,

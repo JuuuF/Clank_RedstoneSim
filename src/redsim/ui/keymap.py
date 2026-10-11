@@ -80,6 +80,9 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec(
         "select.copy_drag", "Drag a copy of the box (from inside it)", ("Ctrl+Left Drag",), MOUSE
     ),
+    ActionSpec(
+        "select.stack", "Stack copies: drag a face handle outwards", ("Shift+Left Drag",), MOUSE
+    ),
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
     ActionSpec("sim.tick", "Step one tick", ("Right", "T")),
@@ -90,7 +93,10 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("edit.redo", "Redo", ("Ctrl+Y", "Ctrl+Shift+Z")),
     ActionSpec("edit.copy", "Copy the selection", ("Ctrl+C",)),
     ActionSpec("edit.paste", "Paste at the block under the cursor", ("Ctrl+V",)),
-    ActionSpec("edit.rotate", "Rotate the clipboard 90°", ("R",)),
+    ActionSpec("edit.rotate", "Rotate the selection (or paste preview) 90° clockwise", ("R",)),
+    ActionSpec("edit.rotate_back", "Rotate the selection 90° counter-clockwise", ("Shift+R",)),
+    ActionSpec("edit.flip", "Flip the selection left/right (as seen from the camera)", ("H",)),
+    ActionSpec("edit.flip_depth", "Flip the selection front/back", ("Shift+H",)),
     ActionSpec("edit.rotate_block", "Rotate the block under the cursor clockwise", ("Q",)),
     ActionSpec(
         "edit.rotate_block_back",

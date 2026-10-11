@@ -156,6 +156,20 @@ class LevelTicks:
             )
         return len(ticks)
 
+    def take_in_box(self, low: Pos, high: Pos) -> list[ScheduledTick]:
+        """Remove and return the pending ticks inside a box (editor transforms move them)."""
+
+        def inside(tick: ScheduledTick) -> bool:
+            return all(low[i] <= tick.pos[i] <= high[i] for i in range(3))
+
+        taken = [t for _, t in sorted(self._heap) if inside(t)]
+        if taken:
+            for tick in taken:
+                del self._pending[tick.key]
+            self._heap = [(o, t) for o, t in self._heap if not inside(t)]
+            heapq.heapify(self._heap)
+        return taken
+
     def remove_at(self, pos: Pos) -> None:
         """Drop pending ticks at ``pos`` (editor deletions only, not a game mechanic)."""
         keys = [key for key in self._pending if key[0] == pos]

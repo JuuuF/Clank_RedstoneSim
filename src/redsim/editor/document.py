@@ -29,6 +29,7 @@ from redsim.sim.level import Level
 from redsim.sim.timeline import Timeline
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
+from redsim.world.rotation import default_pivot2, rotated_box
 
 FLOOR_HALF_SIZE = 16
 
@@ -173,9 +174,56 @@ class Document:
         high = (region.high[0] + offset[0], region.high[1] + offset[1], region.high[2] + offset[2])
         return Region(low, high)
 
+    def transform_region(
+        self,
+        region: Region,
+        quarter_turns: int = 0,
+        mirror: str | None = None,
+        pivot2: tuple[int, int] | None = None,
+    ) -> Region:
+        """Rotate (clockwise seen from above, around ``pivot2``: twice the x/z point;
+        default the box center) and/or mirror (``"x"``: east-west, ``"z"``: north-south) a
+        selection in place; block states turn too, no block updates, pending ticks move
+        along. One undo step. Returns the new box."""
+        pivot = pivot2 if pivot2 is not None else default_pivot2(region.low, region.high)
+        payload = {
+            "begin": list(region.low),
+            "end": list(region.high),
+            "quarter_turns": quarter_turns,
+            "mirror": mirror,
+            "pivot2": list(pivot),
+        }
+        label = f"rotate {quarter_turns * 90}°" if quarter_turns else f"flip {mirror}"
+        self._apply(Action("transform_region", region.low, payload=payload), label)
+        low, high = rotated_box(region.low, region.high, quarter_turns, pivot)
+        return Region(low, high)
+
+    def stack_region(self, region: Region, step: Pos, count: int) -> Region:
+        """``count`` copies of a selection, each ``step`` further (no block updates). One
+        undo step. Returns the box around the original and all copies."""
+        if count < 1:
+            raise EditError("Nothing to stack.")
+        payload = {
+            "begin": list(region.low),
+            "end": list(region.high),
+            "step": list(step),
+            "count": count,
+        }
+        self._apply(Action("stack_region", region.low, payload=payload), f"stack ×{count}")
+        far_low = tuple(region.low[i] + step[i] * count for i in range(3))
+        far_high = tuple(region.high[i] + step[i] * count for i in range(3))
+        return Region.from_corners(
+            tuple(min(region.low[i], far_low[i]) for i in range(3)),  # type: ignore[arg-type]
+            tuple(max(region.high[i], far_high[i]) for i in range(3)),  # type: ignore[arg-type]
+        )
+
     def rotate_clipboard(self, quarter_turns: int = 1) -> None:
         if self.clipboard is not None:
             self.clipboard = self.clipboard.rotated(quarter_turns)
+
+    def mirror_clipboard(self, axis: str) -> None:
+        if self.clipboard is not None:
+            self.clipboard = self.clipboard.mirrored(axis)
 
     def fill(self, region: Region, state: BlockState) -> None:
         """``/fill`` in replace mode (used to delete a region with air)."""

@@ -99,6 +99,7 @@ CLICK_VERBS = {
     "select.block": "select",
     "select.box": "box / move / resize",
     "select.copy_drag": "copy",
+    "select.stack": "stack",
     "select.extend": "extend",
     "pick": "pick",
 }
@@ -132,6 +133,7 @@ class Viewport(QOpenGLWidget):
     select_requested = Signal(object)  # Pos | None (inspector selection)
     region_changed = Signal(object)  # Region | None
     region_move_requested = Signal(object, object, bool)  # Region, offset, copy
+    region_stack_requested = Signal(object, object, int)  # Region, step, count
     paste_requested = Signal(object)  # Pos (minimum corner)
     mode_changed = Signal(str)
 
@@ -158,6 +160,7 @@ class Viewport(QOpenGLWidget):
         self.handle_hover: Handle | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
         self._move: _MoveDrag | None = None
+        self._stack: _StackDrag | None = None
         #: Ctrl+V preview: the prefab follows the cursor until a click places it.
         self.paste_preview: Prefab | None = None
         self._ghost: tuple[np.ndarray, Pos] | None = None  # vertices at offset 0, offset
@@ -471,10 +474,16 @@ class Viewport(QOpenGLWidget):
         if self.region is not None:
             lo, hi = _bounds(self.region)
             parts.append(thick_edges(lo, hi, SELECTION_COLOR, width))
-            if self.mode == SELECT and self._move is None and self.paste_preview is None:
+            busy = self._move is not None or self._stack is not None
+            if self.mode == SELECT and not busy and self.paste_preview is None:
                 parts.extend(self._handle_pins(self.region))
         if self._move is not None:
             lo, hi = _bounds(shifted(self._move.region, self._move.offset_pos))
+            parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
+        if self._stack is not None and self._stack.count:
+            far = shifted(self._stack.region, self._stack.offset(self._stack.count))
+            lo = np.minimum(_bounds(self._stack.region)[0], _bounds(far)[0])
+            hi = np.maximum(_bounds(self._stack.region)[1], _bounds(far)[1])
             parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
         paste_box = self.paste_region()
         if paste_box is not None:
@@ -606,6 +615,8 @@ class Viewport(QOpenGLWidget):
             self._drag_action = action or ""
             if self._drag_action in ("select.box", "select.copy_drag"):
                 self._begin_select_drag(start, copy=self._drag_action == "select.copy_drag")
+            elif self._drag_action == "select.stack":
+                self._begin_stack(start)
         last = self._drag_last or point
         self._drag(self._drag_action, point.x() - last.x(), point.y() - last.y())
         self._drag_last = point
@@ -628,6 +639,8 @@ class Viewport(QOpenGLWidget):
                     self._click(action)
         elif drag_action in ("select.box", "select.copy_drag"):
             self._end_select_drag()
+        elif drag_action == "select.stack":
+            self._end_stack()
         self.update()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
@@ -661,6 +674,9 @@ class Viewport(QOpenGLWidget):
             camera.pan(dy * scale, -dx * scale)
         elif action in ("select.box", "select.copy_drag"):
             self._continue_select_drag()
+            return
+        elif action == "select.stack":
+            self._continue_stack()
             return
         else:
             return
@@ -744,6 +760,40 @@ class Viewport(QOpenGLWidget):
                 self.region_move_requested.emit(move.region, move.offset_pos, move.copy)
         elif resize is not None or self._region_anchor is not None:
             self.region_changed.emit(self.region)
+
+    def _begin_stack(self, start: QPoint) -> None:
+        """Shift+drag on a face handle: repeat the selection along that face's normal."""
+        region = self.region
+        if region is None:
+            return
+        origin, direction = self._ray(start)
+        hit = handle_hit(region, origin, direction, self.handle_size())
+        if hit is None:
+            return
+        handle = hit[0]
+        center = face_center(region, handle)
+        axis = self._screen_vector(center, center + handle.normal)
+        self._stack = _StackDrag(region, handle, start, axis, self._region_ghost(region))
+
+    def _continue_stack(self) -> None:
+        stack, point = self._stack, self._last_mouse
+        if stack is None or point is None:
+            return
+        drag = (point.x() - stack.start.x(), point.y() - stack.start.y())
+        count = max(0, round(steps_along(drag, stack.axis) / stack.length))
+        if count != stack.count:
+            stack.count = count
+            copies = [stack.ghost.copy() for _ in range(count)]
+            for i, vertices in enumerate(copies, start=1):
+                vertices[:, :3] += np.array(stack.offset(i), dtype=np.float32)
+            self._ghost = (np.vstack(copies), (0, 0, 0)) if copies else None
+            self.update()
+
+    def _end_stack(self) -> None:
+        stack, self._stack = self._stack, None
+        self._ghost = None
+        if stack is not None and stack.count:
+            self.region_stack_requested.emit(stack.region, stack.offset(1), stack.count)
 
     def _extend_box(self) -> None:
         if self._region_anchor is not None and self.hover is not None:
@@ -886,6 +936,25 @@ class _MoveDrag:
     @property
     def offset_pos(self) -> Pos:
         return (self.dx, self.lift, self.dz)
+
+
+class _StackDrag:
+    """Copies being pulled out of a selection along one face's normal."""
+
+    def __init__(
+        self, region: Region, handle: Handle, start: QPoint, axis: np.ndarray, ghost: np.ndarray
+    ) -> None:
+        self.region = region
+        self.handle = handle
+        self.start = start
+        self.axis = axis
+        self.ghost = ghost
+        self.length = region.size[handle.axis]
+        self.count = 0
+
+    def offset(self, copies: int) -> Pos:
+        step = self.handle.normal * self.length * copies
+        return (int(step[0]), int(step[1]), int(step[2]))
 
 
 _HANDLES = tuple(Handle(axis, high) for axis in range(3) for high in (False, True))
