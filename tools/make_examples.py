@@ -165,7 +165,13 @@ def build() -> Document:
     for _ in range(4):
         b.doc.run_tick()
     doc = b.doc
-    doc.extra["camera"] = {"position": [4.5, 6.0, -6.0 + Z_SHIFT], "yaw": 0.0, "pitch": 33.0}
+    # Orbit camera (redsim.ui.camera): pivot in the middle of the rows, looking south.
+    doc.extra["camera"] = {
+        "pivot": [4.5, 1.0, 11.0 + Z_SHIFT],
+        "distance": 24.0,
+        "yaw": 0.0,
+        "pitch": 40.0,
+    }
     return doc
 
 
