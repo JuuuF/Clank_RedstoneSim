@@ -61,6 +61,27 @@ Trackmania-style paste on the camera's working layer, strict update-free cloning
 (game-verified EXP-026), build preview, info overlay (F3), X-ray (Alt+Z), immediate-apply
 inspector with arrows/toggles/steppers, rotate/flip/stack in place (ADR-021).
 
+## Third round of feedback (2026-10-11)
+
+| Topic | Request |
+|---|---|
+| Layout | Views feel scattered and unordered; hard to find things. |
+| Inventory | Like Trackmania: hierarchical groups in a bar at the bottom of the screen, navigated with number keys. |
+| Selection body | Keep the edge thickness; add a very low-alpha body so it is clear which blocks are inside. |
+| Gizmos | Handles too big and clunky. Blender-like gizmos and arrows for resizing, rotating and flipping are welcome (may break from Minecraft looks). |
+| Paste height | Plain mouse wheel moves the paste layer vertically (no Ctrl). |
+| Timeline | Like Blender: Left/Right step time, Shift+Left jumps to the start; Blender-like timeline mechanics, possibly with a timeline monitor. |
+| X-ray | Three-way toggle (like Minecraft's F5): off, building blocks see-through, everything see-through (circuit blocks too). Both alphas adjustable in the options. |
+| Lock selection | Enter locks a selection (like GIMP) to rotate, flip etc. in place. |
+| Hints | Blender-like context hints for the essential actions at the bottom. |
+| Stack feedback | Handles change their look while Shift is held, so stacking is discoverable. |
+| Bug | Ctrl+drag copy of a selection did nothing on release. |
+| Delete | Keep neighbor updates on delete. |
+| Debug screen | F3: a Minecraft-like debug screen with block states and more. |
+| Style | Simple but slick; looks good, still feels like Minecraft, not disconnected from the game. |
+| Verification | Build bigger circuits and stress-test against the game, including 0-ticking and block-event manipulation. |
+| Next mechanics | Observers, rails, target blocks, then hoppers. |
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,
