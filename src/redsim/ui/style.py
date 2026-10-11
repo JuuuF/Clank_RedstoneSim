@@ -224,15 +224,18 @@ def _wall_torch(lit: bool) -> list[Box]:
 
 
 def _repeater(state: BlockState) -> list[Box]:
-    # FACING north: input north (z=0), output south (z=16).
+    # FACING north: input north (z=0), output south (z=16). Torch positions follow the game
+    # models (assets/minecraft/models/block/repeater_<n>tick.json, mirrored from their
+    # facing=south frame): the fixed torch sits at the output end and the delay torch moves
+    # from next to it (delay 1) towards the input (delay 4).
     powered = state.get(POWERED)
     torch = LIT_RED if powered else UNLIT_RED
     delay = int(state.get(DELAY))
-    z = 2 + 2 * (delay - 1)
+    z = 8 - 2 * (delay - 1)
     boxes = [
         Box((0, 0, 0), (16, 2, 16), COMPONENT_BASE),
         Box((5, 2, 14), (11, 2.4, 16), rgb(0.85, 0.85, 0.85)),  # output edge marker
-        Box((7, 2, 11), (9, 7, 13), torch),  # output torch
+        Box((7, 2, 12), (9, 7, 14), torch),  # fixed (output) torch
     ]
     if state.get(LOCKED):
         boxes.append(Box((2, 2, z), (14, 4, z + 2), rgb(0.25, 0.25, 0.25)))

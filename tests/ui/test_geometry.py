@@ -28,6 +28,15 @@ def test_wall_lever_sits_against_its_attached_block() -> None:
     assert min(b.lo[0] for b in wall_torch) <= 1
 
 
+def test_repeater_delay_torch_matches_the_game_model() -> None:
+    # repeater_<n>tick.json (facing=south, unrotated): fixed torch z 2..4 at the output end,
+    # delay torch z 6..8 for delay 1 up to z 12..14 for delay 4 (towards the input).
+    for delay in range(1, 5):
+        state = blocks.parse_state(f"repeater[facing=south,delay={delay}]")
+        torches = sorted(b.lo[2] for b in block_boxes(state) if b.lo[1] == 2 and b.hi[1] == 7)
+        assert torches == [2, 6 + 2 * (delay - 1)]
+
+
 def test_mesh_culls_hidden_faces_between_full_cubes() -> None:
     level = Level()
     level.blocks[(0, 0, 0)] = blocks.STONE.default_state
