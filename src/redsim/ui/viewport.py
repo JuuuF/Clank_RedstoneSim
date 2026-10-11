@@ -45,6 +45,7 @@ from redsim.ui.geometry import (
     box_lines,
     ghost_mesh,
     pick,
+    ray_box,
     solid_box,
     thick_edges,
 )
@@ -392,8 +393,8 @@ class Viewport(QOpenGLWidget):
 
     def paste_hint(self) -> str:
         return (
-            f"layer y={self.working_height()} (Ctrl+Wheel moves it) · Left Click: place · "
-            "R: rotate · Right Click / Esc: cancel"
+            f"layer y={self.working_height()} (Wheel moves it) · Left Click: place · "
+            "R: rotate · H: flip · Right Click / Esc: cancel"
         )
 
     def mode_hint(self) -> str:
@@ -654,11 +655,12 @@ class Viewport(QOpenGLWidget):
             self.update()
             return
         modifiers = _modifier_names(event.modifiers())
-        action = self.keymap.mouse_action(self.mode, modifiers, None, "Wheel")
-        if action == "camera.zoom":
+        mode = "paste" if self.paste_preview is not None else self.mode
+        action = self.keymap.mouse_action(mode, modifiers, None, "Wheel")
+        if action in ("camera.zoom", "paste.zoom"):
             self.camera.zoom(ZOOM_PER_NOTCH**-steps)
-        elif action == "camera.vertical":
-            self.camera.raise_pivot(steps)  # one block per notch
+        elif action in ("camera.vertical", "paste.layer"):
+            self.camera.raise_pivot(steps)  # one block per notch; the paste layer follows
         else:
             return
         self._camera_moved()
@@ -721,8 +723,8 @@ class Viewport(QOpenGLWidget):
                 axis = self._screen_vector(center, center + handle[0].normal)
                 self._resize = (handle[0], region, start, axis)
                 return
-        if region is not None and block is not None and region.contains(block.pos):
-            grab = origin + direction * block.distance
+        grab = self._grab_point(region, origin, direction, block)
+        if region is not None and grab is not None:
             ghost = self._region_ghost(region)
             self._move = _MoveDrag(region, copy, float(grab[1]), grab, ghost)
             self._ghost = (ghost, (0, 0, 0))
@@ -731,6 +733,20 @@ class Viewport(QOpenGLWidget):
             return  # copy-drags start inside the selection
         self._region_anchor = block.pos if block else None
         self._extend_box()
+
+    @staticmethod
+    def _grab_point(
+        region: Region | None, origin: np.ndarray, direction: np.ndarray, block: Hit | None
+    ) -> np.ndarray | None:
+        """Where a drag grabs the selection: a block inside it, else anywhere the ray meets
+        the box itself (selections usually contain air)."""
+        if region is None:
+            return None
+        if block is not None and region.contains(block.pos):
+            return origin + direction * block.distance
+        lo, hi = _bounds(region)
+        hit = ray_box(origin, direction, lo, hi)
+        return None if hit is None else origin + direction * hit[0]
 
     def _continue_select_drag(self) -> None:
         point = self._last_mouse

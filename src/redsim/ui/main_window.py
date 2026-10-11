@@ -210,6 +210,14 @@ class MainWindow(QMainWindow):
         self._action(sim_menu, "Step event", self._step_event, "sim.event")
         self._action(sim_menu, "Tick back", self._tick_back, "sim.tick_back")
         self._action(sim_menu, "Step back", self._step_back, "sim.step_back")
+        sim_menu.addSeparator()
+        for text, where, keymap_id in (
+            ("Jump to start", "start", "sim.start"),
+            ("Jump to end", "end", "sim.end"),
+            ("Previous edit", "previous", "sim.prev_edit"),
+            ("Next edit", "next", "sim.next_edit"),
+        ):
+            self._action(sim_menu, text, lambda _=False, w=where: self._jump(w), keymap_id)
         region_menu = bar.addMenu("&Region")
         toolbar = self.addToolBar("Selection")
         toolbar.setObjectName("Selection toolbar")
@@ -701,6 +709,13 @@ class MainWindow(QMainWindow):
         self.last_steps = []
         if not moved:
             self._message("Already at the start of the recorded history.")
+        self._changed()
+
+    def _jump(self, where: str) -> None:
+        self.simulation.play.setChecked(False)
+        if not self.document.jump(where):
+            self._message("Already there.")
+        self.last_steps = []
         self._changed()
 
     def _tick_back(self) -> None:

@@ -414,7 +414,7 @@ class Hit:
     distance: float
 
 
-def _ray_box(
+def ray_box(
     origin: np.ndarray, direction: np.ndarray, lo: np.ndarray, hi: np.ndarray
 ) -> tuple[float, int] | None:
     """Slab test; returns (t_enter, axis) of the entry face or None."""
@@ -477,7 +477,7 @@ def pick(
             for box in boxes_at(level, pos):
                 lo = np.array(pos, dtype=np.float64) + np.array(box.lo) / 16.0
                 hi = np.array(pos, dtype=np.float64) + np.array(box.hi) / 16.0
-                hit = _ray_box(o, d, lo, hi)
+                hit = ray_box(o, d, lo, hi)
                 if hit is not None and (best is None or hit[0] < best[0]):
                     best = hit
             if best is not None:

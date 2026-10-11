@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 KEY, HOLD, MOUSE = "key", "hold", "mouse"
-MODES = ("normal", "build", "select")
+MODES = ("normal", "build", "select", "paste")  # "paste": while a paste preview is shown
 MODIFIERS = ("Ctrl", "Shift", "Alt", "Meta")
 BUTTONS = ("Left", "Right", "Middle")
 GESTURES = ("Click", "Drag")
@@ -65,6 +65,8 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("camera.down", "Move the pivot down", ("PgDown",), HOLD),
     ActionSpec("camera.focus", "Move the pivot to the block under the cursor", ("F",)),
     ActionSpec("pick", "Pick the block type under the cursor", ("Middle Click",), MOUSE),
+    ActionSpec("paste.layer", "While pasting: move the paste layer up/down", ("Wheel",), MOUSE),
+    ActionSpec("paste.zoom", "While pasting: zoom", ("Ctrl+Wheel",), MOUSE),
     ActionSpec("normal.inspect", "Select a block for the inspector", ("Left Click",), MOUSE),
     ActionSpec("normal.use", "Use a lever, button, repeater, …", ("Right Click",), MOUSE),
     ActionSpec("build.break", "Break the block", ("Left Click",), MOUSE),
@@ -86,9 +88,13 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
     ActionSpec("sim.tick", "Step one tick", ("Right", "T")),
-    ActionSpec("sim.event", "Step one event (engine step)", ("Shift+Right", "E")),
+    ActionSpec("sim.event", "Step one event (engine step)", ("Ctrl+Right", "E")),
     ActionSpec("sim.tick_back", "Tick back", ("Left",)),
-    ActionSpec("sim.step_back", "Step back (one engine step)", ("Shift+Left",)),
+    ActionSpec("sim.step_back", "Step back (one engine step)", ("Ctrl+Left",)),
+    ActionSpec("sim.start", "Jump to the start of the recorded history", ("Shift+Left",)),
+    ActionSpec("sim.end", "Jump to the end of the recorded history", ("Shift+Right",)),
+    ActionSpec("sim.prev_edit", "Jump to the previous edit", ("Down",)),
+    ActionSpec("sim.next_edit", "Jump to the next edit", ("Up",)),
     ActionSpec("edit.undo", "Undo", ("Ctrl+Z",)),
     ActionSpec("edit.redo", "Redo", ("Ctrl+Y", "Ctrl+Shift+Z")),
     ActionSpec("edit.copy", "Copy the selection", ("Ctrl+C",)),
@@ -335,8 +341,19 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
     (
         "Simulation",
         None,
-        ("sim.run", "sim.tick", "sim.event", "sim.tick_back", "sim.step_back"),
+        (
+            "sim.run",
+            "sim.tick",
+            "sim.tick_back",
+            "sim.event",
+            "sim.step_back",
+            "sim.start",
+            "sim.end",
+            "sim.next_edit",
+            "sim.prev_edit",
+        ),
     ),
+    ("Pasting", "paste", ("paste.layer", "paste.zoom")),
     ("View", None, ("view.info", "view.xray")),
     (
         "Edit and file",

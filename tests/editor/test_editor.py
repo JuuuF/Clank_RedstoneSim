@@ -117,3 +117,24 @@ def test_usable_blocks() -> None:
     assert Document.is_usable(blocks.LEVER)
     assert Document.is_usable(blocks.REPEATER)
     assert not Document.is_usable(blocks.STONE)
+
+
+def test_blender_like_jumps_through_the_history() -> None:
+    from redsim.world import blocks as b
+
+    doc = Document.new_flat()
+    doc.run_ticks(3)
+    doc.setblock((0, 1, 0), b.REDSTONE_BLOCK.default_state)  # edit 1 at game time 3
+    doc.run_ticks(4)
+    doc.setblock((1, 1, 0), b.REDSTONE_LAMP.default_state)  # edit 2 at game time 7
+    doc.run_ticks(2)
+    assert doc.engine.game_time == 9
+    assert doc.jump("start") and doc.engine.game_time == 0
+    assert not doc.jump("start")
+    assert doc.jump("next") and doc.state_at((0, 1, 0)).is_(b.REDSTONE_BLOCK)
+    assert doc.engine.game_time == 3 and doc.state_at((1, 1, 0)).is_air
+    assert doc.jump("next") and doc.state_at((1, 1, 0)).is_(b.REDSTONE_LAMP)
+    assert not doc.jump("next")
+    assert doc.jump("end") and doc.engine.game_time == 9
+    assert doc.jump("previous") and doc.engine.game_time == 7
+    assert doc.jump("previous") and doc.engine.game_time == 3

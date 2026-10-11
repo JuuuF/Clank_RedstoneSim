@@ -46,6 +46,13 @@ def test_owner_camera_and_mode_defaults() -> None:
     assert keymap.mouse_action("normal", none, "Left", "Drag") is None
     # Shift is not a camera key: rewinding has its own bindings.
     assert "Shift+T" not in keymap.bindings("sim.tick_back")
+    # While pasting, the plain wheel moves the paste layer (owner, round three).
+    assert keymap.mouse_action("paste", none, None, "Wheel") == "paste.layer"
+    assert keymap.mouse_action("paste", ctrl, None, "Wheel") == "paste.zoom"
+    assert keymap.mouse_action("paste", none, "Middle", "Drag") == "camera.orbit"
+    # Blender timeline keys.
+    assert keymap.bindings("sim.start") == ("Shift+Left",)
+    assert keymap.bindings("sim.tick") == ("Right", "T")
 
 
 def test_overrides_replace_unbind_and_warn(tmp_path: Path) -> None:
@@ -101,4 +108,4 @@ def test_hotkey_sections_cover_every_action() -> None:
     assert {spec.title for spec in ACTIONS} <= titles
     assert all(title != "Other" for title, _, _ in sections)  # everything has a home
     modes = {mode for _, mode, _ in sections if mode}
-    assert modes == {"normal", "build", "select"}
+    assert modes == {"normal", "build", "select", "paste"}

@@ -45,8 +45,8 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   the original). The selection follows the moved or copied blocks.
 - **Paste (Trackmania-style):** Ctrl+C copies the box; Ctrl+V shows the clipboard as a
   ghost centered under the cursor on the camera's working layer (the pivot's height, shown
-  in the badge). Ctrl+wheel moves the layer up or down, so a paste can go into the air or
-  inside blocks; a grid marks the layer and yellow lines drop to the ground. Left click
+  in the badge). The wheel moves the layer up or down (Ctrl+wheel zooms while pasting), so
+  a paste can go into the air or inside blocks; a grid marks the layer and yellow lines drop to the ground. Left click
   places it, R rotates it, right click or Esc cancels.
 - **No block updates:** pasting, moving, copying and stacking are editor operations and
   cause no block updates (`/clone … strict`), so budded components stay budded
@@ -86,9 +86,10 @@ reason the old Shift+T rewind was disliked).
 | Keys | Action |
 |---|---|
 | Space or P | run / pause |
-| → or T | step one tick |
-| Shift+→ or E | step one event (engine step) |
-| ← / Shift+← | tick back / step back |
+| → or T / ← | step one tick forward / back |
+| Ctrl+→ or E / Ctrl+← | step one event (engine step) forward / back |
+| Shift+← / Shift+→ | jump to the start / end of the recorded history (Blender) |
+| ↑ / ↓ | jump to the next / previous edit (like Blender's keyframe jumps) |
 | Ctrl+Z / Ctrl+Y | undo / redo (rewinds to just before the last edit) |
 | Ctrl+C / Ctrl+V | copy the selection box / paste preview at the cursor (click places) |
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |

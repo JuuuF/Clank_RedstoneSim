@@ -294,6 +294,29 @@ class Document:
         self._changed()
         return True
 
+    def jump(self, where: str) -> bool:
+        """Blender-like jumps: ``"start"``/``"end"`` of the recorded history, or the
+        ``"previous"``/``"next"`` edit (landing just after it). False if already there."""
+        history = self.history
+        position = history.position
+        after_edits = [index + 1 for index in history.action_indices()]
+        if where == "start":
+            target = history.start
+        elif where == "end":
+            target = history.end
+        elif where == "previous":
+            earlier = [p for p in after_edits if p < position]
+            target = max(earlier) if earlier else history.start
+        else:
+            later = [p for p in after_edits if p > position]
+            if not later:
+                return False
+            target = min(later)
+        if target == position:
+            return False
+        self.seek(target)
+        return True
+
     def seek(self, step_index: int) -> None:
         self.history.seek(step_index)
         self._changed()

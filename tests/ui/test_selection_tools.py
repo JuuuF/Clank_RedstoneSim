@@ -64,3 +64,17 @@ def test_paste_sits_on_the_camera_plane_centered_under_the_cursor() -> None:
     assert paste_origin(eye, down, 4, (1, 1, 1)) == (0, 4, 0)
     assert paste_origin(eye, down, 4, (3, 2, 5)) == (-1, 4, -2)  # centered
     assert paste_origin(eye, np.array([0.0, 1.0, 0.0]), 4, (1, 1, 1)) is None  # plane behind
+
+
+def test_a_drag_grabs_the_selection_through_air_inside_it() -> None:
+    """Regression: Ctrl+drag copy did nothing when the drag started on air in the box."""
+    import os
+
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from redsim.ui.viewport import Viewport
+
+    box = Region((0, 1, 0), (1, 2, 0))
+    grab = Viewport._grab_point(box, np.array([0.5, 10.0, 0.5]), np.array([0.0, -1.0, 0.0]), None)
+    assert grab is not None and np.allclose(grab, [0.5, 3.0, 0.5])  # the box's top face
+    miss = Viewport._grab_point(box, np.array([5.5, 10.0, 0.5]), np.array([0.0, -1.0, 0.0]), None)
+    assert miss is None
