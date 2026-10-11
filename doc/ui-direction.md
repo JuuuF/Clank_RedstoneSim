@@ -110,6 +110,22 @@ because the keymap file written earlier kept the old default Shift+Left = step b
 defaults in keymap files now follow the new ones). Stepping back was fast in measurements
 (the build is no longer replayed, keyframes are denser); backward playback was added.
 
+## Fifth round of feedback (2026-10-11)
+
+| Topic | Request |
+|---|---|
+| Build height | Do not place against any surface: place on the layer at the camera pivot's height; the wheel moves it up and down. |
+| Inventory | Show the whole hierarchy up to the current level, like Trackmania (stacked rows). |
+| Rails | Curved rails looked wrong. |
+| Observer | Return the face side to the plain model (keep the rest). |
+| Tick 0 | "Set tick 0 here": after moving placements into tick 0, run a few ticks (e.g. a new redstone block updates its circuit) and make that the start. |
+
+Status: implemented. BUILD places on the working layer with a grid and drop lines (wheel:
+layer, Ctrl+wheel: zoom); the inventory shows one compact row per level above the current
+one; curved rails are two concentric arcs; the observer face is plain again (arrows kept);
+"Set tick 0 here" is a button next to the transport controls (Ctrl+0, also in the
+Simulation menu and the timeline menu) and keeps later edits, shifted.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

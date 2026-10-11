@@ -7,6 +7,7 @@ block's actual orientation.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -269,24 +270,42 @@ def _rail(block_id: str, state: BlockState) -> list[Box]:
         steps += [Box((3, 2 * i + 1, 4 * i), (5, 2 * i + 2, 4 * i + 4), metal) for i in range(4)]
         steps += [Box((11, 2 * i + 1, 4 * i), (13, 2 * i + 2, 4 * i + 4), metal) for i in range(4)]
         return face_horizontally(steps, rises.opposite)  # model rises towards +z (south)
-    # Curves: an L joining the two named sides (north_east, south_west, ...).
-    first, second = (Direction[name.upper()] for name in shape.split("_"))
-    arm = [Box((3, 1, 0), (5, 2, 9), metal), Box((11, 1, 0), (13, 2, 13), metal)]
-    plate = [Box((1, 0, 1), (15, 1, 15), ties)]
-    return plate + face_horizontally(arm, first) + face_horizontally(arm, second)
+    return _curved_rail(shape, metal, ties)
+
+
+def _curved_rail(shape: str, metal: Color, ties: Color) -> list[Box]:
+    """A curve joining two sides (``south_east``: south and east): both rails are quarter
+    circles around the corner between those sides, radius 4 and 12, so they meet the
+    straight rails (x = 3-5 and 11-13) at the edges; ties run radially."""
+    cx = 16.0 if "east" in shape else 0.0
+    cz = 16.0 if "south" in shape else 0.0
+    sx = -1.0 if cx else 1.0  # from the corner into the block
+    sz = -1.0 if cz else 1.0
+
+    def at(radius: float, angle: float) -> tuple[float, float]:
+        return cx + sx * radius * math.cos(angle), cz + sz * radius * math.sin(angle)
+
+    boxes = []
+    for degrees in (12, 45, 78):  # ties: small squares along three radii
+        angle = math.radians(degrees)
+        for step in range(2, 15, 2):
+            x, z = at(step + 0.5, angle)
+            boxes.append(Box((x - 1.1, 0, z - 1.1), (x + 1.1, 1, z + 1.1), ties))
+    for rail_radius, count in ((4.0, 7), (12.0, 16)):  # the rails
+        for i in range(count + 1):
+            x, z = at(rail_radius, math.radians(90 * i / count))
+            boxes.append(Box((x - 1, 1, z - 1), (x + 1, 2, z + 1), metal))
+    return boxes
 
 
 def _observer(powered: bool) -> list[Box]:
-    """Facing north: the watching face (z = 0) has two eyes and a mouth; arrows on the top,
-    bottom and sides point to the back (the signal's way); the output dot is on the back."""
+    """Facing north: the watching face (z = 0) is dark; arrows on the top, bottom and sides
+    point to the back (the signal's way); the output dot is on the back."""
     body = rgb(0.42, 0.42, 0.42)
     mark = rgb(0.74, 0.74, 0.76)
     boxes = [
         Box((0, 0, 1), (16, 16, 15), body),
-        Box((0, 0, 0), (16, 16, 1), rgb(0.18, 0.18, 0.2)),  # the face
-        Box((3, 9, -0.3), (6, 12, 0), mark),  # eyes
-        Box((10, 9, -0.3), (13, 12, 0), mark),
-        Box((4, 4, -0.3), (12, 6, 0), rgb(0.08, 0.08, 0.09)),  # mouth
+        Box((0, 0, 0), (16, 16, 1), rgb(0.22, 0.22, 0.24)),  # the face
         Box((0, 0, 15), (16, 16, 16), rgb(0.33, 0.33, 0.33)),
         Box((6, 6, 16), (10, 10, 16.4), LIT_RED if powered else UNLIT_RED),  # output dot
     ]

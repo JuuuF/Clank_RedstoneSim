@@ -99,12 +99,11 @@ def test_right_click_turns_vertical_facings_too(app: Any) -> None:
 
 
 def test_viewport_line_cells_follow_the_main_axis(app: Any) -> None:
-    from redsim.ui.geometry import Hit
     from redsim.ui.main_window import MainWindow
 
     window = MainWindow()
     viewport = window.viewport
-    viewport._line = ((0, 1, 0), Hit((0, 0, 0), Direction.UP, 1.0))
+    viewport._line = (0, 1, 0)
     viewport._line_end = (5, 1, 2)
     assert viewport.line_cells() == [(x, 1, 0) for x in range(6)]
     viewport._line_end = (1, 1, -3)
@@ -131,5 +130,24 @@ def test_playing_backwards_stops_at_tick_0(app: Any) -> None:
     bar.reverse.setChecked(True)
     assert not bar.play.isChecked()  # one direction at a time
     bar.stop()
+    window.document.dirty = False
+    window.close()
+
+
+def test_build_mode_places_on_the_camera_layer(app: Any) -> None:
+    from PySide6.QtCore import QPoint
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1000, 700)
+    window.show()
+    viewport = window.viewport
+    viewport.camera.pivot[1] = 3.5  # the working layer is y = 3, in the air
+    target = viewport.build_target(QPoint(viewport.width() // 2, viewport.height() // 2))
+    assert target is not None and target[1] == 3
+    keymap = viewport.keymap
+    assert keymap.mouse_action("build", frozenset(), None, "Wheel") == "build.layer"
+    assert keymap.mouse_action("build", frozenset({"Ctrl"}), None, "Wheel") == "build.zoom"
     window.document.dirty = False
     window.close()

@@ -38,9 +38,9 @@ def test_window_edits_steps_and_renders(app: object) -> None:
 
     # Right click on the floor with a lever selected, then a lamp next to it.
     window.inventory.select_block(blocks.LEVER)
-    window._place(Hit((0, 0, 0), Direction.UP, 5.0))
+    window._place((0, 1, 0))
     window.inventory.select_block(blocks.REDSTONE_LAMP)
-    window._place(Hit((1, 0, 0), Direction.UP, 5.0))
+    window._place((1, 1, 0))
     # Right click on the lever uses it (no Shift): the lamp lights immediately.
     window._use((0, 1, 0))
     document = window.document

@@ -330,7 +330,8 @@ Short records. Each one states the context, the decision, and its trade-offs.
     applied through the engine as usual (same block updates) and then folded into the base
     snapshot (`Timeline.apply_to_base` → `rebase`): never recorded, never replayed. Ticks
     are shown relative to the base, so a file saved at game time 4 starts at tick 0.
-    "Make the current tick the build" rebases at any tick boundary.
+    "Set tick 0 here" rebases at any tick boundary: the history before it goes, edits
+    recorded later move along (shifted) and the simulated length is kept (one undo step).
   - Edits at later ticks are recorded with their tick. Edits at one tick boundary form a
     **batch**: `run_tick` applies the recorded edits of a boundary together with that tick,
     so they appear at once (engine stepping still shows them one by one).

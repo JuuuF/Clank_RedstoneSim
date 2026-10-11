@@ -33,7 +33,7 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QWidget
 
 from redsim.core.direction import Direction
-from redsim.core.pos import Pos, offset
+from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
@@ -134,8 +134,8 @@ def _modifier_names(modifiers: Qt.KeyboardModifier) -> frozenset[str]:
 
 class Viewport(QOpenGLWidget):
     hover_changed = Signal(object)  # Hit | None
-    place_requested = Signal(object)  # Hit
-    line_requested = Signal(object, object)  # [Pos] (a straight line), Hit at the start
+    place_requested = Signal(object)  # Pos: a cell on the working layer
+    line_requested = Signal(object)  # [Pos]: a straight line on the working layer
     rotate_requested = Signal(object, int)  # Pos, quarter turns
     use_requested = Signal(object)  # Pos
     break_requested = Signal(object)  # Pos
@@ -192,9 +192,10 @@ class Viewport(QOpenGLWidget):
         self._line_ghost: tuple[Any, np.ndarray] | None = None
         self._last_shift = 0.0
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
-        #: BUILD mode line drag: the start cell and the hit it was placed against.
-        self._line: tuple[Pos, Hit] | None = None
+        #: BUILD mode line drag: the start cell.
+        self._line: Pos | None = None
         self._line_end: Pos | None = None
+        self._build_cell: Pos | None = None  # the layer cell the preview was made for
         self._ghost_uploaded: tuple[int, Pos] | None = None
         self.world_mesh = ChunkedMesh()
         self._mesh_revision = -1
@@ -259,12 +260,12 @@ class Viewport(QOpenGLWidget):
         (cursor-ray yaw/pitch, wire connections, source setup), or a red outline. While a
         line is dragged, the whole line."""
         ghost, blocked = None, None
-        hit, block = self.hover, self.build_block
+        block = self.build_block
         busy = self.paste_preview is not None or self._move is not None
         if self._line is not None and block is not None:
-            start, start_hit = self._line
+            start = self._line
             cells = self.line_cells()
-            request = PlaceRequest(start_hit.face, *self.player_view())
+            request = PlaceRequest(Direction.UP, *self.player_view())
             states = [(cell, self._placed_state(block, request, cell)) for cell in cells]
             parts = tuple(
                 ((c[0] - start[0], c[1] - start[1], c[2] - start[2]), st)
@@ -273,13 +274,14 @@ class Viewport(QOpenGLWidget):
             )
             if parts:
                 ghost = (self._combined_ghost(parts), start)
-        elif self.mode == BUILD and hit is not None and block is not None and not busy:
-            target = offset(hit.pos, hit.face)
-            request = PlaceRequest(hit.face, *self.player_view())
-            state = self._placed_state(block, request, target)
-            if state is None:
+        elif self.mode == BUILD and block is not None and not busy:
+            target = self.build_target()
+            self._build_cell = target
+            request = PlaceRequest(Direction.UP, *self.player_view())
+            state = None if target is None else self._placed_state(block, request, target)
+            if target is not None and state is None:
                 blocked = target
-            else:
+            elif target is not None and state is not None:
                 ghost = (self._single_ghost(state), target)
         if _ghost_key(ghost) != _ghost_key(self._build_ghost) or blocked != self.build_blocked:
             self._build_ghost, self.build_blocked = ghost, blocked
@@ -327,7 +329,7 @@ class Viewport(QOpenGLWidget):
         most on (x or z, on the start's layer), at most ``MAX_LINE`` long."""
         if self._line is None:
             return []
-        start = self._line[0]
+        start = self._line
         end = self._line_end or start
         dx, dz = end[0] - start[0], end[2] - start[2]
         if abs(dx) >= abs(dz):
@@ -339,37 +341,38 @@ class Viewport(QOpenGLWidget):
             (start[0] + step[0] * i, start[1], start[2] + step[2] * i) for i in range(length + 1)
         ]
 
+    def build_target(self, point: QPoint | None = None) -> Pos | None:
+        """BUILD mode places on the working layer (the camera pivot's height; the wheel
+        moves it), in the cell under the cursor, like Trackmania's editor."""
+        point = point if point is not None else self._last_mouse
+        if point is None:
+            return None
+        origin, direction = self._ray(point)
+        self._hover_direction = direction
+        return paste_origin(origin, direction, self.working_height(), (1, 1, 1))
+
     def _begin_line(self, point: QPoint) -> bool:
-        hit = self._pick_at(point)
-        if hit is None or self.build_block is None:
+        start = self.build_target(point)
+        if start is None or self.build_block is None:
             return False
-        self._line = (offset(hit.pos, hit.face), hit)
+        self._line = start
         self._line_end = None
         return True
 
     def _continue_line(self, point: QPoint) -> None:
         if self._line is None:
             return
-        start = self._line[0]
-        origin, direction = self._ray(point)
-        end = None
-        if abs(direction[1]) > 1e-6:  # where the ray meets the start's layer
-            t = (start[1] - origin[1]) / direction[1]
-            if t > 0:
-                spot = origin + t * direction
-                end = (math.floor(spot[0]), start[1], math.floor(spot[2]))
-        if end is None and self.hover is not None:
-            end = offset(self.hover.pos, self.hover.face)
-        if end != self._line_end:
+        end = self.build_target(point)
+        if end is not None and end != self._line_end:
             self._line_end = end
             self._update_build_ghost()
 
     def _end_line(self) -> None:
         if self._line is None:
             return
-        cells, hit = self.line_cells(), self._line[1]
+        cells = self.line_cells()
         self._line, self._line_end = None, None
-        self.line_requested.emit(cells, hit)
+        self.line_requested.emit(cells)
         self._update_build_ghost()
 
     # ------------------------------------------------------------------ GL
@@ -379,6 +382,11 @@ class Viewport(QOpenGLWidget):
         self.renderer = Renderer()
         self.world_mesh.reset()
         self._mesh_revision = -1
+
+    def resizeGL(self, width: int, height: int) -> None:
+        # The same mouse position now casts a different ray: retarget the previews.
+        self._update_build_ghost()
+        self._update_paste_ghost()
 
     def paintGL(self) -> None:
         renderer = self.renderer
@@ -552,6 +560,7 @@ class Viewport(QOpenGLWidget):
             delete = self.keymap.bindings("edit.delete")
             if delete:
                 parts.insert(3, f"{delete[0]}: remove")
+            parts.insert(0, f"layer y={self.working_height()} (Wheel moves it)")
         return " · ".join(parts)
 
     def _overlay_lines(self) -> np.ndarray:
@@ -579,8 +588,10 @@ class Viewport(QOpenGLWidget):
             parts.append(block_outline(level, self.selection, (1.0, 0.85, 0.1, 1.0)))
         if self.hover is not None:
             parts.append(block_outline(level, self.hover.pos, (0.05, 0.05, 0.05, 1.0)))
-            if self.mode == BUILD and self.paste_preview is None:
-                cell = offset(self.hover.pos, self.hover.face)  # where a block would go
+        if self.mode == BUILD and self.paste_preview is None:
+            cell = self._line_end or self._build_cell  # where a block would go
+            if cell is not None:
+                parts.extend(self._paste_guides(Region(cell, cell)))  # layer grid
                 color = (1.0, 0.2, 0.2, 1.0) if cell == self.build_blocked else (1, 1, 1, 1)
                 parts.append(box_lines(cell, (cell[0] + 1, cell[1] + 1, cell[2] + 1), color))
         if not parts:
@@ -851,9 +862,9 @@ class Viewport(QOpenGLWidget):
         modifiers = _modifier_names(event.modifiers())
         mode = "paste" if self.paste_preview is not None else self.mode
         action = self.keymap.mouse_action(mode, modifiers, None, "Wheel")
-        if action in ("camera.zoom", "paste.zoom"):
+        if action in ("camera.zoom", "paste.zoom", "build.zoom"):
             self.camera.zoom(ZOOM_PER_NOTCH**-steps)
-        elif action in ("camera.vertical", "paste.layer"):
+        elif action in ("camera.vertical", "paste.layer", "build.layer"):
             self.camera.raise_pivot(steps)  # one block per notch; the paste layer follows
         else:
             return
@@ -898,6 +909,10 @@ class Viewport(QOpenGLWidget):
             self._region_anchor = anchor
             self.region = Region.from_corners(anchor, hit.pos)
             self.region_changed.emit(self.region)
+        elif action == "build.place":
+            target = self.build_target()
+            if target is not None:
+                self.place_requested.emit(target)
         elif hit is None:
             return
         elif action == "pick":
@@ -906,8 +921,7 @@ class Viewport(QOpenGLWidget):
             self.use_requested.emit(hit.pos)
         elif action == "build.break":
             self.break_requested.emit(hit.pos)
-        elif action == "build.place":
-            self.place_requested.emit(hit)
+
         elif action in ("build.rotate", "build.rotate_back"):
             self.rotate_requested.emit(hit.pos, 1 if action == "build.rotate" else 3)
 

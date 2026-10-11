@@ -78,6 +78,8 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("pick", "Pick the block type under the cursor", ("Middle Click",), MOUSE),
     ActionSpec("paste.layer", "While pasting: move the paste layer up/down", ("Wheel",), MOUSE),
     ActionSpec("paste.zoom", "While pasting: zoom", ("Ctrl+Wheel",), MOUSE),
+    ActionSpec("build.layer", "BUILD: move the build layer up/down", ("Wheel",), MOUSE),
+    ActionSpec("build.zoom", "BUILD: zoom", ("Ctrl+Wheel",), MOUSE),
     ActionSpec("normal.inspect", "Select a block for the inspector", ("Left Click",), MOUSE),
     ActionSpec("normal.use", "Use a lever, button, repeater, …", ("Right Click",), MOUSE),
     ActionSpec("build.place", "Place the chosen block", ("Left Click",), MOUSE),
@@ -105,6 +107,9 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
     ActionSpec("sim.run_back", "Play backwards / pause", ("Ctrl+Shift+Space",)),
+    ActionSpec(
+        "sim.set_zero", "Set tick 0 here (the current state becomes the build)", ("Ctrl+0",)
+    ),
     ActionSpec("sim.tick", "Step one tick", ("Right", "T")),
     ActionSpec("sim.event", "Step one event (engine step)", ("Ctrl+Right", "E")),
     ActionSpec("sim.tick_back", "Tick back", ("Left",)),
@@ -372,6 +377,8 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         (
             "build.place",
             "build.line",
+            "build.layer",
+            "build.zoom",
             "build.rotate",
             "build.rotate_back",
             "build.break",
@@ -408,6 +415,7 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         (
             "sim.run",
             "sim.run_back",
+            "sim.set_zero",
             "sim.tick",
             "sim.tick_back",
             "sim.event",

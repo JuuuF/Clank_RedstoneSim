@@ -484,16 +484,29 @@ class Document:
         return self._replan(new_ticks, f"Deleted {len(new_ticks)} edits")
 
     def set_tick_zero(self) -> None:
-        """Make the current state the build state (tick 0); the history before it goes."""
+        """ "Set tick 0 here": the current state becomes the build (tick 0), e.g. after
+        running a few ticks so a new redstone block has updated its circuit. The history
+        before it goes; edits recorded later move along (their ticks shift) and the
+        simulated length is kept. One undo step."""
         if not self.can_edit:
             raise EditError("Finish the current tick first.")
-        self._undo.append(self._history_state())
+        history = self.history
+        if history.at_base:
+            self.notice = "This is already tick 0."
+            return
+        before = self._history_state()
+        here = self.tick
+        later: Plan = {}
+        for index in sorted(history.inputs):
+            tick = history.input_times[index] - history.base_time
+            if tick > here or (tick == here and index >= history.position):
+                later.setdefault(tick - here, []).append(history.inputs[index])
+        end = max(0, before.end_tick - here)
+        history.rebase()
+        self._rebuild(HistoryState(history.base, later, end, 0))
+        self._undo.append(before)
         self._redo.clear()
-        self.history.rebase()
-        self.tick_steps, self.edit_ticks = {}, {}
-        for values in self.samples.values():
-            values.clear()
-        self._changed()
+        self.notice = f"Tick {here} is now tick 0 (the build)."
 
     # ------------------------------------------------------------------ simulation
     def step(self) -> StepInfo:

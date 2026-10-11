@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.core.direction import Direction
-from redsim.core.pos import Pos, offset
+from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
@@ -149,7 +149,8 @@ class MainWindow(QMainWindow):
         canvas.delete_edits.connect(
             lambda indices: self._history_edit(self.document.delete_edits, indices)
         )
-        canvas.set_tick_zero.connect(lambda: self._history_edit(self.document.set_tick_zero))
+        canvas.set_tick_zero.connect(self._set_tick_zero)
+        self.simulation.set_tick_zero.connect(self._set_tick_zero)
         self.inspector.monitor_requested.connect(self._toggle_monitor)
         self.inspector.hit_requested.connect(self._projectile_hit)
         self.inspector.contents_requested.connect(self._set_container_slot)
@@ -244,6 +245,7 @@ class MainWindow(QMainWindow):
         self._action(
             sim_menu, "Play backwards / pause", self.simulation.reverse.toggle, "sim.run_back"
         )
+        self._action(sim_menu, "Set tick 0 here", self._set_tick_zero, "sim.set_zero")
         self._action(sim_menu, "Step tick", self._step_tick, "sim.tick")
         self._action(sim_menu, "Step event", self._step_event, "sim.event")
         self._action(sim_menu, "Tick back", self._tick_back, "sim.tick_back")
@@ -485,6 +487,9 @@ class MainWindow(QMainWindow):
             self.document, rates, view, viewport.mode, viewport.region, viewport.region_locked
         )
 
+    def _set_tick_zero(self) -> None:
+        self._history_edit(self.document.set_tick_zero)
+
     def _history_edit(self, function: Any, *args: Any) -> None:
         """Keyframe operations re-run the history; the run stops first."""
         self.simulation.stop()
@@ -541,10 +546,11 @@ class MainWindow(QMainWindow):
             self._message(self.document.notice)
         self._changed()
 
-    def _place(self, hit: Hit) -> None:
-        target: Pos = offset(hit.pos, hit.face)
+    def _place(self, target: Pos) -> None:
+        """A click in BUILD mode: place on the working layer, like a player clicking the top
+        of the block below (orientation from the cursor ray)."""
         yaw, pitch = self.viewport.player_view()
-        request = PlaceRequest(hit.face, yaw, pitch)
+        request = PlaceRequest(Direction.UP, yaw, pitch)
         kind = sources.SOURCE_BLOCKS.get(self.current_block.id)
         if kind is not None:
             strength = self.inventory.strength.value()
@@ -599,13 +605,14 @@ class MainWindow(QMainWindow):
             return
         self._edit(self.document.setblock, pos, rotated)
 
-    def _place_line(self, cells: list[Pos], hit: Hit) -> None:
+    def _place_line(self, cells: list[Pos]) -> None:
         """A dragged line: every block placed as one edit batch (one undo step)."""
         if len(cells) <= 1:
-            self._place(hit)
+            if cells:
+                self._place(cells[0])
             return
         yaw, pitch = self.viewport.player_view()
-        request = PlaceRequest(hit.face, yaw, pitch)
+        request = PlaceRequest(Direction.UP, yaw, pitch)
         block = self.current_block
         kind = sources.SOURCE_BLOCKS.get(block.id)
         self.document.notice = ""

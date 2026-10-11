@@ -406,7 +406,7 @@ class TimelineCanvas(QWidget):
         delete.setEnabled(bool(chosen))
         delete.triggered.connect(lambda: self.delete_edits.emit(chosen))
         menu.addSeparator()
-        zero = menu.addAction("Make the current tick the build (tick 0)")
+        zero = menu.addAction("Set tick 0 here (the current state becomes the build)")
         zero.triggered.connect(self.set_tick_zero.emit)
         menu.exec(where)
 
@@ -437,6 +437,7 @@ class TimelineBar(QWidget):
     tick_back = Signal()
     step_back = Signal()
     jump = Signal(str)  # "start" | "end" | "previous" | "next"
+    set_tick_zero = Signal()
     speed_changed = Signal(int)
 
     def __init__(self) -> None:
@@ -474,6 +475,14 @@ class TimelineBar(QWidget):
         button("▶|", "Step one tick (Right); Ctrl+Right or E: one engine step", self.step_tick.emit)
         button("▶◆", "Next edit (Up)", lambda: self.jump.emit("next"))
         button("⏭", "Jump to end (Shift+Right)", lambda: self.jump.emit("end"))
+        row.addSpacing(8)
+        zero = button(
+            "Set tick 0 here",
+            "Make the current state the build (tick 0), e.g. after a few ticks let a new "
+            "block update its circuit. Later edits move along. (Ctrl+0)",
+            self.set_tick_zero.emit,
+        )
+        zero.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         row.addSpacing(12)
         row.addWidget(QLabel("ticks/s"))
         self.speed = QSpinBox()

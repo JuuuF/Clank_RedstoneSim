@@ -27,7 +27,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     them in time, **M** merges the selection into its earliest tick, **Del** deletes it.
     The right-click menu also merges a whole row ("merge all placed edits": everything you
     placed while the simulation ran), moves the selection into the build (tick 0), and
-    makes the current tick the new tick 0. Each of these re-runs the history and is one
+    sets tick 0 at the current tick. Each of these re-runs the history and is one
     undo step; edits that cannot be applied at their new time are dropped (with a note).
   - **Monitor tracks** (logic-analyzer style): Inspector → 📈 Monitor adds the selected
     block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
@@ -35,8 +35,8 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     recorded values are rebuilt as the simulation runs.
 - **Inventory** (like Trackmania's): folders (Redstone, Movement, Signal sources, Items,
   Rails, Building, Special) with block previews. Number keys open a folder or pick the
-  block with that number, Backspace goes up, and every level of the folder path above the
-  tiles is a button. **Recent** shows the last nine blocks you placed (kept between
+  block with that number, Backspace goes up. Every level above the current folder stays
+  visible as a compact row with the chosen folder highlighted (click there to jump back). **Recent** shows the last nine blocks you placed (kept between
   sessions); **🔍 Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
   search: type a few letters (fuzzy), Enter builds with the block. Picking a block enters
   BUILD mode. Signal sources show the strength box.
@@ -49,7 +49,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 | Mode | Key | Left click | Right click | Left drag |
 |---|---|---|---|---|
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
-| **BUILD** | B | place the block | turn the block under the cursor (Shift: back; Ctrl: use it) | a straight line of the block |
+| **BUILD** | B | place the block on the build layer | turn the block under the cursor (Shift: back; Ctrl: use it) | a straight line on the build layer |
 | **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
 - Middle click picks the block type under the cursor in every mode.
@@ -59,9 +59,14 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - In BUILD, **Del** removes the block under the cursor (with a selection box, Del clears the
   box instead). Right click turns blocks around the vertical axis; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.
-- **Line placement:** drag with the left button: the line runs from the first cell along the
-  axis (x or z, on that layer) you moved most along, up to 64 blocks, with a preview of every
-  block. On release all are placed as one edit batch and one undo step; cells that are
+- **Build layer (Trackmania-style):** blocks go on the horizontal layer at the camera
+  pivot's height, in the cell under the cursor (a grid marks the layer, yellow lines drop
+  to the ground, the badge shows `layer y=…`). The **wheel** moves the layer (and the
+  pivot) up or down one block per notch; **Ctrl+wheel** zooms in BUILD mode. Blocks are
+  oriented as if placed on top of the block below, facing along the cursor ray.
+- **Line placement:** drag with the left button: the line runs on the build layer from the
+  first cell along the axis (x or z) you moved most along, up to 64 blocks, with a preview
+  of every block. On release all are placed as one edit batch and one undo step; cells that are
   taken or lack support are skipped.
 - In BUILD, a translucent preview shows the block exactly as a left click would place it
   (orientation from the cursor ray, wire connections, source setup) inside a white outline;
@@ -140,6 +145,7 @@ reason the old Shift+T rewind was disliked).
 |---|---|
 | Space or P | run / pause |
 | Ctrl+Shift+Space | play backwards / pause (stops at tick 0) |
+| Ctrl+0 | **Set tick 0 here** (also a button by the transport controls): the current state becomes the build; later edits move along |
 | → or T / ← | step one tick forward / back |
 | Ctrl+→ or E / Ctrl+← | step one event (engine step) forward / back |
 | Shift+← / Shift+→ | jump to tick 0 / the end of the recorded history (Blender) |

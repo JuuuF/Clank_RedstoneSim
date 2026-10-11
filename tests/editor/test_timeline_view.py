@@ -154,3 +154,31 @@ def test_set_tick_zero_and_relative_ticks(tmp_path: Path) -> None:
     doc.run_ticks(3)
     doc.set_tick_zero()
     assert doc.tick == 0 and doc.end_tick == 0 and doc.engine.game_time == 7
+
+
+def test_set_tick_zero_after_letting_the_circuit_settle() -> None:
+    """Owner workflow: add a redstone block, run a few ticks so it updates the circuit,
+    then make that the build. Edits recorded later move along."""
+    doc = Document.new_flat()
+    doc.setblock(
+        (1, 1, 0),
+        blocks.REPEATER.default_state.with_(
+            blocks.REPEATER.properties[0], blocks.REPEATER.properties[0].values[2]
+        ),
+    )  # facing
+    doc.setblock((2, 1, 0), blocks.REDSTONE_LAMP.default_state)
+    doc.run_ticks(2)
+    doc.setblock((0, 1, 0), blocks.REDSTONE_BLOCK.default_state)  # recorded at tick 2
+    doc.merge_edits(doc.edit_batches()[0].indices, tick=0)  # moved into the build
+    assert doc.tick == 2  # the view stays where it was
+    doc.run_ticks(5)
+    doc.setblock((4, 1, 4), blocks.STONE.default_state)  # recorded at tick 7
+    doc.run_ticks(3)
+    doc.seek_tick(4)
+    lit = doc.state_at((2, 1, 0)).get(blocks.REDSTONE_LAMP.properties[0])
+    doc.set_tick_zero()
+    assert doc.tick == 0 and doc.history.at_base
+    assert doc.state_at((2, 1, 0)).get(blocks.REDSTONE_LAMP.properties[0]) == lit
+    assert [b.tick for b in doc.edit_batches()] == [3]  # tick 7 → tick 3
+    assert doc.end_tick == 6  # recorded to tick 10 → 6
+    assert doc.undo() and doc.tick == 4 and [b.tick for b in doc.edit_batches()] == [7]

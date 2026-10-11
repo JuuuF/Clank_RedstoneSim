@@ -1,8 +1,9 @@
 """Trackmania-style inventory bar: hierarchical folders at the bottom, navigated by numbers.
 
 Number keys open the folder (or pick the block) with that number; Backspace goes up one
-level, and every level of the folder path above the tiles is a button. Tiles show a preview
-of the block (``icons``). Recently placed blocks sit at the top right (saved in
+level. Like Trackmania, every folder level above the current one stays visible as a
+compact row with the chosen folder highlighted; clicking there jumps to that level. Tiles
+show a preview of the block (``icons``). Recently placed blocks sit at the top right (saved in
 ``recent_blocks.json`` next to the preferences). Choosing a block enters BUILD mode
 (``block_chosen``). The folder tree is plain data (``INVENTORY``), so new blocks only need a
 line here; folders can nest when one grows past nine entries.
@@ -17,6 +18,7 @@ from pathlib import Path
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
+    QBoxLayout,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -223,9 +225,8 @@ class InventoryBar(QWidget):
         self.back.setToolTip("Up one folder (Backspace)")
         self.back.clicked.connect(self.go_up)
         top.addWidget(self.back)
-        self.path_row = QHBoxLayout()
-        self.path_row.setSpacing(0)
-        top.addLayout(self.path_row)
+        self.path_label = QLabel()
+        top.addWidget(self.path_label)
         top.addStretch(1)
         search = QToolButton()
         search.setText("🔍 Search")
@@ -249,6 +250,11 @@ class InventoryBar(QWidget):
             "cakes the matching bites (even values only)."
         )
         top.addWidget(self.strength)
+        #: Trackmania-style: one compact row per folder level above the current one, with
+        #: the chosen folder highlighted, then the current folder's big numbered tiles.
+        self.levels = QVBoxLayout()
+        self.levels.setSpacing(1)
+        outer.addLayout(self.levels)
         tiles = QWidget()
         self.tiles_row = QHBoxLayout(tiles)
         self.tiles_row.setContentsMargins(0, 0, 0, 0)
@@ -267,7 +273,7 @@ class InventoryBar(QWidget):
         self.refresh()
 
     # ------------------------------------------------------------------ display
-    def _clear(self, layout: QHBoxLayout, widgets: list[QWidget]) -> None:
+    def _clear(self, layout: QBoxLayout, widgets: list[QWidget]) -> None:
         for widget in widgets:
             layout.removeWidget(widget)
             widget.setParent(None)
@@ -276,9 +282,9 @@ class InventoryBar(QWidget):
 
     def refresh(self) -> None:
         self._clear(self.tiles_row, self._tiles)
-        self._clear(self.path_row, self._path_widgets)
+        self._clear(self.levels, self._path_widgets)
         self._clear(self.recent_row, self._recent_widgets)
-        self._build_path()
+        self._build_levels()
         self._build_recent()
         self.back.setEnabled(bool(self.nav.path))
         for number, child in enumerate(self.nav.folder().children, start=1):
@@ -309,23 +315,43 @@ class InventoryBar(QWidget):
         self.strength_label.setVisible(is_source)
         self.strength.setVisible(is_source)
 
-    def _build_path(self) -> None:
-        """``Inventory › Redstone › Switches``: every level is a button that goes there."""
+    def _build_levels(self) -> None:
+        """A row for each folder level above the current one (the chosen folder
+        highlighted); clicking a tile there goes to that level."""
         crumbs = ["Inventory", *self.nav.breadcrumb()]
-        for depth, title in enumerate(crumbs):
-            if depth:
-                arrow = QLabel("›")
-                self.path_row.addWidget(arrow)
-                self._path_widgets.append(arrow)
-            button = QToolButton()
-            button.setAutoRaise(True)
-            button.setText(title)
-            last = depth == len(crumbs) - 1
-            button.setStyleSheet("font-weight: bold;" if last else "")
-            button.setToolTip("Current folder" if last else f"Back to {title}")
-            button.clicked.connect(lambda _=False, d=depth: self.go_to_depth(d))
-            self.path_row.addWidget(button)
-            self._path_widgets.append(button)
+        self.path_label.setText(" › ".join(crumbs[:-1] + [f"<b>{crumbs[-1]}</b>"]))
+        folder = self.nav.root
+        for depth, chosen in enumerate(self.nav.path):
+            row = QWidget()
+            layout = QHBoxLayout(row)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(2)
+            for index, child in enumerate(folder.children):
+                tile = QToolButton()
+                tile.setAutoRaise(True)
+                tile.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+                tile.setIconSize(QSize(18, 18))
+                if isinstance(child, Folder):
+                    tile.setIcon(folder_icon(child))
+                    tile.setText(child.title)
+                else:
+                    tile.setIcon(block_icon(blocks.get(child), 18))
+                    tile.setText(block_label(child))
+                tile.setCheckable(True)
+                tile.setChecked(index == chosen)
+                tile.clicked.connect(lambda _=False, d=depth, i=index: self._pick_at_level(d, i))
+                layout.addWidget(tile)
+            layout.addStretch(1)
+            self.levels.addWidget(row)
+            self._path_widgets.append(row)
+            child = folder.children[chosen]
+            assert isinstance(child, Folder)
+            folder = child
+
+    def _pick_at_level(self, depth: int, index: int) -> None:
+        """A tile in an upper row: open that folder there, or choose that block."""
+        self.nav.path = self.nav.path[:depth]
+        self.press(index + 1)
 
     def _build_recent(self) -> None:
         for block_id in self.recent:
