@@ -4,17 +4,27 @@ One shader draws four kinds of vertex streams: opaque triangles, translucent tri
 (drawn after, without depth writes), lines (outlines, sections) and lines drawn on top of
 everything (the camera pivot). The world mesh is
 split into chunks (``redsim.ui.geometry.ChunkedMesh``), each with its own buffers, so a change
-re-uploads only the chunks it touched. Vertices are ``x, y, z, r, g, b, a`` float32.
+re-uploads only the chunks it touched. Vertices are ``x, y, z, r, g, b, a, u, v`` float32
+(``u`` < 0: untextured; 7-column data is padded). Textured faces sample the block atlas
+(``atlas.Atlas``) with nearest filtering; texels with alpha < 0.1 are discarded.
 """
 
 from __future__ import annotations
 
 import numpy as np
-from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOpenGLFunctions, QVector2D, QVector3D
+from PySide6.QtGui import (
+    QImage,
+    QMatrix4x4,
+    QOpenGLContext,
+    QOpenGLFunctions,
+    QVector2D,
+    QVector3D,
+)
 from PySide6.QtOpenGL import (
     QOpenGLBuffer,
     QOpenGLShader,
     QOpenGLShaderProgram,
+    QOpenGLTexture,
     QOpenGLVertexArrayObject,
 )
 
@@ -33,32 +43,46 @@ GL_POLYGON_OFFSET_FILL = 0x8037
 GL_SCISSOR_TEST = 0x0C11
 GL_STENCIL_TEST = 0x0B90
 GL_CULL_FACE = 0x0B44
+GL_LEQUAL = 0x0203
+#: Vertex stride: x, y, z, r, g, b, a, u, v as float32.
+STRIDE = 36
 
 VERTEX_SHADER = """#version 330 core
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 color;
+layout(location = 2) in vec2 uv;
 uniform mat4 mvp;
 uniform vec3 eye;
 out vec4 vColor;
+out vec2 vUv;
 out float vDistance;
 void main() {
     gl_Position = mvp * vec4(position, 1.0);
     vColor = color;
+    vUv = uv;
     vDistance = distance(position, eye);
 }
 """
 FRAGMENT_SHADER = """#version 330 core
 in vec4 vColor;
+in vec2 vUv;
 in float vDistance;
 uniform float alphaScale;
 uniform vec3 fogColor;
 uniform vec2 fogRange;   // start, end (blocks)
 uniform float fogAmount; // 0 for overlays, 1 for the world
+uniform sampler2D atlas;
 out vec4 fragColor;
 void main() {
+    vec4 base = vColor;
+    if (vUv.x >= 0.0) {  // textured: the game's texture, tinted and shaded by the color
+        vec4 texel = texture(atlas, vUv);
+        if (texel.a < 0.1) discard;  // cutout (dust, torches, rails, glass)
+        base = texel * vColor;
+    }
     float fog = clamp((vDistance - fogRange.x) / (fogRange.y - fogRange.x), 0.0, 1.0);
-    vec3 rgb = mix(vColor.rgb, fogColor, fog * fogAmount);
-    fragColor = vec4(rgb, vColor.a * alphaScale);
+    vec3 rgb = mix(base.rgb, fogColor, fog * fogAmount);
+    fragColor = vec4(rgb, base.a * alphaScale);
 }
 """
 #: Sky gradient (top of the screen, horizon); the fog fades the world into the horizon.
@@ -77,15 +101,19 @@ class _Stream:
         self.count = 0
 
     def upload(self, program: QOpenGLShaderProgram, data: np.ndarray) -> None:
+        if data.ndim == 2 and data.shape[1] == 7:  # untextured: UV (-1, -1)
+            data = np.hstack([data, np.full((len(data), 2), -1.0, dtype=np.float32)])
         data = np.ascontiguousarray(data, dtype=np.float32)
         self.count = len(data)
         self.vao.bind()
         self.vbo.bind()
         self.vbo.allocate(data.tobytes(), data.nbytes)
         program.enableAttributeArray(0)
-        program.setAttributeBuffer(0, GL_FLOAT, 0, 3, 28)
+        program.setAttributeBuffer(0, GL_FLOAT, 0, 3, STRIDE)
         program.enableAttributeArray(1)
-        program.setAttributeBuffer(1, GL_FLOAT, 12, 4, 28)
+        program.setAttributeBuffer(1, GL_FLOAT, 12, 4, STRIDE)
+        program.enableAttributeArray(2)
+        program.setAttributeBuffer(2, GL_FLOAT, 28, 2, STRIDE)
         self.vao.release()
 
     def destroy(self) -> None:
@@ -106,6 +134,7 @@ class Renderer:
         if not self.program.link():
             raise RuntimeError(self.program.log())
         self.program.bind()
+        self.atlas: QOpenGLTexture | None = None
         #: Chunk key → (opaque, translucent, solid) streams.
         self.chunks: dict[object, tuple[_Stream, _Stream, _Stream]] = {}
         self.lines = _Stream()
@@ -133,6 +162,19 @@ class Renderer:
         streams[0].upload(self.program, opaque)
         streams[1].upload(self.program, translucent)
         streams[2].upload(self.program, solid)
+
+    def set_atlas(self, image: QImage | None) -> None:
+        """The block texture atlas (nearest-neighbor sampling, like the game)."""
+        if self.atlas is not None:
+            self.atlas.destroy()
+            self.atlas = None
+        if image is None:
+            return
+        texture = QOpenGLTexture(image, QOpenGLTexture.MipMapGeneration.DontGenerateMipMaps)
+        texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
+        texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+        texture.setWrapMode(QOpenGLTexture.WrapMode.ClampToEdge)
+        self.atlas = texture
 
     def remove_chunk(self, key: object) -> None:
         streams = self.chunks.pop(key, None)
@@ -181,11 +223,16 @@ class Renderer:
         gl.glDisable(GL_CULL_FACE)
         gl.glDisable(GL_BLEND)
         gl.glDepthMask(GL_TRUE)
+        # Equal depth passes: coplanar overlay faces (grass sides) draw over their base.
+        gl.glDepthFunc(GL_LEQUAL)
         gl.glViewport(0, 0, width, height)
         gl.glClearColor(*background)
         gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         program = self.program
         program.bind()
+        if self.atlas is not None:
+            self.atlas.bind(0)
+            program.setUniformValue1i(program.uniformLocation("atlas"), 0)
         location = program.uniformLocation("mvp")
         alpha = program.uniformLocation("alphaScale")
         fog_amount = program.uniformLocation("fogAmount")
@@ -204,18 +251,23 @@ class Renderer:
         gl.glEnable(GL_DEPTH_TEST)
         program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
         program.setUniformValue1f(fog_amount, 1.0)
+        # World faces are wound counter-clockwise seen from outside, like the game's, which
+        # draws them with back-face culling: flat parts (dust, rails) show one side only.
+        gl.glEnable(GL_CULL_FACE)
         for opaque, _, solid in self.chunks.values():
             drawn = () if xray == 2 else (opaque,) if xray == 1 else (opaque, solid)
             for stream in drawn:
                 if stream.count:
                     stream.vao.bind()
                     gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
+        gl.glDisable(GL_CULL_FACE)
         if self.lines.count:
             program.setUniformValue1f(fog_amount, 0.0)
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
             program.setUniformValue1f(fog_amount, 1.0)
         if xray:
+            gl.glEnable(GL_CULL_FACE)
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             gl.glDepthMask(GL_FALSE)
@@ -230,7 +282,20 @@ class Renderer:
             self.program.setUniformValue1f(alpha, 1.0)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
-        translucent = [stream for _, stream, _ in self.chunks.values() if stream.count]
+            gl.glDisable(GL_CULL_FACE)
+        world_translucent = [stream for _, stream, _ in self.chunks.values() if stream.count]
+        if world_translucent:
+            gl.glEnable(GL_CULL_FACE)
+            gl.glEnable(GL_BLEND)
+            gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            gl.glDepthMask(GL_FALSE)
+            for stream in world_translucent:
+                stream.vao.bind()
+                gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
+            gl.glDepthMask(GL_TRUE)
+            gl.glDisable(GL_BLEND)
+            gl.glDisable(GL_CULL_FACE)
+        translucent = []
         if self.ghost.count:
             translucent.append(self.ghost)
         if self.volume.count:

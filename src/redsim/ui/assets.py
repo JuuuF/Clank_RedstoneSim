@@ -1,0 +1,383 @@
+"""The game's own block models and textures, read at runtime from the supplied client jar.
+
+Nothing is copied into the repository: the jar stays where the owner put it
+(``data/minecraft_jars/client.jar``, or ``$REDSIM_MINECRAFT_JAR``); without it the editor
+falls back to the colored box models of ``style``. See doc/decisions.md ADR-023.
+
+Port of the relevant parts of the client's model pipeline (paths relative to
+``data/minecraft_src/client-src/``):
+
+* blockstates: ``variants`` (property conditions → model, ``x``/``y`` rotation) and
+  ``multipart`` (``when`` conditions with ``OR``/``AND`` and ``a|b`` values → parts);
+* models: ``parent`` chains, ``textures`` with ``#name`` references (strings or
+  ``{"sprite": …}``), ``elements`` (``from``/``to``, ``rotation``, ``shade``, faces with
+  ``uv``, ``rotation``, ``texture``, ``cullface``, ``tintindex``);
+* baking (``client/resources/model/cuboid/FaceBakery.java``): default face UVs
+  (``defaultFaceUV``), vertex order (``client/renderer/FaceInfo.java``), UV corners
+  (``CuboidFace.UVs.getVertexU/V`` shifted by the face rotation, ``Quadrant``), element
+  rotation around its origin (with ``rescale``), then the variant rotation around the block
+  center: x first, then y (``Quadrant.fromXYZAngles``; ``BLOCK_ROT_Y_90`` maps
+  (x, z) → (−z, x) around the center, ``BLOCK_ROT_X_90`` maps (y, z) → (z, −y)).
+
+``uvlock`` is not applied (none of the in-scope blocks need it to look right).
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import zipfile
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
+
+from redsim.core.direction import Direction
+from redsim.world.block import BlockState
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_JAR = REPO_ROOT / "data" / "minecraft_jars" / "client.jar"
+
+#: FaceInfo vertex order per face: which corner (min/max) on x, y, z.
+FACE_VERTICES: dict[Direction, tuple[tuple[int, int, int], ...]] = {
+    Direction.DOWN: ((0, 0, 1), (0, 0, 0), (1, 0, 0), (1, 0, 1)),
+    Direction.UP: ((0, 1, 0), (0, 1, 1), (1, 1, 1), (1, 1, 0)),
+    Direction.NORTH: ((1, 1, 0), (1, 0, 0), (0, 0, 0), (0, 1, 0)),
+    Direction.SOUTH: ((0, 1, 1), (0, 0, 1), (1, 0, 1), (1, 1, 1)),
+    Direction.WEST: ((0, 1, 0), (0, 0, 0), (0, 0, 1), (0, 1, 1)),
+    Direction.EAST: ((1, 1, 1), (1, 0, 1), (1, 0, 0), (1, 1, 0)),
+}
+_BY_NAME = {d.name.lower(): d for d in Direction}
+
+Vec = tuple[float, float, float]
+
+
+@dataclass(frozen=True)
+class Quad:
+    """One baked face: corners in block units (FaceInfo order), UVs in 0..1 of its
+    texture, the texture id (``minecraft:block/stone``), the direction it is culled by
+    (``None``: never), the direction it faces (for shading), whether it is shaded, and
+    its tint index (-1: none)."""
+
+    corners: tuple[Vec, Vec, Vec, Vec]
+    uvs: tuple[tuple[float, float], ...]
+    texture: str
+    cull: Direction | None
+    facing: Direction
+    shade: bool
+    tint: int
+    translucent: bool
+
+
+def _default_uv(lo: Vec, hi: Vec, face: Direction) -> tuple[float, float, float, float]:
+    """``FaceBakery.defaultFaceUV``."""
+    (x0, y0, z0), (x1, y1, z1) = lo, hi
+    if face is Direction.DOWN:
+        return (x0, 16 - z1, x1, 16 - z0)
+    if face is Direction.UP:
+        return (x0, z0, x1, z1)
+    if face is Direction.NORTH:
+        return (16 - x1, 16 - y1, 16 - x0, 16 - y0)
+    if face is Direction.SOUTH:
+        return (x0, 16 - y1, x1, 16 - y0)
+    if face is Direction.WEST:
+        return (z0, 16 - y1, z1, 16 - y0)
+    return (16 - z1, 16 - y1, 16 - z0, 16 - y0)
+
+
+def _rotate_axis(v: Vec, axis: str, degrees: float, origin: Vec, rescale: bool) -> Vec:
+    """Rotate ``v`` around ``origin`` by ``degrees`` about ``axis`` (right-handed, like
+    ``Matrix4f.rotation(angle, unit axis)``), optionally rescaled (``CuboidRotation``)."""
+    angle = math.radians(degrees)
+    c, s = math.cos(angle), math.sin(angle)
+    x, y, z = (v[0] - origin[0], v[1] - origin[1], v[2] - origin[2])
+    if axis == "x":
+        x, y, z = x, y * c - z * s, y * s + z * c
+        scale = (1.0, 1 / max(abs(c), abs(s)), 1 / max(abs(c), abs(s)))
+    elif axis == "y":
+        x, y, z = x * c + z * s, y, -x * s + z * c
+        scale = (1 / max(abs(c), abs(s)), 1.0, 1 / max(abs(c), abs(s)))
+    else:
+        x, y, z = x * c - y * s, x * s + y * c, z
+        scale = (1 / max(abs(c), abs(s)), 1 / max(abs(c), abs(s)), 1.0)
+    if rescale:
+        x, y, z = x * scale[0], y * scale[1], z * scale[2]
+    return (x + origin[0], y + origin[1], z + origin[2])
+
+
+def _rotate_block(v: Vec, x_rot: int, y_rot: int) -> Vec:
+    """The variant rotation around the block center: x first, then y, in 90° steps."""
+    px, py, pz = v[0] - 0.5, v[1] - 0.5, v[2] - 0.5
+    for _ in range((x_rot // 90) % 4):
+        py, pz = pz, -py
+    for _ in range((y_rot // 90) % 4):
+        px, pz = -pz, px
+    return (px + 0.5, py + 0.5, pz + 0.5)
+
+
+def _rotate_direction(d: Direction, x_rot: int, y_rot: int) -> Direction:
+    step = d.step
+    moved = _rotate_block((0.5 + step[0], 0.5 + step[1], 0.5 + step[2]), x_rot, y_rot)
+    delta = tuple(round(moved[i] - 0.5) for i in range(3))
+    return next(direction for direction in Direction if direction.step == delta)
+
+
+def _facing(corners: tuple[Vec, ...]) -> Direction:
+    """``FaceBakery.calculateFacing``: the direction closest to the quad's normal."""
+    a, b, c = corners[0], corners[1], corners[2]
+    u = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
+    w = (c[0] - a[0], c[1] - a[1], c[2] - a[2])
+    n = (u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0])
+    return max(Direction, key=lambda d: sum(n[i] * d.step[i] for i in range(3)))
+
+
+def _matches(condition: dict[str, Any], props: dict[str, str]) -> bool:
+    """A multipart ``when``: ``OR``/``AND`` lists or ``property: "a|b"``. A property the
+    simulator does not model (e.g. ``waterlogged``) counts as its default
+    (``false``/``none``)."""
+    if "OR" in condition:
+        return any(_matches(c, props) for c in condition["OR"])
+    if "AND" in condition:
+        return all(_matches(c, props) for c in condition["AND"])
+    for name, wanted in condition.items():
+        options = str(wanted).lower().split("|")
+        value = props.get(name)
+        if value is None:
+            if not ({"false", "none"} & set(options)):
+                return False
+        elif value not in options:
+            return False
+    return True
+
+
+def _state_props(state: BlockState) -> dict[str, str]:
+    return {p.name: p.serialize(state.get(p)) for p in state.block.properties}
+
+
+class Assets:
+    """Read-only access to the client jar's block assets, with caches."""
+
+    def __init__(self, jar: Path) -> None:
+        self.jar = jar
+        self._zip = zipfile.ZipFile(jar)
+        self._names = set(self._zip.namelist())
+        self._models: dict[str, dict[str, Any]] = {}
+        self._quads: dict[BlockState, tuple[Quad, ...]] = {}
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def find() -> Assets | None:
+        """The assets of ``$REDSIM_MINECRAFT_JAR`` or the supplied jar, if present."""
+        if os.environ.get("REDSIM_NO_GAME_ASSETS"):
+            return None
+        path = Path(os.environ.get("REDSIM_MINECRAFT_JAR") or DEFAULT_JAR)
+        try:
+            return Assets(path) if path.is_file() else None
+        except (OSError, zipfile.BadZipFile):
+            return None
+
+    # ------------------------------------------------------------------ raw files
+    def _path(self, resource: str, folder: str, suffix: str) -> str:
+        namespace, _, name = (
+            resource.partition(":") if ":" in resource else ("minecraft", "", resource)
+        )
+        return f"assets/{namespace}/{folder}/{name}{suffix}"
+
+    def has(self, path: str) -> bool:
+        return path in self._names
+
+    def json(self, path: str) -> Any:
+        return json.loads(self._zip.read(path))
+
+    def texture_bytes(self, texture: str) -> bytes | None:
+        path = self._path(texture, "textures", ".png")
+        return self._zip.read(path) if path in self._names else None
+
+    def file_bytes(self, path: str) -> bytes | None:
+        return self._zip.read(path) if path in self._names else None
+
+    # ------------------------------------------------------------------ models
+    def model(self, name: str) -> dict[str, Any]:
+        """A model with its parent chain resolved: merged ``textures`` (child wins) and the
+        nearest ``elements``."""
+        if ":" not in name:
+            name = f"minecraft:{name}"
+        cached = self._models.get(name)
+        if cached is not None:
+            return cached
+        path = self._path(name, "models", ".json")
+        data: dict[str, Any] = self.json(path) if path in self._names else {}
+        resolved: dict[str, Any] = {"textures": {}, "elements": None, "parent_chain": [name]}
+        parent = data.get("parent")
+        if parent and not parent.startswith("builtin/"):
+            base = self.model(parent)
+            resolved["textures"].update(base["textures"])
+            resolved["elements"] = base["elements"]
+            resolved["parent_chain"] = [name, *base["parent_chain"]]
+        elif parent:
+            resolved["parent_chain"] = [name, parent]
+        for key, value in data.get("textures", {}).items():
+            resolved["textures"][key] = value
+        if "elements" in data:
+            resolved["elements"] = data["elements"]
+        self._models[name] = resolved
+        return resolved
+
+    def is_generated_item(self, name: str) -> bool:
+        """Whether a model is a flat item sprite (``item/generated`` chain)."""
+        chain = self.model(name)["parent_chain"]
+        return any(link.endswith(("item/generated", "item/handheld")) for link in chain)
+
+    @staticmethod
+    def resolve_texture(textures: dict[str, Any], ref: str) -> tuple[str, bool] | None:
+        """``#name`` → texture id and whether it is forced translucent."""
+        translucent = False
+        seen = 0
+        while ref.startswith("#") and seen < 16:
+            value = textures.get(ref[1:])
+            if value is None:
+                return None
+            if isinstance(value, dict):
+                translucent = translucent or bool(value.get("force_translucent"))
+                value = value.get("sprite", "")
+            ref, seen = value, seen + 1
+        if not ref or ref.startswith("#"):
+            return None
+        return (ref if ":" in ref else f"minecraft:{ref}"), translucent
+
+    # ------------------------------------------------------------------ blockstates
+    def parts(self, state: BlockState) -> list[dict[str, Any]]:
+        """The model references (``model``, ``x``, ``y``) the blockstate file gives
+        ``state``."""
+        path = self._path(state.block.id, "blockstates", ".json")
+        if path not in self._names:
+            return []
+        data = self.json(path)
+        props = _state_props(state)
+        chosen: list[dict[str, Any]] = []
+        if "variants" in data:
+            best: Any = None
+            for key, value in data["variants"].items():
+                conditions = dict(part.split("=", 1) for part in key.split(",") if "=" in part)
+                if _matches(conditions, props):
+                    best = value
+                    break
+            if best is not None:
+                chosen.append(best[0] if isinstance(best, list) else best)
+        for part in data.get("multipart", []):
+            if "when" not in part or _matches(part["when"], props):
+                apply = part["apply"]
+                chosen.append(apply[0] if isinstance(apply, list) else apply)
+        return chosen
+
+    def block_quads(self, state: BlockState) -> tuple[Quad, ...]:
+        """All baked faces of ``state``'s block model."""
+        cached = self._quads.get(state)
+        if cached is not None:
+            return cached
+        quads: list[Quad] = []
+        for part in self.parts(state):
+            model = self.model(part["model"])
+            quads.extend(self.bake(model, int(part.get("x", 0)), int(part.get("y", 0))))
+        result = tuple(quads)
+        self._quads[state] = result
+        return result
+
+    def bake(self, model: dict[str, Any], x_rot: int = 0, y_rot: int = 0) -> list[Quad]:
+        quads = []
+        textures = model["textures"]
+        for element in model["elements"] or []:
+            lo = tuple(float(v) for v in element["from"])
+            hi = tuple(float(v) for v in element["to"])
+            rotation = element.get("rotation")
+            shade = bool(element.get("shade", True))
+            override = _BY_NAME.get(str(element.get("shade_direction_override", "")))
+            for face_name, face in element.get("faces", {}).items():
+                direction = _BY_NAME[face_name]
+                resolved = self.resolve_texture(textures, face.get("texture", ""))
+                if resolved is None:
+                    continue
+                texture, translucent = resolved
+                u0, v0, u1, v1 = face.get("uv") or _default_uv(lo, hi, direction)  # type: ignore[arg-type]
+                shift = (int(face.get("rotation", 0)) // 90) % 4
+                corners: list[Vec] = []
+                uvs: list[tuple[float, float]] = []
+                for index, pick in enumerate(FACE_VERTICES[direction]):
+                    v: Vec = (
+                        (hi if pick[0] else lo)[0] / 16,
+                        (hi if pick[1] else lo)[1] / 16,
+                        (hi if pick[2] else lo)[2] / 16,
+                    )
+                    if rotation:
+                        origin = tuple(float(c) / 16 for c in rotation.get("origin", (8, 8, 8)))
+                        if "axis" in rotation:
+                            v = _rotate_axis(
+                                v,
+                                rotation["axis"],
+                                float(rotation.get("angle", 0)),
+                                origin,  # type: ignore[arg-type]
+                                bool(rotation.get("rescale", False)),
+                            )
+                    if x_rot or y_rot:
+                        v = _rotate_block(v, x_rot, y_rot)
+                    corners.append(v)
+                    k = (index + shift) % 4
+                    uvs.append(((u0 if k in (0, 1) else u1) / 16, (v0 if k in (0, 3) else v1) / 16))
+                cull = face.get("cullface")
+                cull_dir = (
+                    _rotate_direction(_BY_NAME[cull], x_rot, y_rot) if cull in _BY_NAME else None
+                )
+                corner_tuple = (corners[0], corners[1], corners[2], corners[3])
+                facing = _facing(corner_tuple)
+                if override is not None:
+                    facing = _rotate_direction(override, x_rot, y_rot)
+                quads.append(
+                    Quad(
+                        corner_tuple,
+                        tuple(uvs),
+                        texture,
+                        cull_dir,
+                        facing,
+                        shade,
+                        int(face.get("tintindex", -1)),
+                        translucent,
+                    )
+                )
+        return quads
+
+    def block_textures(self, block_id: str) -> set[str]:
+        """Every texture any model of the block's blockstate file uses."""
+        path = self._path(block_id, "blockstates", ".json")
+        if path not in self._names:
+            return set()
+        data = self.json(path)
+        models: set[str] = set()
+
+        def add(entry: Any) -> None:
+            for item in entry if isinstance(entry, list) else [entry]:
+                models.add(item["model"])
+
+        for value in data.get("variants", {}).values():
+            add(value)
+        for part in data.get("multipart", []):
+            add(part["apply"])
+        found = set()
+        for name in models:
+            model = self.model(name)
+            for element in model["elements"] or []:
+                for face in element.get("faces", {}).values():
+                    resolved = self.resolve_texture(model["textures"], face.get("texture", ""))
+                    if resolved is not None:
+                        found.add(resolved[0])
+        return found
+
+    def item_model(self, block_id: str) -> str | None:
+        """The model an inventory shows for the block's item (``items/<id>.json``)."""
+        path = self._path(block_id, "items", ".json")
+        if path not in self._names:
+            return None
+        data = self.json(path).get("model", {})
+        while isinstance(data, dict) and data.get("type") != "minecraft:model":
+            data = data.get("fallback") or data.get("model") or {}
+        return data.get("model") if isinstance(data, dict) else None

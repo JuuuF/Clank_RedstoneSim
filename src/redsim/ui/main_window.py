@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import time
 from pathlib import Path
@@ -312,6 +313,14 @@ class MainWindow(QMainWindow):
         )
         info.setCheckable(True)
         info.setToolTip(SPECS["view.info"].title)
+        textures = self._action(view_menu, "Game textures", self._toggle_textures)
+        textures.setCheckable(True)
+        textures.setChecked(self.viewport.atlas is not None)
+        textures.setEnabled(self.viewport.textures_available)
+        textures.setToolTip(
+            "Draw blocks with the game's own models and textures, read from the supplied "
+            "client jar (data/minecraft_jars/client.jar). Off: simple colored models."
+        )
         self._action(view_menu, "Cycle X-ray", self._cycle_xray, "view.xray")
         xray_group = QActionGroup(self)
         self._xray_actions = []
@@ -378,6 +387,12 @@ class MainWindow(QMainWindow):
         labels = ("off", "building blocks see-through", "everything see-through")
         self._message(f"X-ray: {labels[level]} (Alt+Z cycles; levels in Settings → Preferences)")
         self.viewport.update()
+
+    def _toggle_textures(self, on: bool) -> None:
+        self.viewport.set_game_textures(on)
+        self.viewport.preferences.game_textures = on
+        with contextlib.suppress(OSError):
+            self.viewport.preferences.save()
 
     def _preferences(self) -> None:
         dialog = PreferencesDialog(self.viewport.preferences, self)

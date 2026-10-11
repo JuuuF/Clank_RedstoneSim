@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -15,11 +16,15 @@ import numpy.typing as npt
 from redsim.core.direction import ALL, Direction
 from redsim.core.pos import Pos
 from redsim.sim.level import Level
-from redsim.ui.style import Box, Color, block_boxes, moving_boxes
+from redsim.ui.assets import Assets, Quad
+from redsim.ui.style import Box, Color, block_boxes, moving_boxes, wire_color
 from redsim.world import blocks
 from redsim.world.block import BlockState
 from redsim.world.blocks.piston import PistonMovingBlockEntity
-from redsim.world.properties import EXTENDED, FACING, PISTON_TYPE
+from redsim.world.properties import EXTENDED, FACING, PISTON_TYPE, POWER
+
+if TYPE_CHECKING:
+    from redsim.ui.atlas import Atlas
 
 FloatArray = npt.NDArray[np.float32]
 
@@ -51,12 +56,12 @@ def _face_quads(lo: np.ndarray, hi: np.ndarray, direction: Direction) -> np.ndar
 
 @dataclass
 class Mesh:
-    opaque: FloatArray  # (n, 7): x, y, z, r, g, b, a; components and partial blocks
+    opaque: FloatArray  # (n, 9): x, y, z, r, g, b, a, u, v; components and partial blocks
     translucent: FloatArray
     #: Contains moving pistons, whose look changes every tick without a block change.
     animated: bool = False
     #: Full opaque cubes (building blocks), kept apart so X-ray can make them see-through.
-    solid: FloatArray = field(default_factory=lambda: np.zeros((0, 7), dtype=np.float32))
+    solid: FloatArray = field(default_factory=lambda: np.zeros((0, 9), dtype=np.float32))
 
     @property
     def vertex_count(self) -> int:
@@ -160,34 +165,64 @@ XRAY_KEEP = frozenset(
         "minecraft:slime_block",
     }
 )
-_EMPTY = np.zeros((0, 7), dtype=np.float32)
+#: Vertex layout of world meshes: x, y, z, r, g, b, a, u, v (u < 0: untextured).
+VERTEX_SIZE = 9
+_EMPTY = np.zeros((0, VERTEX_SIZE), dtype=np.float32)
 
 
 @dataclass(frozen=True)
 class _Model:
-    """Face template ids of one block state, per direction (in ``ALL`` order)."""
+    """Face template ids of one block state. ``opaque[i]`` for ``i`` < 6 are the faces
+    culled by a full neighbor in direction ``ALL[i]``; ``opaque[6]`` are never culled.
+    Translucent faces likewise (also culled against the same state)."""
 
-    full_opaque: bool
     opaque: tuple[tuple[int, ...], ...]
     translucent: tuple[tuple[int, ...], ...]
-    opaque_all: tuple[int, ...]
     has_translucent: bool
+
+
+#: Blocks drawn in the translucent pass (with the game's models; boxes say it themselves).
+TRANSLUCENT_BLOCKS = frozenset({"minecraft:slime_block", "minecraft:honey_block"})
+GRASS_TINT = (0.569, 0.741, 0.349)  # plains grass color (#91BD59)
+
+
+def tint_color(state: BlockState, index: int) -> tuple[float, float, float]:
+    """``BlockColors`` for the in-scope blocks: redstone dust by power, grass green."""
+    if index < 0:
+        return (1.0, 1.0, 1.0)
+    if state.block.id == "minecraft:redstone_wire":
+        red, green, blue, _ = wire_color(int(state.get(POWER)))
+        return (red, green, blue)
+    if state.block.id == "minecraft:grass_block":
+        return GRASS_TINT
+    return (1.0, 1.0, 1.0)
 
 
 class Mesher:
     """Builds meshes from block states, vectorized over faces.
 
-    Every distinct face (box, direction, color) becomes one *template*: its 6 vertices in
-    block-local coordinates. A block state maps to the template ids of its faces, cached, so
-    building a mesh is a lookup per block followed by one numpy gather and offset.
+    Every distinct face becomes one *template*: its 6 vertices (``x, y, z, r, g, b, a, u,
+    v``) in block-local coordinates. A block state maps to the template ids of its faces,
+    cached, so building a mesh is a lookup per block followed by one numpy gather and
+    offset. With the game's assets (``assets.Assets``) and a texture ``atlas``, faces come
+    from the real block models; otherwise from the colored boxes of ``style``.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, assets: Assets | None = None, atlas: Atlas | None = None) -> None:
+        self.assets = assets if atlas is not None else None
+        self.atlas = atlas
         self._template_ids: dict[tuple[object, ...], int] = {}
         self._template_rows: list[np.ndarray] = []
-        self._templates = np.zeros((0, 6, 7), dtype=np.float32)
-        self._models: dict[tuple[BlockState, bool], _Model] = {}
+        #: Per template: for each of its 6 vertices, the face corner it sits on (corner
+        #: shading of full cubes), or None if it is not a whole block face.
+        self._template_corners: list[tuple[int, ...] | None] = []
+        self._templates = np.zeros((0, 6, VERTEX_SIZE), dtype=np.float32)
+        self._models: dict[BlockState, _Model] = {}
         self._full: dict[BlockState, bool] = {}
+
+    @property
+    def textured(self) -> bool:
+        return self.assets is not None
 
     def _is_full(self, state: BlockState) -> bool:
         full = self._full.get(state)
@@ -196,37 +231,59 @@ class Mesher:
             self._full[state] = full
         return full
 
-    def _template(self, box: Box, direction: Direction, color: Color) -> int:
-        key = (box.lo, box.hi, direction, color)
+    def _add_template(self, key: tuple[object, ...], rows: np.ndarray) -> int:
         index = self._template_ids.get(key)
         if index is None:
-            lo = np.array(box.lo, dtype=np.float32) / 16.0
-            hi = np.array(box.hi, dtype=np.float32) / 16.0
             index = len(self._template_rows)
-            self._template_rows.append(_triangles(lo, hi, direction, color))
+            self._template_rows.append(rows)
+            self._template_corners.append(_corner_indices(rows))
             self._template_ids[key] = index
         return index
 
-    def _model(self, state: BlockState, tinted: bool) -> _Model:
-        boxes = block_boxes(state)
-        opaque: list[list[int]] = [[] for _ in ALL]
-        translucent: list[list[int]] = [[] for _ in ALL]
-        for box in boxes:
-            color = box.color
-            if tinted:
-                # Checkerboard tint on full cubes, for depth perception (presentation only).
-                color = (color[0] * 0.93, color[1] * 0.93, color[2] * 0.93, color[3])
-            target = translucent if box.translucent else opaque
-            for index, direction in enumerate(ALL):
-                target[index].append(self._template(box, direction, color))
+    def _box_template(self, box: Box, direction: Direction, color: Color) -> int:
+        lo = np.array(box.lo, dtype=np.float32) / 16.0
+        hi = np.array(box.hi, dtype=np.float32) / 16.0
+        return self._add_template(
+            (box.lo, box.hi, direction, color), _pad(_triangles(lo, hi, direction, color))
+        )
+
+    def _quad_template(self, quad: Quad, state: BlockState) -> int:
+        assert self.atlas is not None
+        red, green, blue = tint_color(state, quad.tint)
+        shade = SHADE[quad.facing] if quad.shade else 1.0
+        color = (red * shade, green * shade, blue * shade, 1.0)
+        key = (quad.corners, quad.uvs, quad.texture, color)
+        if key in self._template_ids:
+            return self._template_ids[key]
+        uv = [self.atlas.uv(quad.texture, u, v) for u, v in quad.uvs]
+        rows = np.array(
+            [(*quad.corners[i], *color, *uv[i]) for i in (0, 1, 2, 0, 2, 3)], dtype=np.float32
+        )
+        return self._add_template(key, rows)
+
+    def _model(self, state: BlockState) -> _Model:
+        opaque: list[list[int]] = [[] for _ in range(7)]
+        translucent: list[list[int]] = [[] for _ in range(7)]
+        quads = self.assets.block_quads(state) if self.assets is not None else ()
+        if quads:
+            see_through = state.block.id in TRANSLUCENT_BLOCKS
+            for quad in quads:
+                slot = 6 if quad.cull is None else ALL.index(quad.cull)
+                target = translucent if see_through or quad.translucent else opaque
+                target[slot].append(self._quad_template(quad, state))
+        else:
+            full = self._is_full(state)
+            for box in block_boxes(state):
+                target = translucent if box.translucent else opaque
+                for index, direction in enumerate(ALL):
+                    slot = index if full or box.translucent else 6
+                    target[slot].append(self._box_template(box, direction, box.color))
         model = _Model(
-            full_opaque=self._is_full(state),
             opaque=tuple(tuple(ids) for ids in opaque),
             translucent=tuple(tuple(ids) for ids in translucent),
-            opaque_all=tuple(i for ids in opaque for i in ids),
             has_translucent=any(translucent),
         )
-        self._models[(state, tinted)] = model
+        self._models[state] = model
         return model
 
     def build(self, level: Level, positions: Iterable[Pos]) -> Mesh:
@@ -246,6 +303,7 @@ class Mesher:
         t_pos: list[Pos] = []
         t_counts: list[int] = []
         dynamic: list[Pos] = []
+        corners_of = self._template_corners
         for pos in positions:
             state = states.get(pos)
             if state is None:
@@ -255,44 +313,52 @@ class Mesher:
                 continue
             x, y, z = pos
             full = is_full(state)
-            model = models.get((state, False)) or self._model(state, False)
-            if full:
-                keep = state.block.id in XRAY_KEEP
-                ids, at, counts = (o_ids, o_pos, o_counts) if keep else (s_ids, s_pos, s_counts)
-                shade = o_shade if keep else s_shade
-                noise = block_noise(pos)
-                before = len(ids)
-                for index, (dx, dy, dz) in enumerate(_STEPS):
-                    neighbor = states.get((x + dx, y + dy, z + dz))
-                    if neighbor is None or not is_full(neighbor):
-                        face_ids = model.opaque[index]
-                        ids.extend(face_ids)
-                        levels = []
-                        for side1, side2, diagonal in CORNERS[index]:
-                            a = states.get((x + side1[0], y + side1[1], z + side1[2]))
-                            b = states.get((x + side2[0], y + side2[1], z + side2[2]))
-                            c = states.get((x + diagonal[0], y + diagonal[1], z + diagonal[2]))
-                            a_full = a is not None and is_full(a)
-                            b_full = b is not None and is_full(b)
-                            c_full = c is not None and is_full(c)
-                            occluded = 3 if a_full and b_full else a_full + b_full + c_full
-                            levels.append(AO_LEVELS[occluded] * noise)
-                        corner = (levels[0], levels[1], levels[2], levels[0], levels[2], levels[3])
-                        for _ in face_ids:
-                            shade.extend(corner)
-                if len(ids) > before:
-                    at.append(pos)
-                    counts.append(len(ids) - before)
-            elif model.opaque_all:
-                o_ids.extend(model.opaque_all)
-                o_pos.append(pos)
-                o_counts.append(len(model.opaque_all))
-                o_shade.extend((1.0,) * (6 * len(model.opaque_all)))
+            model = models.get(state) or self._model(state)
+            keep = not full or state.block.id in XRAY_KEEP
+            ids, at, counts = (o_ids, o_pos, o_counts) if keep else (s_ids, s_pos, s_counts)
+            shade = o_shade if keep else s_shade
+            noise = block_noise(pos) if full else 1.0
+            before = len(ids)
+            for index, (dx, dy, dz) in enumerate(_STEPS):
+                face_ids = model.opaque[index]
+                if not face_ids:
+                    continue
+                neighbor = states.get((x + dx, y + dy, z + dz))
+                if neighbor is not None and is_full(neighbor):
+                    continue
+                ids.extend(face_ids)
+                if not full:
+                    shade.extend((1.0,) * (6 * len(face_ids)))
+                    continue
+                levels = []
+                for side1, side2, diagonal in CORNERS[index]:
+                    a = states.get((x + side1[0], y + side1[1], z + side1[2]))
+                    b = states.get((x + side2[0], y + side2[1], z + side2[2]))
+                    c = states.get((x + diagonal[0], y + diagonal[1], z + diagonal[2]))
+                    a_full = a is not None and is_full(a)
+                    b_full = b is not None and is_full(b)
+                    c_full = c is not None and is_full(c)
+                    occluded = 3 if a_full and b_full else a_full + b_full + c_full
+                    levels.append(AO_LEVELS[occluded] * noise)
+                for face_id in face_ids:
+                    corners = corners_of[face_id]
+                    if corners is None:
+                        shade.extend((noise,) * 6)
+                    else:
+                        shade.extend(levels[c] for c in corners)
+            if model.opaque[6]:
+                ids.extend(model.opaque[6])
+                shade.extend((noise,) * (6 * len(model.opaque[6])))
+            if len(ids) > before:
+                at.append(pos)
+                counts.append(len(ids) - before)
             if model.has_translucent:
                 before = len(t_ids)
                 for index, (dx, dy, dz) in enumerate(_STEPS):
-                    if states.get((x + dx, y + dy, z + dz)) is not state:
-                        t_ids.extend(model.translucent[index])  # no faces between equal blocks
+                    neighbor = states.get((x + dx, y + dy, z + dz))
+                    if neighbor is not state and (neighbor is None or not is_full(neighbor)):
+                        t_ids.extend(model.translucent[index])  # none between equal blocks
+                t_ids.extend(model.translucent[6])
                 if len(t_ids) > before:
                     t_pos.append(pos)
                     t_counts.append(len(t_ids) - before)
@@ -301,20 +367,53 @@ class Mesher:
         opaque = [self._assemble(o_ids, o_pos, o_counts, o_shade)]
         translucent = [self._assemble(t_ids, t_pos, t_counts)]
         for pos in dynamic:
-            # Moved blocks are never culled against (their look changes every tick).
-            moving = boxes_at(level, pos)
-            noise = block_noise(pos) if is_full_opaque(moving) else 1.0
-            origin = np.array(pos, dtype=np.float32)
-            for box in moving:
-                lo = origin + np.array(box.lo, dtype=np.float32) / 16.0
-                hi = origin + np.array(box.hi, dtype=np.float32) / 16.0
-                red, green, blue, alpha = box.color
-                color = (red * noise, green * noise, blue * noise, alpha)
-                target = translucent if box.translucent else opaque
-                for direction in ALL:
-                    target.append(_triangles(lo, hi, direction, color))
+            self._moving(level, pos, opaque, translucent)
         solid = self._assemble(s_ids, s_pos, s_counts, s_shade)
         return Mesh(_stack(opaque), _stack(translucent), animated=bool(dynamic), solid=solid)
+
+    def _moving(
+        self, level: Level, pos: Pos, opaque: list[np.ndarray], translucent: list[np.ndarray]
+    ) -> None:
+        """Blocks moved by a piston: drawn at their progress, never culled against."""
+        origin = np.array(pos, dtype=np.float32)
+        entity = level.get_block_entity(pos, create=False)
+        if self.assets is not None and isinstance(entity, PistonMovingBlockEntity):
+            progress = entity.extended_progress(entity.progress)
+            shift = np.array(entity.direction.step, dtype=np.float32) * (progress - 1.0)
+            pieces = [(entity.moved_state, shift)]
+            if entity.is_source and not entity.extending:
+                piston = (
+                    "sticky"
+                    if entity.moved_state.block.id == "minecraft:sticky_piston"
+                    else "normal"
+                )
+                head = blocks.PISTON_HEAD.default_state.with_(FACING, entity.direction).with_(
+                    PISTON_TYPE, piston
+                )
+                pieces = [(entity.moved_state.with_(EXTENDED, True), np.zeros(3, np.float32))]
+                pieces.append((head, shift))
+            for state, offset in pieces:
+                model = self._models.get(state) or self._model(state)
+                for group, target in ((model.opaque, opaque), (model.translucent, translucent)):
+                    ids = [i for slot in group for i in slot]
+                    if ids:
+                        rows = np.stack([self._template_rows[i] for i in ids]).reshape(
+                            -1, VERTEX_SIZE
+                        )
+                        rows = rows.copy()
+                        rows[:, :3] += origin + offset
+                        target.append(rows)
+            return
+        moving = boxes_at(level, pos)
+        noise = block_noise(pos) if is_full_opaque(moving) else 1.0
+        for box in moving:
+            lo = origin + np.array(box.lo, dtype=np.float32) / 16.0
+            hi = origin + np.array(box.hi, dtype=np.float32) / 16.0
+            red, green, blue, alpha = box.color
+            color = (red * noise, green * noise, blue * noise, alpha)
+            target = translucent if box.translucent else opaque
+            for direction in ALL:
+                target.append(_pad(_triangles(lo, hi, direction, color)))
 
     def _assemble(
         self,
@@ -325,13 +424,40 @@ class Mesher:
     ) -> FloatArray:
         if not ids:
             return _EMPTY
-        vertices = self._templates[np.asarray(ids, dtype=np.intp)]  # (faces, 6, 7), a copy
+        vertices = self._templates[np.asarray(ids, dtype=np.intp)]  # (faces, 6, 9), a copy
         offsets = np.repeat(np.asarray(positions, dtype=np.float32), counts, axis=0)
         vertices[:, :, :3] += offsets[:, None, :]
         if shade:
             factors = np.asarray(shade, dtype=np.float32).reshape(-1, 6)
             vertices[:, :, 3:6] *= factors[:, :, None]
-        return vertices.reshape(-1, 7)
+        return vertices.reshape(-1, VERTEX_SIZE)
+
+
+def _pad(rows: np.ndarray) -> np.ndarray:
+    """Untextured vertices: UV (-1, -1) tells the shader to use the color alone."""
+    if rows.shape[1] == VERTEX_SIZE:
+        return rows
+    uv = np.full((len(rows), 2), -1.0, dtype=np.float32)
+    return np.hstack([rows, uv]).astype(np.float32)
+
+
+_UNIT_FACES = {direction: _face_quads(np.zeros(3), np.ones(3), direction) for direction in ALL}
+
+
+def _corner_indices(rows: np.ndarray) -> tuple[int, ...] | None:
+    """Which corner (``_face_quads`` order) each of a template's 6 vertices sits on, if the
+    template is a whole face of the unit cube (corner shading applies)."""
+    positions = rows[:, :3]
+    for corners in _UNIT_FACES.values():
+        found = []
+        for vertex in positions:
+            match = np.where(np.all(np.abs(corners - vertex) < 1e-4, axis=1))[0]
+            if len(match) != 1:
+                break
+            found.append(int(match[0]))
+        else:
+            return tuple(found)
+    return None
 
 
 def ghost_mesh(
@@ -414,6 +540,9 @@ def _triangles(lo: np.ndarray, hi: np.ndarray, direction: Direction, color: Colo
 def _stack(parts: list[np.ndarray]) -> FloatArray:
     if not parts:
         return np.zeros((0, 7), dtype=np.float32)
+    width = max(part.shape[1] for part in parts)
+    if width == VERTEX_SIZE:
+        parts = [_pad(part) for part in parts]
     return np.ascontiguousarray(np.vstack(parts), dtype=np.float32)
 
 

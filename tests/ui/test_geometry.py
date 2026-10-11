@@ -8,7 +8,7 @@ import numpy as np
 
 from redsim.core.direction import Direction
 from redsim.sim.level import Level
-from redsim.ui.geometry import ChunkedMesh, Mesh, build_mesh, chunk_of, pick
+from redsim.ui.geometry import VERTEX_SIZE, ChunkedMesh, Mesh, build_mesh, chunk_of, pick
 from redsim.ui.style import block_boxes, wire_color
 from redsim.world import blocks
 
@@ -74,8 +74,8 @@ def test_translucent_blocks_go_to_their_own_buffer() -> None:
 
 def _faces(meshes: list[Mesh]) -> tuple[list[bytes], list[bytes]]:
     def rows(arrays: list[np.ndarray]) -> list[bytes]:
-        joined = np.vstack(arrays) if arrays else np.zeros((0, 7), np.float32)
-        return sorted(face.tobytes() for face in np.round(joined.reshape(-1, 6, 7), 4))
+        joined = np.vstack(arrays) if arrays else np.zeros((0, VERTEX_SIZE), np.float32)
+        return sorted(face.tobytes() for face in np.round(joined.reshape(-1, 6, VERTEX_SIZE), 4))
 
     opaque = [m.opaque for m in meshes] + [m.solid for m in meshes]
     return rows(opaque), rows([m.translucent for m in meshes])

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import math
 import time
+from functools import lru_cache
 from typing import Any
 
 import numpy as np
@@ -38,11 +39,14 @@ from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
 from redsim.editor.placement import PlaceRequest, placement_state
+from redsim.ui.assets import Assets
+from redsim.ui.atlas import Atlas
 from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import block_lines
 from redsim.ui.geometry import (
     ChunkedMesh,
     Hit,
+    Mesher,
     block_outline,
     box_lines,
     ghost_mesh,
@@ -132,6 +136,15 @@ def _modifier_names(modifiers: Qt.KeyboardModifier) -> frozenset[str]:
     return frozenset(names)
 
 
+@lru_cache(maxsize=1)
+def game_textures() -> tuple[Assets | None, Atlas | None]:
+    """The game's block models and a texture atlas, if the client jar is available."""
+    assets = Assets.find()
+    if assets is None:
+        return None, None
+    return assets, Atlas.for_blocks(assets)
+
+
 class Viewport(QOpenGLWidget):
     hover_changed = Signal(object)  # Hit | None
     place_requested = Signal(object)  # Pos: a cell on the working layer
@@ -169,7 +182,6 @@ class Viewport(QOpenGLWidget):
         #: Blender-like X-ray (building blocks see-through) and the block-info overlay.
         self.xray = 0  # 0 off, 1 building blocks see-through, 2 everything see-through
         self.show_info = False
-        self.preferences = Preferences.load()
         #: F3 debug screen: the left column comes from the main window (it knows the rates).
         self.debug_left: list[str] = []
         #: SELECT mode: the face handle under the cursor, and drags in progress.
@@ -197,7 +209,11 @@ class Viewport(QOpenGLWidget):
         self._line_end: Pos | None = None
         self._build_cell: Pos | None = None  # the layer cell the preview was made for
         self._ghost_uploaded: tuple[int, Pos] | None = None
-        self.world_mesh = ChunkedMesh()
+        self.preferences = Preferences.load()
+        self.assets, self.atlas = (
+            game_textures() if self.preferences.game_textures else (None, None)
+        )
+        self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
         self._mesh_revision = -1
         #: Lines of text drawn over the top-left corner (run status, achieved rates).
         self.overlay_text: list[str] = []
@@ -380,8 +396,38 @@ class Viewport(QOpenGLWidget):
         # Called again whenever Qt recreates the context (e.g. on re-parenting), so all GPU
         # data must be uploaded again.
         self.renderer = Renderer()
+        self.renderer.set_atlas(self.atlas.image() if self.atlas is not None else None)
         self.world_mesh.reset()
         self._mesh_revision = -1
+        context = self.context()
+        if context is not None:  # free GPU textures while the context still exists
+            context.aboutToBeDestroyed.connect(self._release_gl, Qt.ConnectionType.UniqueConnection)
+
+    @property
+    def textures_available(self) -> bool:
+        return game_textures()[0] is not None
+
+    def set_game_textures(self, on: bool) -> None:
+        """Switch between the game's textured models and the colored box models."""
+        self.assets, self.atlas = game_textures() if on else (None, None)
+        self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
+        self._build_meshes.clear()
+        self._line_ghost = None
+        self._mesh_revision = -1
+        if self.renderer is not None:
+            self.makeCurrent()
+            for key in list(self.renderer.chunks):
+                self.renderer.remove_chunk(key)
+            self.renderer.set_atlas(self.atlas.image() if self.atlas is not None else None)
+            self.doneCurrent()
+        self._update_build_ghost()
+        self.update()
+
+    def _release_gl(self) -> None:
+        if self.renderer is not None:
+            self.makeCurrent()
+            self.renderer.set_atlas(None)
+            self.doneCurrent()
 
     def resizeGL(self, width: int, height: int) -> None:
         # The same mouse position now casts a different ray: retarget the previews.

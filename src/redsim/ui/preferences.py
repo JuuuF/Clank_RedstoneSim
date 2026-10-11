@@ -25,6 +25,8 @@ class Preferences:
     #: X-ray: alpha of building blocks (both X-ray levels) and of circuit blocks (level 2).
     xray_building_alpha: float = 0.18
     xray_circuit_alpha: float = 0.45
+    #: Draw blocks with the game's models and textures (when the client jar is there).
+    game_textures: bool = True
 
     @staticmethod
     def path() -> Path:
@@ -39,7 +41,10 @@ class Preferences:
             return prefs
         for field in fields(prefs):
             value = data.get(field.name) if isinstance(data, dict) else None
-            if isinstance(value, int | float):
+            if isinstance(getattr(prefs, field.name), bool):
+                if isinstance(value, bool):
+                    setattr(prefs, field.name, value)
+            elif isinstance(value, int | float) and not isinstance(value, bool):
                 setattr(prefs, field.name, min(1.0, max(0.0, float(value))))
         return prefs
 

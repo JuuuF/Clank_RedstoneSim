@@ -1,5 +1,8 @@
-"""Block previews for the inventory and the block search: the block's 3D model
-(``style.block_boxes``) drawn in an isometric view with Qt's painter (no OpenGL needed).
+"""Block previews for the inventory and the block search, drawn with Qt's painter.
+
+With the game's assets (``assets.Assets``): the item's own look, a flat sprite (dust,
+torches, repeaters, rails, hoppers) or its block model, textured, in the isometric view.
+Without them: the colored box model (``style.block_boxes``) in the same view.
 
 The view looks from above the south-east: the top, east and south faces of every box are
 visible, shaded like Minecraft's item renders (top brightest). Boxes are drawn back to
@@ -10,10 +13,23 @@ from __future__ import annotations
 
 import math
 from functools import cache
+from typing import Any
 
 from PySide6.QtCore import QPointF, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap, QPolygonF
+from PySide6.QtGui import (
+    QColor,
+    QIcon,
+    QImage,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPolygonF,
+    QTransform,
+)
 
+from redsim.core.direction import Direction
+from redsim.ui.assets import Assets, Quad
 from redsim.ui.style import Box, block_boxes
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
@@ -110,8 +126,120 @@ def render_boxes(boxes: list[Box], size: int) -> QPixmap:
     return pixmap
 
 
+#: Inventory items of blocks whose item has another name.
+ITEM_IDS = {
+    "minecraft:redstone_wire": "minecraft:redstone",
+    "minecraft:redstone_wall_torch": "minecraft:redstone_torch",
+}
+
+
+def _texture_image(texture: str) -> QImage | None:
+    assets = Assets.find()
+    data = assets.texture_bytes(texture) if assets is not None else None
+    if data is None:
+        return None
+    image = QImage.fromData(data)
+    if image.isNull():
+        return None
+    if image.height() > image.width():  # animated: first frame
+        image = image.copy(0, 0, image.width(), image.width())
+    return image
+
+
+def render_item_sprite(texture: str, size: int) -> QPixmap | None:
+    """A flat item sprite, scaled up with sharp pixels."""
+    image = _texture_image(texture)
+    if image is None:
+        return None
+    scaled = image.scaled(
+        size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation
+    )
+    return QPixmap.fromImage(scaled)
+
+
+def render_quads(quads: list[Quad], size: int, tint: Any = None) -> QPixmap:
+    """The game's block model in the isometric view, textured: every quad facing the
+    viewer is mapped from its texture rectangle onto its projected corners."""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+    scale = size * 0.92 / 2.0
+    base = QTransform().translate(size / 2, size / 2).scale(scale, scale)
+    shades = {Direction.UP: 1.0, Direction.EAST: 0.78, Direction.SOUTH: 0.6}
+
+    def depth(quad: Quad) -> float:
+        return sum(c[0] + c[1] + c[2] for c in quad.corners)
+
+    for quad in sorted(quads, key=depth):
+        if quad.facing not in shades:
+            continue
+        image = _texture_image(quad.texture)
+        if image is None:
+            continue
+        if quad.tint >= 0 and tint is not None:
+            image = _tinted(image, tint)
+        source = QPolygonF([QPointF(u * image.width(), v * image.height()) for u, v in quad.uvs])
+        target = QPolygonF([_project(x - 0.5, y - 0.5, z - 0.5) for x, y, z in quad.corners])
+        mapping = QTransform()
+        if not QTransform.quadToQuad(source, target, mapping):
+            continue
+        painter.save()
+        painter.setTransform(mapping * base)
+        clip = QPainterPath()
+        clip.addPolygon(source)
+        painter.setClipPath(clip)
+        painter.drawImage(0, 0, image)
+        painter.restore()
+        shade = shades[quad.facing] if quad.shade else 1.0
+        if shade < 1.0:
+            painter.save()
+            painter.setTransform(base)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(0, 0, 0, int(255 * (1 - shade))))
+            painter.drawPolygon(target)
+            painter.restore()
+    painter.end()
+    return pixmap
+
+
+def _tinted(image: QImage, color: tuple[float, float, float]) -> QImage:
+    tinted = image.convertToFormat(QImage.Format.Format_ARGB32)
+    painter = QPainter(tinted)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Multiply)
+    painter.fillRect(tinted.rect(), QColor.fromRgbF(*color))
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
+    painter.drawImage(0, 0, image)
+    painter.end()
+    return tinted
+
+
+def game_pixmap(block_id: str, size: int) -> QPixmap | None:
+    """The game's inventory look: the item's sprite, or its block model."""
+    assets = Assets.find()
+    if assets is None:
+        return None
+    model = assets.item_model(ITEM_IDS.get(block_id, block_id))
+    if model is not None and assets.is_generated_item(model):
+        layer = assets.resolve_texture(assets.model(model)["textures"], "#layer0")
+        return render_item_sprite(layer[0], size) if layer else None
+    block = blocks.get(block_id)
+    if model is not None:
+        quads = assets.bake(assets.model(model))
+    else:
+        quads = list(assets.block_quads(icon_state(block)))
+    if not quads:
+        return None
+    from redsim.ui.geometry import tint_color
+
+    return render_quads(quads, size, tint_color(icon_state(block), 0))
+
+
 @cache
 def block_pixmap(block_id: str, size: int = 32) -> QPixmap:
+    textured = game_pixmap(block_id, size)
+    if textured is not None:
+        return textured
     return render_boxes(block_boxes(icon_state(blocks.get(block_id))), size)
 
 
