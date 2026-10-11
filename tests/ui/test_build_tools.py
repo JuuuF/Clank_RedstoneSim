@@ -43,6 +43,19 @@ def test_recent_blocks_are_remembered_and_saved(app: Any) -> None:
     bar.refresh()
     bar.go_to_depth(1)
     assert bar.nav.breadcrumb() == ["Redstone"]
+    # Regression: going back after a refresh touched already deleted path buttons.
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    def run_deletes() -> None:  # what the event loop does with deleteLater
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+    for _ in range(3):
+        bar.press(9)  # Switches
+        run_deletes()
+        bar.go_up()
+        run_deletes()
+    bar.go_up()
+    assert bar.nav.breadcrumb() == []
 
 
 def test_every_inventory_block_has_a_preview(app: Any) -> None:

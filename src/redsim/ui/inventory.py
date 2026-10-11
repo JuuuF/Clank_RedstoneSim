@@ -262,7 +262,8 @@ class InventoryBar(QWidget):
         scroller.setFixedHeight(TILE_HEIGHT + 14)  # tiles plus a horizontal scrollbar
         outer.addWidget(scroller)
         self._tiles: list[QWidget] = []
-        self._dynamic: list[QWidget] = []
+        self._path_widgets: list[QWidget] = []
+        self._recent_widgets: list[QWidget] = []
         self.refresh()
 
     # ------------------------------------------------------------------ display
@@ -275,10 +276,8 @@ class InventoryBar(QWidget):
 
     def refresh(self) -> None:
         self._clear(self.tiles_row, self._tiles)
-        for layout in (self.path_row, self.recent_row):
-            mine = [w for w in self._dynamic if layout.indexOf(w) >= 0]
-            self._clear(layout, mine)
-            self._dynamic = [w for w in self._dynamic if w not in mine]
+        self._clear(self.path_row, self._path_widgets)
+        self._clear(self.recent_row, self._recent_widgets)
         self._build_path()
         self._build_recent()
         self.back.setEnabled(bool(self.nav.path))
@@ -317,7 +316,7 @@ class InventoryBar(QWidget):
             if depth:
                 arrow = QLabel("›")
                 self.path_row.addWidget(arrow)
-                self._dynamic.append(arrow)
+                self._path_widgets.append(arrow)
             button = QToolButton()
             button.setAutoRaise(True)
             button.setText(title)
@@ -326,7 +325,7 @@ class InventoryBar(QWidget):
             button.setToolTip("Current folder" if last else f"Back to {title}")
             button.clicked.connect(lambda _=False, d=depth: self.go_to_depth(d))
             self.path_row.addWidget(button)
-            self._dynamic.append(button)
+            self._path_widgets.append(button)
 
     def _build_recent(self) -> None:
         for block_id in self.recent:
@@ -339,7 +338,7 @@ class InventoryBar(QWidget):
             button.setChecked(block_id == self.current)
             button.clicked.connect(lambda _=False, b=block_id: self.select_block(blocks.get(b)))
             self.recent_row.addWidget(button)
-            self._dynamic.append(button)
+            self._recent_widgets.append(button)
 
     # ------------------------------------------------------------------ navigation
     def press(self, number: int) -> None:
