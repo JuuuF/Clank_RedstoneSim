@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, branch `feat/analog-source` (merged into `main`).*
+*Last updated: 2026-10-11, after the second feedback round (all merged into `main`).*
 
 ## Summary
 
@@ -92,10 +92,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **202 tests pass** (2026-10-11), including the JDK oracle, the 26
+- `python -m pytest`: **214 tests pass** (2026-10-11), including the JDK oracle, the 26
   game-recording replays, save round trips, chunked-mesh consistency, run pacing and
   offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 25 of 25 scenarios match in one
+- Real-game comparisons (`python -m tools.gameserver.run`): 26 of 26 scenarios match in one
   fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
@@ -122,10 +122,12 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-Owner feedback of 2026-10-11 ([[ui-direction]]) is done: real-time speed (ADR-017), the new
-controls (ADR-018), Axiom-like selections (ADR-019) and the hot-swappable signal source
-(ADR-020). Next: selection rotate/flip in place and stack/repeat, then more mechanics
-(observers, hoppers, target blocks) and the "technical Minecraft" look.
+Both owner feedback rounds of 2026-10-11 ([[ui-direction]]) are done: real-time speed
+(ADR-017), controls (ADR-018), Axiom-like selections with update-free cloning (ADR-019),
+signal sources (ADR-020), rotate/flip/stack in place (ADR-021), plus a hotkeys panel, build
+preview, Trackmania-style paste, X-ray, an info overlay and an immediate-apply inspector
+([[controls]]). Next: more mechanics (observers, hoppers, target blocks) and the
+"technical Minecraft" look, once the owner has picked priorities.
 
 All seven roadmap milestones have a working core. Suggested next steps:
 

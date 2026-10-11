@@ -55,6 +55,12 @@ stack/repeat.
 | Inspector | Apply edits immediately (no Set/Apply button); facing as arrow buttons; booleans as toggle buttons. |
 | Selection tools | Rotate and flip are essential (blocks inside must turn too); stack/repeat wanted. |
 
+**Status (2026-10-11):** all of the above is implemented and on `main` ([[controls]]):
+hotkeys panel (F1), pin handles and thick see-through selection (bottom face grabbable),
+Trackmania-style paste on the camera's working layer, strict update-free cloning
+(game-verified EXP-026), build preview, info overlay (F3), X-ray (Alt+Z), immediate-apply
+inspector with arrows/toggles/steppers, rotate/flip/stack in place (ADR-021).
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

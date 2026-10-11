@@ -2,11 +2,11 @@
  "scenario": "clone_strict_bud",
  "description": "A budded piston (powered only by quasi-connectivity, never updated) is cloned: with /clone ... strict the copy stays budded (no updates); with a normal /clone the final neighbor updates make the copy extend; a strict move leaves both budded.",
  "origin": [
-  0,
+  600,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 725,
  "fingerprint": "8fffb5132a5684cd",
  "game_version": "26.3",
  "ticks": 8,

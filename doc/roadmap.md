@@ -13,7 +13,7 @@ state is in [[project-state]].
 | 5 | Pistons and timing-sensitive behavior | ◐ | core done and game-verified (EXP-015…020); open: scheduled-tick-driven 0-tick cases, observers |
 | 6 | Playback, history, diagnostics | ☑ | timeline rewind/replay, step/tick back, slider, warp, diagnostics panel; polish open (trace tree) |
 | 7 | Contraptions and abstraction | ☑ | selection, /clone paste, rotation, /fill delete, prefab library, groups with ports; abstract models deferred (ADR-016) |
-| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (25/25 match) |
+| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (26/26 match) |
 
 Order note: the world model was built before the editor because both the editor and the
 engine depend on it ([[decisions]] ADR-007).
@@ -28,7 +28,10 @@ engine depend on it ([[decisions]] ADR-007).
    (`/clone … move|force`, ADR-019), paste preview.
 0. ☑ **Signal sources:** barrel and lectern (game-verified EXP-024/025), one hot-swappable
    source in the UI (ADR-020).
-0. **Next:** selection rotate/flip, stack/repeat; observers, hoppers, target blocks.
+0. ☑ **Second feedback round:** update-free editor cloning (EXP-026), selection looks,
+   Trackmania paste, build preview, X-ray, info overlay, inspector controls, rotate/flip/
+   stack (ADR-021), hotkeys panel.
+0. **Next:** observers, hoppers, target blocks; the "technical Minecraft" look.
 
 1. Owner review of the editor on the real desktop.
 2. Diagnostics polish (causal trace tree, "why did this change?").
