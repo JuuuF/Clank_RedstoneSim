@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.document import Document
@@ -34,6 +35,7 @@ from redsim.sim import trace as tr
 from redsim.ui.keymap import Keymap
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
+from redsim.world.properties import Property
 
 NO_SELECTION = "Left-click a block in NORMAL mode (Esc) to inspect it."
 
@@ -155,8 +157,101 @@ class PalettePanel(QWidget):
         return blocks.get(block_id) if block_id else blocks.STONE
 
 
+DIRECTION_LABELS = {
+    "north": "↑ N",
+    "east": "→ E",
+    "south": "↓ S",
+    "west": "← W",
+    "up": "⤒ Up",
+    "down": "⤓ Down",
+}
+
+
+def _later(callback: Any) -> None:
+    """Run after the current event: edits rebuild the panel, which may delete the button
+    whose click is still being handled."""
+    QTimer.singleShot(0, callback)
+
+
+class _Choice(QWidget):
+    """Exclusive buttons for a property's values (directions get arrows)."""
+
+    def __init__(self, prop: Property, on_pick: Any) -> None:
+        super().__init__()
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.buttons: dict[Any, QPushButton] = {}
+        for value in prop.values:
+            text = prop.serialize(value)
+            label = DIRECTION_LABELS.get(text, text) if isinstance(value, Direction) else text
+            button = QPushButton(label)
+            button.setCheckable(True)
+            button.setToolTip(f"{prop.name} = {text}")
+            button.clicked.connect(lambda _=False, v=value: on_pick(v))
+            layout.addWidget(button)
+            self.buttons[value] = button
+
+    def show_value(self, value: Any) -> None:
+        for option, button in self.buttons.items():
+            button.setChecked(option == value)
+
+
+class _Toggle(QPushButton):
+    """A boolean property: one button that flips it."""
+
+    def __init__(self, prop: Property, on_pick: Any) -> None:
+        super().__init__()
+        self.setCheckable(True)
+        self.clicked.connect(lambda checked: on_pick(bool(checked)))
+        self.setToolTip(f"Click to flip {prop.name}")
+
+    def show_value(self, value: Any) -> None:
+        self.setChecked(bool(value))
+        self.setText("true" if value else "false")
+
+
+class _Stepper(QWidget):
+    """An integer property: ◀ value ▶."""
+
+    def __init__(self, values: tuple[Any, ...], on_pick: Any, tooltip: str) -> None:
+        super().__init__()
+        self.values = values
+        self.value: Any = values[0]
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.back = QPushButton("◀")
+        self.label = QLabel("")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setMinimumWidth(36)
+        self.next = QPushButton("▶")
+        for button in (self.back, self.next):
+            button.setMaximumWidth(40)
+            button.setToolTip(tooltip)
+        self.back.clicked.connect(lambda: self._step(-1, on_pick))
+        self.next.clicked.connect(lambda: self._step(1, on_pick))
+        layout.addWidget(self.back)
+        layout.addWidget(self.label)
+        layout.addWidget(self.next)
+        layout.addStretch(1)
+
+    def _step(self, delta: int, on_pick: Any) -> None:
+        index = self.values.index(self.value) + delta
+        if 0 <= index < len(self.values):
+            on_pick(self.values[index])
+
+    def show_value(self, value: Any) -> None:
+        self.value = value
+        self.label.setText(str(value))
+        index = self.values.index(value) if value in self.values else 0
+        self.back.setEnabled(index > 0)
+        self.next.setEnabled(index < len(self.values) - 1)
+
+
 class InspectorPanel(QWidget):
-    """Shows the selected block; property edits are applied with /setblock semantics."""
+    """The selected block. Every control applies at once, as a /setblock edit (one undo
+    step each); widgets are updated in place while the same kind of block stays selected."""
 
     apply_requested = Signal(object, object)  # Pos, BlockState
     section_requested = Signal(object, object)  # Pos, str | None
@@ -167,47 +262,52 @@ class InspectorPanel(QWidget):
         super().__init__()
         self._pos: Pos | None = None
         self._state: BlockState | None = None
-        self._editors: dict[str, QComboBox] = {}
+        self._layout_key: tuple[Any, ...] | None = None
+        self._editors: dict[str, Any] = {}
+        self._page: int | None = None
         layout = QVBoxLayout(self)
         self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
         layout.addWidget(self.title)
-        self.form = QFormLayout()
-        layout.addLayout(self.form)
+        self.form_widget = QWidget()
+        self.form = QFormLayout(self.form_widget)
+        self.form.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.form_widget)
         self.entity = QLabel("")
+        self.entity.setWordWrap(True)
         layout.addWidget(self.entity)
-        self.apply_button = QPushButton("Apply (/setblock)")
-        self.apply_button.setToolTip(
-            "Applies the edited properties like the /setblock command: the state is adjusted "
-            "by neighbor shapes, then neighbors are updated. Player actions (right click) use "
-            "the in-game interaction logic instead."
+        self.note = QLabel(
+            "<small>Edits apply at once with /setblock semantics (state adjusted by "
+            "neighbor shapes, then neighbor updates). Right click in NORMAL mode uses a "
+            "block like a player instead.</small>"
         )
-        self.apply_button.clicked.connect(self._apply)
-        layout.addWidget(self.apply_button)
+        self.note.setWordWrap(True)
+        layout.addWidget(self.note)
         self.source_box = QWidget()
-        source_layout = QVBoxLayout(self.source_box)
+        source_layout = QFormLayout(self.source_box)
         source_layout.setContentsMargins(0, 6, 0, 0)
-        source_layout.addWidget(QLabel("<b>Signal source</b>"))
-        source_row = QHBoxLayout()
-        self.source_kind = QComboBox()
+        self.source_kind = QWidget()
+        kind_layout = QHBoxLayout(self.source_kind)
+        kind_layout.setContentsMargins(0, 0, 0, 0)
+        kind_layout.setSpacing(2)
+        self.kind_buttons: dict[str, QPushButton] = {}
         for kind in sources.KINDS.values():
-            self.source_kind.addItem(kind.title, kind.id)
-            self.source_kind.setItemData(
-                self.source_kind.count() - 1, kind.tooltip, Qt.ItemDataRole.ToolTipRole
-            )
-        self.source_kind.setToolTip("Swap the block behind this signal (keeps the strength).")
-        source_row.addWidget(self.source_kind)
-        self.source_strength = QSpinBox()
-        self.source_strength.setRange(0, 15)
-        source_row.addWidget(self.source_strength)
-        self.source_apply = QPushButton("Set")
-        self.source_apply.setToolTip(
-            "Sets the block up for this strength with /setblock and block-entity data."
+            button = QPushButton(kind.id.capitalize())
+            button.setCheckable(True)
+            button.setToolTip(kind.tooltip)
+            button.clicked.connect(lambda _=False, k=kind.id: self._pick_source(k, None))
+            kind_layout.addWidget(button)
+            self.kind_buttons[kind.id] = button
+        source_layout.addRow("Signal source", self.source_kind)
+        self.source_strength = _Stepper(
+            tuple(range(16)),
+            lambda value: self._pick_source(None, int(value)),
+            "Strength as a comparator reads it (the block is set up for it)",
         )
-        self.source_apply.clicked.connect(self._apply_source)
-        source_row.addWidget(self.source_apply)
-        source_layout.addLayout(source_row)
-        page_row = QHBoxLayout()
+        source_layout.addRow("Strength", self.source_strength)
+        self.page_row = QWidget()
+        page_layout = QHBoxLayout(self.page_row)
+        page_layout.setContentsMargins(0, 0, 0, 0)
         self.page_back = QPushButton("◀ Page")
         self.page_next = QPushButton("Page ▶")
         for button, step in ((self.page_back, -1), (self.page_next, 1)):
@@ -216,10 +316,9 @@ class InspectorPanel(QWidget):
                 "2-tick pulse into the block below (verified from the game source)."
             )
             button.clicked.connect(lambda _=False, d=step: self._turn_page(d))
-            page_row.addWidget(button)
-        source_layout.addLayout(page_row)
+            page_layout.addWidget(button)
+        source_layout.addRow("Player", self.page_row)
         layout.addWidget(self.source_box)
-        self._page: int | None = None
         section_row = QHBoxLayout()
         section_row.addWidget(QLabel("Section:"))
         self.section_box = QComboBox()
@@ -229,44 +328,47 @@ class InspectorPanel(QWidget):
         layout.addStretch(1)
         self.show_block(None, None)
 
+    # ------------------------------------------------------------------ display
     def show_block(self, document: Document | None, pos: Pos | None) -> None:
-        while self.form.rowCount():
-            self.form.removeRow(0)
-        self._editors.clear()
         self._pos = pos
-        self._state = None
-        self.section_box.clear()
         self.source_box.setVisible(False)
         if document is None or pos is None:
+            self._rebuild(None)
+            self._state = None
             self.title.setText(NO_SELECTION)
             self.entity.setText("")
-            self.apply_button.setEnabled(False)
+            self.note.setVisible(False)
+            self.section_box.clear()
             self.section_box.setEnabled(False)
             return
         state = document.state_at(pos)
         self._state = state
+        editable = document.can_edit
+        key = (pos, state.block.id)
+        if key != self._layout_key:
+            self._rebuild(state)
+            self._layout_key = key
         self.title.setText(f"<b>{state.block.name}</b> at {pos}")
         for prop in state.block.properties:
-            box = QComboBox()
-            for value in prop.values:
-                box.addItem(prop.serialize(value), value)
-            box.setCurrentText(prop.serialize(state.get(prop)))
-            self.form.addRow(prop.name, box)
-            self._editors[prop.name] = box
+            editor = self._editors[prop.name]
+            editor.show_value(state.get(prop))
+            editor.setEnabled(editable)
+        self.note.setVisible(bool(state.block.properties))
         be = document.level.get_block_entity(pos, create=False)
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
         kind = sources.kind_of(state)
         if kind is not None:
             self.source_box.setVisible(True)
-            self.source_kind.setCurrentIndex(self.source_kind.findData(kind))
-            self.source_strength.setValue(sources.strength_at(document.level, pos) or 0)
-            self.source_apply.setEnabled(document.can_edit)
+            self.source_box.setEnabled(editable)
+            for name, button in self.kind_buttons.items():
+                button.setChecked(name == kind)
+            self.source_strength.show_value(sources.strength_at(document.level, pos) or 0)
             page = getattr(be, "page", None) if getattr(be, "book", None) else None
             self._page = page
-            for button in (self.page_back, self.page_next):
-                button.setVisible(kind == "lectern")
-                button.setEnabled(page is not None and document.can_edit)
-        self.apply_button.setEnabled(bool(state.block.properties) and document.can_edit)
+            self.page_row.setVisible(kind == "lectern")
+            self.page_row.setEnabled(page is not None)
+        self.section_box.blockSignals(True)
+        self.section_box.clear()
         self.section_box.setEnabled(True)
         self.section_box.addItem("(none)", None)
         for name in document.sections.sections:
@@ -274,23 +376,51 @@ class InspectorPanel(QWidget):
         current = document.sections.section_at(pos)
         if current is not None:
             self.section_box.setCurrentText(current.name)
+        self.section_box.blockSignals(False)
 
-    def _apply(self) -> None:
+    def _rebuild(self, state: BlockState | None) -> None:
+        while self.form.rowCount():
+            self.form.removeRow(0)
+        self._editors.clear()
+        self._layout_key = None
+        if state is None:
+            return
+        for prop in state.block.properties:
+            editor: Any
+            values = prop.values
+            if values == (True, False):
+                editor = _Toggle(prop, lambda v, p=prop: self._pick(p, v))
+            elif all(isinstance(v, int) and not isinstance(v, bool) for v in values):
+                editor = _Stepper(values, lambda v, p=prop: self._pick(p, v), prop.name)
+            else:
+                editor = _Choice(prop, lambda v, p=prop: self._pick(p, v))
+            self.form.addRow(prop.name, editor)
+            self._editors[prop.name] = editor
+
+    # ------------------------------------------------------------------ edits
+    def _pick(self, prop: Property, value: Any) -> None:
+        if self._pos is None or self._state is None or self._state.get(prop) == value:
+            if self._state is not None:
+                self._editors[prop.name].show_value(self._state.get(prop))
+            return
+        pos, state = self._pos, self._state.with_(prop, value)
+        _later(lambda: self.apply_requested.emit(pos, state))
+
+    def _pick_source(self, kind: str | None, strength: int | None) -> None:
         if self._pos is None or self._state is None:
             return
-        state = self._state
-        for prop in state.block.properties:
-            state = state.with_(prop, self._editors[prop.name].currentData())
-        self.apply_requested.emit(self._pos, state)
-
-    def _apply_source(self) -> None:
-        if self._pos is not None:
-            kind = str(self.source_kind.currentData())
-            self.source_requested.emit(self._pos, kind, self.source_strength.value())
+        current = sources.kind_of(self._state)
+        kind = kind or current
+        if kind is None:
+            return
+        value = self.source_strength.value if strength is None else strength
+        pos = self._pos
+        _later(lambda: self.source_requested.emit(pos, kind, int(value)))
 
     def _turn_page(self, step: int) -> None:
         if self._pos is not None and self._page is not None:
-            self.page_requested.emit(self._pos, self._page + step)
+            pos, page = self._pos, self._page + step
+            _later(lambda: self.page_requested.emit(pos, page))
 
     def _section_changed(self, index: int) -> None:
         if self._pos is not None:

@@ -172,3 +172,42 @@ def test_info_overlay_lists_signal_values(app: object) -> None:
     assert any(kind == "comparator" for _, _, kind in labels)
     window.document.dirty = False
     window.close()
+
+
+def test_inspector_controls_apply_immediately(app: object) -> None:
+    from redsim.editor import sources
+    from redsim.editor.placement import PlaceRequest
+    from redsim.ui.main_window import MainWindow
+    from redsim.world.properties import DELAY, FACING, HORIZONTAL_FACING, LOCKED
+
+    def settle() -> None:
+        for _ in range(3):
+            QtWidgets.QApplication.processEvents()
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("repeater[facing=north,delay=1]"))
+    window._select((0, 1, 0))
+    editors = window.inspector._editors
+    editors["facing"].buttons[Direction.EAST].click()
+    settle()
+    assert document.state_at((0, 1, 0)).get(HORIZONTAL_FACING) is Direction.EAST
+    editors["delay"].next.click()
+    settle()
+    assert document.state_at((0, 1, 0)).get(DELAY) == 2
+    editors["locked"].click()
+    settle()
+    assert document.state_at((0, 1, 0)).get(LOCKED) is True
+
+    document.place_source((2, 1, 0), "barrel", 6, PlaceRequest(Direction.UP, 0.0, 60.0))
+    window._select((2, 1, 0))
+    window.inspector.kind_buttons["lectern"].click()
+    settle()
+    assert document.state_at((2, 1, 0)).is_(blocks.LECTERN)
+    assert sources.strength_at(document.level, (2, 1, 0)) == 6
+    window.inspector.source_strength.next.click()
+    settle()
+    assert sources.strength_at(document.level, (2, 1, 0)) == 7
+    assert document.state_at((2, 1, 0)).has(FACING) is False
+    window.document.dirty = False
+    window.close()

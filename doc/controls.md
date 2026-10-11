@@ -97,8 +97,8 @@ hides the annotation outlines.
 
 The palette's **Signal sources** section (barrel, lectern, cake; hover for how they
 differ) places a source at the **Source strength** chosen below the list. In the inspector,
-a source shows a **Signal source** row: pick a kind and strength and press *Set* to change
-it or swap the block in place (one `/setblock` edit each). Lecterns also get *◀ Page* /
+a source shows a **Signal source** row: kind buttons swap the block in place, the strength
+stepper changes the value (one `/setblock` edit each, applied at once). Lecterns also get *◀ Page* /
 *Page ▶*, which turn the page like a player (the comparator value changes and the lectern
 sends a 2-tick pulse into the block below). Details: [[mechanics/analog-sources]].
 
@@ -106,8 +106,11 @@ sends a 2-tick pulse into the block below). Details: [[mechanics/analog-sources]
 
 - **Q / Shift+Q** turns the block under the cursor (repeaters, comparators, pistons facing
   sideways, levers, buttons, torches, wire connections). Up/down facings do not turn.
-- **Inspector:** left-click a block in NORMAL mode, choose any property (facing, delay,
-  mode, …) and press *Apply (/setblock)*. This covers everything Q cannot.
+- **Inspector:** left-click a block in NORMAL mode. Every property has a direct control
+  that applies at once: facing as arrow buttons (↑N →E ↓S ←W, up/down), booleans as
+  toggle buttons, numbers as ◀ value ▶ steppers, other choices as buttons. Signal sources
+  get kind buttons (barrel/lectern/cake: swap in place) and a strength stepper. Each click
+  is one undo step.
 - Both are `/setblock` edits ([[decisions]] ADR-013): the new state is set directly, then
   neighbors update. A wall torch turned away from its wall stays until a neighbor update
   pops it, as in the game.
