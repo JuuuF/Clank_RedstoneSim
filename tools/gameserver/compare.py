@@ -1,7 +1,8 @@
 """Run the same scenario in the simulator and in the sandboxed 26.3 server, tick by tick.
 
-A scenario is built only from ``/setblock`` commands (replace mode), which the simulator
-mirrors exactly (``Action("setblock", ...)`` ports ``SetBlockCommand``). Inputs are applied
+A scenario is built only from ``/setblock`` commands (replace mode, optionally with
+block-entity data), which the simulator mirrors exactly (``Action("setblock", ...)`` ports
+``SetBlockCommand``). Inputs are applied
 between ticks, like any command or player action. After every tick, the full block state of
 each watched position in the simulator is checked in the game with ``execute if block``;
 mismatches are resolved property by property so the report shows the real state.
@@ -37,13 +38,16 @@ class Scenario:
     name: str
     description: str
     size: tuple[int, int]  # floor footprint (x, z) starting at relative (0, 0)
-    setup: list[tuple[Pos, str]]
+    #: ``(rel, state)`` or ``(rel, state, nbt)``; ``nbt`` is the simulator's block-entity
+    #: JSON (``BlockEntity.to_json``), translated for the game by ``game_nbt``.
+    setup: list[tuple[Any, ...]]
     watch: list[Pos]
     ticks: int
     inputs: dict[int, list[tuple[Pos, str]]] = field(default_factory=dict)
     #: Region commands after ``t`` ticks (applied after ``inputs``):
     #: ``("fill", rel_a, rel_b, state)``, ``("clone", rel_a, rel_b, rel_destination)``, or
-    #: ``("clone_move" | "clone_force", rel_a, rel_b, rel_destination)`` (``replace move/force``).
+    #: ``("clone_move" | "clone_force", rel_a, rel_b, rel_destination)`` (``replace move/force``),
+    #: or ``("item", rel, slot, (item_id | None, count))`` (``/item replace block``).
     #: The cloned area must have no pending scheduled ticks (the simulator's paste does
     #: not copy ticks, ``/clone`` does).
     commands: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
@@ -94,8 +98,9 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
     engine = Engine()
     engine.level.game_time = start_time
     build_terrain(engine, origin, scenario.size)
-    for rel, state in scenario.setup:
-        engine.apply(Action("setblock", absolute(origin, rel), state))
+    for rel, state, *nbt in scenario.setup:
+        payload = {"nbt": nbt[0]} if nbt else None
+        engine.apply(Action("setblock", absolute(origin, rel), state, payload=payload))
     frames = [observe_sim(engine, scenario, origin)]
     for tick in range(scenario.ticks):
         for rel, state in scenario.inputs.get(tick, []):
@@ -110,6 +115,10 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
 def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action:
     from redsim.editor.clipboard import Prefab, Region
 
+    if command[0] == "item":
+        _, rel, slot, (item, count) = command
+        payload = {"slot": slot, "item": item, "count": count}
+        return Action("container_item", absolute(origin, rel), payload=payload)
     kind, rel_a, rel_b, last = command
     a, b = absolute(origin, rel_a), absolute(origin, rel_b)
     if kind == "fill":
@@ -122,6 +131,11 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
 
 
 def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
+    if command[0] == "item":
+        _, rel, slot, (item, count) = command
+        x, y, z = absolute(origin, rel)
+        stack = f"{item or 'minecraft:air'} {count}"
+        return f"item replace block {x} {y} {z} container.{slot} with {stack}"
     kind, rel_a, rel_b, last = command
     a, b = absolute(origin, rel_a), absolute(origin, rel_b)
     corners = f"{a[0]} {a[1]} {a[2]} {b[0]} {b[1]} {b[2]}"
@@ -237,7 +251,8 @@ def run_game(
         server.run(
             [
                 f"setblock {' '.join(map(str, absolute(origin, rel)))} {s}"
-                for rel, s in scenario.setup
+                + (snbt(game_nbt(nbt[0])) if nbt else "")
+                for rel, s, *nbt in scenario.setup
             ]
         )
     )
@@ -253,6 +268,42 @@ def run_game(
         server.step(1)
         frames.append(observe_game(server, sim_frames[tick + 1], origin))
     return frames
+
+
+class _Byte(int):
+    """An NBT byte (``1b``)."""
+
+
+def game_nbt(nbt: dict[str, Any]) -> dict[str, Any]:
+    """The simulator's block-entity JSON in the game's NBT layout: slot numbers are bytes,
+    and a lectern book's page count becomes a ``writable_book_content`` page list."""
+    data = json.loads(json.dumps(nbt))
+    for item in data.get("Items", []):
+        item["Slot"] = _Byte(item["Slot"])
+    book = data.get("Book")
+    if book is not None and "pages" in book:
+        pages = [str(i + 1) for i in range(book.pop("pages"))]
+        book["components"] = {"minecraft:writable_book_content": {"pages": pages}}
+    return data
+
+
+def snbt(value: Any) -> str:
+    """Stringified NBT for commands."""
+    if isinstance(value, dict):
+        items = []
+        for key, item in value.items():
+            name = key if re.fullmatch(r"[A-Za-z0-9_]+", key) else json.dumps(key)
+            items.append(f"{name}:{snbt(item)}")
+        return "{" + ",".join(items) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(snbt(item) for item in value) + "]"
+    if isinstance(value, _Byte):
+        return f"{int(value)}b"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int | float):
+        return str(value)
+    return json.dumps(str(value))
 
 
 # ---------------------------------------------------------------- driver

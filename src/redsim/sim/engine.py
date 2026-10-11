@@ -32,7 +32,16 @@ class Phase(Enum):
 
 
 ActionKind = Literal[
-    "place", "break", "use", "setblock", "set_block", "fill", "clone", "clone_region"
+    "place",
+    "break",
+    "use",
+    "setblock",
+    "set_block",
+    "fill",
+    "clone",
+    "clone_region",
+    "container_item",
+    "lectern_page",
 ]
 
 #: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
@@ -46,7 +55,8 @@ class Action:
 
     * ``place``/``break``/``use``: what a player does (``BlockItem.place``,
       ``ServerPlayerGameMode.destroyBlock``, ``useWithoutItem``).
-    * ``setblock``: the ``/setblock`` command in replace mode (``SetBlockCommand.setBlock``).
+    * ``setblock``: the ``/setblock`` command in replace mode (``SetBlockCommand.setBlock``);
+      ``payload={"nbt": {...}}`` adds block-entity data like ``/setblock … {…}``.
     * ``set_block``: a raw ``Level.setBlock`` with explicit flags (editor tool, not vanilla).
     * ``fill``: ``/fill <pos> <payload["to"]> <state>`` in replace mode (``FillCommand``).
     * ``clone``: place a captured region at ``pos`` like ``/clone`` (replace mode, not strict)
@@ -55,6 +65,11 @@ class Action:
     * ``clone_region``: the full ``/clone <begin> <end> <pos> replace <mode>`` reading the
       live source region (``payload``: ``begin``, ``end``, ``mode`` = normal/force/move);
       scheduled ticks inside the region are copied. Used to drag selections.
+    * ``container_item``: ``/item replace block <pos> container.<slot> with <item> <count>``
+      (``payload``: ``slot``, ``item`` or None for empty, ``count``): ``Container.setItem``.
+    * ``lectern_page``: a player turning a lectern's book to ``payload["page"]``
+      (``LecternBlockEntity.setPage``: comparator update and a 2-tick pulse). Not a command;
+      there is no player on the test server, so this path is verified by source reading.
     """
 
     kind: ActionKind
@@ -273,8 +288,13 @@ class Engine:
                     info.detail["info"] = "use: no effect"
             elif action.kind == "setblock":
                 assert action.state is not None
-                if not self._setblock_command(action.pos, action.state):
+                nbt = action.payload.get("nbt") if action.payload else None
+                if not self._setblock_command(action.pos, action.state, nbt):
                     info.detail["info"] = "setblock: no change"
+            elif action.kind == "container_item":
+                self._container_item(action.pos, action.payload)
+            elif action.kind == "lectern_page":
+                self._lectern_page(action.pos, int(action.payload["page"]))
             elif action.kind == "fill":
                 assert action.state is not None
                 tx, ty, tz = action.payload["to"]
@@ -310,9 +330,10 @@ class Engine:
         if placed.is_(state.block):
             placed.block.set_placed_by(level, pos, placed)
 
-    def _setblock_command(self, pos: Pos, text: str) -> bool:
+    def _setblock_command(self, pos: Pos, text: str, nbt: dict[str, Any] | None = None) -> bool:
         """``SetBlockCommand.setBlock`` (replace mode, not strict): ``BlockInput.place`` with
-        flags 2|256 (shape-adjusted state, explicit properties re-applied), then
+        flags 2|256 (shape-adjusted state, explicit properties re-applied, then the block
+        entity data loaded; ``setChanged`` only if the data changed, ``BlockInput`` L79), then
         ``updateNeighboursOnBlockSet``."""
         from redsim.world.blocks import parse_state_explicit
 
@@ -326,10 +347,43 @@ class Engine:
             for prop in explicit:
                 placed = placed.with_(prop, state.get(prop))
         flags = UpdateFlags.CLIENTS | UpdateFlags.SKIP_BLOCK_ENTITY_SIDEEFFECTS
-        if not level.set_block(pos, placed, flags):
+        affected = level.set_block(pos, placed, flags)
+        if nbt is not None:
+            entity = level.get_block_entity(pos)
+            if entity is not None:
+                before = entity.to_json()
+                entity.load_json(nbt)
+                if entity.to_json() != before:
+                    affected = True
+                    current = level.get_block_state(pos)
+                    if not current.is_air:  # BlockEntity.setChanged
+                        level.update_neighbour_for_output_signal(pos, current.block)
+        if not affected:
             return False  # "Could not set the block": no neighbor updates either
         level.update_neighbours_on_block_set(pos, old_state)
         return True
+
+    def _container_item(self, pos: Pos, payload: dict[str, Any]) -> None:
+        """``/item replace block``: ``Container.setItem`` on one slot (``setChanged``)."""
+        from redsim.world.blocks.container import BarrelBlockEntity
+
+        entity = self.level.get_block_entity(pos)
+        if not isinstance(entity, BarrelBlockEntity):
+            raise ActionError(f"no container at {pos}")
+        slot = int(payload["slot"])
+        if not 0 <= slot < entity.SIZE:
+            raise ActionError(f"slot {slot} does not exist")
+        item = payload.get("item")
+        entity.set_item(self.level, slot, (item, int(payload["count"])) if item else None)
+
+    def _lectern_page(self, pos: Pos, page: int) -> None:
+        """A player turning the page (``LecternMenu`` → ``LecternBlockEntity.setPage``)."""
+        from redsim.world.blocks.lectern import LecternBlockEntity
+
+        entity = self.level.get_block_entity(pos)
+        if not isinstance(entity, LecternBlockEntity) or not entity.has_book():
+            raise ActionError(f"no lectern with a book at {pos}")
+        entity.set_page(self.level, page)
 
     def _fill_command(self, corner_a: Pos, corner_b: Pos, text: str) -> None:
         """``FillCommand.fillBlocks`` (replace mode, not strict): place every position like

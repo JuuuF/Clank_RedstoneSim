@@ -6,6 +6,8 @@ dedicated server has no player to flip a lever. ``inputs[t]`` is applied after `
 
 from __future__ import annotations
 
+from typing import Any
+
 from tools.gameserver.compare import Scenario
 
 RB = "minecraft:redstone_block"
@@ -414,6 +416,70 @@ CLONE_MOVE_RUNNING = Scenario(
     },
 )
 
+
+def _items(total: int, item: str = "minecraft:redstone", stack: int = 64) -> dict[str, Any]:
+    """Barrel NBT holding ``total`` items in full stacks plus one partial stack."""
+    counts = [stack] * (total // stack) + ([total % stack] if total % stack else [])
+    return {"Items": [{"Slot": i, "id": item, "count": c} for i, c in enumerate(counts)]}
+
+
+BARREL_FILLS = [1, 123, 124, 863, 864, 1727, 1728]
+BARREL_SIGNALS = Scenario(
+    name="barrel_signals",
+    description=(
+        "Comparators read barrels at the fill thresholds of signals 1/2, 7/8 and 14/15 "
+        "(64-stacks), and 14 slots of ender pearls (16-stacks); later /item replace adds "
+        "one item (123 -> 124: signal 1 -> 2) and empties a slot (1728 -> 1664: 15 -> 14)."
+    ),
+    size=(2 * len(BARREL_FILLS) + 1, 3),
+    setup=[((2 * i, 1, 1), "minecraft:comparator[facing=north]") for i in range(8)]
+    + [
+        ((2 * i, 1, 0), "minecraft:barrel[facing=up]", _items(total))
+        for i, total in enumerate(BARREL_FILLS)
+    ]
+    + [((14, 1, 0), "minecraft:barrel[facing=up]", _items(14 * 16, "minecraft:ender_pearl", 16))],
+    watch=[(2 * i, 1, 1) for i in range(8)],
+    ticks=12,
+    commands={
+        3: [("item", (2, 1, 0), 26, ("minecraft:redstone", 1))],
+        6: [("item", (12, 1, 0), 0, (None, 1))],
+    },
+)
+
+LECTERN_PAGES = [(1, 0), (2, 0), (2, 1), (3, 1), (15, 0), (15, 7), (15, 14), (10, 3), (10, 20),
+                 (100, 50), (100, 99)]  # fmt: skip
+LECTERN_SIGNALS = Scenario(
+    name="lectern_signals",
+    description=(
+        "Comparators read lecterns holding writable books of N pages open at page p "
+        "(floor(p / (N - 1) * 14) + 1, page clamped to the book), a lectern without a book "
+        "(0) and one whose state says has_book=false although it holds a book (0)."
+    ),
+    size=(2 * len(LECTERN_PAGES) + 5, 3),
+    setup=[
+        ((2 * i, 1, 1), "minecraft:comparator[facing=north]") for i in range(len(LECTERN_PAGES) + 2)
+    ]
+    + [
+        (
+            (2 * i, 1, 0),
+            "minecraft:lectern[has_book=true]",
+            {"Book": {"id": "minecraft:writable_book", "count": 1, "pages": n}, "Page": page},
+        )
+        for i, (n, page) in enumerate(LECTERN_PAGES)
+    ]
+    + [
+        ((2 * len(LECTERN_PAGES), 1, 0), "minecraft:lectern"),
+        (
+            (2 * len(LECTERN_PAGES) + 2, 1, 0),
+            "minecraft:lectern[has_book=false]",
+            {"Book": {"id": "minecraft:writable_book", "count": 1, "pages": 5}, "Page": 2},
+        ),
+    ],
+    watch=[(2 * i, 1, 1) for i in range(len(LECTERN_PAGES) + 2)]
+    + [(2 * i, 1, 0) for i in range(len(LECTERN_PAGES) + 2)],
+    ticks=4,
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -438,6 +504,8 @@ ALL = [
     CLONE_INVERTER,
     FILL_REMOVES_LINE,
     CLONE_MOVE_RUNNING,
+    BARREL_SIGNALS,
+    LECTERN_SIGNALS,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}
