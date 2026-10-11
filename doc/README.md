@@ -9,7 +9,7 @@ To click through the simulator: [[tour]].
 
 ## Navigation
 
-- **Project:** [[project-state]] · [[tour]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]]
+- **Project:** [[project-state]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]
@@ -19,18 +19,21 @@ To click through the simulator: [[tour]].
 - Milestones 0–4 are done for the initial scope, and pistons (M5) work: lever, buttons,
   lamp, torch (with burnout), wire, repeater, comparator, cake, pistons, sticky pistons,
   slime and honey.
-- 139 tests pass. A sandboxed 26.3 server confirms 22 of 22 recorded scenarios tick for
+- 165 tests pass. A sandboxed 26.3 server confirms 22 of 22 recorded scenarios tick for
   tick, including a repeater priority race, comparator modes, QC doors and block spitting.
 - The 3D editor works (`python -m redsim`): rewind/replay (M6), copy/paste with `/clone`
   semantics, prefabs and groups (M7). All seven milestones have a working core.
-- Work happens on feature branches (latest: `feat/contraptions`); nothing has been pushed.
+- After the owner's first hands-on session: real-time running (ADR-017), and the new
+  controls: modes, orbit camera, rebindable keymap (ADR-018, [[controls]]).
+- Work happens on feature branches; verified work is fast-forwarded to `main` and pushed.
 
 ## Owner decisions on record
 
 - In-game testing through a sandboxed dedicated server: approved, testing only (ADR-008).
 - Torch burnout: implemented, since it is deterministic in 26.3 (ADR-010).
 - Test circuits start simple: door, sliding piston, lamp, inverters, AND gates, …
-- Controls: Minecraft-style (WASD + mouse look on right-drag, LMB break, RMB place, MMB pick).
+- Controls: vim-like modes, Blender-style orbit camera, rebindable keymap ([[controls]],
+  [[ui-direction]]); replaces the first Minecraft-style fly controls.
 - Wiki pages are hints; the source and the game are proof (ADR-011).
 - Docs are the project's long-term memory (ADR-012).
 

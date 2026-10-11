@@ -31,9 +31,9 @@ in [`doc/`](doc/README.md), which is also an Obsidian vault.
 
 ## Editor controls
 
-WASD/Space/Shift fly (Ctrl faster) · right-drag look · left click break · right click place
-or use · Shift+right click place · middle click pick · Ctrl+click inspect · 1–9 hotbar ·
-P run/pause · T step tick · E step event · Shift+T tick back · Shift+E step back · timeline
-slider to rewind/replay · B mark selection corners · Ctrl+C/Ctrl+V copy/paste · R rotate
-clipboard · Del clear selection · Ctrl+Z/Ctrl+Y undo/redo (rewinds to before the last edit) ·
-F1 help.
+Modes: **Esc** NORMAL (left click inspects, right click uses levers etc.), **B** BUILD (left
+breaks, right places), **V** SELECT (click or drag boxes). Camera: middle-drag orbits around
+the pivot, Shift+middle-drag pans, Ctrl+wheel moves the pivot up/down, wheel zooms, WASD
+moves the pivot, F focuses the block under the cursor. Space runs/pauses, → / ← step a tick
+forward/back. All bindings are rebindable (Settings → Edit keymap file). Full list:
+[`doc/controls.md`](doc/controls.md); in the app: F1.

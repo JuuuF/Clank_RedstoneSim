@@ -22,8 +22,10 @@ engine depend on it ([[decisions]] ADR-007).
 
 0. ☑ **Real-time speed:** chunked, dirty-tracked meshes; simulation decoupled from
    rendering; ticks/s display (ADR-017).
-0. **Interaction redesign:** vim-like modes, orbit camera around a visible pivot, Axiom-like
-   selections, hot-swappable analog source block.
+0. ☑ **Interaction redesign, part 1:** vim-like modes, orbit camera around a visible pivot,
+   rebindable keymap (ADR-018, [[controls]]).
+0. **Interaction redesign, part 2:** Axiom-like selections (handles, move/copy in place),
+   hot-swappable analog source block.
 
 1. Owner review of the editor on the real desktop.
 2. Diagnostics polish (causal trace tree, "why did this change?").

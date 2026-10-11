@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, branch `feat/realtime-render` (merged into `main`).*
+*Last updated: 2026-10-11, branch `feat/controls` (merged into `main`).*
 
 ## Summary
 
@@ -19,8 +19,8 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   container analog source (barrel with inventory).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick. All 22 recorded scenarios match ([[experiments/index]]).
-- **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, fly camera,
-  cursor picking, place/break/use with player-like orientation, block palette and hotbar,
+- **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, orbit
+  camera, vim-like modes and a rebindable keymap ([[controls]]), cursor picking, place/break/use with player-like orientation, block palette and hotbar,
   inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
   step tick, step event, speed), diagnostics (scheduled ticks, block events, last-step
   trace), undo/redo for edits, and JSON save/open of the complete engine state. Launch with
@@ -63,7 +63,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
 | `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
 | `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
-| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes, run pacing | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_pacing.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
+| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes, run pacing, orbit camera, keymap and modes | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_pacing.py`, `tests/ui/test_camera.py`, `tests/ui/test_keymap.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
 
@@ -88,7 +88,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **148 tests pass** (2026-10-11), including the JDK oracle, the 22
+- `python -m pytest`: **165 tests pass** (2026-10-11), including the JDK oracle, the 22
   game-recording replays, save round trips, chunked-mesh consistency, run pacing and
   offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
 - Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match in one
@@ -111,15 +111,16 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   indented causal list (no interactive tree yet).
 - Saves contain the current state only, not the timeline history.
 - Section edits are not part of undo/rewind.
-- The GUI was verified offscreen (smoke test) and launched once on the owner's desktop
-  (XWayland, OpenGL 3.3) with the example world; it has not yet been used interactively by
-  the owner.
+- The GUI is verified offscreen (smoke tests) and on the owner's desktop (XWayland,
+  OpenGL 3.3) with scripted input: orbit, pan, Ctrl+wheel, zoom, mode keys, BUILD place and
+  SELECT drag behave as specified. The owner has used the earlier fly-camera version; the
+  new controls await their hands-on review.
 
 ## Next steps (in order)
 
-Owner feedback of 2026-10-11 ([[ui-direction]]) comes first. Real-time speed is done
-(ADR-017); next is the interaction redesign: a rebindable keymap, the orbit camera, modes
-(NORMAL/BUILD/SELECT), then Axiom-like selections and the analog source block.
+Owner feedback of 2026-10-11 ([[ui-direction]]) comes first. Real-time speed (ADR-017)
+and the new controls (ADR-018: keymap, orbit camera, modes) are done; next are Axiom-like
+selections (handles, move/copy in place) and the hot-swappable analog source block.
 
 All seven roadmap milestones have a working core. Suggested next steps:
 

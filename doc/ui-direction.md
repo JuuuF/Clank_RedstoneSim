@@ -21,7 +21,7 @@ Implementation status is tracked in [[roadmap]] and [[project-state]].
   - mouse wheel moves the pivot up and down;
   - dragging the mouse moves it horizontally;
   - Ctrl+wheel zooms in and out, as does middle-click dragging.
-- Still open: which input orbits (rotates) around the pivot.
+- Resolved by the decisions below (middle-drag orbits).
 
 ## Decisions (owner, 2026-10-11)
 
@@ -32,6 +32,10 @@ Implementation status is tracked in [[roadmap]] and [[project-state]].
 | Build clicks | Minecraft-style: **left breaks, right places**, middle picks the block type. |
 | Selection | Left-drag draws box selections in SELECT mode. |
 | Signal sources | Hot-swappable source block backed by real blocks: **container (barrel/chest)** and **lectern** first; cake stays available. |
+
+**Status (2026-10-11):** camera, modes, build clicks, box selection by left-drag and the
+rebindable keymap are implemented ([[controls]], ADR-018). Open: Axiom-like handles,
+moving selections in place, and the analog source block.
 
 ## Looks
 

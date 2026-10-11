@@ -234,20 +234,19 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 |---|---|
 | `style.py` | Block → colored boxes in pixels by functional category (no textures); wire color uses the game's power formula; orientation transforms |
 | `geometry.py` | Vectorized mesh building per 8³ chunk with dirty tracking (`Mesher`, `ChunkedMesh`: face culling between full cubes, separate translucent buffer, checkerboard tint) and CPU picking (voxel traversal + ray/box tests on the same boxes) |
-| `camera.py` | Fly camera with Minecraft yaw/pitch conventions; view/projection matrices; cursor rays |
+| `camera.py` | Orbit camera around a pivot with Minecraft yaw/pitch conventions; view/projection matrices; cursor rays; JSON form (reads the old fly-camera form) |
+| `keymap.py` | All input bindings as actions with defaults; user overrides from a JSON file; conflict checks; mode-aware mouse lookup (no Qt) |
 | `renderer.py` | One shader through PySide6's GL wrappers; an opaque and a translucent buffer per chunk, plus one line buffer |
 | `pacing.py` | Real-time run pacing (`TickPacer`) and rate measurement (`RateMeter`), no Qt |
-| `viewport.py` | `QOpenGLWidget`: input handling, hover, selection; emits edit signals only |
+| `viewport.py` | `QOpenGLWidget`: modes, mouse gestures via the keymap, orbit camera, hover, selection box, pivot and mode badge; emits edit signals only |
 | `panels.py` | Palette (with hotbar), inspector, simulation controls, diagnostics, sections, controls help |
 | `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run loop |
 | `app.py` | Entry point; selects `xcb` under Wayland; requests an OpenGL 3.3 core context |
 
-Controls (owner-confirmed, Minecraft-like): WASD/Space/Shift fly (Ctrl faster); hold the
-right button and drag to look; left click breaks; right click places, or uses a usable block
-(Shift+right click always places); middle click picks; Ctrl+left click selects for the
-inspector; 1–9 hotbar; P run/pause, T step tick, E step event, Shift+T/Shift+E back;
-B mark selection corners, Ctrl+C/Ctrl+V copy/paste, R rotate clipboard, Del clear
-selection; Ctrl+Z/Ctrl+Y undo/redo.
+Controls: vim-like modes (NORMAL/BUILD/SELECT), an orbit camera around a drawn pivot and a
+rebindable keymap; the full reference is [[controls]], the design is ADR-018. Mouse input
+is resolved as *(mode, modifiers, button, click|drag|wheel) → action*; a press becomes a drag
+after 4 pixels of movement, otherwise a click on release.
 
 The viewport targets the block under the mouse cursor (an editor convenience; the game
 uses the screen center). The renderer never writes world state.

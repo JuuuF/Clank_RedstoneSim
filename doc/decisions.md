@@ -232,3 +232,23 @@ Short records. Each one states the context, the decision, and its trade-offs.
   50 000 blocks, a journal in `Level._chunk_set_block_state` can replace the diff. Vertices
   are world-space float32, which loses precision at very large coordinates (chunk-relative
   vertices plus a per-chunk offset would fix that).
+
+## ADR-018
+
+**Controls: modes, orbit camera and a rebindable keymap**
+
+- **Context:** The owner disliked overloaded clicks and the Shift+T rewind (Shift also moved
+  the fly camera down) and chose vim-like modes, a Blender-style orbit camera, Minecraft
+  build clicks and a keymap that can be rebound later ([[ui-direction]]).
+- **Decision:** All inputs are named actions with defaults in `redsim.ui.keymap`; a JSON
+  file overrides them. Mouse actions are prefixed with the mode they belong to
+  (`build.place`) or are mode-independent (`camera.orbit`, `pick`); mode-specific bindings
+  win. The camera is an orbit camera (pivot, distance, yaw, pitch). Modifier keys never act
+  on their own, so they cannot collide with shortcuts; rewinding moved to ← / Shift+←.
+  Choosing a block enters BUILD. Placement orientation uses the cursor ray, i.e. a player
+  looking from the camera at the targeted block.
+- **Alternatives:** Qt's own shortcut settings only cover keys, not mouse gestures or held
+  keys. A rebinding dialog can be built on the same keymap later.
+- **Trade-offs:** Several defaults share a key across contexts (Left Click in each mode);
+  conflicts are only reported within one context. Laptop users without a middle button get
+  Alt+left drag (Blender's emulation).

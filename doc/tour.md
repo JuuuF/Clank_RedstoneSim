@@ -9,8 +9,10 @@ redsim examples/showcase.redsim.json     # or: python -m redsim examples/showcas
 
 The camera opens looking south over eight circuits, one per row. Inputs are on the left,
 outputs on the right. Blue outlines mark inputs, green outlines outputs, orange the
-processing parts, purple the clock, and white boxes are groups. Fly with WASD, Space and
-Shift; hold the right mouse button and drag to look around.
+processing parts, purple the clock, and white boxes are groups. Middle-drag orbits around
+the orange pivot, Shift+middle-drag pans, the wheel zooms and Ctrl+wheel moves the pivot up
+and down. You start in NORMAL mode: right click uses levers, left click inspects. All
+controls: [[controls]].
 
 ## Things to try
 
@@ -24,7 +26,7 @@ Shift; hold the right mouse button and drag to look around.
 4. **AND gate.** The lamp only lights when both levers are on.
 5. **Comparator (subtract).** The cake behind it gives 14. Flip the side lever: the side
    input becomes 14, so the output drops to 0. Right-click the cake to eat a slice and
-   watch the values change. Ctrl+click the comparator to see its stored output in the
+   watch the values change. Left-click the comparator to see its stored output in the
    inspector.
 6. **Sliding block.** Flip the lever: the sticky piston pushes the planks, and pulls them
    back when switched off.
@@ -42,12 +44,14 @@ per second and frames per second. It should hold the target rate (20 by default)
 - **Step event (E)** runs one engine step at a time. The **Diagnostics** panel shows the
   pending scheduled ticks and, under "Last step trace", every neighbor update and block
   change that step caused.
-- **Rewind:** Shift+T (tick back), Shift+E (step back), or drag the timeline slider. Replay
-  is exact.
+- **Rewind:** ← (tick back), Shift+← (step back), or drag the timeline slider. Replay is
+  exact. → steps a tick forward, Shift+→ one event.
 - **Contraptions → Groups** lists each circuit's ports with live values. Double-click an
   input port to flip its lever.
-- **Copy a circuit:** press B on two opposite corners, Ctrl+C, point somewhere else and
-  press Ctrl+V. Press R to rotate the clipboard first.
+- **Copy a circuit:** press V (SELECT mode), drag a box over the circuit, Ctrl+C, point
+  somewhere else and press Ctrl+V. Press R to rotate the clipboard first.
+- **Build:** press B (or a hotbar key 1–9): left click breaks, right click places where the
+  white outline shows.
 - Ctrl+Z undoes the last edit (it rewinds to just before it).
 
 Regenerate the file with `python -m tools.make_examples`.
