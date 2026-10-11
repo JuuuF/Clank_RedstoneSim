@@ -2,11 +2,11 @@
  "scenario": "clone_move_running",
  "description": "/clone ... replace move while circuits run: a delay-4 repeater is moved away from its input while its scheduled tick is pending (the tick is copied, so the moved repeater still turns on); a powered wire line is moved one block onto itself (overlap: the source is cleared first).",
  "origin": [
-  24,
+  528,
   0,
   0
  ],
- "start_time": 15,
+ "start_time": 693,
  "fingerprint": "39f1255a322b33b8",
  "game_version": "26.3",
  "ticks": 16,

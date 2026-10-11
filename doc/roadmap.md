@@ -13,7 +13,7 @@ state is in [[project-state]].
 | 5 | Pistons and timing-sensitive behavior | ◐ | core done and game-verified (EXP-015…020); open: scheduled-tick-driven 0-tick cases, observers |
 | 6 | Playback, history, diagnostics | ☑ | timeline rewind/replay, step/tick back, slider, warp, diagnostics panel; polish open (trace tree) |
 | 7 | Contraptions and abstraction | ☑ | selection, /clone paste, rotation, /fill delete, prefab library, groups with ports; abstract models deferred (ADR-016) |
-| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (22/22 match) |
+| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (23/23 match) |
 
 Order note: the world model was built before the editor because both the editor and the
 engine depend on it ([[decisions]] ADR-007).
@@ -24,8 +24,9 @@ engine depend on it ([[decisions]] ADR-007).
    rendering; ticks/s display (ADR-017).
 0. ☑ **Interaction redesign, part 1:** vim-like modes, orbit camera around a visible pivot,
    rebindable keymap (ADR-018, [[controls]]).
-0. **Interaction redesign, part 2:** Axiom-like selections (handles, move/copy in place),
-   hot-swappable analog source block.
+0. ☑ **Interaction redesign, part 2:** Axiom-like selections: handles, drag to move/copy
+   (`/clone … move|force`, ADR-019), paste preview.
+0. **Next:** hot-swappable analog source block; selection rotate/flip, stack/repeat.
 
 1. Owner review of the editor on the real desktop.
 2. Diagnostics polish (causal trace tree, "why did this change?").

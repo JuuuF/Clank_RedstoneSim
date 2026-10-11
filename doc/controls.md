@@ -12,7 +12,7 @@ panel is generated from the active keymap, so it always shows the real bindings.
 |---|---|---|---|---|
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
 | **BUILD** | B | break | place the palette block (Ctrl+right click: use) | — |
-| **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box |
+| **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
 - Middle click picks the block type under the cursor in every mode.
 - The badge in the bottom-left corner shows the mode and what the mouse buttons do.
@@ -21,6 +21,21 @@ panel is generated from the active keymap, so it always shows the real bindings.
 - In BUILD, a white outline shows where a right click will put the block.
 - Placed blocks are oriented like a player looking at the target from the camera along the
   cursor ray (`Viewport.player_view`).
+
+## Selections (SELECT mode, Axiom-style)
+
+- **Draw:** click a block, Shift+click another to extend, or drag across blocks.
+- **Resize:** each face of the box has a square handle (yellow when under the cursor). Drag
+  it to move that face along its axis.
+- **Move:** drag from a block inside the box. A translucent ghost and a white box show the
+  target; the wheel lifts or lowers it while dragging. Releasing runs
+  `/clone <box> <target> replace move`: one undoable edit, and pending scheduled ticks move
+  along (game-verified, [[experiments/index]] EXP-023).
+- **Copy:** Ctrl+drag from inside the box: `/clone … replace force` (the copy may overlap
+  the original). The selection follows the moved or copied blocks.
+- **Paste:** Ctrl+C copies the box; Ctrl+V shows the clipboard as a ghost at the cursor;
+  left click places it (`/clone` semantics), R rotates it, right click or Esc cancels.
+- **Delete:** Del fills the box with air (`/fill`).
 
 ## Camera (orbit around a pivot)
 
@@ -48,7 +63,7 @@ reason the old Shift+T rewind was disliked).
 | Shift+→ or E | step one event (engine step) |
 | ← / Shift+← | tick back / step back |
 | Ctrl+Z / Ctrl+Y | undo / redo (rewinds to just before the last edit) |
-| Ctrl+C / Ctrl+V | copy the selection box / paste at the block under the cursor |
+| Ctrl+C / Ctrl+V | copy the selection box / paste preview at the cursor (click places) |
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
 | R | rotate the clipboard 90° |
 | Del | clear the selection box (fill with air) |

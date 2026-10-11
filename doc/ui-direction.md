@@ -33,9 +33,10 @@ Implementation status is tracked in [[roadmap]] and [[project-state]].
 | Selection | Left-drag draws box selections in SELECT mode. |
 | Signal sources | Hot-swappable source block backed by real blocks: **container (barrel/chest)** and **lectern** first; cake stays available. |
 
-**Status (2026-10-11):** camera, modes, build clicks, box selection by left-drag and the
-rebindable keymap are implemented ([[controls]], ADR-018). Open: Axiom-like handles,
-moving selections in place, and the analog source block.
+**Status (2026-10-11):** camera, modes, build clicks and the rebindable keymap are
+implemented ([[controls]], ADR-018), as are Axiom-like selections: face handles to resize,
+drag to move, Ctrl+drag to copy, paste preview (ADR-019). Open: rotate/flip in place,
+stack/repeat, and the analog source block.
 
 ## Looks
 
@@ -45,6 +46,8 @@ moving selections in place, and the analog source block.
 
 ## Analog signal sources
 
+- Changing placed blocks: Q / Shift+Q rotate the block under the cursor; the inspector
+  edits any property (owner request, 2026-10-11).
 - Cake as the comparator source feels odd. Wanted: a **generic "signal strength source"**
   in the palette that maps to a real block (lectern, hopper, composter, container, …) and
   can be **hot-swapped** between them, with tooltips explaining how they differ

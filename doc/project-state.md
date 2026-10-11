@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, branch `feat/controls` (merged into `main`).*
+*Last updated: 2026-10-11, branch `feat/selections` (merged into `main`).*
 
 ## Summary
 
@@ -18,7 +18,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   (analog source), the redstone block, and simple and non-conducting blocks. Open: a
   container analog source (barrel with inventory).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 22 recorded scenarios match ([[experiments/index]]).
+  tick. All 23 recorded scenarios match ([[experiments/index]]).
 - **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, orbit
   camera, vim-like modes and a rebindable keymap ([[controls]]), cursor picking, place/break/use with player-like orientation, block palette and hotbar,
   inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
@@ -36,8 +36,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   changed; the run loop is paced by the wall clock and decoupled from drawing; the viewport
   shows the achieved ticks/s. Measured 19.9 ticks/s at target 20 on the owner's desktop
   (ADR-017).
-- **Contraptions (M7):** done for the core scope. Box selection, copy/paste with `/clone`
-  semantics (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
+- **Contraptions (M7):** done for the core scope. Axiom-style box selection with resize
+  handles, drag-to-move and drag-to-copy (full `/clone … move|force`, scheduled ticks
+  included, game-verified EXP-023), copy/paste with a preview and `/clone` semantics
+  (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
   a prefab library (save, import/export JSON), and groups with exposed input/output ports and
   live readings. Abstract (black-box) group models are deferred (ADR-016).
 
@@ -88,10 +90,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **165 tests pass** (2026-10-11), including the JDK oracle, the 22
+- `python -m pytest`: **176 tests pass** (2026-10-11), including the JDK oracle, the 23
   game-recording replays, save round trips, chunked-mesh consistency, run pacing and
   offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 22 of 22 scenarios match in one
+- Real-game comparisons (`python -m tools.gameserver.run`): 23 of 23 scenarios match in one
   fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
@@ -118,9 +120,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-Owner feedback of 2026-10-11 ([[ui-direction]]) comes first. Real-time speed (ADR-017)
-and the new controls (ADR-018: keymap, orbit camera, modes) are done; next are Axiom-like
-selections (handles, move/copy in place) and the hot-swappable analog source block.
+Owner feedback of 2026-10-11 ([[ui-direction]]) comes first. Real-time speed (ADR-017),
+the new controls (ADR-018) and Axiom-like selections (ADR-019) are done; next is the
+hot-swappable analog source block (container, lectern), then selection rotate/flip in place
+and stack/repeat.
 
 All seven roadmap milestones have a working core. Suggested next steps:
 

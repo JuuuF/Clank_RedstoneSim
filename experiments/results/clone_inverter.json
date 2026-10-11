@@ -2,11 +2,11 @@
  "scenario": "clone_inverter",
  "description": "A powered torch inverter (wire into a block, torch on top, lamp) at rest is copied with /clone; the copy settles, then its input is removed and both are compared.",
  "origin": [
-  0,
+  480,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 671,
  "fingerprint": "274f880861214a97",
  "game_version": "26.3",
  "ticks": 14,

@@ -48,8 +48,10 @@ per second and frames per second. It should hold the target rate (20 by default)
   exact. → steps a tick forward, Shift+→ one event.
 - **Contraptions → Groups** lists each circuit's ports with live values. Double-click an
   input port to flip its lever.
-- **Copy a circuit:** press V (SELECT mode), drag a box over the circuit, Ctrl+C, point
-  somewhere else and press Ctrl+V. Press R to rotate the clipboard first.
+- **Copy a circuit:** press V (SELECT mode), drag a box over the circuit, then Ctrl+drag
+  from inside the box to drop a copy elsewhere. Or Ctrl+C, then Ctrl+V shows a preview at
+  the cursor (R rotates it) and a left click places it. Plain drag from inside the box
+  moves the circuit; drag a face handle to resize the box.
 - **Build:** press B (or a hotbar key 1–9): left click breaks, right click places where the
   white outline shows.
 - Ctrl+Z undoes the last edit (it rewinds to just before it).

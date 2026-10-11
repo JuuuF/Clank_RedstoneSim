@@ -214,6 +214,8 @@ with `execute if block`. Details: [[experiments/index]], [[implementation-notes]
   relative, with state strings and block-entity data; JSON format `redsim-prefab`).
   `Prefab.rotated(n)` rotates offsets and states (`redsim.world.rotation`).
 - Paste = `Action("clone")` at the target, so it is recorded in the timeline (undo/replay).
+- Moving or copying a selection in place = `Action("clone_region")`, the full
+  `/clone … replace move|force` on the live world, scheduled ticks included (ADR-019).
   Delete = `Action("fill")` with air.
 - Groups name a region and expose ports (named input/output positions). They are
   annotations only: the circuit inside still simulates block by block with unchanged timing
@@ -238,6 +240,7 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | `keymap.py` | All input bindings as actions with defaults; user overrides from a JSON file; conflict checks; mode-aware mouse lookup (no Qt) |
 | `renderer.py` | One shader through PySide6's GL wrappers; an opaque and a translucent buffer per chunk, plus one line buffer |
 | `pacing.py` | Real-time run pacing (`TickPacer`) and rate measurement (`RateMeter`), no Qt |
+| `selection_tools.py` | Selection handles, resize and drag-plane math (no Qt); the edits are `/clone` actions (ADR-019) |
 | `viewport.py` | `QOpenGLWidget`: modes, mouse gestures via the keymap, orbit camera, hover, selection box, pivot and mode badge; emits edit signals only |
 | `panels.py` | Palette (with hotbar), inspector, simulation controls, diagnostics, sections, controls help |
 | `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run loop |

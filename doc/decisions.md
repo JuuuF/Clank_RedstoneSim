@@ -252,3 +252,18 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Trade-offs:** Several defaults share a key across contexts (Left Click in each mode);
   conflicts are only reported within one context. Laptop users without a middle button get
   Alt+left drag (Blender's emulation).
+
+## ADR-019
+
+**Selection drags are `/clone … move` and `/clone … force`**
+
+- **Context:** Axiom-like editing moves and copies selections in place. The simulator must
+  not invent an update order for that.
+- **Decision:** A drag becomes one engine action `clone_region` that ports the whole
+  `CloneCommands.clone` reading the live source: the overlap check (normal mode), the area
+  limit (32 768), block grouping, the clear list and barrier/air clearing of `move`, the
+  placement passes and `LevelTicks.copyAreaFrom`. Moving uses `move`, copying uses `force`
+  (copies may overlap). Game-verified (EXP-023), including the copied scheduled tick.
+- **Consequences:** A moved circuit keeps running (its pending ticks come along); one drag
+  is one undo step. Paste of a stored prefab still uses the placement half only (no
+  ticks), since prefabs are snapshots.
