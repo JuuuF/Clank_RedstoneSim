@@ -33,13 +33,24 @@ from PySide6.QtWidgets import QWidget
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos, offset
-from redsim.editor.clipboard import Region
+from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
 from redsim.ui.camera import Camera
-from redsim.ui.geometry import ChunkedMesh, Hit, block_outline, box_lines, pick
+from redsim.ui.geometry import ChunkedMesh, Hit, block_outline, box_lines, ghost_mesh, pick
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.pacing import RateMeter
 from redsim.ui.renderer import Renderer
+from redsim.ui.selection_tools import (
+    Handle,
+    handle_hit,
+    handle_square,
+    horizontal_offset,
+    plane_point,
+    resized,
+    shifted,
+    steps_along,
+)
+from redsim.world import blocks
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 ORBIT_DEGREES_PER_PIXEL = 0.3
@@ -61,7 +72,8 @@ CLICK_VERBS = {
     "build.place": "place",
     "build.use": "use",
     "select.block": "select",
-    "select.box": "box",
+    "select.box": "box / move / resize",
+    "select.copy_drag": "copy",
     "select.extend": "extend",
     "pick": "pick",
 }
@@ -94,6 +106,8 @@ class Viewport(QOpenGLWidget):
     pick_requested = Signal(object)  # Pos
     select_requested = Signal(object)  # Pos | None (inspector selection)
     region_changed = Signal(object)  # Region | None
+    region_move_requested = Signal(object, object, bool)  # Region, offset, copy
+    paste_requested = Signal(object)  # Pos (minimum corner)
     mode_changed = Signal(str)
 
     def __init__(
@@ -109,6 +123,15 @@ class Viewport(QOpenGLWidget):
         self.selection: Pos | None = None
         self.region: Region | None = None
         self._region_anchor: Pos | None = None
+        #: SELECT mode: the face handle under the cursor, and drags in progress.
+        self.handle_hover: Handle | None = None
+        self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
+        self._move: _MoveDrag | None = None
+        #: Ctrl+V preview: the prefab follows the cursor until a click places it.
+        self.paste_preview: Prefab | None = None
+        self._ghost: tuple[np.ndarray, Pos] | None = None  # vertices at offset 0, offset
+        self._paste_base = np.zeros((0, 7), dtype=np.float32)
+        self._ghost_uploaded: tuple[int, Pos] | None = None
         self.world_mesh = ChunkedMesh()
         self._mesh_revision = -1
         #: Lines of text drawn over the top-left corner (run status, achieved rates).
@@ -186,6 +209,7 @@ class Viewport(QOpenGLWidget):
             self._mesh_revision = self.document.revision
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_top_lines(self._pivot_lines())
+        self._upload_ghost(renderer)
         ratio = self.devicePixelRatioF()
         width, height = int(self.width() * ratio), int(self.height() * ratio)
         aspect = max(width, 1) / max(height, 1)
@@ -256,18 +280,51 @@ class Viewport(QOpenGLWidget):
             parts.append(
                 box_lines(low, (high[0] + 1, high[1] + 1, high[2] + 1), (0.0, 0.9, 0.9, 1.0), 0.02)
             )
+            if self.mode == SELECT and self._move is None:
+                parts.extend(self._handle_lines(self.region))
+        if self._move is not None:
+            moved = shifted(self._move.region, self._move.offset_pos)
+            parts.append(_region_lines(moved, (1.0, 1.0, 1.0, 1.0), 0.03))
+        paste_box = self.paste_region()
+        if paste_box is not None:
+            parts.append(_region_lines(paste_box, (1.0, 1.0, 1.0, 1.0), 0.03))
         if self.selection is not None:
             parts.append(block_outline(level, self.selection, (1.0, 0.85, 0.1, 1.0)))
         if self.hover is not None:
             parts.append(block_outline(level, self.hover.pos, (0.05, 0.05, 0.05, 1.0)))
-            if self.mode == BUILD:
-                target = offset(self.hover.pos, self.hover.face)  # where a block would go
-                parts.append(
-                    box_lines(target, (target[0] + 1, target[1] + 1, target[2] + 1), (1, 1, 1, 1))
-                )
+            if self.mode == BUILD and self.paste_preview is None:
+                cell = offset(self.hover.pos, self.hover.face)  # where a block would go
+                parts.append(box_lines(cell, (cell[0] + 1, cell[1] + 1, cell[2] + 1), (1, 1, 1, 1)))
         if not parts:
             return np.zeros((0, 7), dtype=np.float32)
         return np.vstack(parts)
+
+    def _handle_lines(self, region: Region) -> list[np.ndarray]:
+        """Face handles of the selection box (the hovered one larger and yellow)."""
+        parts = []
+        for handle in _HANDLES:
+            center, half = handle_square(region, handle)
+            hovered = handle == self.handle_hover
+            if hovered:
+                half *= 1.4
+            color = (1.0, 0.85, 0.1, 1.0) if hovered else (0.0, 0.9, 0.9, 1.0)
+            lo, hi = center - half, center + half
+            lo[handle.axis] = hi[handle.axis] = center[handle.axis]
+            parts.append(box_lines(lo, hi, color, 0.01))
+        return parts
+
+    def _upload_ghost(self, renderer: Renderer) -> None:
+        ghost = self._ghost
+        key = None if ghost is None else (id(ghost[0]), ghost[1])
+        if key == self._ghost_uploaded:
+            return
+        self._ghost_uploaded = key
+        if ghost is None:
+            renderer.upload_ghost(np.zeros((0, 7), dtype=np.float32))
+            return
+        vertices = ghost[0].copy()
+        vertices[:, :3] += np.array(ghost[1], dtype=np.float32)
+        renderer.upload_ghost(vertices)
 
     def _pivot_lines(self) -> np.ndarray:
         """A small cross and ring at the pivot, drawn on top of everything."""
@@ -345,8 +402,8 @@ class Viewport(QOpenGLWidget):
             name = _BUTTON_NAMES.get(button)
             action = self.keymap.mouse_action(self.mode, modifiers, name, "Drag")
             self._drag_action = action or ""
-            if self._drag_action == "select.box":
-                self._begin_box(start)
+            if self._drag_action in ("select.box", "select.copy_drag"):
+                self._begin_select_drag(start, copy=self._drag_action == "select.copy_drag")
         last = self._drag_last or point
         self._drag(self._drag_action, point.x() - last.x(), point.y() - last.y())
         self._drag_last = point
@@ -360,18 +417,26 @@ class Viewport(QOpenGLWidget):
         self._drag_action = None
         if drag_action is None:
             self._update_hover(event.position().toPoint())
-            name = _BUTTON_NAMES.get(button)
-            action = self.keymap.mouse_action(self.mode, modifiers, name, "Click")
-            if action is not None:
-                self._click(action)
-        elif drag_action == "select.box":
-            self.region_changed.emit(self.region)
+            if self.paste_preview is not None:
+                self._paste_click(button)
+            else:
+                name = _BUTTON_NAMES.get(button)
+                action = self.keymap.mouse_action(self.mode, modifiers, name, "Click")
+                if action is not None:
+                    self._click(action)
+        elif drag_action in ("select.box", "select.copy_drag"):
+            self._end_select_drag()
         self.update()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         delta = event.angleDelta()
         steps = (delta.y() or delta.x()) / 120.0  # some systems turn Shift+wheel sideways
         if not steps:
+            return
+        if self._move is not None:  # while dragging a selection, the wheel lifts it
+            self._move.lift += 1 if steps > 0 else -1
+            self._ghost = (self._move.ghost, self._move.offset_pos)
+            self.update()
             return
         modifiers = _modifier_names(event.modifiers())
         action = self.keymap.mouse_action(self.mode, modifiers, None, "Wheel")
@@ -392,8 +457,8 @@ class Viewport(QOpenGLWidget):
             scale = 2 * camera.distance * math.tan(math.radians(camera.fov) / 2)
             scale /= max(self.height(), 1)
             camera.pan(dy * scale, -dx * scale)
-        elif action == "select.box":
-            self._extend_box()
+        elif action in ("select.box", "select.copy_drag"):
+            self._continue_select_drag()
             return
         else:
             return
@@ -424,30 +489,149 @@ class Viewport(QOpenGLWidget):
         elif action == "build.place":
             self.place_requested.emit(hit)
 
-    def _begin_box(self, start: QPoint) -> None:
-        hit = self._pick_at(start)
-        self._region_anchor = hit.pos if hit else None
+    # ------------------------------------------------------------------ selections
+    def _begin_select_drag(self, start: QPoint, copy: bool) -> None:
+        """A left drag in SELECT mode: resize from a handle, move/copy from inside the box,
+        otherwise draw a new box."""
+        origin, direction = self._ray(start)
+        block = pick(self.document.level, origin, direction)
+        region = self.region
+        if region is not None and not copy:
+            handle = handle_hit(region, origin, direction)
+            if handle is not None and (block is None or handle[1] <= block.distance + 0.01):
+                center, _ = handle_square(region, handle[0])
+                axis = self._screen_vector(center, center + handle[0].normal)
+                self._resize = (handle[0], region, start, axis)
+                return
+        if region is not None and block is not None and region.contains(block.pos):
+            grab = origin + direction * block.distance
+            ghost = self._region_ghost(region)
+            self._move = _MoveDrag(region, copy, float(grab[1]), grab, ghost)
+            self._ghost = (ghost, (0, 0, 0))
+            return
+        if copy:
+            return  # copy-drags start inside the selection
+        self._region_anchor = block.pos if block else None
         self._extend_box()
+
+    def _continue_select_drag(self) -> None:
+        point = self._last_mouse
+        if point is None:
+            return
+        if self._resize is not None:
+            handle, region, start, axis = self._resize
+            drag = (point.x() - start.x(), point.y() - start.y())
+            self.region = resized(region, handle, steps_along(drag, axis))
+            self.update()
+        elif self._move is not None:
+            origin, direction = self._ray(point)
+            hit = plane_point(origin, direction, self._move.plane_y)
+            if hit is not None:
+                self._move.dx, self._move.dz = horizontal_offset(self._move.grab, hit)
+                self._ghost = (self._move.ghost, self._move.offset_pos)
+                self.update()
+        else:
+            self._extend_box()
+
+    def _end_select_drag(self) -> None:
+        move, self._move = self._move, None
+        resize, self._resize = self._resize, None
+        self._ghost = None
+        if move is not None:
+            if move.offset_pos != (0, 0, 0):
+                self.region_move_requested.emit(move.region, move.offset_pos, move.copy)
+        elif resize is not None or self._region_anchor is not None:
+            self.region_changed.emit(self.region)
 
     def _extend_box(self) -> None:
         if self._region_anchor is not None and self.hover is not None:
             self.region = Region.from_corners(self._region_anchor, self.hover.pos)
             self.update()
 
+    def _region_ghost(self, region: Region) -> np.ndarray:
+        level = self.document.level
+        states = {pos: level.blocks[pos] for pos in region.positions() if pos in level.blocks}
+        return ghost_mesh(states, mesher=self.world_mesh.mesher)
+
+    # ------------------------------------------------------------------ paste preview
+    def begin_paste(self, prefab: Prefab) -> None:
+        """Show ``prefab`` as a ghost at the cursor; a left click places it."""
+        states = {(dx, dy, dz): blocks.parse_state(text) for dx, dy, dz, text, _ in prefab.blocks}
+        self.paste_preview = prefab
+        self._paste_base = ghost_mesh(states, mesher=self.world_mesh.mesher)
+        self._update_paste_ghost()
+
+    def cancel_paste(self) -> None:
+        self.paste_preview = None
+        self._ghost = None
+        self.update()
+
+    def paste_target(self) -> Pos | None:
+        """Minimum corner of the paste: the cell in front of the targeted face."""
+        if self.hover is None:
+            return None
+        return offset(self.hover.pos, self.hover.face)
+
+    def paste_region(self) -> Region | None:
+        target = self.paste_target()
+        if self.paste_preview is None or target is None:
+            return None
+        sx, sy, sz = self.paste_preview.size
+        return Region(target, (target[0] + sx - 1, target[1] + sy - 1, target[2] + sz - 1))
+
+    def _update_paste_ghost(self) -> None:
+        target = self.paste_target()
+        if self.paste_preview is None:
+            return
+        self._ghost = None if target is None else (self._paste_base, target)
+        self.update()
+
+    def _paste_click(self, button: Qt.MouseButton) -> None:
+        target = self.paste_target()
+        if button == Qt.MouseButton.LeftButton and target is not None:
+            self.cancel_paste()
+            self.paste_requested.emit(target)
+        elif button == Qt.MouseButton.RightButton:
+            self.cancel_paste()
+
     # ------------------------------------------------------------------ targeting
-    def _pick_at(self, point: QPoint) -> Hit | None:
+    def _ray(self, point: QPoint) -> tuple[np.ndarray, np.ndarray]:
         width, height = max(self.width(), 1), max(self.height(), 1)
         ndc_x = 2.0 * point.x() / width - 1.0
         ndc_y = 1.0 - 2.0 * point.y() / height
-        origin, direction = self.camera.ray_through(ndc_x, ndc_y, width / height)
+        return self.camera.ray_through(ndc_x, ndc_y, width / height)
+
+    def _screen_vector(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        """On-screen vector (pixels) from world point ``a`` to ``b``."""
+        width, height = max(self.width(), 1), max(self.height(), 1)
+        mvp = self.camera.projection_matrix(width / height) @ self.camera.view_matrix()
+        points = []
+        for world in (a, b):
+            clip = mvp @ np.array([*world, 1.0])
+            w = clip[3] if abs(clip[3]) > 1e-9 else 1e-9
+            points.append(np.array([(clip[0] / w + 1) / 2 * width, (1 - clip[1] / w) / 2 * height]))
+        return points[1] - points[0]
+
+    def _pick_at(self, point: QPoint) -> Hit | None:
+        origin, direction = self._ray(point)
         self._hover_direction = direction
         return pick(self.document.level, origin, direction)
 
     def _update_hover(self, point: QPoint) -> None:
         hit = self._pick_at(point)
+        handle = None
+        if self.mode == SELECT and self.region is not None and self._press is None:
+            origin, direction = self._ray(point)
+            found = handle_hit(self.region, origin, direction)
+            if found is not None and (hit is None or found[1] <= hit.distance + 0.01):
+                handle = found[0]
+        if handle != self.handle_hover:
+            self.handle_hover = handle
+            self.update()
         if hit != self.hover:
             self.hover = hit
             self.hover_changed.emit(hit)
+            self._update_paste_ghost()
             self.update()
 
     def _camera_moved(self) -> None:
@@ -472,6 +656,34 @@ class Viewport(QOpenGLWidget):
         if self._hover_direction is not None:
             return Camera.angles_of(self._hover_direction)
         return self.camera.yaw, self.camera.pitch
+
+
+class _MoveDrag:
+    """A selection being dragged to a new place (or copied there)."""
+
+    def __init__(
+        self, region: Region, copy: bool, plane_y: float, grab: np.ndarray, ghost: np.ndarray
+    ) -> None:
+        self.region = region
+        self.copy = copy
+        self.plane_y = plane_y
+        self.grab = grab
+        self.ghost = ghost
+        self.dx = self.dz = self.lift = 0
+
+    @property
+    def offset_pos(self) -> Pos:
+        return (self.dx, self.lift, self.dz)
+
+
+_HANDLES = tuple(Handle(axis, high) for axis in range(3) for high in (False, True))
+
+
+def _region_lines(
+    region: Region, color: tuple[float, float, float, float], grow: float
+) -> np.ndarray:
+    high = region.high
+    return box_lines(region.low, (high[0] + 1, high[1] + 1, high[2] + 1), color, grow)
 
 
 def _hex_color(text: str) -> tuple[float, float, float, float]:

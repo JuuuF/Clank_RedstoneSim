@@ -122,6 +122,20 @@ class Document:
             raise EditError("The clipboard is empty.")
         self._apply(Action("clone", origin, payload=source.payload()), f"paste {source.name}")
 
+    def clone_region(self, region: Region, offset: Pos, mode: str = "move") -> Region:
+        """Move (``mode="move"``) or copy (``"force"``) a region in place by ``offset``, as
+        ``/clone <low> <high> <low + offset> replace <mode>``: one action, one undo step,
+        scheduled ticks inside come along. Returns the region at its new place."""
+        if offset == (0, 0, 0):
+            raise EditError("The selection did not move.")
+        low = (region.low[0] + offset[0], region.low[1] + offset[1], region.low[2] + offset[2])
+        payload = {"begin": list(region.low), "end": list(region.high), "mode": mode}
+        size = "×".join(str(v) for v in region.size)
+        label = f"{'move' if mode == 'move' else 'copy'} {size} selection"
+        self._apply(Action("clone_region", low, payload=payload), label)
+        high = (region.high[0] + offset[0], region.high[1] + offset[1], region.high[2] + offset[2])
+        return Region(low, high)
+
     def rotate_clipboard(self, quarter_turns: int = 1) -> None:
         if self.clipboard is not None:
             self.clipboard = self.clipboard.rotated(quarter_turns)

@@ -123,6 +123,8 @@ class MainWindow(QMainWindow):
         self.viewport.pick_requested.connect(self._pick)
         self.viewport.select_requested.connect(self._select)
         self.viewport.region_changed.connect(self._region_changed)
+        self.viewport.region_move_requested.connect(self._move_region)
+        self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
         self.inspector.apply_requested.connect(self._apply_state)
         self.inspector.section_requested.connect(self._assign_section)
@@ -228,6 +230,10 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------ modes and keymap
     def _mode_key(self, mode: str) -> None:
         """Mode shortcuts; the NORMAL key pressed in NORMAL mode clears the selections."""
+        if mode == NORMAL and self.viewport.paste_preview is not None:
+            self.viewport.cancel_paste()
+            self._message("Paste cancelled.")
+            return
         if mode == NORMAL and self.viewport.mode == NORMAL:
             self.viewport.region = None
             self._select(None)
@@ -410,17 +416,36 @@ class MainWindow(QMainWindow):
             self._message(f"Copied {prefab.non_air_count} blocks (with air: {len(prefab.blocks)}).")
 
     def _paste(self) -> None:
-        hit = self.viewport.hover
-        if hit is None:
-            self._message("Point at the place to paste.", error=True)
+        """Ctrl+V: preview the clipboard at the cursor; a left click places it."""
+        if self.document.clipboard is None:
+            self._message("The clipboard is empty.", error=True)
             return
-        self._edit(self.document.paste, offset(hit.pos, hit.face))
+        self.viewport.begin_paste(self.document.clipboard)
+        self._message("Paste: left click places it · R rotates · right click or Esc cancels.")
+
+    def _paste_at(self, origin: Pos) -> None:
+        self._edit(self.document.paste, origin)
+
+    def _move_region(self, region: Region, by: Pos, copy: bool) -> None:
+        """A dragged selection: ``/clone … replace move`` (or ``force`` for a copy)."""
+        self.document.notice = ""
+        try:
+            moved = self.document.clone_region(region, by, "force" if copy else "move")
+        except EditError as exc:
+            self._message(str(exc), error=True)
+        else:
+            self.viewport.region = moved
+            verb = "Copied" if copy else "Moved"
+            self._message(f"{verb} the selection by {by[0]}, {by[1]}, {by[2]}.")
+        self._changed()
 
     def _rotate_clipboard(self) -> None:
         if self.document.clipboard is None:
             self._message("The clipboard is empty.")
             return
         self.document.rotate_clipboard(1)
+        if self.viewport.paste_preview is not None:
+            self.viewport.begin_paste(self.document.clipboard)
         self._message("Clipboard rotated 90° clockwise.")
 
     def _delete_region(self) -> None:

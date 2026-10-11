@@ -90,6 +90,7 @@ class Renderer:
         self.chunks: dict[object, tuple[_Stream, _Stream]] = {}
         self.lines = _Stream()
         self.top_lines = _Stream()
+        self.ghost = _Stream()  # translucent preview of a moved or pasted selection
 
     def set_chunk(self, key: object, opaque: np.ndarray, translucent: np.ndarray) -> None:
         streams = self.chunks.get(key)
@@ -112,6 +113,10 @@ class Renderer:
     def upload_top_lines(self, lines: np.ndarray) -> None:
         self.program.bind()
         self.top_lines.upload(self.program, lines)
+
+    def upload_ghost(self, triangles: np.ndarray) -> None:
+        self.program.bind()
+        self.ghost.upload(self.program, triangles)
 
     def draw(self, mvp: np.ndarray, width: int, height: int, background: tuple[float, ...]) -> None:
         gl = self.gl
@@ -136,6 +141,8 @@ class Renderer:
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
         translucent = [stream for _, stream in self.chunks.values() if stream.count]
+        if self.ghost.count:
+            translucent.append(self.ghost)
         if translucent:
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)

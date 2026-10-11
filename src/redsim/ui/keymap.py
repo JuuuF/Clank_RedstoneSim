@@ -71,7 +71,15 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("build.place", "Place the palette block", ("Right Click",), MOUSE),
     ActionSpec("build.use", "Use instead of placing", ("Ctrl+Right Click",), MOUSE),
     ActionSpec("select.block", "Select one block", ("Left Click",), MOUSE),
-    ActionSpec("select.box", "Drag a box selection", ("Left Drag",), MOUSE),
+    ActionSpec(
+        "select.box",
+        "Drag a box; from a face handle: resize; from inside the box: move it",
+        ("Left Drag",),
+        MOUSE,
+    ),
+    ActionSpec(
+        "select.copy_drag", "Drag a copy of the box (from inside it)", ("Ctrl+Left Drag",), MOUSE
+    ),
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
     ActionSpec("sim.tick", "Step one tick", ("Right", "T")),

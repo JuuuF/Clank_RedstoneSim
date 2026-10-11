@@ -251,6 +251,18 @@ class Mesher:
         return vertices.reshape(-1, 7)
 
 
+def ghost_mesh(
+    states: dict[Pos, BlockState], alpha: float = 0.45, mesher: Mesher | None = None
+) -> FloatArray:
+    """Translucent preview of loose block states (selection drags, paste preview)."""
+    level = Level()
+    level.blocks = {pos: state for pos, state in states.items() if not state.is_air}
+    mesh = (mesher or Mesher()).build(level, level.blocks)
+    rows = np.vstack([mesh.opaque, mesh.translucent])
+    rows[:, 6] = np.minimum(rows[:, 6], alpha)
+    return rows
+
+
 class ChunkedMesh:
     """Per-chunk meshes of one world, rebuilt only where something changed.
 

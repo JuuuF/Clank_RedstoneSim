@@ -66,7 +66,11 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     window.viewport.region = Region.from_corners((0, 1, 0), (1, 1, 0))  # SELECT-mode box
     window._copy()
     window.viewport.hover = Hit((0, 0, 5), Direction.UP, 5.0)  # floor block: paste above it
-    window._paste()
+    window._paste()  # preview first
+    assert window.viewport.paste_region() == Region((0, 1, 5), (1, 1, 5))
+    target = window.viewport.paste_target()
+    assert target is not None
+    window._paste_at(target)  # what a left click does
     assert document.state_at((0, 1, 5)).is_(blocks.LEVER)
     assert document.state_at((1, 1, 5)).is_(blocks.REDSTONE_LAMP)
     window._delete_region()  # clears the marked selection (the original pair)
