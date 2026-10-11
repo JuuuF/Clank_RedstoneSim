@@ -115,8 +115,8 @@ def build() -> Document:
             [Port("A", (7, 1, 9), "input"), Port("B", (7, 1, 11), "input"),
              Port("A and B", (4, 1, 10), "output")])  # fmt: skip
 
-    # 5. Comparator in subtract mode: cake (14) minus a dust side input (14 when on).
-    b.place((6, 1, 14), blocks.CAKE)
+    # 5. Comparator in subtract mode: a barrel signal source (14) minus a dust side input.
+    b.doc.place_source(at((6, 1, 14)), "barrel", 14, LOOK_WEST)
     b.place((5, 1, 14), blocks.COMPARATOR, LOOK_WEST)
     b.use((5, 1, 14))  # compare → subtract
     b.place((4, 1, 14), blocks.REDSTONE_WIRE)
@@ -125,7 +125,7 @@ def build() -> Document:
     b.place((5, 1, 16), blocks.REDSTONE_WIRE)
     b.place((5, 1, 15), blocks.REDSTONE_WIRE)
     b.mark("processing", (6, 1, 14), (5, 1, 14), (4, 1, 14), (5, 1, 15), (5, 1, 16))
-    b.group("5 comparator subtract (right-click the cake to eat)", (3, 1, 14), (6, 1, 17),
+    b.group("5 comparator subtract (inspect the barrel to change it)", (3, 1, 14), (6, 1, 17),
             [Port("side lever", (5, 1, 17), "input"), Port("comparator", (5, 1, 14), "output"),
              Port("lamp", (3, 1, 14), "output")])  # fmt: skip
 

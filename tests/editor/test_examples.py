@@ -53,7 +53,7 @@ def test_every_example_circuit_works() -> None:
     doc.run_ticks(6)
     assert lit(doc, at(4, 1, 10))
 
-    assert lit(doc, at(3, 1, 14))  # 5. comparator: cake 14 - side 0
+    assert lit(doc, at(3, 1, 14))  # 5. comparator: barrel source 14 - side 0
     doc.use(at(5, 1, 17))  # side input 14: output 0
     doc.run_ticks(8)
     assert not lit(doc, at(3, 1, 14))

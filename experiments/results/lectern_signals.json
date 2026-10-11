@@ -2,11 +2,11 @@
  "scenario": "lectern_signals",
  "description": "Comparators read lecterns holding writable books of N pages open at page p (floor(p / (N - 1) * 14) + 1, page clamped to the book), a lectern without a book (0) and one whose state says has_book=false although it holds a book (0).",
  "origin": [
-  24,
+  576,
   0,
   0
  ],
- "start_time": 13,
+ "start_time": 721,
  "fingerprint": "2f7fb13b101fbc68",
  "game_version": "26.3",
  "ticks": 4,

@@ -22,7 +22,7 @@
    "minecraft:lever[face=floor,facing=south,powered=false]",
    "minecraft:oak_planks",
    "minecraft:lever[face=wall,facing=east,powered=false]",
-   "minecraft:cake[bites=0]",
+   "minecraft:barrel[facing=up,open=false]",
    "minecraft:sticky_piston[facing=west,extended=false]",
    "minecraft:redstone_torch[lit=true]",
    "minecraft:redstone_wire[north=side,east=none,south=side,west=none,power=15]",
@@ -6434,6 +6434,150 @@
   ],
   "block_entities": [
    {
+    "type": "barrel",
+    "pos": [
+     6,
+     1,
+     2
+    ],
+    "state": "minecraft:barrel[facing=up,open=false]",
+    "removed": false,
+    "data": {
+     "Items": [
+      {
+       "Slot": 0,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 1,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 2,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 3,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 4,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 5,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 6,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 7,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 8,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 9,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 10,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 11,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 12,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 13,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 14,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 15,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 16,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 17,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 18,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 19,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 20,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 21,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 22,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 23,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 24,
+       "id": "minecraft:redstone",
+       "count": 64
+      },
+      {
+       "Slot": 25,
+       "id": "minecraft:redstone",
+       "count": 5
+      }
+     ]
+    }
+   },
+   {
     "type": "comparator",
     "pos": [
      5,
@@ -6448,7 +6592,8 @@
    }
   ],
   "block_entity_map": {
-   "5,1,2": 0
+   "6,1,2": 0,
+   "5,1,2": 1
   },
   "scheduled_ticks": [
    {
@@ -6864,7 +7009,7 @@
     ]
    },
    {
-    "name": "5 comparator subtract (right-click the cake to eat)",
+    "name": "5 comparator subtract (inspect the barrel to change it)",
     "low": [
      3,
      1,
