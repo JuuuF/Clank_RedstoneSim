@@ -53,7 +53,7 @@ per second and frames per second. It should hold the target rate (20 by default)
   from inside the box to drop a copy elsewhere. Or Ctrl+C, then Ctrl+V shows a preview at
   the cursor (R rotates it) and a left click places it. Plain drag from inside the box
   moves the circuit; drag a face handle to resize the box.
-- **Build:** press B (or a hotbar key 1–9): left click breaks, right click places where the
+- **Build:** press B (or pick a block in the inventory with 1–9): left click breaks, right click places where the
   white outline shows.
 - Ctrl+Z undoes the last edit (it rewinds to just before it).
 

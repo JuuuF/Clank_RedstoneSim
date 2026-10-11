@@ -9,17 +9,37 @@ shows the real bindings: grouped by what you are doing (getting around, modes, e
 clicks, simulation, view, editing), searchable, with the current mode's section
 highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 
+## Window layout
+
+- **Top:** menus, then the tool bar: modes (Normal, Build, Select) and the selection tools
+  (rotate, flip, copy, paste, delete, lock).
+- **Middle:** the 3D view. On the right, one **Properties** panel with tabs: Inspector,
+  Circuit (sections, groups and prefabs), Diagnostics, Hotkeys.
+- **Timeline** (like Blender's): transport buttons (start, previous edit, tick back,
+  run, tick forward, next edit, end), speed and warp, and a ruler with the recorded range,
+  yellow diamonds where you edited, and the blue playhead. Click or drag to scrub, wheel to
+  zoom, middle-drag to pan. **Monitor tracks** (logic-analyzer style): Inspector →
+  📈 Monitor adds the selected block; its value per tick (wire power, lit/powered,
+  comparator output, …) is drawn in a row. Right-click a row's label to remove it.
+  Monitored blocks are saved; their recorded values are rebuilt as the simulation runs.
+- **Inventory** (like Trackmania's): folders (Redstone, Movement, Signal sources, Building,
+  Special). Number keys open a folder or pick the block with that number, Backspace goes
+  up; picking a block enters BUILD mode. Signal sources show the strength box.
+- **Hint bar** (like Blender's): the essential keys for what you are doing right now (mode,
+  selection, gizmo under the cursor, Shift held, pasting), the block under the cursor and
+  status messages.
+
 ## Modes (vim-like)
 
 | Mode | Key | Left click | Right click | Left drag |
 |---|---|---|---|---|
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
-| **BUILD** | B | break | place the palette block (Ctrl+right click: use) | — |
+| **BUILD** | B | break | place the inventory block (Ctrl+right click: use) | — |
 | **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
 - Middle click picks the block type under the cursor in every mode.
 - The badge in the bottom-left corner shows the mode and what the mouse buttons do.
-- Choosing a block (palette, hotbar keys 1–9, middle-click pick) switches to BUILD.
+- Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and the selection box.
 - In BUILD, a translucent preview shows the block exactly as a right click would place it
   (orientation from the cursor ray, wire connections, source setup) inside a white outline;
@@ -103,7 +123,7 @@ reason the old Shift+T rewind was disliked).
 | R / Shift+R | rotate the selection (or the paste preview) 90° clockwise / counter-clockwise |
 | H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |
 | Del | clear the selection box (fill with air) |
-| 1–9 | hotbar |
+| 1–9 / Backspace | inventory: open folder or pick block / up one folder |
 | F1 | controls panel |
 
 ## View toggles
@@ -118,8 +138,8 @@ hides the annotation outlines.
 
 ## Signal sources
 
-The palette's **Signal sources** section (barrel, lectern, cake; hover for how they
-differ) places a source at the **Source strength** chosen below the list. In the inspector,
+The inventory's **Signal sources** folder (barrel, lectern, cake; hover for how they
+differ) places a source at the **Source strength** shown next to the tiles. In the inspector,
 a source shows a **Signal source** row: kind buttons swap the block in place, the strength
 stepper changes the value (one `/setblock` edit each, applied at once). Lecterns also get *◀ Page* /
 *Page ▶*, which turn the page like a player (the comparator value changes and the lectern

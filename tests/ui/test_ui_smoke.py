@@ -37,9 +37,9 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     QtWidgets.QApplication.processEvents()
 
     # Right click on the floor with a lever selected, then a lamp next to it.
-    window.block_palette.select_block(blocks.LEVER)
+    window.inventory.select_block(blocks.LEVER)
     window._place(Hit((0, 0, 0), Direction.UP, 5.0))
-    window.block_palette.select_block(blocks.REDSTONE_LAMP)
+    window.inventory.select_block(blocks.REDSTONE_LAMP)
     window._place(Hit((1, 0, 0), Direction.UP, 5.0))
     # Right click on the lever uses it (no Shift): the lamp lights immediately.
     window._use((0, 1, 0))
@@ -128,11 +128,11 @@ def test_f1_brings_the_controls_to_the_front(app: object) -> None:
     window.resize(1000, 700)
     window.show()
     QtWidgets.QApplication.processEvents()
-    assert window.help_dock.visibleRegion().isEmpty()  # behind the block palette tab
+    assert window.tabs.currentWidget() is not window.hotkeys  # the Inspector is in front
     window.viewport.setFocus()
     QTest.keyClick(window.viewport, Qt.Key.Key_F1)
     QtWidgets.QApplication.processEvents()
-    assert not window.help_dock.visibleRegion().isEmpty()
+    assert window.tabs.currentWidget() is window.hotkeys
     window.document.dirty = False
     window.close()
 

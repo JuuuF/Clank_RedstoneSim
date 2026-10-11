@@ -13,9 +13,10 @@ from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
     QInputDialog,
-    QLabel,
     QMainWindow,
     QMessageBox,
+    QTabWidget,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -27,19 +28,19 @@ from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
 from redsim.ui.camera import Camera
 from redsim.ui.geometry import Hit
+from redsim.ui.hints import Context, HintBar, context_hints
+from redsim.ui.inventory import InventoryBar
 from redsim.ui.keymap import SPECS, Keymap, default_path
 from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panels import (
-    HOTBAR,
     ContraptionsPanel,
     DiagnosticsPanel,
     HotkeysPanel,
     InspectorPanel,
-    PalettePanel,
     PreferencesDialog,
     SectionsPanel,
-    SimulationPanel,
 )
+from redsim.ui.timeline import TimelineBar
 from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
 from redsim.world import blocks
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
@@ -61,38 +62,47 @@ class MainWindow(QMainWindow):
         self.current_block = blocks.STONE
         self.last_steps: list[Any] = []
         self.viewport = Viewport(self.document, self.keymap)
-        self.setCentralWidget(self.viewport)
+        # Layout (owner, round three): the 3D view in the middle; below it the Blender-like
+        # timeline and the Trackmania-like inventory; one tabbed panel on the right; a
+        # Blender-like hint bar at the very bottom.
+        self.simulation = TimelineBar()
+        self.inventory = InventoryBar()
+        central = QWidget()
+        column = QVBoxLayout(central)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(0)
+        column.addWidget(self.viewport, 1)
+        column.addWidget(self.simulation)
+        column.addWidget(self.inventory)
+        self.setCentralWidget(central)
 
-        self.block_palette = PalettePanel()
         self.inspector = InspectorPanel()
-        self.simulation = SimulationPanel()
         self.diagnostics = DiagnosticsPanel()
         self.sections = SectionsPanel(self.document)
-        left = Qt.DockWidgetArea.LeftDockWidgetArea
-        right = Qt.DockWidgetArea.RightDockWidgetArea
-        blocks_dock = self._dock("Blocks", self.block_palette, left)
-        self.hotkeys = HotkeysPanel(self.keymap)
-        blocks_dock.raise_()
-        simulation_dock = self._dock("Simulation", self.simulation, right)
-        inspector_dock = self._dock("Inspector", self.inspector, right)
-        sections_dock = self._dock("Sections", self.sections, right)
-        self.tabifyDockWidget(inspector_dock, sections_dock)
         self.contraptions = ContraptionsPanel()
-        contraptions_dock = self._dock("Contraptions", self.contraptions, right)
-        self.tabifyDockWidget(sections_dock, contraptions_dock)
-        self.help_dock = self._dock("Hotkeys", self.hotkeys, right)
-        self.tabifyDockWidget(contraptions_dock, self.help_dock)
-        inspector_dock.raise_()
-        self.diagnostics_dock = self._dock(
-            "Diagnostics", self.diagnostics, Qt.DockWidgetArea.BottomDockWidgetArea
-        )
-        self.resizeDocks([blocks_dock, simulation_dock], [210, 320], Qt.Orientation.Horizontal)
-        self.resizeDocks([self.diagnostics_dock], [190], Qt.Orientation.Vertical)
+        self.hotkeys = HotkeysPanel(self.keymap)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self.inspector, "Inspector")
+        circuit = QTabWidget()
+        circuit.addTab(self.sections, "Sections")
+        circuit.addTab(self.contraptions, "Groups && prefabs")
+        self.tabs.addTab(circuit, "Circuit")
+        self.tabs.addTab(self.diagnostics, "Diagnostics")
+        self.tabs.addTab(self.hotkeys, "Hotkeys")
+        self.side_dock = self._dock("Properties", self.tabs, Qt.DockWidgetArea.RightDockWidgetArea)
+        self.side_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.resizeDocks([self.side_dock], [360], Qt.Orientation.Horizontal)
+        self.hint_bar = HintBar()
+        self.statusBar().addWidget(self.hint_bar, 1)
+        self.statusBar().setSizeGripEnabled(False)
 
         self.play_timer = QTimer(self)
         self.play_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self.play_timer.timeout.connect(self._play_tick)
         self.pacer = TickPacer(self.simulation.speed.value())
+        self._hint_timer = QTimer(self)
+        self._hint_timer.timeout.connect(self._update_hints)
+        self._hint_timer.start(120)
         self._rotation_pivot: tuple[Region, tuple[int, int]] | None = None
         self.tick_rate = RateMeter()
         self._panels_refreshed = 0.0
@@ -114,13 +124,16 @@ class MainWindow(QMainWindow):
         return dock
 
     def _connect(self) -> None:
-        self.block_palette.block_chosen.connect(self._choose_block)
-        # Hand the keyboard back to the viewport, so mode and hotbar keys keep working.
-        self.block_palette.strength.editingFinished.connect(self.viewport.setFocus)
-        self.block_palette.strength.valueChanged.connect(
+        self.inventory.block_chosen.connect(self._choose_block)
+        # Hand the keyboard back to the viewport, so mode and inventory keys keep working.
+        self.inventory.strength.editingFinished.connect(self.viewport.setFocus)
+        self.inventory.strength.valueChanged.connect(
             lambda value: self.viewport.set_build_block(self.current_block, value)
         )
-        self.block_palette.list.itemClicked.connect(lambda _item: self.viewport.setFocus())
+        self.simulation.jump.connect(self._jump)
+        self.simulation.canvas.scrub.connect(self._scrub)
+        self.simulation.canvas.remove_monitor.connect(self._toggle_monitor)
+        self.inspector.monitor_requested.connect(self._toggle_monitor)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
         self.viewport.use_requested.connect(self._use)
@@ -144,7 +157,6 @@ class MainWindow(QMainWindow):
         self.simulation.step_event.connect(self._step_event)
         self.simulation.tick_back.connect(self._tick_back)
         self.simulation.step_back.connect(self._step_back)
-        self.simulation.seek_requested.connect(self._seek)
         self.contraptions.save_prefab.connect(self._save_prefab)
         self.contraptions.load_prefab.connect(self._load_prefab)
         self.contraptions.delete_prefab.connect(self._delete_prefab)
@@ -221,8 +233,12 @@ class MainWindow(QMainWindow):
         ):
             self._action(sim_menu, text, lambda _=False, w=where: self._jump(w), keymap_id)
         region_menu = bar.addMenu("&Region")
-        toolbar = self.addToolBar("Selection")
-        toolbar.setObjectName("Selection toolbar")
+        toolbar = self.addToolBar("Tools")
+        toolbar.setObjectName("Tools toolbar")
+        toolbar.setMovable(False)
+        for mode in (NORMAL, BUILD, SELECT):
+            toolbar.addAction(self._mode_actions[mode])
+        toolbar.addSeparator()
         for text, slot, keymap_id in (
             ("⟳ Rotate", lambda: self._rotate(1), "edit.rotate"),
             ("⟲ Rotate", lambda: self._rotate(3), "edit.rotate_back"),
@@ -234,13 +250,9 @@ class MainWindow(QMainWindow):
             action = self._action(region_menu, text, slot, keymap_id)
             action.setToolTip(f"{SPECS[keymap_id].title} ({self.keymap.describe(keymap_id)})")
             toolbar.addAction(action)
-        stack_hint = QLabel("  Shift+drag a handle: stack copies  ")
-        stack_hint.setToolTip(SPECS["select.stack"].title)
-        toolbar.addWidget(stack_hint)
-        self._action(
-            region_menu, "Clear selection (fill with air)", self._delete_region, "edit.delete"
-        )
-        toolbar.addAction(self._actions["edit.delete"])
+        delete = self._action(region_menu, "Delete", self._delete_region, "edit.delete")
+        delete.setToolTip("Clear the selection: fill it with air (Del)")
+        toolbar.addAction(delete)
         lock = self._action(region_menu, "🔒 Lock", self._toggle_lock, "select.lock")
         lock.setToolTip(f"{SPECS['select.lock'].title} ({self.keymap.describe('select.lock')})")
         toolbar.addAction(lock)
@@ -287,15 +299,15 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
         for dock in self.findChildren(QDockWidget):
             view_menu.addAction(dock.toggleViewAction())
-        hotbar_menu = bar.addMenu("&Hotbar")
-        for index, block_id in enumerate(HOTBAR, start=1):
-            block = blocks.get(block_id)
+        inventory_menu = bar.addMenu("&Inventory")
+        for number in range(1, 10):
             self._action(
-                hotbar_menu,
-                f"{index}: {block.name}",
-                lambda _=False, b=block: self.block_palette.select_block(b),
-                f"hotbar.{index}",
+                inventory_menu,
+                f"Slot {number}",
+                lambda _=False, n=number: self.inventory.press(n),
+                f"inventory.{number}",
             )
+        self._action(inventory_menu, "Up one folder", self.inventory.go_up, "inventory.up")
         settings_menu = bar.addMenu("Se&ttings")
         self._action(settings_menu, "Preferences…", self._preferences)
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
@@ -327,8 +339,8 @@ class MainWindow(QMainWindow):
 
     def _show_controls(self) -> None:
         """Bring the Controls dock to the front (it shares a tab group with the palette)."""
-        self.help_dock.show()
-        self.help_dock.raise_()
+        self.side_dock.show()
+        self.tabs.setCurrentWidget(self.hotkeys)
 
     def _cycle_xray(self) -> None:
         self._set_xray((self.viewport.xray + 1) % 3)
@@ -388,7 +400,7 @@ class MainWindow(QMainWindow):
         self.simulation.show_status(self.document)
         self.sections.refresh()
         self.contraptions.show_document(self.document)
-        if self.diagnostics_dock.isVisible():
+        if self.tabs.currentWidget() is self.diagnostics:
             self.diagnostics.show_state(self.document, self.last_steps)
         name = self.document.path.name if self.document.path else "untitled"
         self.setWindowTitle(
@@ -410,22 +422,47 @@ class MainWindow(QMainWindow):
         ]
 
     def _message(self, text: str, error: bool = False) -> None:
-        self.statusBar().showMessage(text, 6000 if error else 3000)
+        self.hint_bar.show_message(text, error)
+
+    def _update_hints(self) -> None:
+        viewport = self.viewport
+        spot = viewport.gizmo_hover
+        context = Context(
+            mode=viewport.mode,
+            has_region=viewport.region is not None,
+            locked=viewport.region_locked,
+            pasting=viewport.paste_preview is not None,
+            shift=viewport._shift,
+            gizmo=spot.kind if spot is not None else None,
+            running=self.play_timer.isActive(),
+        )
+        self.hint_bar.show_hints(context_hints(self.keymap, context))
+
+    def _scrub(self, tick: int) -> None:
+        self.simulation.play.setChecked(False)
+        if self.document.seek_tick(tick):
+            self.last_steps = []
+            self._changed()
+
+    def _toggle_monitor(self, pos: Pos) -> None:
+        on = self.document.toggle_monitor(pos)
+        self._message(f"{'Monitoring' if on else 'Stopped monitoring'} {pos} on the timeline.")
+        self._changed()
 
     # ------------------------------------------------------------------ editing
     def _choose_block(self, block: Any) -> None:
         """Choosing a block to place (palette, hotbar, pick) enters BUILD mode."""
         self.current_block = block
-        self.viewport.set_build_block(block, self.block_palette.strength.value())
+        self.viewport.set_build_block(block, self.inventory.strength.value())
         self.viewport.set_mode(BUILD)
         self._message(f"Placing: {block.name}")
 
     def _hover(self, hit: Hit | None) -> None:
         if hit is None:
-            self.statusBar().clearMessage()
+            self.hint_bar.show_hover("")
             return
         state = self.document.state_at(hit.pos)
-        self.statusBar().showMessage(f"{hit.pos}  {state!r}")
+        self.hint_bar.show_hover(f"{hit.pos}  {state!r}")
 
     def _edit(self, function: Any, *args: Any) -> None:
         self.document.notice = ""
@@ -443,7 +480,7 @@ class MainWindow(QMainWindow):
         request = PlaceRequest(hit.face, yaw, pitch)
         kind = sources.SOURCE_BLOCKS.get(self.current_block.id)
         if kind is not None:
-            strength = self.block_palette.strength.value()
+            strength = self.inventory.strength.value()
             self._edit(self.document.place_source, target, kind, strength, request)
         else:
             self._edit(self.document.place, target, self.current_block, request)
@@ -485,7 +522,7 @@ class MainWindow(QMainWindow):
         block = self.document.state_at(pos).block
         if isinstance(block, RedstoneWallTorchBlock):
             block = blocks.REDSTONE_TORCH
-        self.block_palette.select_block(block)
+        self.inventory.select_block(block)
 
     def _select(self, pos: Pos | None) -> None:
         self.viewport.selection = pos

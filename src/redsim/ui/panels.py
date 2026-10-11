@@ -8,7 +8,6 @@ from typing import Any
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QCheckBox,
     QColorDialog,
     QComboBox,
     QDialog,
@@ -22,7 +21,6 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QSlider,
-    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -38,129 +36,10 @@ from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.preferences import Preferences
-from redsim.world import blocks
-from redsim.world.block import Block, BlockState
+from redsim.world.block import BlockState
 from redsim.world.properties import Property
 
 NO_SELECTION = "Left-click a block in NORMAL mode (Esc) to inspect it."
-
-#: Palette order; the first nine are the hotbar (keys 1-9).
-PALETTE: list[tuple[str, list[str]]] = [
-    (
-        "Redstone",
-        [
-            "minecraft:redstone_wire",
-            "minecraft:redstone_torch",
-            "minecraft:repeater",
-            "minecraft:comparator",
-            "minecraft:lever",
-            "minecraft:redstone_lamp",
-            "minecraft:redstone_block",
-            "minecraft:stone_button",
-            "minecraft:oak_button",
-            "minecraft:piston",
-            "minecraft:sticky_piston",
-        ],
-    ),
-    (
-        "Signal sources",
-        ["minecraft:barrel", "minecraft:lectern", "minecraft:cake"],
-    ),
-    (
-        "Building",
-        [
-            "minecraft:stone",
-            "minecraft:smooth_stone",
-            "minecraft:cobblestone",
-            "minecraft:oak_planks",
-            "minecraft:white_wool",
-            "minecraft:white_concrete",
-            "minecraft:smooth_stone_slab",
-        ],
-    ),
-    (
-        "Special",
-        [
-            "minecraft:glass",
-            "minecraft:glowstone",
-            "minecraft:obsidian",
-            "minecraft:bedrock",
-            "minecraft:slime_block",
-            "minecraft:honey_block",
-        ],
-    ),
-]
-HOTBAR = [
-    "minecraft:stone",
-    "minecraft:redstone_wire",
-    "minecraft:redstone_torch",
-    "minecraft:repeater",
-    "minecraft:comparator",
-    "minecraft:lever",
-    "minecraft:redstone_lamp",
-    "minecraft:redstone_block",
-    "minecraft:sticky_piston",
-]
-
-
-class PalettePanel(QWidget):
-    """Block list; signal sources are placed at the strength chosen below the list."""
-
-    block_chosen = Signal(object)  # Block
-
-    def __init__(self) -> None:
-        super().__init__()
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.list = QListWidget()
-        layout.addWidget(self.list)
-        for title, ids in PALETTE:
-            header = QListWidgetItem(title)
-            header.setFlags(Qt.ItemFlag.NoItemFlags)
-            font = header.font()
-            font.setBold(True)
-            header.setFont(font)
-            self.list.addItem(header)
-            for block_id in ids:
-                item = QListWidgetItem("   " + blocks.get(block_id).name.replace("_", " "))
-                item.setData(Qt.ItemDataRole.UserRole, block_id)
-                kind = sources.SOURCE_BLOCKS.get(block_id)
-                if kind is not None:
-                    item.setToolTip(sources.KINDS[kind].tooltip)
-                self.list.addItem(item)
-        row = QHBoxLayout()
-        row.setContentsMargins(6, 0, 6, 6)
-        row.addWidget(QLabel("Source strength:"))
-        self.strength = QSpinBox()
-        self.strength.setRange(0, 15)
-        self.strength.setValue(15)
-        self.strength.setToolTip(
-            "Comparator reading of placed signal sources (barrel, lectern, cake). The block "
-            "is set up for it: barrels get the fewest items, lecterns a 15-page book open at "
-            "the right page, cakes the matching bites (even values only)."
-        )
-        row.addWidget(self.strength)
-        layout.addLayout(row)
-        self.list.currentItemChanged.connect(self._changed)
-        self.select_block(blocks.STONE)
-
-    def _changed(self, item: QListWidgetItem | None) -> None:
-        if item is not None and item.data(Qt.ItemDataRole.UserRole):
-            block_id = item.data(Qt.ItemDataRole.UserRole)
-            self.strength.setEnabled(block_id in sources.SOURCE_BLOCKS)
-            self.block_chosen.emit(blocks.get(block_id))
-
-    def select_block(self, block: Block) -> None:
-        for row in range(self.list.count()):
-            if self.list.item(row).data(Qt.ItemDataRole.UserRole) == block.id:
-                self.list.setCurrentRow(row)
-                return
-
-    def current_block(self) -> Block:
-        item = self.list.currentItem()
-        block_id = item.data(Qt.ItemDataRole.UserRole) if item else None
-        return blocks.get(block_id) if block_id else blocks.STONE
-
 
 DIRECTION_LABELS = {
     "north": "↑ N",
@@ -262,6 +141,7 @@ class InspectorPanel(QWidget):
     section_requested = Signal(object, object)  # Pos, str | None
     source_requested = Signal(object, str, int)  # Pos, kind, strength
     page_requested = Signal(object, int)  # Pos, page (a player turning the page)
+    monitor_requested = Signal(object)  # Pos: add/remove on the timeline monitor
 
     def __init__(self) -> None:
         super().__init__()
@@ -271,9 +151,16 @@ class InspectorPanel(QWidget):
         self._editors: dict[str, Any] = {}
         self._page: int | None = None
         layout = QVBoxLayout(self)
+        title_row = QHBoxLayout()
         self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
-        layout.addWidget(self.title)
+        title_row.addWidget(self.title, 1)
+        self.monitor = QPushButton("📈 Monitor")
+        self.monitor.setCheckable(True)
+        self.monitor.setToolTip("Show this block's value per tick on the timeline")
+        self.monitor.clicked.connect(lambda: self._pos and self.monitor_requested.emit(self._pos))
+        title_row.addWidget(self.monitor)
+        layout.addLayout(title_row)
         self.form_widget = QWidget()
         self.form = QFormLayout(self.form_widget)
         self.form.setContentsMargins(0, 0, 0, 0)
@@ -338,6 +225,7 @@ class InspectorPanel(QWidget):
         self._pos = pos
         self.source_box.setVisible(False)
         if document is None or pos is None:
+            self.monitor.setVisible(False)
             self._rebuild(None)
             self._state = None
             self.title.setText(NO_SELECTION)
@@ -349,6 +237,8 @@ class InspectorPanel(QWidget):
         state = document.state_at(pos)
         self._state = state
         editable = document.can_edit
+        self.monitor.setVisible(True)
+        self.monitor.setChecked(pos in document.monitors)
         key = (pos, state.block.id)
         if key != self._layout_key:
             self._rebuild(state)
@@ -430,92 +320,6 @@ class InspectorPanel(QWidget):
     def _section_changed(self, index: int) -> None:
         if self._pos is not None:
             self.section_requested.emit(self._pos, self.section_box.itemData(index))
-
-
-class SimulationPanel(QWidget):
-    play_toggled = Signal(bool)
-    step_tick = Signal()
-    step_event = Signal()
-    tick_back = Signal()
-    step_back = Signal()
-    seek_requested = Signal(int)
-    speed_changed = Signal(int)
-
-    def __init__(self) -> None:
-        super().__init__()
-        layout = QVBoxLayout(self)
-        back_row = QHBoxLayout()
-        tick_back = QPushButton("⏮ Tick back")
-        tick_back.setToolTip("Rewind to the previous tick boundary (Shift+T)")
-        tick_back.clicked.connect(self.tick_back.emit)
-        back_row.addWidget(tick_back)
-        step_back = QPushButton("◀ Step back")
-        step_back.setToolTip("Rewind one engine step (Shift+E)")
-        step_back.clicked.connect(self.step_back.emit)
-        back_row.addWidget(step_back)
-        layout.addLayout(back_row)
-        row = QHBoxLayout()
-        self.play = QPushButton("▶ Run")
-        self.play.setCheckable(True)
-        self.play.setToolTip("Run/pause the simulation at the chosen tick rate (P)")
-        self.play.toggled.connect(self._toggled)
-        row.addWidget(self.play)
-        tick = QPushButton("Step tick")
-        tick.setToolTip("Finish the current game tick, or run one whole tick (T)")
-        tick.clicked.connect(self.step_tick.emit)
-        row.addWidget(tick)
-        event = QPushButton("Step event")
-        event.setToolTip(
-            "Run one engine step: tick start, one scheduled tick, one block event or one "
-            "block-entity tick (the simulator's 'sub-tick', see doc/architecture.md) (E)"
-        )
-        event.clicked.connect(self.step_event.emit)
-        row.addWidget(event)
-        layout.addLayout(row)
-        speed_row = QHBoxLayout()
-        speed_row.addWidget(QLabel("Ticks per second:"))
-        self.speed = QSpinBox()
-        self.speed.setRange(1, 200)
-        self.speed.setValue(20)
-        self.speed.valueChanged.connect(self.speed_changed.emit)
-        speed_row.addWidget(self.speed)
-        self.warp = QCheckBox("Warp")
-        self.warp.setToolTip("Run as many ticks as possible (normal event order is kept)")
-        speed_row.addWidget(self.warp)
-        layout.addLayout(speed_row)
-        self.slider = QSlider(Qt.Orientation.Horizontal)
-        self.slider.setToolTip(
-            "Timeline of engine steps: drag to rewind or replay (deterministic re-execution)"
-        )
-        self.slider.valueChanged.connect(self._slider_moved)
-        layout.addWidget(self.slider)
-        self.status = QLabel("")
-        self.status.setWordWrap(True)
-        layout.addWidget(self.status)
-
-    def _toggled(self, on: bool) -> None:
-        self.play.setText("⏸ Pause" if on else "▶ Run")
-        self.play_toggled.emit(on)
-
-    def _slider_moved(self, value: int) -> None:
-        if not self.slider.signalsBlocked():
-            self.seek_requested.emit(value)
-
-    def show_status(self, document: Document) -> None:
-        engine = document.engine
-        history = document.history
-        self.slider.blockSignals(True)
-        self.slider.setRange(history.start, history.end)
-        self.slider.setValue(history.position)
-        self.slider.blockSignals(False)
-        ahead = history.end - history.position
-        future = f" ({ahead} recorded steps ahead)" if ahead else ""
-        self.status.setText(
-            f"Game time: <b>{engine.game_time}</b><br>"
-            f"Phase: {engine.phase.value}<br>"
-            f"Next step: {engine.peek_next_step()}<br>"
-            f"Engine step: {history.position} of {history.end}{future}"
-        )
 
 
 class DiagnosticsPanel(QTabWidget):

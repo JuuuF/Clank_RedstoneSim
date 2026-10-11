@@ -22,6 +22,7 @@ from redsim.editor import sources
 from redsim.editor.annotations import Sections
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.groups import Groups
+from redsim.editor.monitor import monitor_value
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
 from redsim.sim.engine import Action, ActionError, Engine, StepInfo
@@ -51,10 +52,20 @@ class Document:
     groups: Groups = field(default_factory=Groups)
     prefabs: dict[str, Prefab] = field(default_factory=dict)
     clipboard: Prefab | None = None
+    #: Timeline view (not saved; rebuilt as the history runs): game time → step index at
+    #: that tick boundary, action step index → game time, and the last recorded tick.
+    tick_steps: dict[int, int] = field(default_factory=dict)
+    edit_ticks: dict[int, int] = field(default_factory=dict)
+    end_tick: int = 0
+    #: Monitored blocks (saved) and their recorded values per tick (not saved).
+    monitors: list[Pos] = field(default_factory=list)
+    samples: dict[Pos, dict[int, int]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.timeline is None:
             self.timeline = Timeline(self.engine)
+        self.end_tick = self.engine.game_time
+        self._observe()
 
     @property
     def history(self) -> Timeline:
@@ -88,10 +99,14 @@ class Document:
         if not self.can_edit:
             raise EditError("Finish the current tick before editing (edits happen between ticks).")
         discarded = self.history.end - self.history.position
+        index = self.history.position
         try:
             self.history.apply(action)
         except ActionError as exc:
             raise EditError(str(exc)) from exc
+        if discarded:
+            self._forget_after(index, self.engine.game_time)
+        self.edit_ticks[index] = self.engine.game_time
         self.notice = f"Discarded {discarded} recorded later steps." if discarded else ""
         self._changed()
 
@@ -278,6 +293,7 @@ class Document:
     def run_ticks(self, count: int) -> None:
         for _ in range(count):
             self.history.run_tick()
+            self._observe()
         self._changed(dirty=True)
 
     def step_back(self) -> bool:
@@ -330,6 +346,7 @@ class Document:
         extra["sections"] = self.sections.to_json()
         extra["groups"] = self.groups.to_json()
         extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
+        extra["monitors"] = [list(pos) for pos in self.monitors]
         save_io.save(target, self.engine, extra)
         self.path = target
         self.dirty = False
@@ -341,6 +358,7 @@ class Document:
         sections = Sections.from_json(raw_sections) if raw_sections is not None else Sections()
         groups = Groups.from_json(extra.pop("groups", []))
         prefabs = {name: Prefab.from_json(data) for name, data in extra.pop("prefabs", {}).items()}
+        monitors = [(int(x), int(y), int(z)) for x, y, z in extra.pop("monitors", [])]
         return Document(
             engine=engine,
             sections=sections,
@@ -348,9 +366,52 @@ class Document:
             extra=extra,
             groups=groups,
             prefabs=prefabs,
+            monitors=monitors,
         )
 
+    # ------------------------------------------------------------------ timeline view
+    def _observe(self) -> None:
+        """Record where this tick boundary is in the history and sample monitored blocks."""
+        engine, history = self.engine, self.history
+        tick = engine.game_time
+        if history.position >= history.end:
+            self.end_tick = tick
+        if engine.at_tick_boundary():
+            self.tick_steps[tick] = max(self.tick_steps.get(tick, -1), history.position)
+            for pos in self.monitors:
+                self.samples.setdefault(pos, {})[tick] = monitor_value(engine.level, pos)
+
+    def _forget_after(self, index: int, tick: int) -> None:
+        """An edit after a rewind dropped the recorded future: drop what described it."""
+        self.tick_steps = {t: s for t, s in self.tick_steps.items() if s <= index or t < tick}
+        actions = set(self.history.action_indices())
+        self.edit_ticks = {i: t for i, t in self.edit_ticks.items() if i in actions}
+        for values in self.samples.values():
+            for stale in [t for t in values if t > tick]:
+                del values[stale]
+        self.end_tick = tick
+
+    def seek_tick(self, tick: int) -> bool:
+        """Scrub to a tick boundary of the recorded history (after that moment's edits)."""
+        known = [t for t in self.tick_steps if t <= tick]
+        if not known:
+            return False
+        self.seek(self.tick_steps[max(known)])
+        return True
+
+    def toggle_monitor(self, pos: Pos) -> bool:
+        """Add or remove a block from the timeline monitor; returns whether it is monitored."""
+        if pos in self.monitors:
+            self.monitors.remove(pos)
+            self.samples.pop(pos, None)
+            self._changed(dirty=True)
+            return False
+        self.monitors.append(pos)
+        self._changed(dirty=True)
+        return True
+
     def _changed(self, dirty: bool = True) -> None:
+        self._observe()
         self.revision += 1
         if dirty:
             self.dirty = True

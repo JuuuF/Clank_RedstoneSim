@@ -40,8 +40,9 @@ class ActionSpec:
     kind: str = KEY
 
 
-def _hotbar(slot: int) -> ActionSpec:
-    return ActionSpec(f"hotbar.{slot}", f"Hotbar slot {slot}", (str(slot),))
+def _inventory(slot: int) -> ActionSpec:
+    title = f"Inventory: open folder / pick block {slot}"
+    return ActionSpec(f"inventory.{slot}", title, (str(slot),))
 
 
 ACTIONS: tuple[ActionSpec, ...] = (
@@ -121,7 +122,8 @@ ACTIONS: tuple[ActionSpec, ...] = (
         "view.xray", "X-ray: cycle off / building blocks / everything see-through", ("Alt+Z",)
     ),
     ActionSpec("help.controls", "Show the controls", ("F1",)),
-    *(_hotbar(slot) for slot in range(1, 10)),
+    *(_inventory(slot) for slot in range(1, 10)),
+    ActionSpec("inventory.up", "Inventory: up one folder", ("Backspace",)),
 )
 SPECS: dict[str, ActionSpec] = {spec.id: spec for spec in ACTIONS}
 
@@ -373,7 +375,7 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
             "help.controls",
         ),
     ),
-    ("Hotbar", None, tuple(f"hotbar.{slot}" for slot in range(1, 10))),
+    ("Inventory", None, (*(f"inventory.{slot}" for slot in range(1, 10)), "inventory.up")),
 )
 
 
