@@ -233,9 +233,10 @@ class Viewport(QOpenGLWidget):
                 painter.drawText(12, 10 + metrics.ascent() + index * line_height, line)
         # Mode badge (bottom left) with what the mouse buttons do in this mode.
         badge = f" {self.mode.upper()} "
-        hint = self.mode_hint()
         top = self.height() - line_height - 14
         badge_width = metrics.horizontalAdvance(badge) + 8
+        room = max(0, self.width() - badge_width - 30)  # the full list is in the help (F1)
+        hint = metrics.elidedText(self.mode_hint(), Qt.TextElideMode.ElideRight, room)
         painter.fillRect(6, top, badge_width, line_height + 8, MODE_COLORS[self.mode])
         painter.fillRect(
             6 + badge_width,

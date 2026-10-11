@@ -117,6 +117,9 @@ class MainWindow(QMainWindow):
 
     def _connect(self) -> None:
         self.block_palette.block_chosen.connect(self._choose_block)
+        # Hand the keyboard back to the viewport, so mode and hotbar keys keep working.
+        self.block_palette.strength.editingFinished.connect(self.viewport.setFocus)
+        self.block_palette.list.itemClicked.connect(lambda _item: self.viewport.setFocus())
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
         self.viewport.use_requested.connect(self._use)
