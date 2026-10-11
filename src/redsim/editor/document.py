@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from redsim.core.pos import Pos
+from redsim.editor import sources
 from redsim.editor.annotations import Sections
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.groups import Groups
@@ -104,6 +105,34 @@ class Document:
 
     def use(self, pos: Pos) -> None:
         self._apply(Action("use", pos), f"use {self.state_at(pos).block.name}")
+
+    def place_source(self, pos: Pos, kind: str, strength: int, request: PlaceRequest) -> None:
+        """Put a signal source of ``strength`` at ``pos``: the backing block, oriented like a
+        player would place it, set with its block-entity data (``/setblock … {…}``)."""
+        block = blocks.get(sources.KINDS[kind].block_id)
+        if not self.state_at(pos).is_air:
+            raise EditError(f"position {pos} is occupied")
+        oriented = placement_state(block, request, self.engine.level, pos)
+        if oriented is None or not oriented.can_survive(self.engine.level, pos):
+            raise EditError(f"{block.name} cannot be placed there (needs support).")
+        self._set_source(pos, kind, strength, oriented)
+
+    def set_source(self, pos: Pos, kind: str, strength: int) -> None:
+        """Change a source's strength or swap its backing block in place (keeps facing)."""
+        self._set_source(pos, kind, strength, self.state_at(pos))
+
+    def _set_source(self, pos: Pos, kind: str, strength: int, oriented: BlockState) -> None:
+        text, nbt = sources.source_setblock(kind, strength, oriented)
+        actual = sources.nearest_strength(kind, strength)
+        payload = {"nbt": nbt} if nbt is not None else None
+        label = f"{sources.KINDS[kind].title} source {actual}"
+        self._apply(Action("setblock", pos, text, payload=payload), label)
+        if actual != strength:
+            self.notice = f"{sources.KINDS[kind].title} cannot give {strength}; using {actual}."
+
+    def turn_page(self, pos: Pos, page: int) -> None:
+        """A player turning a lectern's page (comparator update and a 2-tick pulse)."""
+        self._apply(Action("lectern_page", pos, payload={"page": page}), f"turn to page {page}")
 
     def setblock(self, pos: Pos, state: BlockState) -> None:
         """Inspector edit: ``/setblock`` semantics (shape-adjusted state, neighbor updates)."""
