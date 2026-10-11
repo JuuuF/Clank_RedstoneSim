@@ -459,6 +459,12 @@ class TimelineBar(QWidget):
         button("⏮", "Jump to start (Shift+Left)", lambda: self.jump.emit("start"))
         button("◆◀", "Previous edit (Down)", lambda: self.jump.emit("previous"))
         button("◀", "Tick back (Left); Ctrl+Left: one engine step", self.tick_back.emit)
+        self.reverse = QToolButton()
+        self.reverse.setText("◁")
+        self.reverse.setCheckable(True)
+        self.reverse.setToolTip("Play backwards / pause (Ctrl+Shift+Space)")
+        self.reverse.toggled.connect(self._reverse_toggled)
+        row.addWidget(self.reverse)
         self.play = QToolButton()
         self.play.setText("▶")
         self.play.setCheckable(True)
@@ -487,7 +493,30 @@ class TimelineBar(QWidget):
 
     def _toggled(self, on: bool) -> None:
         self.play.setText("⏸" if on else "▶")
+        if on and self.reverse.isChecked():
+            self.reverse.blockSignals(True)
+            self.reverse.setChecked(False)
+            self.reverse.setText("◁")
+            self.reverse.blockSignals(False)
         self.play_toggled.emit(on)
+
+    def _reverse_toggled(self, on: bool) -> None:
+        """Backwards playback uses the same run loop, ticking back instead of forward."""
+        self.reverse.setText("⏸" if on else "◁")
+        if on and self.play.isChecked():
+            self.play.blockSignals(True)
+            self.play.setChecked(False)
+            self.play.setText("▶")
+            self.play.blockSignals(False)
+        self.play_toggled.emit(on)
+
+    @property
+    def backwards(self) -> bool:
+        return self.reverse.isChecked()
+
+    def stop(self) -> None:
+        for button in (self.play, self.reverse):
+            button.setChecked(False)
 
     def show_status(self, document: Document) -> None:
         engine = document.engine

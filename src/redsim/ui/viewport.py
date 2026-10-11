@@ -73,6 +73,11 @@ BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 ORBIT_DEGREES_PER_PIXEL = 0.3
 ZOOM_PER_NOTCH = 1.15
 DRAG_THRESHOLD = 4
+#: The build preview is this much smaller than a block (no z-fighting with neighbors).
+GHOST_SHRINK = 0.99
+#: Longest line placed by one drag.
+MAX_LINE = 64
+DOUBLE_SHIFT_SECONDS = 0.35
 PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
 SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
 LOCKED_COLOR = (1.0, 0.62, 0.15, 1.0)
@@ -95,9 +100,10 @@ MODE_COLORS = {
 CLICK_VERBS = {
     "normal.inspect": "inspect",
     "normal.use": "use",
-    "build.break": "break",
     "build.place": "place",
-    "build.use": "use",
+    "build.line": "line",
+    "build.rotate": "turn",
+    "build.break": "break",
     "select.block": "select",
     "select.box": "box / move / resize",
     "select.copy_drag": "copy",
@@ -129,6 +135,8 @@ def _modifier_names(modifiers: Qt.KeyboardModifier) -> frozenset[str]:
 class Viewport(QOpenGLWidget):
     hover_changed = Signal(object)  # Hit | None
     place_requested = Signal(object)  # Hit
+    line_requested = Signal(object, object)  # [Pos] (a straight line), Hit at the start
+    rotate_requested = Signal(object, int)  # Pos, quarter turns
     use_requested = Signal(object)  # Pos
     break_requested = Signal(object)  # Pos
     pick_requested = Signal(object)  # Pos
@@ -140,6 +148,7 @@ class Viewport(QOpenGLWidget):
     gizmo_hover_changed = Signal(object)  # Hotspot | None
     paste_requested = Signal(object)  # Pos (minimum corner)
     mode_changed = Signal(str)
+    search_requested = Signal()  # Shift pressed twice (like Rider's search everywhere)
 
     def __init__(
         self, document: Document, keymap: Keymap | None = None, parent: QWidget | None = None
@@ -180,7 +189,12 @@ class Viewport(QOpenGLWidget):
         self.build_strength = 15
         self._build_ghost: tuple[np.ndarray, Pos] | None = None
         self._build_meshes: dict[BlockState, np.ndarray] = {}
+        self._line_ghost: tuple[Any, np.ndarray] | None = None
+        self._last_shift = 0.0
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
+        #: BUILD mode line drag: the start cell and the hit it was placed against.
+        self._line: tuple[Pos, Hit] | None = None
+        self._line_end: Pos | None = None
         self._ghost_uploaded: tuple[int, Pos] | None = None
         self.world_mesh = ChunkedMesh()
         self._mesh_revision = -1
@@ -241,33 +255,122 @@ class Viewport(QOpenGLWidget):
         self._update_build_ghost()
 
     def _update_build_ghost(self) -> None:
-        """Preview of the block to place: oriented like the placement would orient it
-        (cursor-ray yaw/pitch, wire connections, source setup), or a red outline."""
+        """Preview of the block(s) to place: oriented like the placement would orient them
+        (cursor-ray yaw/pitch, wire connections, source setup), or a red outline. While a
+        line is dragged, the whole line."""
         ghost, blocked = None, None
         hit, block = self.hover, self.build_block
         busy = self.paste_preview is not None or self._move is not None
-        if self.mode == BUILD and hit is not None and block is not None and not busy:
-            level = self.document.level
+        if self._line is not None and block is not None:
+            start, start_hit = self._line
+            cells = self.line_cells()
+            request = PlaceRequest(start_hit.face, *self.player_view())
+            states = [(cell, self._placed_state(block, request, cell)) for cell in cells]
+            parts = tuple(
+                ((c[0] - start[0], c[1] - start[1], c[2] - start[2]), st)
+                for c, st in states
+                if st is not None
+            )
+            if parts:
+                ghost = (self._combined_ghost(parts), start)
+        elif self.mode == BUILD and hit is not None and block is not None and not busy:
             target = offset(hit.pos, hit.face)
-            state = None
-            if level.get_block_state(target).is_air:
-                request = PlaceRequest(hit.face, *self.player_view())
-                state = placement_state(block, request, level, target)
-                kind = sources.SOURCE_BLOCKS.get(block.id)
-                if state is not None and kind is not None:
-                    text, _ = sources.source_setblock(kind, self.build_strength, state)
-                    state = blocks.parse_state(text)
-            if state is None or not state.can_survive(level, target):
+            request = PlaceRequest(hit.face, *self.player_view())
+            state = self._placed_state(block, request, target)
+            if state is None:
                 blocked = target
             else:
-                vertices = self._build_meshes.get(state)
-                if vertices is None:
-                    vertices = ghost_mesh({(0, 0, 0): state}, 0.5, self.world_mesh.mesher)
-                    self._build_meshes[state] = vertices
-                ghost = (vertices, target)
+                ghost = (self._single_ghost(state), target)
         if _ghost_key(ghost) != _ghost_key(self._build_ghost) or blocked != self.build_blocked:
             self._build_ghost, self.build_blocked = ghost, blocked
             self.update()
+
+    def _placed_state(self, block: Block, request: PlaceRequest, target: Pos) -> BlockState | None:
+        level = self.document.level
+        if not level.get_block_state(target).is_air:
+            return None
+        state = placement_state(block, request, level, target)
+        kind = sources.SOURCE_BLOCKS.get(block.id)
+        if state is not None and kind is not None:
+            text, _ = sources.source_setblock(kind, self.build_strength, state)
+            state = blocks.parse_state(text)
+        if state is None or not state.can_survive(level, target):
+            return None
+        return state
+
+    def _single_ghost(self, state: BlockState) -> np.ndarray:
+        vertices = self._build_meshes.get(state)
+        if vertices is None:
+            vertices = ghost_mesh({(0, 0, 0): state}, 0.5, self.world_mesh.mesher)
+            # Shrink it a little around the block center, so none of its faces lies in the
+            # plane of a neighbor's face (z-fighting flicker, e.g. wire on a block).
+            vertices[:, :3] = 0.5 + (vertices[:, :3] - 0.5) * GHOST_SHRINK
+            self._build_meshes[state] = vertices
+        return vertices
+
+    def _combined_ghost(self, parts: tuple[tuple[Pos, BlockState], ...]) -> np.ndarray:
+        cached = self._line_ghost
+        if cached is not None and cached[0] == parts:
+            return cached[1]
+        pieces = []
+        for rel, state in parts:
+            vertices = self._single_ghost(state).copy()
+            vertices[:, :3] += np.array(rel, dtype=np.float32)
+            pieces.append(vertices)
+        combined = np.vstack(pieces)
+        self._line_ghost = (parts, combined)
+        return combined
+
+    # ------------------------------------------------------------------ line drag
+    def line_cells(self) -> list[Pos]:
+        """The cells of the dragged line: from the start along the axis the cursor moved
+        most on (x or z, on the start's layer), at most ``MAX_LINE`` long."""
+        if self._line is None:
+            return []
+        start = self._line[0]
+        end = self._line_end or start
+        dx, dz = end[0] - start[0], end[2] - start[2]
+        if abs(dx) >= abs(dz):
+            length, step = abs(dx), (1 if dx >= 0 else -1, 0, 0)
+        else:
+            length, step = abs(dz), (0, 0, 1 if dz >= 0 else -1)
+        length = min(length, MAX_LINE - 1)
+        return [
+            (start[0] + step[0] * i, start[1], start[2] + step[2] * i) for i in range(length + 1)
+        ]
+
+    def _begin_line(self, point: QPoint) -> bool:
+        hit = self._pick_at(point)
+        if hit is None or self.build_block is None:
+            return False
+        self._line = (offset(hit.pos, hit.face), hit)
+        self._line_end = None
+        return True
+
+    def _continue_line(self, point: QPoint) -> None:
+        if self._line is None:
+            return
+        start = self._line[0]
+        origin, direction = self._ray(point)
+        end = None
+        if abs(direction[1]) > 1e-6:  # where the ray meets the start's layer
+            t = (start[1] - origin[1]) / direction[1]
+            if t > 0:
+                spot = origin + t * direction
+                end = (math.floor(spot[0]), start[1], math.floor(spot[2]))
+        if end is None and self.hover is not None:
+            end = offset(self.hover.pos, self.hover.face)
+        if end != self._line_end:
+            self._line_end = end
+            self._update_build_ghost()
+
+    def _end_line(self) -> None:
+        if self._line is None:
+            return
+        cells, hit = self.line_cells(), self._line[1]
+        self._line, self._line_end = None, None
+        self.line_requested.emit(cells, hit)
+        self._update_build_ghost()
 
     # ------------------------------------------------------------------ GL
     def initializeGL(self) -> None:
@@ -438,13 +541,17 @@ class Viewport(QOpenGLWidget):
         )
 
     def mode_hint(self) -> str:
-        """``Left Click: break · Right Click: place · …`` for the current mode."""
+        """``Left Click: place · Left Drag: line · …`` for the current mode."""
         parts = []
         for action, verb in CLICK_VERBS.items():
             prefix = action.split(".")[0]
             bindings = self.keymap.bindings(action)
             if bindings and prefix in (self.mode, "pick"):
                 parts.append(f"{bindings[0]}: {verb}")
+        if self.mode == BUILD:
+            delete = self.keymap.bindings("edit.delete")
+            if delete:
+                parts.insert(3, f"{delete[0]}: remove")
         return " · ".join(parts)
 
     def _overlay_lines(self) -> np.ndarray:
@@ -618,6 +725,15 @@ class Viewport(QOpenGLWidget):
             self.update()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Shift and not event.isAutoRepeat():
+            now = time.monotonic()
+            if now - self._last_shift < DOUBLE_SHIFT_SECONDS:
+                self._last_shift = 0.0
+                self.search_requested.emit()
+            else:
+                self._last_shift = now
+        elif event.key() != Qt.Key.Key_Shift:
+            self._last_shift = 0.0
         if event.key() == Qt.Key.Key_Shift:
             self._track_shift(True)
         action = self._held_actions.get(event.key())
@@ -682,6 +798,8 @@ class Viewport(QOpenGLWidget):
             name = _BUTTON_NAMES.get(button)
             action = self.keymap.mouse_action(self.mode, modifiers, name, "Drag")
             self._drag_action = action or ""
+            if self._drag_action == "build.line" and not self._begin_line(start):
+                self._drag_action = ""
             if self._drag_action in ("select.box", "select.copy_drag"):
                 self._begin_select_drag(start, copy=self._drag_action == "select.copy_drag")
             elif self._drag_action == "select.stack":
@@ -716,6 +834,8 @@ class Viewport(QOpenGLWidget):
             self._end_select_drag()
         elif drag_action == "select.stack":
             self._end_stack()
+        elif drag_action == "build.line":
+            self._end_line()
         self.update()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
@@ -754,6 +874,10 @@ class Viewport(QOpenGLWidget):
         elif action == "select.stack":
             self._continue_stack()
             return
+        elif action == "build.line":
+            if self._drag_last is not None:
+                self._continue_line(self._drag_last + QPoint(dx, dy))
+            return
         else:
             return
         self._camera_moved()
@@ -784,6 +908,8 @@ class Viewport(QOpenGLWidget):
             self.break_requested.emit(hit.pos)
         elif action == "build.place":
             self.place_requested.emit(hit)
+        elif action in ("build.rotate", "build.rotate_back"):
+            self.rotate_requested.emit(hit.pos, 1 if action == "build.rotate" else 3)
 
     # ------------------------------------------------------------------ selections
     def _begin_select_drag(self, start: QPoint, copy: bool) -> None:

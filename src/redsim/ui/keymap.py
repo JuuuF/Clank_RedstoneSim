@@ -29,7 +29,17 @@ MODES = ("normal", "build", "select", "paste")  # "paste": while a paste preview
 MODIFIERS = ("Ctrl", "Shift", "Alt", "Meta")
 BUTTONS = ("Left", "Right", "Middle")
 GESTURES = ("Click", "Drag")
-KEYMAP_VERSION = 1
+KEYMAP_VERSION = 2
+
+#: Earlier default bindings. A keymap file entry equal to one of them was not changed by
+#: the user (older versions wrote every default into the file), so the current default
+#: applies instead.
+LEGACY_DEFAULTS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "sim.event": (("Shift+Right", "E"),),
+    "sim.step_back": (("Shift+Left",),),
+    "build.break": (("Left Click",),),
+    "build.place": (("Right Click",),),
+}
 
 
 @dataclass(frozen=True)
@@ -70,9 +80,14 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("paste.zoom", "While pasting: zoom", ("Ctrl+Wheel",), MOUSE),
     ActionSpec("normal.inspect", "Select a block for the inspector", ("Left Click",), MOUSE),
     ActionSpec("normal.use", "Use a lever, button, repeater, …", ("Right Click",), MOUSE),
-    ActionSpec("build.break", "Break the block", ("Left Click",), MOUSE),
-    ActionSpec("build.place", "Place the palette block", ("Right Click",), MOUSE),
-    ActionSpec("build.use", "Use instead of placing", ("Ctrl+Right Click",), MOUSE),
+    ActionSpec("build.place", "Place the chosen block", ("Left Click",), MOUSE),
+    ActionSpec("build.line", "Drag a straight line of the chosen block", ("Left Drag",), MOUSE),
+    ActionSpec("build.rotate", "Turn the block under the cursor", ("Right Click",), MOUSE),
+    ActionSpec(
+        "build.rotate_back", "Turn the block under the cursor back", ("Shift+Right Click",), MOUSE
+    ),
+    ActionSpec("build.break", "Break the block under the cursor (Del does too)", (), MOUSE),
+    ActionSpec("build.use", "Use the block (lever, button, …)", ("Ctrl+Right Click",), MOUSE),
     ActionSpec("select.block", "Select one block", ("Left Click",), MOUSE),
     ActionSpec(
         "select.box",
@@ -89,6 +104,7 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("select.lock", "Lock / unlock the selection (Enter, like GIMP)", ("Return",)),
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
+    ActionSpec("sim.run_back", "Play backwards / pause", ("Ctrl+Shift+Space",)),
     ActionSpec("sim.tick", "Step one tick", ("Right", "T")),
     ActionSpec("sim.event", "Step one event (engine step)", ("Ctrl+Right", "E")),
     ActionSpec("sim.tick_back", "Tick back", ("Left",)),
@@ -105,13 +121,18 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("edit.rotate_back", "Rotate the selection 90° counter-clockwise", ("Shift+R",)),
     ActionSpec("edit.flip", "Flip the selection left/right (as seen from the camera)", ("H",)),
     ActionSpec("edit.flip_depth", "Flip the selection front/back", ("Shift+H",)),
+    ActionSpec("search.blocks", "Search blocks to build with", ("Ctrl+Space", "/")),
     ActionSpec("edit.rotate_block", "Rotate the block under the cursor clockwise", ("Q",)),
     ActionSpec(
         "edit.rotate_block_back",
         "Rotate the block under the cursor counter-clockwise",
         ("Shift+Q",),
     ),
-    ActionSpec("edit.delete", "Clear the selection (fill with air)", ("Del",)),
+    ActionSpec(
+        "edit.delete",
+        "Delete: the selection (SELECT mode) or the block under the cursor (BUILD mode)",
+        ("Del",),
+    ),
     ActionSpec("file.new", "New world", ("Ctrl+N",)),
     ActionSpec("file.open", "Open…", ("Ctrl+O",)),
     ActionSpec("file.save", "Save", ("Ctrl+S",)),
@@ -180,6 +201,7 @@ def default_path() -> Path:
 class Keymap:
     def __init__(self, overrides: dict[str, list[str]] | None = None) -> None:
         self.warnings: list[str] = []
+        self._overridden: set[str] = set()
         self._bindings: dict[str, tuple[str, ...]] = {s.id: s.defaults for s in ACTIONS}
         for action, bindings in (overrides or {}).items():
             spec = SPECS.get(action)
@@ -189,6 +211,8 @@ class Keymap:
             if not isinstance(bindings, list) or not all(isinstance(b, str) for b in bindings):
                 self.warnings.append(f"{action}: bindings must be a list of strings (ignored)")
                 continue
+            if tuple(bindings) in LEGACY_DEFAULTS.get(action, ()):
+                continue  # an old default, not a user choice
             if spec.kind == MOUSE:
                 valid = []
                 for binding in bindings:
@@ -199,6 +223,8 @@ class Keymap:
                         self.warnings.append(f"{action}: {exc}")
                 bindings = valid
             self._bindings[action] = tuple(bindings)
+            self._overridden.add(action)
+        self._drop_shadowed_defaults()
         self.warnings.extend(self.conflicts())
         self._mouse: list[tuple[str, MouseBinding]] = [
             (action, parse_mouse(binding))
@@ -206,6 +232,30 @@ class Keymap:
             if SPECS[action].kind == MOUSE
             for binding in bindings
         ]
+
+    def _drop_shadowed_defaults(self) -> None:
+        """A key the user bound to an action is taken away from another action that only
+        has it by default (otherwise Qt fires neither: an ambiguous shortcut)."""
+        claimed = {
+            normalize_key(binding)
+            for action in self._overridden
+            if SPECS[action].kind != MOUSE
+            for binding in self._bindings[action]
+        }
+        for action, bindings in self._bindings.items():
+            if action in self._overridden or SPECS[action].kind == MOUSE:
+                continue
+            kept = tuple(b for b in bindings if normalize_key(b) not in claimed)
+            if kept != bindings:
+                self._bindings[action] = kept
+                for binding in sorted(set(bindings) - set(kept)):
+                    owner = next(
+                        a
+                        for a in self._overridden
+                        if SPECS[a].kind != MOUSE
+                        and normalize_key(binding) in {normalize_key(b) for b in self._bindings[a]}
+                    )
+                    self.warnings.append(f"{binding!r} now belongs to {owner}, not {action}")
 
     # ------------------------------------------------------------------ files
     @staticmethod
@@ -227,15 +277,18 @@ class Keymap:
 
     @staticmethod
     def write_defaults(path: Path) -> None:
-        """Write every action with its default bindings, as a template to edit."""
+        """Write a template: empty ``bindings`` plus every default for reference, so later
+        versions can change defaults the user never touched."""
         path.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "version": KEYMAP_VERSION,
-            "help": "Each action maps to a list of bindings; [] unbinds. Keys use Qt key "
+            "help": "Copy the actions you want to change from 'defaults' into 'bindings'. "
+            "Each action maps to a list of bindings; [] unbinds. Keys use Qt key "
             "sequence text (Ctrl+Z, Shift+Right, Space); mouse bindings are "
             "'[Mods+]<Left|Right|Middle> <Click|Drag>' or '[Mods+]Wheel'. "
-            "Remove actions you do not change.",
-            "bindings": {spec.id: list(spec.defaults) for spec in ACTIONS},
+            "Only 'bindings' is read.",
+            "bindings": {},
+            "defaults": {spec.id: list(spec.defaults) for spec in ACTIONS},
         }
         path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -318,9 +371,14 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         "build",
         (
             "build.place",
+            "build.line",
+            "build.rotate",
+            "build.rotate_back",
             "build.break",
+            "edit.delete",
             "build.use",
             "pick",
+            "search.blocks",
             "edit.rotate_block",
             "edit.rotate_block_back",
         ),
@@ -349,6 +407,7 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         None,
         (
             "sim.run",
+            "sim.run_back",
             "sim.tick",
             "sim.tick_back",
             "sim.event",

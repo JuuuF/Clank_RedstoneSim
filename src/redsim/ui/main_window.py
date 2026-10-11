@@ -20,12 +20,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from redsim.core.direction import Direction
 from redsim.core.pos import Pos, offset
 from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
+from redsim.ui.block_search import BlockSearch
 from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import world_lines
 from redsim.ui.geometry import Hit
@@ -44,6 +46,7 @@ from redsim.ui.panels import (
 from redsim.ui.timeline import TimelineBar
 from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
 from redsim.world import blocks
+from redsim.world.block import Block
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
 from redsim.world.rotation import default_pivot2, rotate_state
 
@@ -126,6 +129,8 @@ class MainWindow(QMainWindow):
 
     def _connect(self) -> None:
         self.inventory.block_chosen.connect(self._choose_block)
+        self.inventory.search_requested.connect(self._search_blocks)
+        self.viewport.search_requested.connect(self._search_blocks)
         # Hand the keyboard back to the viewport, so mode and inventory keys keep working.
         self.inventory.strength.editingFinished.connect(self.viewport.setFocus)
         self.inventory.strength.valueChanged.connect(
@@ -150,6 +155,8 @@ class MainWindow(QMainWindow):
         self.inspector.contents_requested.connect(self._set_container_slot)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
+        self.viewport.line_requested.connect(self._place_line)
+        self.viewport.rotate_requested.connect(self._rotate_block_at)
         self.viewport.use_requested.connect(self._use)
         self.viewport.break_requested.connect(self._break)
         self.viewport.pick_requested.connect(self._pick)
@@ -234,6 +241,9 @@ class MainWindow(QMainWindow):
         self._action(mode_menu, "Move pivot to the block", self._focus_pivot, "camera.focus")
         sim_menu = bar.addMenu("&Simulation")
         self._action(sim_menu, "Run / pause", self.simulation.play.toggle, "sim.run")
+        self._action(
+            sim_menu, "Play backwards / pause", self.simulation.reverse.toggle, "sim.run_back"
+        )
         self._action(sim_menu, "Step tick", self._step_tick, "sim.tick")
         self._action(sim_menu, "Step event", self._step_event, "sim.event")
         self._action(sim_menu, "Tick back", self._tick_back, "sim.tick_back")
@@ -322,6 +332,7 @@ class MainWindow(QMainWindow):
                 f"inventory.{number}",
             )
         self._action(inventory_menu, "Up one folder", self.inventory.go_up, "inventory.up")
+        self._action(inventory_menu, "Search blocks…", self._search_blocks, "search.blocks")
         settings_menu = bar.addMenu("Se&ttings")
         self._action(settings_menu, "Preferences…", self._preferences)
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
@@ -476,12 +487,12 @@ class MainWindow(QMainWindow):
 
     def _history_edit(self, function: Any, *args: Any) -> None:
         """Keyframe operations re-run the history; the run stops first."""
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         self.last_steps = []
         self._edit(function, *args)
 
     def _scrub(self, tick: int) -> None:
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         if self.document.seek_tick(tick):
             self.last_steps = []
             self._changed()
@@ -499,6 +510,13 @@ class MainWindow(QMainWindow):
         self._changed()
 
     # ------------------------------------------------------------------ editing
+    def _search_blocks(self) -> None:
+        """The quick block search popup over the viewport."""
+        popup = BlockSearch(self, self.inventory.recent)
+        popup.chosen.connect(self.inventory.select_block)
+        popup.open_over(self.viewport)
+        self._block_search = popup  # keep it alive while open
+
     def _choose_block(self, block: Any) -> None:
         """Choosing a block to place (palette, hotbar, pick) enters BUILD mode."""
         self.current_block = block
@@ -533,6 +551,11 @@ class MainWindow(QMainWindow):
             self._edit(self.document.place_source, target, kind, strength, request)
         else:
             self._edit(self.document.place, target, self.current_block, request)
+        self._remember_block(self.current_block)
+
+    def _remember_block(self, block: Block) -> None:
+        """Recently used blocks: shown first in the inventory and the block search."""
+        self.inventory.remember(block.id)
 
     def _set_source(self, pos: Pos, kind: str, strength: int) -> None:
         self._edit(self.document.set_source, pos, kind, strength)
@@ -554,15 +577,54 @@ class MainWindow(QMainWindow):
         if pos is None:
             self._message("Point at a block to rotate it.")
             return
+        self._rotate_block_at(pos, quarter_turns)
+
+    def _rotate_block_at(self, pos: Pos, quarter_turns: int) -> None:
+        """Turn a block with ``/setblock``: around the vertical axis, or, for a block facing
+        up or down (pistons, observers, hoppers), on to its next facing."""
         state = self.document.state_at(pos)
         rotated = rotate_state(state, quarter_turns)
         if rotated is state:
+            for prop in state.block.properties:
+                value = state.get(prop)
+                if isinstance(value, Direction) and len(prop.values) > 4:
+                    values = list(prop.values)
+                    step = 1 if quarter_turns == 1 else -1
+                    rotated = state.with_(prop, values[(values.index(value) + step) % len(values)])
+                    break
+        if rotated is state:
             self._message(
-                f"{state.block.name} does not turn around the vertical axis; the inspector "
-                "can set any property."
+                f"{state.block.name} has no facing to turn; the inspector can set any property."
             )
             return
         self._edit(self.document.setblock, pos, rotated)
+
+    def _place_line(self, cells: list[Pos], hit: Hit) -> None:
+        """A dragged line: every block placed as one edit batch (one undo step)."""
+        if len(cells) <= 1:
+            self._place(hit)
+            return
+        yaw, pitch = self.viewport.player_view()
+        request = PlaceRequest(hit.face, yaw, pitch)
+        block = self.current_block
+        kind = sources.SOURCE_BLOCKS.get(block.id)
+        self.document.notice = ""
+        if kind is not None:
+            strength = self.inventory.strength.value()
+            with self.document.batch():
+                for cell in cells:
+                    try:
+                        self.document.place_source(cell, kind, strength, request)
+                    except EditError:
+                        continue
+        else:
+            placed = self.document.place_many(cells, block, request)
+            if placed < len(cells):
+                self._message(
+                    f"Placed {placed} of {len(cells)} blocks (the rest had no room or support)."
+                )
+        self._remember_block(block)
+        self._changed()
 
     def _break(self, pos: Pos) -> None:
         self._edit(self.document.break_block, pos)
@@ -585,7 +647,7 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _undo(self) -> None:
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         if not self.document.undo():
             self._message("Nothing to undo.")
         self._changed()
@@ -719,6 +781,14 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _delete_region(self) -> None:
+        """Del: in BUILD mode the block under the cursor, otherwise the selection."""
+        if self.viewport.mode == "build" and self.viewport.region is None:
+            hit = self.viewport.hover
+            if hit is None:
+                self._message("Point at a block to remove it.")
+            else:
+                self._break(hit.pos)
+            return
         region = self._region()
         if region is not None:
             self._edit(self.document.fill, region, blocks.AIR.default_state)
@@ -825,7 +895,13 @@ class MainWindow(QMainWindow):
         due = 1 << 30 if warp else self.pacer.due(start)
         ran = 0
         while ran < due:
-            self.last_steps = self.document.run_tick()
+            if self.simulation.backwards:
+                if not self.document.tick_back():
+                    self.simulation.stop()  # back at tick 0
+                    break
+                self.last_steps = []
+            else:
+                self.last_steps = self.document.run_tick()
             ran += 1
             if time.monotonic() - start > RUN_BUDGET_SECONDS:
                 break
@@ -844,14 +920,14 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _rewound(self, moved: bool) -> None:
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         self.last_steps = []
         if not moved:
             self._message("Already at the start of the recorded history.")
         self._changed()
 
     def _jump(self, where: str) -> None:
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         if not self.document.jump(where):
             self._message("Already there.")
         self.last_steps = []
@@ -864,7 +940,7 @@ class MainWindow(QMainWindow):
         self._rewound(self.document.step_back())
 
     def _seek(self, step_index: int) -> None:
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         self.document.seek(step_index)
         self.last_steps = []
         self._changed()
@@ -899,7 +975,7 @@ class MainWindow(QMainWindow):
         return False
 
     def _set_document(self, document: Document) -> None:
-        self.simulation.play.setChecked(False)
+        self.simulation.stop()
         self.document = document
         self.last_steps = []
         self.viewport.set_document(document)

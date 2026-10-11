@@ -38,8 +38,9 @@ def test_owner_camera_and_mode_defaults() -> None:
     assert keymap.mouse_action("build", shift, "Middle", "Drag") == "camera.pan"
     assert keymap.mouse_action("select", ctrl, None, "Wheel") == "camera.vertical"
     assert keymap.mouse_action("normal", none, None, "Wheel") == "camera.zoom"
-    assert keymap.mouse_action("build", none, "Left", "Click") == "build.break"
-    assert keymap.mouse_action("build", none, "Right", "Click") == "build.place"
+    assert keymap.mouse_action("build", none, "Left", "Click") == "build.place"
+    assert keymap.mouse_action("build", none, "Left", "Drag") == "build.line"
+    assert keymap.mouse_action("build", none, "Right", "Click") == "build.rotate"
     assert keymap.mouse_action("normal", none, "Right", "Click") == "normal.use"
     assert keymap.mouse_action("select", none, "Left", "Drag") == "select.box"
     assert keymap.mouse_action("normal", none, "Middle", "Click") == "pick"
@@ -79,9 +80,37 @@ def test_overrides_replace_unbind_and_warn(tmp_path: Path) -> None:
     assert any("Left Flick" in w for w in keymap.warnings)
 
 
-def test_conflicting_keys_are_reported() -> None:
+def test_a_user_binding_takes_the_key_from_a_default() -> None:
     keymap = Keymap({"sim.run": ["B"]})
+    assert keymap.bindings("mode.build") == ()
     assert any("mode.build" in w and "sim.run" in w for w in keymap.warnings)
+
+
+def test_conflicting_user_bindings_are_reported() -> None:
+    keymap = Keymap({"sim.run": ["X"], "mode.select": ["X"]})
+    assert any("mode.select" in w and "sim.run" in w for w in keymap.warnings)
+
+
+def test_old_defaults_in_a_keymap_file_follow_the_new_defaults() -> None:
+    """Older versions wrote every default into the file; those are not user choices."""
+    keymap = Keymap(
+        {
+            "sim.step_back": ["Shift+Left"],
+            "build.place": ["Right Click"],
+            "build.break": ["Left Click"],
+        }
+    )
+    assert keymap.bindings("sim.start") == ("Shift+Left",)
+    assert keymap.bindings("sim.step_back") == ("Ctrl+Left",)
+    assert keymap.mouse_action("build", frozenset(), "Left", "Click") == "build.place"
+    assert keymap.warnings == []
+
+
+def test_the_keymap_template_leaves_bindings_empty(tmp_path: Path) -> None:
+    path = tmp_path / "keymap.json"
+    Keymap.write_defaults(path)
+    data = json.loads(path.read_text())
+    assert data["bindings"] == {} and data["defaults"]["sim.start"] == ["Shift+Left"]
 
 
 def test_unreadable_file_falls_back_to_defaults(tmp_path: Path) -> None:

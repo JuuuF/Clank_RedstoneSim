@@ -277,14 +277,36 @@ def _rail(block_id: str, state: BlockState) -> list[Box]:
 
 
 def _observer(powered: bool) -> list[Box]:
-    # Facing north: the watching face is z = 0, the output dot on the back (z = 16).
+    """Facing north: the watching face (z = 0) has two eyes and a mouth; arrows on the top,
+    bottom and sides point to the back (the signal's way); the output dot is on the back."""
     body = rgb(0.42, 0.42, 0.42)
-    return [
+    mark = rgb(0.74, 0.74, 0.76)
+    boxes = [
         Box((0, 0, 1), (16, 16, 15), body),
-        Box((0, 0, 0), (16, 16, 1), rgb(0.22, 0.22, 0.24)),  # the face
-        Box((0, 0, 15), (16, 16, 16), rgb(0.36, 0.36, 0.36)),
+        Box((0, 0, 0), (16, 16, 1), rgb(0.18, 0.18, 0.2)),  # the face
+        Box((3, 9, -0.3), (6, 12, 0), mark),  # eyes
+        Box((10, 9, -0.3), (13, 12, 0), mark),
+        Box((4, 4, -0.3), (12, 6, 0), rgb(0.08, 0.08, 0.09)),  # mouth
+        Box((0, 0, 15), (16, 16, 16), rgb(0.33, 0.33, 0.33)),
         Box((6, 6, 16), (10, 10, 16.4), LIT_RED if powered else UNLIT_RED),  # output dot
     ]
+    # An arrow (shaft and stepped head) on every side face, pointing to the back (+z).
+    arrow = [
+        ((7, 9), (2, 9)),  # shaft
+        ((3, 13), (9, 10)),  # head, narrowing towards the back
+        ((4, 12), (10, 11)),
+        ((5, 11), (11, 12)),
+        ((6, 10), (12, 13)),
+        ((7, 9), (13, 14)),
+    ]
+    for (a0, a1), (z0, z1) in arrow:
+        boxes += [
+            Box((a0, 16, z0), (a1, 16.3, z1), mark),  # top
+            Box((a0, -0.3, z0), (a1, 0, z1), mark),  # bottom
+            Box((16, a0, z0), (16.3, a1, z1), mark),  # east side
+            Box((-0.3, a0, z0), (0, a1, z1), mark),  # west side
+        ]
+    return boxes
 
 
 def _barrel() -> list[Box]:

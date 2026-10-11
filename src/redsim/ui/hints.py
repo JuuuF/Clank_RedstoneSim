@@ -54,11 +54,13 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
     step = (f"{key('sim.tick_back')}/{key('sim.tick')}", "tick back/forward")
     if context.mode == "build":
         return [
-            ("Right Click", "place"),
-            ("Left Click", "break"),
+            (key("build.place"), "place"),
+            (key("build.line"), "line"),
+            (key("build.rotate"), "turn"),
+            (key("edit.delete"), "remove"),
             ("Middle Click", "pick"),
             ("1-9", "inventory"),
-            (key("edit.rotate_block"), "rotate block"),
+            (key("search.blocks").split(" / ")[0], "search"),
             run,
             (key("mode.select"), "select mode"),
         ]
