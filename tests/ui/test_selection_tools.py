@@ -10,6 +10,7 @@ from redsim.ui.selection_tools import (
     handle_hit,
     horizontal_offset,
     knob_center,
+    paste_origin,
     plane_point,
     resized,
     shifted,
@@ -55,3 +56,11 @@ def test_move_drag_on_the_horizontal_plane() -> None:
     assert horizontal_offset(start, later) == (3, -2)
     assert plane_point(origin, np.array([1.0, 0.0, 0.0]), 1.0) is None
     assert shifted(BOX, (3, 1, -2)) == Region((3, 1, -2), (6, 2, 0))
+
+
+def test_paste_sits_on_the_camera_plane_centered_under_the_cursor() -> None:
+    eye = np.array([0.5, 10.0, 0.5])
+    down = np.array([0.0, -1.0, 0.0])
+    assert paste_origin(eye, down, 4, (1, 1, 1)) == (0, 4, 0)
+    assert paste_origin(eye, down, 4, (3, 2, 5)) == (-1, 4, -2)  # centered
+    assert paste_origin(eye, np.array([0.0, 1.0, 0.0]), 4, (1, 1, 1)) is None  # plane behind

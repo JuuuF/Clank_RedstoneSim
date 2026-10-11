@@ -9,6 +9,7 @@ regions and offsets.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -107,3 +108,17 @@ def shifted(region: Region, offset: Pos) -> Region:
     low = (region.low[0] + offset[0], region.low[1] + offset[1], region.low[2] + offset[2])
     high = (region.high[0] + offset[0], region.high[1] + offset[1], region.high[2] + offset[2])
     return Region(low, high)
+
+
+def paste_origin(
+    origin: np.ndarray, direction: np.ndarray, plane_y: int, size: tuple[int, int, int]
+) -> Pos | None:
+    """Trackmania-editor placement: the box sits on the horizontal plane at ``plane_y`` (the
+    camera's working height), centered under the cursor, so it can go into the air or
+    inside blocks. Returns the minimum corner, or None if the ray never meets the plane."""
+    point = plane_point(origin, direction, float(plane_y))
+    if point is None:
+        return None
+    x = math.floor(float(point[0]) - size[0] / 2 + 0.5)
+    z = math.floor(float(point[2]) - size[2] / 2 + 0.5)
+    return (x, plane_y, z)

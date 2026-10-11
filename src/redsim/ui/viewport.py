@@ -55,6 +55,7 @@ from redsim.ui.selection_tools import (
     handle_hit,
     horizontal_offset,
     knob_center,
+    paste_origin,
     plane_point,
     resized,
     shifted,
@@ -72,6 +73,7 @@ HANDLE_HOVER_COLOR = (1.0, 0.85, 0.1, 1.0)
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
 NORMAL, BUILD, SELECT = "normal", "build", "select"
+PASTE_COLOR = QColor(140, 60, 170)
 MODE_COLORS = {
     NORMAL: QColor(60, 100, 160),
     BUILD: QColor(50, 140, 60),
@@ -249,12 +251,15 @@ class Viewport(QOpenGLWidget):
             for index, line in enumerate(self.overlay_text):
                 painter.drawText(12, 10 + metrics.ascent() + index * line_height, line)
         # Mode badge (bottom left) with what the mouse buttons do in this mode.
-        badge = f" {self.mode.upper()} "
+        pasting = self.paste_preview is not None
+        badge = " PASTE " if pasting else f" {self.mode.upper()} "
         top = self.height() - line_height - 14
         badge_width = metrics.horizontalAdvance(badge) + 8
         room = max(0, self.width() - badge_width - 30)  # the full list is in the help (F1)
-        hint = metrics.elidedText(self.mode_hint(), Qt.TextElideMode.ElideRight, room)
-        painter.fillRect(6, top, badge_width, line_height + 8, MODE_COLORS[self.mode])
+        text = self.paste_hint() if pasting else self.mode_hint()
+        hint = metrics.elidedText(text, Qt.TextElideMode.ElideRight, room)
+        color = PASTE_COLOR if pasting else MODE_COLORS[self.mode]
+        painter.fillRect(6, top, badge_width, line_height + 8, color)
         painter.fillRect(
             6 + badge_width,
             top,
@@ -266,6 +271,12 @@ class Viewport(QOpenGLWidget):
         painter.drawText(10, top + 4 + metrics.ascent(), badge)
         painter.drawText(14 + badge_width, top + 4 + metrics.ascent(), hint)
         painter.end()
+
+    def paste_hint(self) -> str:
+        return (
+            f"layer y={self.working_height()} (Ctrl+Wheel moves it) · Left Click: place · "
+            "R: rotate · Right Click / Esc: cancel"
+        )
 
     def mode_hint(self) -> str:
         """``Left Click: break · Right Click: place · …`` for the current mode."""
@@ -295,6 +306,9 @@ class Viewport(QOpenGLWidget):
                 color = (0.2, 0.5, 1.0, 1.0) if port.role == "input" else (1.0, 0.5, 0.1, 1.0)
                 p = port.pos
                 parts.append(box_lines(p, (p[0] + 1, p[1] + 1, p[2] + 1), color, 0.05))
+        paste_box = self.paste_region()
+        if paste_box is not None:
+            parts.extend(self._paste_guides(paste_box))
         if self.selection is not None:
             parts.append(block_outline(level, self.selection, (1.0, 0.85, 0.1, 1.0)))
         if self.hover is not None:
@@ -305,6 +319,34 @@ class Viewport(QOpenGLWidget):
         if not parts:
             return np.zeros((0, 7), dtype=np.float32)
         return np.vstack(parts)
+
+    def _paste_guides(self, box: Region) -> list[np.ndarray]:
+        """A grid on the working plane around the paste, and drop lines from its corners to
+        the first block below, so its height reads at a glance (Trackmania-style)."""
+        y = float(box.low[1])
+        grid = (1.0, 1.0, 1.0, 0.35)
+        x0, x1 = box.low[0] - 4, box.high[0] + 5
+        z0, z1 = box.low[2] - 4, box.high[2] + 5
+        rows = []
+        for x in range(x0, x1 + 1):
+            rows += [(x, y, z0, *grid), (x, y, z1, *grid)]
+        for z in range(z0, z1 + 1):
+            rows += [(x0, y, z, *grid), (x1, y, z, *grid)]
+        parts = [np.array(rows, dtype=np.float32)]
+        drop = (1.0, 0.9, 0.3, 1.0)
+        level = self.document.level
+        for cx in (box.low[0], box.high[0] + 1):
+            for cz in (box.low[2], box.high[2] + 1):
+                bx, bz = min(cx, box.high[0]), min(cz, box.high[2])  # the corner block column
+                ground = box.low[1]
+                while ground > max(level.min_y, box.low[1] - 64):
+                    if (bx, ground - 1, bz) in level.blocks:
+                        break
+                    ground -= 1
+                if ground < box.low[1]:
+                    line = [(cx, y, cz, *drop), (cx, ground, cz, *drop)]
+                    parts.append(np.array(line, dtype=np.float32))
+        return parts
 
     def _overlay_triangles(self) -> np.ndarray:
         """Selection box, its handles and drop targets: thick, and visible through blocks."""
@@ -435,6 +477,8 @@ class Viewport(QOpenGLWidget):
         point = event.position().toPoint()
         self._last_mouse = point
         self._update_hover(point)
+        if self.paste_preview is not None:
+            self._update_paste_ghost()
         if self._press is None:
             return
         start, button, modifiers = self._press
@@ -609,10 +653,17 @@ class Viewport(QOpenGLWidget):
         self.update()
 
     def paste_target(self) -> Pos | None:
-        """Minimum corner of the paste: the cell in front of the targeted face."""
-        if self.hover is None:
+        """Minimum corner of the paste, Trackmania-editor style: on the horizontal plane at
+        the camera's working height (the pivot's block layer; Ctrl+wheel moves it),
+        centered under the cursor. Works in the air and inside blocks."""
+        if self.paste_preview is None or self._last_mouse is None:
             return None
-        return offset(self.hover.pos, self.hover.face)
+        origin, direction = self._ray(self._last_mouse)
+        return paste_origin(origin, direction, self.working_height(), self.paste_preview.size)
+
+    def working_height(self) -> int:
+        """The block layer the camera pivot is in."""
+        return math.floor(float(self.camera.pivot[1]))
 
     def paste_region(self) -> Region | None:
         target = self.paste_target()
@@ -679,6 +730,7 @@ class Viewport(QOpenGLWidget):
     def _camera_moved(self) -> None:
         if self._last_mouse is not None:
             self._update_hover(self._last_mouse)
+        self._update_paste_ghost()
         self.update()
 
     # ------------------------------------------------------------------ helpers

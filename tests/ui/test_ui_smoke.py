@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 
+import numpy as np
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -65,9 +66,16 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     # Region tools: mark two corners on the lever and lamp, copy, paste elsewhere, delete.
     window.viewport.region = Region.from_corners((0, 1, 0), (1, 1, 0))  # SELECT-mode box
     window._copy()
-    window.viewport.hover = Hit((0, 0, 5), Direction.UP, 5.0)  # floor block: paste above it
+    # Paste follows the camera's working height (pivot layer y=1), centered under the cursor.
+    from PySide6.QtCore import QPoint
+
+    from redsim.ui.camera import Camera
+
+    viewport = window.viewport
+    viewport.camera = Camera(pivot=np.array([1.0, 1.2, 5.5]), distance=10.0, pitch=89.0)
+    viewport._last_mouse = QPoint(viewport.width() // 2, viewport.height() // 2)
     window._paste()  # preview first
-    assert window.viewport.paste_region() == Region((0, 1, 5), (1, 1, 5))
+    assert viewport.paste_region() == Region((0, 1, 5), (1, 1, 5))
     target = window.viewport.paste_target()
     assert target is not None
     window._paste_at(target)  # what a left click does

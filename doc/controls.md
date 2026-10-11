@@ -38,8 +38,11 @@ panel is generated from the active keymap, so it always shows the real bindings.
   along (game-verified, [[experiments/index]] EXP-023).
 - **Copy:** Ctrl+drag from inside the box: `/clone … replace force` (the copy may overlap
   the original). The selection follows the moved or copied blocks.
-- **Paste:** Ctrl+C copies the box; Ctrl+V shows the clipboard as a ghost at the cursor;
-  left click places it (`/clone` semantics), R rotates it, right click or Esc cancels.
+- **Paste (Trackmania-style):** Ctrl+C copies the box; Ctrl+V shows the clipboard as a
+  ghost centered under the cursor on the camera's working layer (the pivot's height, shown
+  in the badge). Ctrl+wheel moves the layer up or down, so a paste can go into the air or
+  inside blocks; a grid marks the layer and yellow lines drop to the ground. Left click
+  places it, R rotates it, right click or Esc cancels.
 - **No block updates:** pasting, moving, copying and stacking are editor operations and
   cause no block updates (`/clone … strict`), so budded components stay budded
   ([[decisions]] ADR-019). Pending scheduled ticks inside a moved selection come along.
