@@ -75,6 +75,8 @@ reading and unit tests only.
 | EXP-032 | `observer_clock`: two observers facing each other oscillate, lamps behind them follow | 30 | match | 2026-10-11 |
 | EXP-033 | `observer_detects`: observers watching dust being powered, a lamp, a piston extending, and a chain of four observers fired by a placed block; lamps and dust behind. First run found the simulator treated observers as conductors | 24 | match | 2026-10-11 |
 | EXP-034 | `observer_pushed`: a sticky piston moves a pulsing observer back and forth (placement and removal rules) | 24 | match | 2026-10-11 |
+| EXP-035 | `rail_shapes`: plain rails: straight line, corner, a T junction switching to a curve when a redstone block powers it, a slope up a step | 10 | match | 2026-10-11 |
+| EXP-036 | `powered_rails`: 12 powered rails fed from one end power exactly 9 (8 past the first), the same for activator rails, a mixed line stops at the activator rail; all turn off when the inputs go | 12 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 

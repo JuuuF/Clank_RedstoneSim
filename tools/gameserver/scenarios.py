@@ -696,6 +696,46 @@ OBSERVER_PUSHED = Scenario(
     },
 )
 
+# ------------------------------------------------------------------ rails
+RAIL_SHAPES = Scenario(
+    name="rail_shapes",
+    description=(
+        "Plain rails choose their shapes from their neighbors: a straight line, a corner, a "
+        "T junction that switches when a redstone block next to it powers it, and a slope "
+        "up a step."
+    ),
+    size=(12, 10),
+    setup=[((x, 1, 1), "minecraft:rail") for x in range(1, 5)]
+    + [((1, 1, 4), "minecraft:rail"), ((2, 1, 4), "minecraft:rail"), ((2, 1, 5), "minecraft:rail")]
+    + [((7, 1, 1), "minecraft:rail"), ((8, 1, 1), "minecraft:rail"), ((9, 1, 1), "minecraft:rail")]
+    + [((8, 1, 2), "minecraft:rail")]
+    + [((5, 1, 8), "minecraft:stone"), ((5, 2, 8), "minecraft:rail"), ((4, 1, 8), "minecraft:rail")]
+    + [((3, 1, 8), "minecraft:rail")],
+    watch=[(x, 1, z) for z in (1, 2, 4, 5, 8) for x in range(0, 11)] + [(5, 2, 8)],
+    ticks=10,
+    inputs={2: [((8, 1, 0), RB)], 6: [((8, 1, 0), AIR)]},
+)
+
+POWERED_RAILS = Scenario(
+    name="powered_rails",
+    description=(
+        "A line of 12 powered rails fed from one end (power reaches 8 rails past the "
+        "powered one), a line of activator rails, a mixed line (powered rails do not pass "
+        "power through activator rails), then the inputs are removed."
+    ),
+    size=(16, 8),
+    setup=[((x, 1, 1), "minecraft:powered_rail[shape=east_west]") for x in range(1, 13)]
+    + [((x, 1, 3), "minecraft:activator_rail[shape=east_west]") for x in range(1, 13)]
+    + [((x, 1, 5), "minecraft:powered_rail[shape=east_west]") for x in (1, 2, 3, 5, 6)]
+    + [((4, 1, 5), "minecraft:activator_rail[shape=east_west]")],
+    watch=[(x, 1, z) for z in (1, 3, 5) for x in range(1, 13)],
+    ticks=12,
+    inputs={
+        2: [((0, 1, 1), RB), ((0, 1, 3), RB), ((0, 1, 5), RB)],
+        7: [((0, 1, 1), AIR), ((0, 1, 3), AIR), ((0, 1, 5), AIR)],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -730,6 +770,8 @@ ALL = [
     OBSERVER_CLOCK,
     OBSERVER_DETECTS,
     OBSERVER_PUSHED,
+    RAIL_SHAPES,
+    POWERED_RAILS,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

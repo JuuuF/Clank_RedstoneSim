@@ -188,6 +188,8 @@ def block_boxes(state: BlockState) -> list[Box]:
         return [Box((1 + 2 * bites, 0, 1), (15, 8, 15), rgb(0.95, 0.90, 0.88))]
     if block_id == "minecraft:barrel":
         return face_any(_barrel(), state.get(FACING))
+    if block_id in ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail"):
+        return _rail(block_id, state)
     if block_id == "minecraft:observer":
         return face_any(_observer(state.get(POWERED)), state.get(FACING))
     if block_id == "minecraft:lectern":
@@ -198,6 +200,40 @@ def block_boxes(state: BlockState) -> list[Box]:
 
 BARREL_WOOD = rgb(0.52, 0.38, 0.22)
 LECTERN_WOOD = rgb(0.62, 0.47, 0.30)
+
+
+RAIL_METAL = {
+    "minecraft:rail": rgb(0.62, 0.62, 0.64),
+    "minecraft:powered_rail": rgb(0.86, 0.70, 0.22),
+    "minecraft:activator_rail": rgb(0.40, 0.36, 0.36),
+}
+
+
+def _rail(block_id: str, state: BlockState) -> list[Box]:
+    """Ties and two rails; slopes as four steps; curves as an L (presentation only)."""
+    shape = next(state.get(p) for p in state.block.properties if p.name == "shape")
+    powered = any(p.name == "powered" for p in state.block.properties) and state.get(POWERED)
+    metal = LIT_RED if powered else RAIL_METAL[block_id]
+    ties = rgb(0.45, 0.33, 0.20)
+    # A north-south straight rail, then turned.
+    straight = [Box((1, 0, z), (15, 1, z + 2), ties) for z in (1, 5, 9, 13)] + [
+        Box((3, 1, 0), (5, 2, 16), metal),
+        Box((11, 1, 0), (13, 2, 16), metal),
+    ]
+    if shape in ("north_south", "east_west"):
+        turn = Direction.EAST if shape == "east_west" else Direction.NORTH
+        return face_horizontally(straight, turn)
+    if shape.startswith("ascending_"):
+        rises = Direction[shape.split("_")[1].upper()]
+        steps = [Box((1, 2 * i, 4 * i), (15, 2 * i + 1, 4 * i + 4), ties) for i in range(4)]
+        steps += [Box((3, 2 * i + 1, 4 * i), (5, 2 * i + 2, 4 * i + 4), metal) for i in range(4)]
+        steps += [Box((11, 2 * i + 1, 4 * i), (13, 2 * i + 2, 4 * i + 4), metal) for i in range(4)]
+        return face_horizontally(steps, rises.opposite)  # model rises towards +z (south)
+    # Curves: an L joining the two named sides (north_east, south_west, ...).
+    first, second = (Direction[name.upper()] for name in shape.split("_"))
+    arm = [Box((3, 1, 0), (5, 2, 9), metal), Box((11, 1, 0), (13, 2, 13), metal)]
+    plate = [Box((1, 0, 1), (15, 1, 15), ties)]
+    return plate + face_horizontally(arm, first) + face_horizontally(arm, second)
 
 
 def _observer(powered: bool) -> list[Box]:

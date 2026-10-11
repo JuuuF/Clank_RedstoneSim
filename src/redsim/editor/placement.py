@@ -34,6 +34,7 @@ from redsim.world.blocks.diode import DiodeBlock
 from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import PistonBaseBlock
+from redsim.world.blocks.rail import BaseRailBlock
 from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
 from redsim.world.properties import ATTACH_FACE, FACING, HORIZONTAL_FACING
 
@@ -125,6 +126,11 @@ def placement_state(
             if candidate is not None and candidate.can_survive(level, pos):
                 return candidate
         return None
+    if isinstance(block, BaseRailBlock):
+        # BaseRailBlock.getStateForPlacement: east-west when looking east or west.
+        looking = horizontal_direction(request.yaw)
+        shape = "east_west" if looking in (Direction.EAST, Direction.WEST) else "north_south"
+        return block.default_state.with_(block.shape_property, shape)
     if isinstance(block, ObserverBlock):
         # ObserverBlock.getStateForPlacement L157: FACING = the nearest looking direction.
         return block.default_state.with_(FACING, ordered_by_nearest(request.yaw, request.pitch)[0])

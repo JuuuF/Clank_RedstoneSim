@@ -26,6 +26,14 @@ def rotate_state(state: BlockState, quarter_turns: int) -> BlockState:
     turns = quarter_turns % 4
     if turns == 0:
         return state
+    from redsim.world.blocks.rail import ROTATE_CW, BaseRailBlock
+
+    if isinstance(state.block, BaseRailBlock):  # BaseRailBlock.rotate tables
+        prop = state.block.shape_property
+        shape = state.get(prop)
+        for _ in range(turns):
+            shape = ROTATE_CW[shape]
+        return state.with_(prop, shape)
     if state.block.id == "minecraft:redstone_wire":
         sides = {d: state.get(p) for d, p in PROPERTY_BY_DIRECTION.items()}
         for direction, value in sides.items():
@@ -47,6 +55,11 @@ def mirror_state(state: BlockState, axis: str) -> BlockState:
     the facing turns around only if it lies on the mirrored axis); redstone wire swaps its
     two side properties on that axis (``RedstoneWireBlock.mirror`` L465)."""
     flipped = Direction.EAST if axis == "x" else Direction.SOUTH
+    from redsim.world.blocks.rail import MIRROR, BaseRailBlock
+
+    if isinstance(state.block, BaseRailBlock):  # BaseRailBlock.mirror tables
+        prop = state.block.shape_property
+        return state.with_(prop, MIRROR[axis].get(state.get(prop), state.get(prop)))
     if state.block.id == "minecraft:redstone_wire":
         a, b = PROPERTY_BY_DIRECTION[flipped], PROPERTY_BY_DIRECTION[flipped.opposite]
         return state.with_(a, state.get(b)).with_(b, state.get(a))

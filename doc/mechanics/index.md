@@ -12,6 +12,7 @@
 | [[redstone-torch]] | Inversion, timing, burnout | researched | implemented (incl. burnout) | unit tests; game EXP-002, 004, 005, 006 |
 | [[manual-sources]] | Lever, buttons, redstone block, lamp | researched | implemented | unit tests; game (lamp, redstone block) |
 | [[pistons]] | Extension/retraction, QC, moved blocks | researched | implemented (`world/blocks/piston.py`) | unit tests; game EXP-015…020 |
+| [[rails]] | Rail shapes, powered/activator rail propagation (8 rails) | researched | implemented (`world/blocks/rail.py`; no detector rails) | unit tests; game EXP-031, 035, 036 |
 | [[observer]] | Shape-update detection, 2-tick pulses, observer clocks | researched | implemented (`world/blocks/observer.py`) | unit tests; game EXP-031..034 |
 | [[analog-sources]] | Barrel (container fill), lectern (book page, page-turn pulse), cake | researched | implemented (`world/blocks/container.py`, `lectern.py`, `cake.py`) | unit tests; game EXP-012/013, 024, 025 |
 

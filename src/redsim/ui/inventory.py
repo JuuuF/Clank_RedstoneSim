@@ -65,6 +65,7 @@ INVENTORY = Folder(
             ),
         ),
         Folder("Signal sources", ("minecraft:barrel", "minecraft:lectern", "minecraft:cake")),
+        Folder("Rails", ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail")),
         Folder(
             "Building",
             (

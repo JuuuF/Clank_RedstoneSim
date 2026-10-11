@@ -18,7 +18,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   sources (barrel, lectern, cake; [[analog-sources]]), the redstone block, and simple and
   non-conducting blocks.
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 33 named scenarios and 40 random circuits match ([[experiments/index]]).
+  tick. All 35 named scenarios and 40 random circuits match ([[experiments/index]]).
 - **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, orbit
   camera, vim-like modes and a rebindable keymap ([[controls]]), cursor picking, place/break/use with player-like orientation, block palette and hotbar,
   inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
@@ -87,13 +87,14 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | comparator (+ block entity) | `comparator.py` | mode click refresh, double front update | EXP-012…EXP-014 |
 | piston, sticky piston, head, moving piston (+ block entity) | `piston.py` | push limit, immovables, popping, slime/honey, pull, head removal | EXP-015…EXP-020 |
 | cake (analog source) | `cake.py` | via comparator tests | EXP-012, EXP-013 |
+| rail, powered rail, activator rail | `rail.py` | shapes, T junction, slope, 8-rail propagation | EXP-031, 035, 036 |
 | observer | `observer.py` | pulse timing, clock, non-conductor | EXP-031..034 |
 | barrel (+ block entity, 27 slots) | `container.py` | thresholds, `/item replace` updates, immovable, save | EXP-024 |
 | lectern (+ block entity) | `lectern.py` | page formula, page-turn pulse, save | EXP-025 (signals; pulse: source only) |
 
 ## Verification status
 
-- `python -m pytest`: **279 tests pass** (2026-10-11), including the JDK oracle, the 26
+- `python -m pytest`: **283 tests pass** (2026-10-11), including the JDK oracle, the 26
   game-recording replays, save round trips, chunked-mesh consistency, run pacing and
   offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
 - Real-game comparisons (`python -m tools.gameserver.run`): 30 of 30 named scenarios match in one

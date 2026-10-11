@@ -16,6 +16,7 @@ from redsim.world.blocks.lamp import RedstoneLampBlock
 from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import MovingPistonBlock, PistonBaseBlock, PistonHeadBlock
+from redsim.world.blocks.rail import PoweredRailBlock, RailBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
     AirBlock,
@@ -108,6 +109,9 @@ CAKE = register(CakeBlock())
 BARREL = register(BarrelBlock())
 LECTERN = register(LecternBlock())
 OBSERVER = register(ObserverBlock())
+RAIL = register(RailBlock())
+POWERED_RAIL = register(PoweredRailBlock("minecraft:powered_rail"))
+ACTIVATOR_RAIL = register(PoweredRailBlock("minecraft:activator_rail"))
 PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
 PISTON_HEAD = register(PistonHeadBlock())

@@ -19,7 +19,7 @@ To click through the simulator: [[tour]].
 - Milestones 0–4 are done for the initial scope, and pistons (M5) work: lever, buttons,
   lamp, torch (with burnout), wire, repeater, comparator, cake, pistons, sticky pistons,
   slime and honey.
-- 279 tests pass. A sandboxed 26.3 server confirms 33 of 33 named scenarios and 40 random circuits tick for
+- 283 tests pass. A sandboxed 26.3 server confirms 35 of 35 named scenarios and 40 random circuits tick for
   tick, including a repeater priority race, comparator modes, QC doors and block spitting.
 - The 3D editor works (`python -m redsim`): rewind/replay (M6), copy/paste with `/clone`
   semantics, prefabs and groups (M7). All seven milestones have a working core.
