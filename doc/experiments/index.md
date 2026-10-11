@@ -63,8 +63,16 @@ reading and unit tests only.
 | EXP-020 | `piston_pops_components`: dust on a pushed block pops, a torch in the push line is destroyed | 6 | match | 2026-10-11 |
 | EXP-021 | `clone_inverter`: a torch inverter copied with `/clone`; the copy settles and reacts like the original | 14 | match | 2026-10-11 |
 | EXP-022 | `fill_removes_line`: `/fill` air cuts a powered wire line; the rest depowers, the torch relights | 8 | match | 2026-10-11 |
+| EXP-023 | `clone_move_running`: `/clone … replace move` of a repeater with a pending tick (the tick is copied; the moved repeater turns on at its old trigger time) and of a powered wire line onto itself (overlap) | 16 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
+
+### EXP-023 sensitivity
+
+With `LevelTicks.copy_area` disabled in the simulator, ticks 8–16 no longer match the game
+recording: the moved repeater would never turn on. So the scenario checks that `/clone`
+copies scheduled ticks (`LevelTicks.copyAreaFrom`), which the editor's selection drag
+relies on ([[decisions]] ADR-019).
 
 ### EXP-004 timeline (game)
 

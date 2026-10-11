@@ -387,6 +387,33 @@ FILL_REMOVES_LINE = Scenario(
     commands={3: [("fill", (3, 1, 1), (4, 1, 1), "minecraft:air")]},
 )
 
+CLONE_MOVE_RUNNING = Scenario(
+    name="clone_move_running",
+    description=(
+        "/clone ... replace move while circuits run: a delay-4 repeater is moved away from "
+        "its input while its scheduled tick is pending (the tick is copied, so the moved "
+        "repeater still turns on); a powered wire line is moved one block onto itself "
+        "(overlap: the source is cleared first)."
+    ),
+    size=(8, 10),
+    setup=[
+        ((1, 1, 1), "minecraft:repeater[facing=west,delay=4]"),
+        ((2, 1, 1), "minecraft:redstone_lamp"),
+        ((0, 1, 7), RB),
+        ((1, 1, 7), "minecraft:redstone_wire"),
+        ((2, 1, 7), "minecraft:redstone_wire"),
+        ((3, 1, 7), "minecraft:redstone_wire"),
+        ((4, 1, 7), "minecraft:redstone_lamp"),
+    ],
+    watch=[(1, 1, 1), (2, 1, 1), (1, 1, 4), (2, 1, 4)] + [(x, 1, 7) for x in range(1, 6)],
+    ticks=16,
+    inputs={0: [((0, 1, 1), RB)]},
+    commands={
+        3: [("clone_move", (1, 1, 1), (2, 1, 1), (1, 1, 4))],
+        5: [("clone_move", (1, 1, 7), (4, 1, 7), (2, 1, 7))],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -410,6 +437,7 @@ ALL = [
     PISTON_POPS_COMPONENTS,
     CLONE_INVERTER,
     FILL_REMOVES_LINE,
+    CLONE_MOVE_RUNNING,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

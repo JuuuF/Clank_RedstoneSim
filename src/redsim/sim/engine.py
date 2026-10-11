@@ -13,6 +13,7 @@ All engine state is plain data and is captured by ``snapshot()``.
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal
@@ -30,7 +31,13 @@ class Phase(Enum):
     BLOCK_ENTITIES = "block entities"
 
 
-ActionKind = Literal["place", "break", "use", "setblock", "set_block", "fill", "clone"]
+ActionKind = Literal[
+    "place", "break", "use", "setblock", "set_block", "fill", "clone", "clone_region"
+]
+
+#: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
+MAX_BLOCK_MODIFICATIONS = 32768
+CLONE_MODES = ("normal", "force", "move")
 
 
 @dataclass(frozen=True)
@@ -45,6 +52,9 @@ class Action:
     * ``clone``: place a captured region at ``pos`` like ``/clone`` (replace mode, not strict)
       would place it (``CloneCommands.clone``); ``payload`` holds the blocks (see
       ``redsim.editor.clipboard``). Scheduled ticks are not copied.
+    * ``clone_region``: the full ``/clone <begin> <end> <pos> replace <mode>`` reading the
+      live source region (``payload``: ``begin``, ``end``, ``mode`` = normal/force/move);
+      scheduled ticks inside the region are copied. Used to drag selections.
     """
 
     kind: ActionKind
@@ -271,6 +281,11 @@ class Engine:
                 self._fill_command(action.pos, (tx, ty, tz), action.state)
             elif action.kind == "clone":
                 self._clone_command(action.pos, action.payload)
+            elif action.kind == "clone_region":
+                payload = action.payload
+                begin, end = tuple(payload["begin"]), tuple(payload["end"])
+                count = self._clone_region_command(begin, end, action.pos, payload["mode"])
+                info.detail["info"] = f"clone {payload['mode']}: {count} blocks"
             elif action.kind == "set_block":
                 assert action.state is not None
                 level.set_block(action.pos, parse_state(action.state), action.flags)
@@ -353,10 +368,8 @@ class Engine:
 
         ``payload["blocks"]`` lists ``[dx, dy, dz, state, block_entity_data | None]`` in source
         iteration order (z outer, then y, then x). Blocks are grouped like the command does:
-        solid (full collision), then blocks with block entities, then the rest; barriers are
-        placed first (flags 818) in reverse order; then every block is set with flags 2;
-        block-entity data is loaded (``setChanged``); finally ``updateNeighboursOnBlockSet``
-        runs for all positions in reverse order with the state found before the clone.
+        solid (full collision), then blocks with block entities, then the rest; then
+        ``_clone_place`` runs the placement passes.
         """
         from redsim.world import blocks
 
@@ -372,12 +385,85 @@ class Engine:
                 other.append(info)
             else:
                 solid.append(info)
+        self._clone_place(solid, entities, other)
+
+    def _clone_region_command(self, begin: Pos, end: Pos, destination: Pos, mode: str) -> int:
+        """``CloneCommands.clone`` (L198) in replace mode, not strict, within this level.
+
+        Reads the source live (z outer, then y, then x). Classification: blocks with a block
+        entity; else "other" when the collision shape is not a full block (the game also
+        requires ``!isSolidRender``, which only differs for blocks with a full occlusion but
+        partial collision shape, none of which are in scope); else solid. The clear list gets
+        "other" positions at the front and the rest at the back. ``move`` first sets every
+        cleared position to barrier (flags 818), then to air (flags 3), then places as usual.
+        Finally the scheduled ticks inside the source box are copied (``copyAreaFrom``).
+        Returns the number of blocks set.
+        """
+        from redsim.world import blocks
+
+        if mode not in CLONE_MODES:
+            raise ActionError(f"unknown clone mode {mode!r}")
+        level = self.level
+        low = (min(begin[0], end[0]), min(begin[1], end[1]), min(begin[2], end[2]))
+        high = (max(begin[0], end[0]), max(begin[1], end[1]), max(begin[2], end[2]))
+        offset = (destination[0] - low[0], destination[1] - low[1], destination[2] - low[2])
+        dest_high = (high[0] + offset[0], high[1] + offset[1], high[2] + offset[2])
+        overlaps = all(destination[i] <= high[i] and low[i] <= dest_high[i] for i in range(3))
+        if mode == "normal" and overlaps:
+            raise ActionError("The source and destination areas cannot overlap")
+        area = (high[0] - low[0] + 1) * (high[1] - low[1] + 1) * (high[2] - low[2] + 1)
+        if area > MAX_BLOCK_MODIFICATIONS:
+            raise ActionError(f"Too many blocks in the specified area ({area} > 32768)")
+        solid, entities, other = [], [], []
+        clear: deque[Pos] = deque()
+        for z in range(low[2], high[2] + 1):
+            for y in range(low[1], high[1] + 1):
+                for x in range(low[0], high[0] + 1):
+                    source = (x, y, z)
+                    target = (x + offset[0], y + offset[1], z + offset[2])
+                    state = level.get_block_state(source)
+                    entity = level.get_block_entity(source)
+                    previous = level.get_block_state(target)
+                    if entity is not None:
+                        entities.append((target, state, entity.to_json(), previous))
+                        clear.append(source)
+                    elif not state.is_collision_shape_full_block():
+                        other.append((target, state, None, previous))
+                        clear.appendleft(source)
+                    else:
+                        solid.append((target, state, None, previous))
+                        clear.append(source)
+        if mode == "move":
+            barrier, air = blocks.BARRIER.default_state, blocks.AIR.default_state
+            for pos in clear:
+                level.set_block(pos, barrier, 818)
+            for pos in clear:
+                level.set_block(pos, air, UpdateFlags.ALL)
+        count = self._clone_place(solid, entities, other)
+        level.block_ticks.copy_area(low, high, offset)
+        return count
+
+    def _clone_place(
+        self,
+        solid: list[tuple[Pos, BlockState, Any, BlockState]],
+        entities: list[tuple[Pos, BlockState, Any, BlockState]],
+        other: list[tuple[Pos, BlockState, Any, BlockState]],
+    ) -> int:
+        """Placement passes of ``CloneCommands.clone``: barriers in reverse order (flags
+        818), every block with flags 2, block-entity data loaded (``setChanged``) and the
+        state set again, then ``updateNeighboursOnBlockSet`` in reverse order with the state
+        found at the destination before the clone. Returns the number of blocks set."""
+        from redsim.world import blocks
+
+        level = self.level
         ordered = solid + entities + other
         barrier = blocks.BARRIER.default_state
         for pos, _, _, _ in reversed(ordered):
             level.set_block(pos, barrier, 818)
+        count = 0
         for pos, state, _, _ in ordered:
-            level.set_block(pos, state, UpdateFlags.CLIENTS)
+            if level.set_block(pos, state, UpdateFlags.CLIENTS):
+                count += 1
         for pos, state, entity_data, _ in entities:
             entity = level.get_block_entity(pos)
             if entity_data is not None and entity is not None:
@@ -387,6 +473,7 @@ class Engine:
             level.set_block(pos, state, UpdateFlags.CLIENTS)
         for pos, _, _, previous in reversed(ordered):
             level.update_neighbours_on_block_set(pos, previous)
+        return count
 
     def _break(self, pos: Pos) -> None:
         """``ServerPlayerGameMode.destroyBlock`` (L286)."""

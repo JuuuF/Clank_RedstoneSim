@@ -129,6 +129,33 @@ class LevelTicks:
         other.overdue_collected = self.overdue_collected
         return other
 
+    def copy_area(self, low: Pos, high: Pos, offset: Pos) -> int:
+        """``LevelTicks.copyAreaFrom(this, area, offset)`` (L258), used by ``/clone``.
+
+        Ticks inside the box (collected ones first, then pending) are scheduled again at
+        ``pos + offset`` with the same trigger tick and priority; their sub-tick order is
+        shifted past the largest copied one, keeping their relative order. Duplicates of a
+        tick already pending at the destination are dropped by ``schedule``.
+        """
+
+        def inside(tick: ScheduledTick) -> bool:
+            return all(low[i] <= tick.pos[i] <= high[i] for i in range(3))
+
+        ticks = [t for t in self.to_run if inside(t)]
+        ticks += [t for _, t in sorted(self._heap) if inside(t)]
+        if not ticks:
+            return 0
+        smallest = min(t.sub_tick for t in ticks)
+        largest = max(t.sub_tick for t in ticks)
+        for t in ticks:
+            pos = (t.pos[0] + offset[0], t.pos[1] + offset[1], t.pos[2] + offset[2])
+            self.schedule(
+                ScheduledTick(
+                    t.block_id, pos, t.trigger_tick, t.priority, t.sub_tick - smallest + largest + 1
+                )
+            )
+        return len(ticks)
+
     def remove_at(self, pos: Pos) -> None:
         """Drop pending ticks at ``pos`` (editor deletions only, not a game mechanic)."""
         keys = [key for key in self._pending if key[0] == pos]

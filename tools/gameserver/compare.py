@@ -42,7 +42,8 @@ class Scenario:
     ticks: int
     inputs: dict[int, list[tuple[Pos, str]]] = field(default_factory=dict)
     #: Region commands after ``t`` ticks (applied after ``inputs``):
-    #: ``("fill", rel_a, rel_b, state)`` or ``("clone", rel_a, rel_b, rel_destination)``.
+    #: ``("fill", rel_a, rel_b, state)``, ``("clone", rel_a, rel_b, rel_destination)``, or
+    #: ``("clone_move" | "clone_force", rel_a, rel_b, rel_destination)`` (``replace move/force``).
     #: The cloned area must have no pending scheduled ticks (the simulator's paste does
     #: not copy ticks, ``/clone`` does).
     commands: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
@@ -113,6 +114,9 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
     a, b = absolute(origin, rel_a), absolute(origin, rel_b)
     if kind == "fill":
         return Action("fill", a, last, payload={"to": list(b)})
+    if kind in ("clone_move", "clone_force"):
+        payload = {"begin": list(a), "end": list(b), "mode": kind.removeprefix("clone_")}
+        return Action("clone_region", absolute(origin, last), payload=payload)
     prefab = Prefab.capture(engine.level, Region.from_corners(a, b))
     return Action("clone", absolute(origin, last), payload=prefab.payload())
 
@@ -124,6 +128,8 @@ def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
     if kind == "fill":
         return f"fill {corners} {last}"
     d = absolute(origin, last)
+    if kind in ("clone_move", "clone_force"):
+        return f"clone {corners} {d[0]} {d[1]} {d[2]} replace {kind.removeprefix('clone_')}"
     return f"clone {corners} {d[0]} {d[1]} {d[2]}"
 
 
