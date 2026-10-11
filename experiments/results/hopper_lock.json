@@ -2,11 +2,11 @@
  "scenario": "hopper_lock",
  "description": "Redstone locks hoppers (enabled=false): a redstone block beside the first hopper from tick 10 to 30, a 0-tick lock on the second (placed and removed at tick 40), a redstone block on top of the second from tick 50 to 60 (it cannot pull then either). An observer watching the first hopper sees each lock change.",
  "origin": [
-  24,
+  888,
   0,
   0
  ],
- "start_time": 91,
+ "start_time": 1103,
  "fingerprint": "15adae6ea41c24e0",
  "game_version": "26.3",
  "ticks": 80,

@@ -170,6 +170,14 @@ applied at each step index, and the indices of tick starts.
 Tested: seeking to random points reproduces the recorded world state exactly (keyframe
 intervals 1, 7, 200), and replay after rewind reproduces the trace.
 
+Since ADR-022 the start is the **base** (tick 0, the build state): edits there are folded
+into the base snapshot instead of being recorded (`apply_to_base`, `rebase`). A failed
+action restores the engine (it used to leave a phantom step that shifted later replays).
+`run_tick` applies the recorded edits of a tick boundary together with that tick.
+`plan()` lists the recorded edits per tick and `rewrite(base, plan, end_tick)` rebuilds
+the history; the editor's `Document` uses it for undo/redo (`HistoryState`) and for
+moving, merging and deleting edit batches (`move_edits`, `merge_edits`, `delete_edits`).
+
 ### What counts as "sub-tick"
 
 The game has no universal sub-tick concept. The pausable unit is the engine step above.
@@ -246,7 +254,10 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | `pacing.py` | Real-time run pacing (`TickPacer`) and rate measurement (`RateMeter`), no Qt |
 | `selection_tools.py` | Selection handles, resize and drag-plane math (no Qt); the edits are `/clone` actions (ADR-019) |
 | `viewport.py` | `QOpenGLWidget`: modes, mouse gestures via the keymap, orbit camera, hover, selection box, pivot and mode badge; emits edit signals only |
-| `panels.py` | Palette (with hotbar), inspector, simulation controls, diagnostics, sections, controls help |
+| `panels.py` | Inspector (properties, sources, container contents, target hits), diagnostics, sections, groups, hotkeys |
+| `inventory.py`, `icons.py`, `block_search.py` | Trackmania-style inventory bar (folders, path, recent blocks), isometric block previews from the block models, quick block search |
+| `timeline.py` | Blender-like transport and timeline: ruler, keyframe rows (move/merge/delete edit batches, ADR-022), monitor tracks |
+| `hints.py`, `debug_screen.py`, `gizmos.py`, `preferences.py` | Hint bar, F3 screen text, selection gizmos, saved preferences |
 | `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run loop |
 | `app.py` | Entry point; selects `xcb` under Wayland; requests an OpenGL 3.3 core context |
 

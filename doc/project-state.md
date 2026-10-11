@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, after the second feedback round (all merged into `main`).*
+*Last updated: 2026-10-11, after the fourth feedback round (all merged into `main`).*
 
 ## Summary
 
@@ -16,22 +16,30 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   lamp, redstone torch and wall torch (including deterministic burnout), redstone wire,
   repeater, comparator (block entity, compare/subtract, side inputs, analog input), analog
   sources (barrel, lectern, cake; [[analog-sources]]), the redstone block, and simple and
-  non-conducting blocks.
+  non-conducting blocks. Added after the third round, in the owner's order: observers,
+  rails (plain, powered, activator), target blocks and hoppers.
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 35 named scenarios and 40 random circuits match ([[experiments/index]]).
-- **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, orbit
-  camera, vim-like modes and a rebindable keymap ([[controls]]), cursor picking, place/break/use with player-like orientation, block palette and hotbar,
-  inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
-  step tick, step event, speed), diagnostics (scheduled ticks, block events, last-step
-  trace), undo/redo for edits, and JSON save/open of the complete engine state. Launch with
-  `python -m redsim`.
+  tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
+  All 40 named scenarios and 40 random circuits (every supported block, 0-tick inputs,
+  live edits) match ([[experiments/index]]).
+- **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
+  and a rebindable keymap ([[controls]]); BUILD mode places with left click (drag: a
+  straight line), turns with right click, removes with Del, with a translucent preview;
+  a Trackmania-style inventory with block previews, recent blocks and quick search; an
+  immediate-apply inspector (`/setblock` edits, container contents, target hits),
+  sections, groups and prefabs; a Blender-like timeline with keyframe rows and monitor
+  tracks; a hint bar, F3 debug screen, X-ray and info overlay; JSON save/open of the
+  complete engine state. Launch with `redsim` or `python -m redsim`.
 - **Pistons (M5):** done for the core scope. Normal and sticky pistons, heads, moving blocks
   with their block entity, structure resolution (12-block limit, slime/honey branching),
   quasi-connectivity, BUD behavior and short-pulse block dropping, all confirmed in game.
   Open: retraction triggered from scheduled ticks (repeater-driven 0-tick setups), observers.
 - **Playback and history (M6):** done. An event-sourced timeline (keyframes + action log +
-  deterministic replay) supports step back, tick back, a timeline slider for seeking and
-  replaying, warp mode, and undo/redo of edits as rewinds. Exact replay is tested.
+  deterministic replay) supports step back, tick back, scrubbing, forward and backward
+  playback and warp. Tick 0 is the build state (not replayed); edits at later ticks form
+  per-tick batches shown as color-coded keyframes that can be moved, merged, deleted or
+  moved into the build; undo/redo restore whole history states (ADR-022). Exact replay is
+  tested.
 - **Real-time rendering:** done. Meshes are built per 8³ chunk and only where blocks
   changed; the run loop is paced by the wall clock and decoupled from drawing; the viewport
   shows the achieved ticks/s. Measured 19.9 ticks/s at target 20 on the owner's desktop
@@ -65,7 +73,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
 | `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
 | `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
-| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes, run pacing, orbit camera, keymap and modes | done (minimal scope) | `tests/ui/test_geometry.py`, `tests/ui/test_pacing.py`, `tests/ui/test_camera.py`, `tests/ui/test_keymap.py`, `tests/ui/test_ui_smoke.py` (offscreen) |
+| `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes, run pacing, orbit camera, keymap and modes, inventory with block previews (`icons`), block search, timeline with keyframe rows, F3 screen, gizmos | done | `tests/ui/*` (offscreen) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
 
@@ -96,12 +104,16 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **283 tests pass** (2026-10-11), including the JDK oracle, the 26
-  game-recording replays, save round trips, chunked-mesh consistency, run pacing and
-  offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 30 of 30 named scenarios match in one
-  fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
-  Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
+- `python -m pytest`: **319 tests pass** (2026-10-11), including the JDK oracle, the 80
+  game-recording replays (40 named, 40 random), save round trips, history rewriting,
+  chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
+  `ruff format --check` and `mypy src tools` are clean. Tests use a private config
+  directory (`tests/conftest.py`).
+- Real-game comparisons (`python -m tools.gameserver.run`): 40 of 40 named scenarios match
+  in one fresh full run (2026-10-11); the 40 random circuits were re-recorded after hoppers
+  joined the palette and all match. The harness fails loudly on rejected commands.
+  Sensitivity was confirmed by deliberately breaking the lamp delay, the hopper 7-tick
+  rule and the hopper `setItem` quirk ([[experiments/index]], [[mechanics/hopper]]).
 
 ## Known limitations (current)
 
@@ -110,8 +122,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - Levers and buttons cannot be operated on the dedicated server (no player), so player
   interaction paths (`BlockItem.place`, `useWithoutItem`) are verified by source reading and
   unit tests, not in game.
-- Rails, trapdoors and hoppers are referenced by ported code paths (wire support, rail
-  removal rule) but are not blocks yet.
+- No entities: no minecarts (so no detector rails), no item entities (the test server runs
+  with `block_drops false`), no projectiles except the target-block hit action.
+- Containers are barrels and hoppers only (no chests, droppers, composters).
 - Overdue scheduled ticks (more than 65 536 due in one tick) are reported but not merged
   per chunk (cannot occur in scope).
 - Experimental redstone (`redstone_experiments`) is out of scope (ADR-006).
@@ -126,24 +139,21 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-Both owner feedback rounds of 2026-10-11 ([[ui-direction]]) are done: real-time speed
-(ADR-017), controls (ADR-018), Axiom-like selections with update-free cloning (ADR-019),
-signal sources (ADR-020), rotate/flip/stack in place (ADR-021), plus a hotkeys panel, build
-preview, Trackmania-style paste, X-ray, an info overlay and an immediate-apply inspector
-([[controls]]). Next: more mechanics (observers, hoppers, target blocks) and the
-"technical Minecraft" look, once the owner has picked priorities.
+All four owner feedback rounds of 2026-10-11 ([[ui-direction]]) are done. Round 4 (this
+state): drag-placed lines, left click places / right click turns / Del removes, preview
+without flicker, inventory with block previews, recent blocks and a clickable path, quick
+block search, tick 0 as the build, edit batches, keyframe rows with move/merge/delete,
+reverse playback, the replay error fixed, stale keymap files migrated, a clearer observer.
 
-All seven roadmap milestones have a working core. Suggested next steps:
+Suggested next steps:
 
-1. **Owner review on the real desktop:** run `python -m redsim`, build the simple circuits,
-   and report what feels wrong. The UI has only been exercised offscreen.
-2. **Diagnostics polish:** interactive causal trace tree, "why did this block change?" for
-   the selected block, scrubbing through block changes inside a step.
-3. **Mechanics coverage:** scheduled-tick-driven piston 0-tick scenarios, observers, target
-   block, note blocks, containers (barrel/hopper) as comparator sources, then rails.
-4. **Scale:** profile larger builds (the engine is pure Python). The renderer already meshes
-   per chunk; beyond about 50 000 blocks, replace the block-map diff with a change journal
-   (ADR-017).
+1. **Owner review** of round 4 on the desktop (`redsim examples/showcase.redsim.json`).
+2. **Mechanics:** droppers/dispensers and chests (containers for hoppers), note blocks,
+   pressure plates (need entities), scheduled-tick-driven piston 0-ticks.
+3. **Diagnostics polish:** interactive causal trace tree, "why did this block change?".
+4. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
+   from tick 0, which is fine for hundreds of ticks but should keep keyframes for long
+   histories.
 
 ## How to resume
 
@@ -151,8 +161,8 @@ All seven roadmap milestones have a working core. Suggested next steps:
 conda activate redsim                  # environment.yml; see implementation-notes
 redsim examples/showcase.redsim.json   # example world, see [[tour]]
 git switch main
-python -m pytest                       # all tests, ~2 s, no server needed
-python -m tools.gameserver.run         # re-run game comparisons (~1-2 min, sandboxed server)
+python -m pytest                       # all tests, ~15 s, no server needed
+python -m tools.gameserver.run         # re-run named game comparisons (~5 min, sandboxed server)
 ```
 
 Read [[implementation-notes]] for conventions, the "adding a block" checklist and harness

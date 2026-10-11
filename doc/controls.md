@@ -15,16 +15,31 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   (rotate, flip, copy, paste, delete, lock).
 - **Middle:** the 3D view. On the right, one **Properties** panel with tabs: Inspector,
   Circuit (sections, groups and prefabs), Diagnostics, Hotkeys.
-- **Timeline** (like Blender's): transport buttons (start, previous edit, tick back,
-  run, tick forward, next edit, end), speed and warp, and a ruler with the recorded range,
-  yellow diamonds where you edited, and the blue playhead. Click or drag to scrub, wheel to
-  zoom, middle-drag to pan. **Monitor tracks** (logic-analyzer style): Inspector →
-  📈 Monitor adds the selected block; its value per tick (wire power, lit/powered,
-  comparator output, …) is drawn in a row. Right-click a row's label to remove it.
-  Monitored blocks are saved; their recorded values are rebuilt as the simulation runs.
-- **Inventory** (like Trackmania's): folders (Redstone, Movement, Signal sources, Building,
-  Special). Number keys open a folder or pick the block with that number, Backspace goes
-  up; picking a block enters BUILD mode. Signal sources show the strength box.
+- **Timeline** (like Blender's): transport buttons (start, previous edit, tick back, play
+  backwards, run, tick forward, next edit, end), speed and warp, and a ruler counting ticks
+  from **tick 0, the build** ([[decisions]] ADR-022), with the recorded range and the blue
+  playhead. Click or drag on the ruler to scrub, wheel to zoom, middle-drag to pan.
+  - **Keyframes:** edits made after tick 0 are diamonds in four color-coded rows: *Placed*
+    (green), *Removed* (red), *Changed* (blue: inspector edits, selection tools), *Used*
+    (yellow: levers, buttons, pages, projectiles). One diamond per tick and row; a number
+    shows how many edits it holds, hovering lists them. Click to select (Shift/Ctrl+click
+    adds), drag a band in empty space to select several, **drag** selected diamonds to move
+    them in time, **M** merges the selection into its earliest tick, **Del** deletes it.
+    The right-click menu also merges a whole row ("merge all placed edits": everything you
+    placed while the simulation ran), moves the selection into the build (tick 0), and
+    makes the current tick the new tick 0. Each of these re-runs the history and is one
+    undo step; edits that cannot be applied at their new time are dropped (with a note).
+  - **Monitor tracks** (logic-analyzer style): Inspector → 📈 Monitor adds the selected
+    block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
+    row. Right-click a row's label to remove it. Monitored blocks are saved; their
+    recorded values are rebuilt as the simulation runs.
+- **Inventory** (like Trackmania's): folders (Redstone, Movement, Signal sources, Items,
+  Rails, Building, Special) with block previews. Number keys open a folder or pick the
+  block with that number, Backspace goes up, and every level of the folder path above the
+  tiles is a button. **Recent** shows the last nine blocks you placed (kept between
+  sessions); **🔍 Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
+  search: type a few letters (fuzzy), Enter builds with the block. Picking a block enters
+  BUILD mode. Signal sources show the strength box.
 - **Hint bar** (like Blender's): the essential keys for what you are doing right now (mode,
   selection, gizmo under the cursor, Shift held, pasting), the block under the cursor and
   status messages.
@@ -34,16 +49,27 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 | Mode | Key | Left click | Right click | Left drag |
 |---|---|---|---|---|
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
-| **BUILD** | B | break | place the inventory block (Ctrl+right click: use) | — |
+| **BUILD** | B | place the block | turn the block under the cursor (Shift: back; Ctrl: use it) | a straight line of the block |
 | **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
 - Middle click picks the block type under the cursor in every mode.
 - The badge in the bottom-left corner shows the mode and what the mouse buttons do.
 - Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and the selection box.
-- In BUILD, a translucent preview shows the block exactly as a right click would place it
+- In BUILD, **Del** removes the block under the cursor (with a selection box, Del clears the
+  box instead). Right click turns blocks around the vertical axis; blocks facing up or down
+  (pistons, observers, hoppers) step through all their facings.
+- **Line placement:** drag with the left button: the line runs from the first cell along the
+  axis (x or z, on that layer) you moved most along, up to 64 blocks, with a preview of every
+  block. On release all are placed as one edit batch and one undo step; cells that are
+  taken or lack support are skipped.
+- In BUILD, a translucent preview shows the block exactly as a left click would place it
   (orientation from the cursor ray, wire connections, source setup) inside a white outline;
-  the outline turns red where the block cannot be placed.
+  the outline turns red where the block cannot be placed. The preview is 1 % smaller than
+  a block, so it never z-fights with the block below.
+- **Tick 0 is the build:** at tick 0 (a new world, or after jumping to the start) edits
+  change the build itself and are not replayed. Edits at later ticks are recorded on the
+  timeline; all edits made at one tick appear together when the history replays.
 - Placed blocks are oriented like a player looking at the target from the camera along the
   cursor ray (`Viewport.player_view`).
 
@@ -113,16 +139,18 @@ reason the old Shift+T rewind was disliked).
 | Keys | Action |
 |---|---|
 | Space or P | run / pause |
+| Ctrl+Shift+Space | play backwards / pause (stops at tick 0) |
 | → or T / ← | step one tick forward / back |
 | Ctrl+→ or E / Ctrl+← | step one event (engine step) forward / back |
-| Shift+← / Shift+→ | jump to the start / end of the recorded history (Blender) |
+| Shift+← / Shift+→ | jump to tick 0 / the end of the recorded history (Blender) |
 | ↑ / ↓ | jump to the next / previous edit (like Blender's keyframe jumps) |
-| Ctrl+Z / Ctrl+Y | undo / redo (rewinds to just before the last edit) |
+| Ctrl+Z / Ctrl+Y | undo / redo: the last edit (or line, or keyframe operation) is removed from the history and the simulation re-run; the view returns to where it was made |
+| Ctrl+Space, /, Shift Shift | quick block search |
 | Ctrl+C / Ctrl+V | copy the selection box / paste preview at the cursor (click places) |
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
 | R / Shift+R | rotate the selection (or the paste preview) 90° clockwise / counter-clockwise |
 | H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |
-| Del | clear the selection box (fill with air) |
+| Del | clear the selection box (fill with air); in BUILD without a box: remove the block under the cursor |
 | 1–9 / Backspace | inventory: open folder or pick block / up one folder |
 | F1 | controls panel |
 
@@ -171,14 +199,22 @@ update and a hopper keeps its transfer cooldown. Details: [[mechanics/hopper]].
 
 ## Rebinding
 
-**Settings → Edit keymap file…** writes all actions with their defaults to
-`~/.config/redsim/keymap.json` (or `$XDG_CONFIG_HOME/redsim/keymap.json`; the environment
-variable `REDSIM_KEYMAP` overrides the path) and opens it. Change the lists, delete the
-entries you keep, then **Settings → Reload keymap**. Example:
+**Settings → Edit keymap file…** creates `~/.config/redsim/keymap.json` (or
+`$XDG_CONFIG_HOME/redsim/keymap.json`; the environment variable `REDSIM_KEYMAP` overrides
+the path) with empty `bindings` and every default under `defaults` for reference, and opens
+it. Copy the actions you want to change into `bindings`, then **Settings → Reload
+keymap**. Only `bindings` is read, so defaults you never touched can change in later
+versions. Example:
 
 ```json
-{"version": 1, "bindings": {"camera.orbit": ["Right Drag"], "sim.run": ["Space"]}}
+{"version": 2, "bindings": {"camera.orbit": ["Right Drag"], "sim.run": ["Space"]}}
 ```
+
+- Files written by older versions listed every default. An entry equal to an earlier
+  default (for example `"sim.step_back": ["Shift+Left"]`) is treated as unchanged and
+  follows the current default (`keymap.LEGACY_DEFAULTS`).
+- A key you bind is taken away from an action that only has it by default (a warning says
+  so); two of your own bindings on one key are reported as a conflict.
 
 - Keys use Qt key sequence text (`Ctrl+Z`, `Shift+Right`, `Space`, `PgUp`).
 - Mouse bindings are `[Ctrl+|Shift+|Alt+|Meta+]<Left|Right|Middle> <Click|Drag>` or

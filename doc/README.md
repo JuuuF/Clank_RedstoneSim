@@ -16,15 +16,14 @@ To click through the simulator: [[tour]].
 
 ## Current status (2026-10-11)
 
-- Milestones 0–4 are done for the initial scope, and pistons (M5) work: lever, buttons,
-  lamp, torch (with burnout), wire, repeater, comparator, cake, pistons, sticky pistons,
-  slime and honey.
-- 283 tests pass. A sandboxed 26.3 server confirms 35 of 35 named scenarios and 40 random circuits tick for
-  tick, including a repeater priority race, comparator modes, QC doors and block spitting.
-- The 3D editor works (`python -m redsim`): rewind/replay (M6), copy/paste with `/clone`
-  semantics, prefabs and groups (M7). All seven milestones have a working core.
-- After the owner's first hands-on session: real-time running (ADR-017), and the new
-  controls: modes, orbit camera, rebindable keymap (ADR-018, [[controls]]).
+- Milestones 0–7 have a working core. Blocks: lever, buttons, lamp, torch (with burnout),
+  wire, repeater, comparator, barrel, lectern, cake, pistons, slime and honey, observers,
+  rails (plain, powered, activator), target blocks and hoppers ([[mechanics/index]]).
+- 319 tests pass. A sandboxed 26.3 server confirms 40 of 40 named scenarios and 40 random
+  circuits tick for tick, including hopper contents and cooldowns.
+- The 3D editor (`redsim`): four rounds of owner feedback are in ([[ui-direction]]); the
+  latest made tick 0 the build state, added keyframe rows with move/merge, drag-placed
+  lines, block previews and a quick search ([[controls]], ADR-022).
 - Work happens on feature branches; verified work is fast-forwarded to `main` and pushed.
 
 ## Owner decisions on record

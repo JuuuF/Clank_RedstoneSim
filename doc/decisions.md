@@ -312,3 +312,37 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Trade-offs:** A barrel's strength is not visible on the block itself (it lives in the
   block entity); the inspector and the comparator show it. Swapping kinds keeps the facing
   when the new block can take it (barrel up → lectern north).
+
+## ADR-022
+
+**Tick 0 is the build; edits form batches; history can be rewritten**
+
+- **Context:** Fourth feedback round ([[ui-direction]]): the timeline replayed the whole build
+  process, placements made at one moment appeared one after another during replay, replays
+  sometimes stopped with "player actions happen between ticks", and the owner wants to move
+  and merge keyframes (for example all placements made while the simulation ran).
+- **Bug found:** `Engine.apply` counts the step before running the action. An edit that
+  failed (clicking an occupied cell, missing support) consumed a step without being
+  recorded, so every later recorded edit replayed one step off, inside a tick. Fixed in
+  `Timeline.apply`: a failed action restores the engine to the snapshot before it.
+- **Decision:**
+  - The timeline's start is the **base** (tick 0, the build state). Edits made there are
+    applied through the engine as usual (same block updates) and then folded into the base
+    snapshot (`Timeline.apply_to_base` → `rebase`): never recorded, never replayed. Ticks
+    are shown relative to the base, so a file saved at game time 4 starts at tick 0.
+    "Make the current tick the build" rebases at any tick boundary.
+  - Edits at later ticks are recorded with their tick. Edits at one tick boundary form a
+    **batch**: `run_tick` applies the recorded edits of a boundary together with that tick,
+    so they appear at once (engine stepping still shows them one by one).
+  - The history is defined by `HistoryState` = base snapshot + edit plan (tick → actions) +
+    simulated length. `Timeline.rewrite` rebuilds it by re-simulating; moving, merging and
+    deleting edit batches, moving them into the build (tick 0), and undo/redo are all
+    "restore a different history state". Undo therefore removes an edit from the replay
+    (it no longer comes back when the simulation runs again) and keeps the simulated
+    length. Edits that cannot be applied at their new tick are dropped and reported.
+  - Edit batches are shown per row (placed, removed, changed, used: `edit_row`), each row
+    color-coded; an action carries an editor label for tooltips.
+- **Trade-offs:** Rewrites re-simulate from the base, which costs time proportional to the
+  recorded length (milliseconds per hundred ticks for typical circuits). Undo states keep
+  their base snapshots alive (immutable, shared). Editing the past still drops the recorded
+  future, as before (ADR-004), but undo brings it back.

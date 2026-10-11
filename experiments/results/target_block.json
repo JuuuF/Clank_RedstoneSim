@@ -2,11 +2,11 @@
  "scenario": "target_block",
  "description": "Dust passing a target block bends into it; an arrow hitting the target's top center powers it (15) for 20 ticks, a snowball for 8; the dust line and a lamp follow. A target placed with power is reset to 0.",
  "origin": [
-  0,
+  840,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 979,
  "fingerprint": "243df4b275f98c2c",
  "game_version": "26.3",
  "ticks": 34,

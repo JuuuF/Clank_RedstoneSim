@@ -103,6 +103,13 @@ Status: all of the third round is implemented (see [[controls]], [[project-state
 | Step back | Stepping backwards is much slower than forwards. |
 | Observer | The model should show clearly which way it faces. |
 
+Status: all of the fourth round is implemented ([[controls]], [[decisions]] ADR-022). Notes:
+the replay error was a real bug (a failed edit consumed a step); "starts at tick 4" was the
+example file being saved at game time 4 (ticks now count from the build); Shift+Left failed
+because the keymap file written earlier kept the old default Shift+Left = step back (old
+defaults in keymap files now follow the new ones). Stepping back was fast in measurements
+(the build is no longer replayed, keyframes are denser); backward playback was added.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

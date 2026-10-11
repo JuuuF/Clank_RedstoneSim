@@ -53,8 +53,11 @@ per second and frames per second. It should hold the target rate (20 by default)
   from inside the box to drop a copy elsewhere. Or Ctrl+C, then Ctrl+V shows a preview at
   the cursor (R rotates it) and a left click places it. Plain drag from inside the box
   moves the circuit; drag a face handle to resize the box.
-- **Build:** press B (or pick a block in the inventory with 1–9): left click breaks, right click places where the
-  white outline shows.
-- Ctrl+Z undoes the last edit (it rewinds to just before it).
+- **Build:** press B (or pick a block in the inventory with 1–9, or search with
+  Ctrl+Space): left click places where the white outline shows, a left drag places a
+  straight line, right click turns a block, Del removes it.
+- The file opens at tick 0, the build: edits there change the build. Run the simulation and
+  edit later to record keyframes on the timeline; drag them in time or merge them (M).
+- Ctrl+Z undoes the last edit (the history is re-run without it).
 
 Regenerate the file with `python -m tools.make_examples`.

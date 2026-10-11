@@ -2,11 +2,11 @@
  "scenario": "observer_detects",
  "description": "Observers watching dust that gets powered, a lamp, a piston extending and a chain of observers fired by a block placed in front of the first; lamps and dust behind.",
  "origin": [
-  24,
+  744,
   0,
   0
  ],
- "start_time": 31,
+ "start_time": 909,
  "fingerprint": "72366eb946df272f",
  "game_version": "26.3",
  "ticks": 24,

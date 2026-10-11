@@ -2,11 +2,11 @@
  "scenario": "hopper_chain",
  "description": "A barrel feeds a chain of three hoppers into a second barrel: 5 redstone dust, then 3 ender pearls (stack size 16), one item per 8 ticks; the third hopper ticks before the second (placed first). Comparators read every hopper and the target barrel; contents and cooldowns are compared every tick.",
  "origin": [
-  0,
+  864,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 1013,
  "fingerprint": "096cbb13f5b4707f",
  "game_version": "26.3",
  "ticks": 90,

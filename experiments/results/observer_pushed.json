@@ -2,11 +2,11 @@
  "scenario": "observer_pushed",
  "description": "A sticky piston moves an observer back and forth while the observer is pulsing (onPlace and removal rules), with dust behind the observer.",
  "origin": [
-  48,
+  768,
   0,
   0
  ],
- "start_time": 55,
+ "start_time": 933,
  "fingerprint": "f2ec58babede941d",
  "game_version": "26.3",
  "ticks": 24,
