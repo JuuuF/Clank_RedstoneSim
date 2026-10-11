@@ -18,6 +18,7 @@ from redsim.world.blocks.piston import MovingPistonBlock, PistonBaseBlock, Pisto
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
     AirBlock,
+    GrassBlock,
     HoneyBlock,
     RedstoneBlock,
     SimpleBlock,
@@ -76,6 +77,9 @@ COBBLESTONE = register(full_cube("minecraft:cobblestone", destroy_speed=2.0))
 OAK_PLANKS = register(full_cube("minecraft:oak_planks", destroy_speed=2.0))
 WHITE_WOOL = register(full_cube("minecraft:white_wool", destroy_speed=0.8))
 WHITE_CONCRETE = register(full_cube("minecraft:white_concrete", destroy_speed=1.8))
+#: Superflat terrain (the test server's world), so pushes along the ground match the game.
+DIRT = register(full_cube("minecraft:dirt", destroy_speed=0.5))
+GRASS_BLOCK = register(GrassBlock())
 GLASS = register(non_conductor("minecraft:glass", destroy_speed=0.3))
 GLOWSTONE = register(non_conductor("minecraft:glowstone", destroy_speed=0.3))
 OBSIDIAN = register(immovable("minecraft:obsidian", destroy_speed=50.0))

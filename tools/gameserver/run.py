@@ -4,6 +4,7 @@ Usage (from the repository root)::
 
     python -m tools.gameserver.run            # all scenarios
     python -m tools.gameserver.run and_gate   # selected scenarios
+    python -m tools.gameserver.run fuzz_1 fuzz_2   # random circuits (tools.gameserver.fuzz)
 
 Results are written to ``experiments/results/<scenario>.json``.
 """
@@ -20,7 +21,7 @@ SPACING = 24  # blocks between scenario origins (distinct coordinates, no interf
 
 
 def main(argv: list[str]) -> int:
-    selected = [s for s in scenarios.ALL if not argv or s.name in argv]
+    selected = [scenarios.lookup(name) for name in argv] if argv else list(scenarios.ALL)
     failures = 0
     with GameServer(fresh_world=True) as server:
         # Force-load every scenario area (each ≤ 18 blocks wide, spaced SPACING apart).

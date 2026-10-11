@@ -14,6 +14,7 @@ the simulator builds the same columns, so neighbor queries see identical blocks.
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import re
@@ -84,15 +85,29 @@ def absolute(origin: Pos, rel: Pos) -> Pos:
 
 
 # ---------------------------------------------------------------- simulator side
+#: Superflat terrain mirrored around each area: pushes can drag the ground (slime and honey
+#: stick to it), and a push line of up to 12 blocks must see the same blocks as the game.
+TERRAIN_RING = 16
+
+
 def build_terrain(engine: Engine, origin: Pos, size: tuple[int, int], margin: int = 2) -> None:
+    """The prepared stone area (``prepare_area``) inside the default superflat world
+    (bedrock, dirt, dirt, grass) as far as any push could reach."""
     level = engine.level
-    for dx in range(-margin, size[0] + margin):
-        for dz in range(-margin, size[1] + margin):
+    ring = margin + TERRAIN_RING
+    for dx in range(-ring, size[0] + ring):
+        for dz in range(-ring, size[1] + ring):
             x, z = origin[0] + dx, origin[2] + dz
+            prepared = -margin <= dx < size[0] + margin and -margin <= dz < size[1] + margin
             level.blocks[(x, -64, z)] = blocks.BEDROCK.default_state
-            level.blocks[(x, -63, z)] = blocks.get("minecraft:stone").default_state
-            level.blocks[(x, -62, z)] = blocks.get("minecraft:stone").default_state
-            level.blocks[(x, FLOOR_Y, z)] = blocks.STONE.default_state
+            if prepared:
+                level.blocks[(x, -63, z)] = blocks.STONE.default_state
+                level.blocks[(x, -62, z)] = blocks.STONE.default_state
+                level.blocks[(x, FLOOR_Y, z)] = blocks.STONE.default_state
+            else:
+                level.blocks[(x, -63, z)] = blocks.DIRT.default_state
+                level.blocks[(x, -62, z)] = blocks.DIRT.default_state
+                level.blocks[(x, FLOOR_Y, z)] = blocks.GRASS_BLOCK.default_state
 
 
 def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, str]]:
@@ -340,5 +355,11 @@ def compare(server: GameServer, scenario: Scenario, origin: Pos) -> dict[str, An
         ],
     }
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (RESULTS_DIR / f"{scenario.name}.json").write_text(json.dumps(result, indent=1) + "\n")
+    text = json.dumps(result, indent=1) + "\n"
+    if scenario.name.startswith("fuzz_"):
+        # Random circuits watch whole volumes: store compressed (about 100× smaller).
+        data = gzip.compress(text.encode(), compresslevel=9, mtime=0)
+        (RESULTS_DIR / f"{scenario.name}.json.gz").write_bytes(data)
+    else:
+        (RESULTS_DIR / f"{scenario.name}.json").write_text(text)
     return result

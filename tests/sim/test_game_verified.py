@@ -8,6 +8,7 @@ states exactly, so they guard game-verified behavior without needing the server.
 
 from __future__ import annotations
 
+import gzip
 import json
 from pathlib import Path
 from typing import Any
@@ -15,20 +16,22 @@ from typing import Any
 import pytest
 
 from tools.gameserver.compare import run_sim
-from tools.gameserver.scenarios import BY_NAME
+from tools.gameserver.scenarios import lookup
 
-RESULTS = sorted((Path(__file__).resolve().parents[2] / "experiments" / "results").glob("*.json"))
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "experiments" / "results"
+RESULTS = sorted([*RESULTS_DIR.glob("*.json"), *RESULTS_DIR.glob("*.json.gz")])
 
 
 def load(path: Path) -> dict[str, Any]:
-    data: dict[str, Any] = json.loads(path.read_text())
+    raw = gzip.decompress(path.read_bytes()) if path.suffix == ".gz" else path.read_bytes()
+    data: dict[str, Any] = json.loads(raw)
     return data
 
 
-@pytest.mark.parametrize("path", RESULTS, ids=[p.stem for p in RESULTS])
+@pytest.mark.parametrize("path", RESULTS, ids=[p.name.split(".")[0] for p in RESULTS])
 def test_simulator_reproduces_game_recording(path: Path) -> None:
     data = load(path)
-    scenario = BY_NAME[data["scenario"]]
+    scenario = lookup(data["scenario"])
     assert data["fingerprint"] == scenario.fingerprint(), "recording is stale: re-run the server"
     assert data["match"], "the recording itself documents a mismatch"
     x, y, z = data["origin"]

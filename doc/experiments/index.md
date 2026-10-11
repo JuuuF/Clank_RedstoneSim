@@ -67,8 +67,27 @@ reading and unit tests only.
 | EXP-024 | `barrel_signals`: comparators read barrels at the 1/2, 7/8 and 14/15 fill thresholds and an ender-pearl fill; `/item replace` changes update them after the comparator delay | 12 | match | 2026-10-11 |
 | EXP-025 | `lectern_signals`: lecterns with 1-100 page books at various pages (incl. a clamped page), no book, and `has_book=false` with a book | 4 | match | 2026-10-11 |
 | EXP-026 | `clone_strict_bud`: a budded (QC-powered, never updated) piston cloned with `/clone … strict` stays budded; a normal `/clone` makes the copy extend; a strict move keeps it budded | 8 | match | 2026-10-11 |
+| EXP-027 | `zero_tick_inputs`: 0-tick pulses (redstone block placed and removed at one boundary) at a piston, a sticky piston, a repeater, a comparator, a torch, a lamp and dust: pistons ignore them (the extend event finds no power), the repeater stretches them into a full pulse, the torch ignores them, the lamp and comparator flash | 24 | match | 2026-10-11 |
+| EXP-028 | `piston_race`: two pistons push into one free cell in the same tick: the one powered first (first block event) wins, in both orders; a piston powered, unpowered and powered again at one boundary moves once (block-event dedup) | 12 | match | 2026-10-11 |
+| EXP-029 | `wire_grid`: a 6×6 dust carpet powered from corners and edges at different ticks, with lamps: dust update order and shapes in a dense grid | 20 | match | 2026-10-11 |
+| EXP-030 | `torch_tower`: a 4-stage torch tower (repeater-driven) with short and long pulses, then 3-on/3-off toggling until the bottom torch burns out at tick 64 | 90 | match | 2026-10-11 |
+| EXP-031 | `fuzz_1` … `fuzz_40`: 40 seeded random circuits (every supported block, 2 layers, 4 toggled inputs with 0-tick pulses, 10 live edits inside the circuit), whole volume compared for 50 ticks | 50 each | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
+
+### EXP-031: differential fuzzing, and what it found
+
+`tools/gameserver/fuzz.py` builds a random circuit per seed; `python -m tools.gameserver.run
+fuzz_1 fuzz_2 …` runs them (recordings are stored gzip-compressed as
+`experiments/results/fuzz_<seed>.json.gz` and replayed by `tests/sim/test_game_verified.py`).
+
+The first batch of 20 found two mismatches (seeds 3 and 15), both the same cause, and not a
+simulator bug: a sticky piston pushing a slime or honey block drags the **ground** under it
+(sticky blocks stick to it). In the game the ground row continues past the prepared test
+area into the superflat world's grass, so the push exceeds 12 blocks and fails; the
+simulator's terrain ended 2 blocks past the area, so the push succeeded. The harness now
+mirrors the superflat terrain (bedrock, dirt, dirt, grass) 16 blocks around each area
+(`compare.build_terrain`); both seeds match, and every earlier recording still replays.
 
 ### EXP-023 sensitivity
 

@@ -60,6 +60,7 @@ POWER = integer("power", 0, 15)
 DELAY = integer("delay", 1, 4)
 BITES = integer("bites", 0, 6)
 OPEN = boolean("open")
+SNOWY = boolean("snowy")
 HAS_BOOK = boolean("has_book")
 #: ``BlockStateProperties.FACING`` (L53) declares N, E, S, W, U, D (not ordinal order).
 FACING = Property("facing", (*HORIZONTAL, Direction.UP, Direction.DOWN))

@@ -13,7 +13,7 @@ state is in [[project-state]].
 | 5 | Pistons and timing-sensitive behavior | ◐ | core done and game-verified (EXP-015…020); open: scheduled-tick-driven 0-tick cases, observers |
 | 6 | Playback, history, diagnostics | ☑ | timeline rewind/replay, step/tick back, slider, warp, diagnostics panel; polish open (trace tree) |
 | 7 | Contraptions and abstraction | ☑ | selection, /clone paste, rotation, /fill delete, prefab library, groups with ports; abstract models deferred (ADR-016) |
-| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (26/26 match) |
+| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (30/30 named + 40 random circuits match) |
 
 Order note: the world model was built before the editor because both the editor and the
 engine depend on it ([[decisions]] ADR-007).

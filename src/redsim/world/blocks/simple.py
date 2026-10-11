@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from redsim.core.pos import Pos
 from redsim.world.block import Block, BlockState, Conductor, PushReaction
-from redsim.world.properties import SLAB_TYPE
+from redsim.world.properties import SLAB_TYPE, SNOWY
 from redsim.world.shape import EMPTY, Shape, box, column
 
 if TYPE_CHECKING:
@@ -96,6 +96,16 @@ class RedstoneBlock(Block):
 def full_cube(block_id: str, destroy_speed: float = 1.5) -> SimpleBlock:
     """A default full cube: conductor, sturdy on all faces, PUSH_PULL."""
     return SimpleBlock(block_id, destroy_speed=destroy_speed)
+
+
+class GrassBlock(SimpleBlock):
+    """``GrassBlock`` as terrain: a full cube with its ``snowy`` state (never set here)."""
+
+    properties = (SNOWY,)
+
+    def __init__(self) -> None:
+        super().__init__("minecraft:grass_block", destroy_speed=0.6)
+        self.register_default_state(self.default_state.with_(SNOWY, False))
 
 
 def non_conductor(block_id: str, destroy_speed: float = 0.3) -> SimpleBlock:

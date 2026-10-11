@@ -501,6 +501,125 @@ CLONE_STRICT_BUD = Scenario(
     },
 )
 
+# ------------------------------------------------------------------ stress tests
+# A 0-tick input: placed and removed at the same tick boundary (two /setblock in a row).
+ZERO_TICK_INPUTS = Scenario(
+    name="zero_tick_inputs",
+    description=(
+        "0-tick pulses (a redstone block placed and removed at the same boundary) next to a "
+        "piston, a sticky piston with a block, a repeater, a comparator, a torch on a block, "
+        "a lamp and a dust line; then a normal pulse for contrast."
+    ),
+    size=(16, 4),
+    setup=[
+        ((1, 1, 1), "minecraft:piston[facing=up]"),
+        ((3, 1, 1), "minecraft:sticky_piston[facing=up]"),
+        ((3, 2, 1), "minecraft:stone"),
+        ((5, 1, 1), "minecraft:repeater[facing=west,delay=2]"),
+        ((6, 1, 1), "minecraft:redstone_lamp"),
+        ((8, 1, 1), "minecraft:comparator[facing=west]"),
+        ((9, 1, 1), "minecraft:redstone_lamp"),
+        ((11, 1, 1), "minecraft:stone"),
+        ((11, 2, 1), "minecraft:redstone_torch"),
+        ((13, 1, 1), "minecraft:redstone_lamp"),
+        ((14, 1, 2), "minecraft:redstone_wire"),
+        ((14, 1, 3), "minecraft:redstone_wire"),
+    ],
+    watch=[(1, 1, 1), (1, 2, 1), (3, 1, 1), (3, 2, 1), (3, 3, 1), (5, 1, 1), (6, 1, 1)]
+    + [(8, 1, 1), (9, 1, 1), (11, 2, 1), (13, 1, 1), (14, 1, 2), (14, 1, 3)],
+    ticks=24,
+    inputs={
+        2: [
+            ((1, 1, 0), RB), ((1, 1, 0), AIR),
+            ((3, 1, 0), RB), ((3, 1, 0), AIR),
+            ((4, 1, 1), RB), ((4, 1, 1), AIR),
+            ((7, 1, 1), RB), ((7, 1, 1), AIR),
+            ((10, 1, 1), RB), ((10, 1, 1), AIR),
+            ((12, 1, 1), RB), ((12, 1, 1), AIR),
+            ((14, 1, 1), RB), ((14, 1, 1), AIR),
+        ],
+        10: [((1, 1, 0), RB), ((3, 1, 0), RB), ((4, 1, 1), RB), ((10, 1, 1), RB)],
+        12: [((1, 1, 0), AIR), ((3, 1, 0), AIR), ((4, 1, 1), AIR), ((10, 1, 1), AIR)],
+    },
+)  # fmt: skip
+
+PISTON_RACE = Scenario(
+    name="piston_race",
+    description=(
+        "Two pistons push into the same gap in the same tick; which one is powered first "
+        "(the order of block events) decides who wins. Row 2 swaps the order. Then a piston "
+        "is powered, unpowered and powered again at one boundary (block-event dedup)."
+    ),
+    size=(8, 8),
+    setup=[
+        ((0, 1, 1), "minecraft:piston[facing=east]"),
+        ((1, 1, 1), "minecraft:stone"),
+        ((3, 1, 1), "minecraft:oak_planks"),
+        ((4, 1, 1), "minecraft:piston[facing=west]"),
+        ((0, 1, 4), "minecraft:piston[facing=east]"),
+        ((1, 1, 4), "minecraft:stone"),
+        ((3, 1, 4), "minecraft:oak_planks"),
+        ((4, 1, 4), "minecraft:piston[facing=west]"),
+        ((2, 1, 7), "minecraft:sticky_piston[facing=east]"),
+        ((3, 1, 7), "minecraft:oak_planks"),
+    ],
+    watch=[(x, 1, z) for z in (1, 4, 7) for x in range(0, 7)],
+    ticks=12,
+    inputs={
+        1: [((0, 2, 1), RB), ((4, 2, 1), RB), ((4, 2, 4), RB), ((0, 2, 4), RB)],
+        2: [((1, 1, 7), RB), ((1, 1, 7), AIR), ((1, 1, 7), RB)],
+        6: [((0, 2, 1), AIR), ((4, 2, 1), AIR), ((4, 2, 4), AIR), ((0, 2, 4), AIR)],
+        8: [((1, 1, 7), AIR)],
+    },
+)
+
+WIRE_GRID = Scenario(
+    name="wire_grid",
+    description=(
+        "A 6×6 dust carpet powered from its corners and edges at different ticks, with "
+        "lamps around it: dust update order, power levels and shapes in a dense grid."
+    ),
+    size=(9, 9),
+    setup=[((x, 1, z), "minecraft:redstone_wire") for z in range(1, 7) for x in range(1, 7)]
+    + [((7, 1, 3), "minecraft:redstone_lamp"), ((3, 1, 7), "minecraft:redstone_lamp")],
+    watch=[(x, 1, z) for z in range(1, 8) for x in range(1, 8)],
+    ticks=20,
+    inputs={
+        0: [((0, 1, 1), RB)],
+        3: [((6, 1, 0), RB)],
+        6: [((0, 1, 1), AIR), ((0, 1, 5), RB)],
+        9: [((7, 1, 6), RB), ((0, 1, 5), AIR)],
+        12: [((6, 1, 0), AIR)],
+        15: [((7, 1, 6), AIR)],
+    },
+)
+
+TORCH_TOWER = Scenario(
+    name="torch_tower",
+    description=(
+        "A torch tower (block, torch, block, ... four stages, lamp on top) driven by short "
+        "and long pulses, then toggled every tick until the bottom torch burns out."
+    ),
+    size=(4, 3),
+    # The input drives a repeater into the base block (a redstone block next to it would
+    # not power it: it gives no strong power).
+    setup=[((1, 1, 1), "minecraft:repeater[facing=west,delay=1]"), ((2, 1, 1), "minecraft:stone")]
+    + [((2, 2 * i, 1), "minecraft:redstone_torch") for i in range(1, 5)]
+    + [((2, 2 * i + 1, 1), "minecraft:stone") for i in range(1, 4)]
+    + [((2, 9, 1), "minecraft:redstone_lamp")],
+    watch=[(1, 1, 1)] + [(2, y, 1) for y in range(2, 10)],
+    ticks=90,
+    inputs={
+        0: [((0, 1, 1), RB)],
+        1: [((0, 1, 1), AIR)],
+        6: [((0, 1, 1), RB)],
+        16: [((0, 1, 1), AIR)],
+        # 3 ticks on, 3 off: the torch can follow (it re-checks 2 ticks after a change), and
+        # 8 turn-offs within 60 ticks burn it out.
+        **{t: [((0, 1, 1), RB if (t - 24) % 6 == 0 else AIR)] for t in range(24, 78, 3)},
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -528,6 +647,19 @@ ALL = [
     BARREL_SIGNALS,
     LECTERN_SIGNALS,
     CLONE_STRICT_BUD,
+    ZERO_TICK_INPUTS,
+    PISTON_RACE,
+    WIRE_GRID,
+    TORCH_TOWER,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}
+
+
+def lookup(name: str) -> Scenario:
+    """A scenario by name; ``fuzz_<seed>`` builds a random circuit (``tools.gameserver.fuzz``)."""
+    if name.startswith("fuzz_"):
+        from tools.gameserver.fuzz import fuzz_scenario
+
+        return fuzz_scenario(int(name.removeprefix("fuzz_")))
+    return BY_NAME[name]
