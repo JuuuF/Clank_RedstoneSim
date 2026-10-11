@@ -311,6 +311,8 @@ class Viewport(QOpenGLWidget):
             xray=self.xray,
             building_alpha=prefs.xray_building_alpha,
             circuit_alpha=prefs.xray_circuit_alpha,
+            eye=tuple(float(v) for v in self.camera.position),  # type: ignore[arg-type]
+            fog=(60.0 + self.camera.distance, 200.0 + 2 * self.camera.distance),
         )
         self.frame_rate.record(time.monotonic())
         self._draw_overlays()

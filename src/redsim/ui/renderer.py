@@ -10,7 +10,7 @@ re-uploads only the chunks it touched. Vertices are ``x, y, z, r, g, b, a`` floa
 from __future__ import annotations
 
 import numpy as np
-from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOpenGLFunctions
+from PySide6.QtGui import QMatrix4x4, QOpenGLContext, QOpenGLFunctions, QVector2D, QVector3D
 from PySide6.QtOpenGL import (
     QOpenGLBuffer,
     QOpenGLShader,
@@ -38,15 +38,32 @@ VERTEX_SHADER = """#version 330 core
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 color;
 uniform mat4 mvp;
+uniform vec3 eye;
 out vec4 vColor;
-void main() { gl_Position = mvp * vec4(position, 1.0); vColor = color; }
+out float vDistance;
+void main() {
+    gl_Position = mvp * vec4(position, 1.0);
+    vColor = color;
+    vDistance = distance(position, eye);
+}
 """
 FRAGMENT_SHADER = """#version 330 core
 in vec4 vColor;
+in float vDistance;
 uniform float alphaScale;
+uniform vec3 fogColor;
+uniform vec2 fogRange;   // start, end (blocks)
+uniform float fogAmount; // 0 for overlays, 1 for the world
 out vec4 fragColor;
-void main() { fragColor = vec4(vColor.rgb, vColor.a * alphaScale); }
+void main() {
+    float fog = clamp((vDistance - fogRange.x) / (fogRange.y - fogRange.x), 0.0, 1.0);
+    vec3 rgb = mix(vColor.rgb, fogColor, fog * fogAmount);
+    fragColor = vec4(rgb, vColor.a * alphaScale);
+}
 """
+#: Sky gradient (top of the screen, horizon); the fog fades the world into the horizon.
+SKY_TOP = (0.42, 0.62, 0.92)
+SKY_HORIZON = (0.72, 0.83, 0.96)
 #: Alpha of the parts of selection overlays hidden behind blocks.
 HIDDEN_OVERLAY_ALPHA = 0.4
 
@@ -97,6 +114,13 @@ class Renderer:
         #: Selection box edges and handles (triangles): drawn normally, then again on top
         #: of everything at reduced alpha so hidden parts stay visible ("x-ray").
         self.overlay = _Stream()
+        self.sky = _Stream()
+        top, bottom = (*SKY_TOP, 1.0), (*SKY_HORIZON, 1.0)
+        quad = [
+            (-1, -1, 0.0, *bottom), (1, -1, 0.0, *bottom), (1, 1, 0.0, *top),
+            (-1, -1, 0.0, *bottom), (1, 1, 0.0, *top), (-1, 1, 0.0, *top),
+        ]  # fmt: skip
+        self.sky.upload(self.program, np.array(quad, dtype=np.float32))
         self.volume = _Stream()  # faint translucent selection body
 
     def set_chunk(
@@ -145,6 +169,8 @@ class Renderer:
         xray: int = 0,
         building_alpha: float = 0.18,
         circuit_alpha: float = 0.45,
+        eye: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        fog: tuple[float, float] = (80.0, 220.0),
     ) -> None:
         """Draw everything. ``xray`` 1: full building blocks become see-through (no depth
         writes) while circuit parts stay opaque; 2: circuit parts are see-through too."""
@@ -158,12 +184,26 @@ class Renderer:
         gl.glViewport(0, 0, width, height)
         gl.glClearColor(*background)
         gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        program = self.program
+        program.bind()
+        location = program.uniformLocation("mvp")
+        alpha = program.uniformLocation("alphaScale")
+        fog_amount = program.uniformLocation("fogAmount")
+        program.setUniformValue1f(alpha, 1.0)
+        program.setUniformValue(program.uniformLocation("eye"), QVector3D(*eye))
+        program.setUniformValue(program.uniformLocation("fogColor"), QVector3D(*SKY_HORIZON))
+        program.setUniformValue(program.uniformLocation("fogRange"), QVector2D(*fog))
+        # Sky: a screen-filling gradient behind everything (no depth).
+        program.setUniformValue1f(fog_amount, 0.0)
+        program.setUniformValue(location, QMatrix4x4())
+        gl.glDisable(GL_DEPTH_TEST)
+        gl.glDepthMask(GL_FALSE)
+        self.sky.vao.bind()
+        gl.glDrawArrays(GL_TRIANGLES, 0, self.sky.count)
+        gl.glDepthMask(GL_TRUE)
         gl.glEnable(GL_DEPTH_TEST)
-        self.program.bind()
-        location = self.program.uniformLocation("mvp")
-        self.program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
-        alpha = self.program.uniformLocation("alphaScale")
-        self.program.setUniformValue1f(alpha, 1.0)
+        program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
+        program.setUniformValue1f(fog_amount, 1.0)
         for opaque, _, solid in self.chunks.values():
             drawn = () if xray == 2 else (opaque,) if xray == 1 else (opaque, solid)
             for stream in drawn:
@@ -171,8 +211,10 @@ class Renderer:
                     stream.vao.bind()
                     gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
         if self.lines.count:
+            program.setUniformValue1f(fog_amount, 0.0)
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
+            program.setUniformValue1f(fog_amount, 1.0)
         if xray:
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -202,6 +244,7 @@ class Renderer:
                 gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
+        program.setUniformValue1f(fog_amount, 0.0)  # overlays are never fogged
         if self.overlay.count:
             self.overlay.vao.bind()
             gl.glDrawArrays(GL_TRIANGLES, 0, self.overlay.count)  # visible parts

@@ -254,6 +254,14 @@ after 4 pixels of movement, otherwise a click on release.
 The viewport targets the block under the mouse cursor (an editor convenience; the game
 uses the screen center). The renderer never writes world state.
 
+### Look (owner: "simple but slick, still Minecraft")
+
+- Full blocks get Minecraft-like smooth-lighting corner shading (each face corner darkened
+  by how many of its three outer neighbors are full blocks) and a stable ±5 % per-block
+  brightness variation instead of a checkerboard (`geometry.AO_LEVELS`, `block_noise`).
+- A sky gradient behind the world and soft distance fog into the horizon color; selection
+  gizmos, outlines and overlays are never fogged (`renderer.py` shaders).
+
 ### Rendering and the run loop ([[decisions]] ADR-017)
 
 - **Chunked meshes.** The world mesh is split into 8³-block chunks. Before drawing, when the

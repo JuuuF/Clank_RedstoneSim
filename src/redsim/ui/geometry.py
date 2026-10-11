@@ -110,6 +110,45 @@ def chunk_of(pos: Pos) -> ChunkKey:
 
 
 _STEPS = tuple(direction.step for direction in ALL)
+#: Corner shading (Minecraft-like smooth lighting without textures): brightness of a face
+#: corner by how many of its 3 outer neighbors (two sides, one diagonal) are full blocks.
+AO_LEVELS = (1.0, 0.82, 0.68, 0.55)
+
+
+def _corner_offsets() -> tuple[tuple[tuple[Pos, Pos, Pos], ...], ...]:
+    """For each direction (``ALL`` order) and each of its 4 face corners: the offsets of the
+    two side neighbors and the diagonal neighbor in the layer outside the face."""
+    result = []
+    for direction in ALL:
+        n = direction.step
+        axis = next(i for i in range(3) if n[i] != 0)
+        tangents = [i for i in range(3) if i != axis]
+        corners = _face_quads(np.zeros(3), np.ones(3), direction)
+        per_corner = []
+        for corner in corners:
+            signs = {a: (1 if corner[a] > 0.5 else -1) for a in tangents}
+            side = []
+            for a in tangents:
+                o = list(n)
+                o[a] += signs[a]
+                side.append((o[0], o[1], o[2]))
+            diagonal = list(n)
+            for a in tangents:
+                diagonal[a] += signs[a]
+            per_corner.append((side[0], side[1], (diagonal[0], diagonal[1], diagonal[2])))
+        result.append(tuple(per_corner))
+    return tuple(result)
+
+
+def block_noise(pos: Pos) -> float:
+    """A stable ±5 % brightness variation per block (presentation only), instead of the
+    checkerboard, so surfaces read like Minecraft blocks."""
+    h = (pos[0] * 374761393 + pos[1] * 668265263 + pos[2] * 2147483647) & 0xFFFFFFFF
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+    h ^= h >> 16
+    return 0.95 + 0.1 * (h & 0xFFFF) / 0xFFFF
+
+
 #: Full cubes that are circuit parts: X-ray keeps them opaque (they go to the opaque buffer).
 XRAY_KEEP = frozenset(
     {
@@ -201,6 +240,8 @@ class Mesher:
         s_ids: list[int] = []
         s_pos: list[Pos] = []
         s_counts: list[int] = []
+        o_shade: list[float] = []  # 6 brightness factors per face (corner shading)
+        s_shade: list[float] = []
         t_ids: list[int] = []
         t_pos: list[Pos] = []
         t_counts: list[int] = []
@@ -214,16 +255,31 @@ class Mesher:
                 continue
             x, y, z = pos
             full = is_full(state)
-            tinted = full and bool((x + y + z) & 1)
-            model = models.get((state, tinted)) or self._model(state, tinted)
+            model = models.get((state, False)) or self._model(state, False)
             if full:
                 keep = state.block.id in XRAY_KEEP
                 ids, at, counts = (o_ids, o_pos, o_counts) if keep else (s_ids, s_pos, s_counts)
+                shade = o_shade if keep else s_shade
+                noise = block_noise(pos)
                 before = len(ids)
                 for index, (dx, dy, dz) in enumerate(_STEPS):
                     neighbor = states.get((x + dx, y + dy, z + dz))
                     if neighbor is None or not is_full(neighbor):
-                        ids.extend(model.opaque[index])
+                        face_ids = model.opaque[index]
+                        ids.extend(face_ids)
+                        levels = []
+                        for side1, side2, diagonal in CORNERS[index]:
+                            a = states.get((x + side1[0], y + side1[1], z + side1[2]))
+                            b = states.get((x + side2[0], y + side2[1], z + side2[2]))
+                            c = states.get((x + diagonal[0], y + diagonal[1], z + diagonal[2]))
+                            a_full = a is not None and is_full(a)
+                            b_full = b is not None and is_full(b)
+                            c_full = c is not None and is_full(c)
+                            occluded = 3 if a_full and b_full else a_full + b_full + c_full
+                            levels.append(AO_LEVELS[occluded] * noise)
+                        corner = (levels[0], levels[1], levels[2], levels[0], levels[2], levels[3])
+                        for _ in face_ids:
+                            shade.extend(corner)
                 if len(ids) > before:
                     at.append(pos)
                     counts.append(len(ids) - before)
@@ -231,6 +287,7 @@ class Mesher:
                 o_ids.extend(model.opaque_all)
                 o_pos.append(pos)
                 o_counts.append(len(model.opaque_all))
+                o_shade.extend((1.0,) * (6 * len(model.opaque_all)))
             if model.has_translucent:
                 before = len(t_ids)
                 for index, (dx, dy, dz) in enumerate(_STEPS):
@@ -241,32 +298,39 @@ class Mesher:
                     t_counts.append(len(t_ids) - before)
         if len(self._templates) != len(self._template_rows):
             self._templates = np.stack(self._template_rows)
-        opaque = [self._assemble(o_ids, o_pos, o_counts)]
+        opaque = [self._assemble(o_ids, o_pos, o_counts, o_shade)]
         translucent = [self._assemble(t_ids, t_pos, t_counts)]
         for pos in dynamic:
-            # Moved blocks are never culled against (their look changes every tick), but keep
-            # the checkerboard tint so a block does not flicker when it comes to rest.
+            # Moved blocks are never culled against (their look changes every tick).
             moving = boxes_at(level, pos)
-            tinted = is_full_opaque(moving) and bool(sum(pos) & 1)
+            noise = block_noise(pos) if is_full_opaque(moving) else 1.0
             origin = np.array(pos, dtype=np.float32)
             for box in moving:
                 lo = origin + np.array(box.lo, dtype=np.float32) / 16.0
                 hi = origin + np.array(box.hi, dtype=np.float32) / 16.0
-                color = box.color
-                if tinted:
-                    color = (color[0] * 0.93, color[1] * 0.93, color[2] * 0.93, color[3])
+                red, green, blue, alpha = box.color
+                color = (red * noise, green * noise, blue * noise, alpha)
                 target = translucent if box.translucent else opaque
                 for direction in ALL:
                     target.append(_triangles(lo, hi, direction, color))
-        solid = self._assemble(s_ids, s_pos, s_counts)
+        solid = self._assemble(s_ids, s_pos, s_counts, s_shade)
         return Mesh(_stack(opaque), _stack(translucent), animated=bool(dynamic), solid=solid)
 
-    def _assemble(self, ids: list[int], positions: list[Pos], counts: list[int]) -> FloatArray:
+    def _assemble(
+        self,
+        ids: list[int],
+        positions: list[Pos],
+        counts: list[int],
+        shade: list[float] | None = None,
+    ) -> FloatArray:
         if not ids:
             return _EMPTY
         vertices = self._templates[np.asarray(ids, dtype=np.intp)]  # (faces, 6, 7), a copy
         offsets = np.repeat(np.asarray(positions, dtype=np.float32), counts, axis=0)
         vertices[:, :, :3] += offsets[:, None, :]
+        if shade:
+            factors = np.asarray(shade, dtype=np.float32).reshape(-1, 6)
+            vertices[:, :, 3:6] *= factors[:, :, None]
         return vertices.reshape(-1, 7)
 
 
@@ -488,3 +552,6 @@ def pick(
         voxel[axis] += step[axis]
         t_max[axis] += t_delta[axis]
     return None
+
+
+CORNERS = _corner_offsets()
