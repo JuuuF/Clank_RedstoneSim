@@ -49,8 +49,6 @@ void main() { fragColor = vec4(vColor.rgb, vColor.a * alphaScale); }
 """
 #: Alpha of the parts of selection overlays hidden behind blocks.
 HIDDEN_OVERLAY_ALPHA = 0.4
-#: Alpha of building blocks in X-ray mode.
-XRAY_ALPHA = 0.18
 
 
 class _Stream:
@@ -139,10 +137,12 @@ class Renderer:
         width: int,
         height: int,
         background: tuple[float, ...],
-        xray: bool = False,
+        xray: int = 0,
+        building_alpha: float = 0.18,
+        circuit_alpha: float = 0.45,
     ) -> None:
-        """Draw everything. ``xray``: full building blocks become see-through (alpha
-        ``XRAY_ALPHA``, no depth writes) while components stay opaque (Blender's X-ray)."""
+        """Draw everything. ``xray`` 1: full building blocks become see-through (no depth
+        writes) while circuit parts stay opaque; 2: circuit parts are see-through too."""
         gl = self.gl
         # A QPainter overlay drawn after us may leave any of these changed.
         gl.glDisable(GL_SCISSOR_TEST)
@@ -160,7 +160,8 @@ class Renderer:
         alpha = self.program.uniformLocation("alphaScale")
         self.program.setUniformValue1f(alpha, 1.0)
         for opaque, _, solid in self.chunks.values():
-            for stream in (opaque,) if xray else (opaque, solid):
+            drawn = () if xray == 2 else (opaque,) if xray == 1 else (opaque, solid)
+            for stream in drawn:
                 if stream.count:
                     stream.vao.bind()
                     gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
@@ -171,11 +172,14 @@ class Renderer:
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             gl.glDepthMask(GL_FALSE)
-            self.program.setUniformValue1f(alpha, XRAY_ALPHA)
-            for _, _, solid in self.chunks.values():
-                if solid.count:
-                    solid.vao.bind()
-                    gl.glDrawArrays(GL_TRIANGLES, 0, solid.count)
+            layers = [(1, building_alpha)] + ([(0, circuit_alpha)] if xray == 2 else [])
+            for index, value in layers:
+                self.program.setUniformValue1f(alpha, value)
+                for streams in self.chunks.values():
+                    stream = streams[2] if index == 1 else streams[0]
+                    if stream.count:
+                        stream.vao.bind()
+                        gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
             self.program.setUniformValue1f(alpha, 1.0)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)

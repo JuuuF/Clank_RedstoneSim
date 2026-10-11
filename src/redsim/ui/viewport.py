@@ -51,6 +51,7 @@ from redsim.ui.geometry import (
 )
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.pacing import RateMeter
+from redsim.ui.preferences import Preferences
 from redsim.ui.renderer import Renderer
 from redsim.ui.selection_tools import (
     Handle,
@@ -155,8 +156,9 @@ class Viewport(QOpenGLWidget):
         self.show_sections = True
         self.show_groups = True
         #: Blender-like X-ray (building blocks see-through) and the block-info overlay.
-        self.xray = False
+        self.xray = 0  # 0 off, 1 building blocks see-through, 2 everything see-through
         self.show_info = False
+        self.preferences = Preferences.load()
         #: SELECT mode: the face handle under the cursor, and drags in progress.
         self.handle_hover: Handle | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
@@ -292,7 +294,16 @@ class Viewport(QOpenGLWidget):
         width, height = int(self.width() * ratio), int(self.height() * ratio)
         aspect = max(width, 1) / max(height, 1)
         mvp = self.camera.projection_matrix(aspect) @ self.camera.view_matrix()
-        renderer.draw(mvp, width, height, BACKGROUND, xray=self.xray)
+        prefs = self.preferences
+        renderer.draw(
+            mvp,
+            width,
+            height,
+            BACKGROUND,
+            xray=self.xray,
+            building_alpha=prefs.xray_building_alpha,
+            circuit_alpha=prefs.xray_circuit_alpha,
+        )
         self.frame_rate.record(time.monotonic())
         self._draw_overlays()
 
@@ -330,7 +341,8 @@ class Viewport(QOpenGLWidget):
         )
         painter.setPen(QColor(255, 255, 255))
         painter.drawText(10, top + 4 + metrics.ascent(), badge)
-        flags = [name for name, on in (("X-RAY", self.xray), ("INFO", self.show_info)) if on]
+        xray_tag = ("", "X-RAY", "X-RAY ALL")[self.xray]
+        flags = [name for name, on in ((xray_tag, self.xray), ("INFO", self.show_info)) if on]
         if flags:
             tag = " " + " · ".join(flags) + " "
             tag_width = metrics.horizontalAdvance(tag) + 8

@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QColorDialog,
     QComboBox,
+    QDialog,
     QFormLayout,
     QHBoxLayout,
     QInputDialog,
@@ -36,6 +37,7 @@ from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui.keymap import Keymap, hotkey_sections
+from redsim.ui.preferences import Preferences
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 from redsim.world.properties import Property
@@ -716,6 +718,48 @@ class HotkeysPanel(QWidget):
             "</small></p>"
         )
         self.view.setHtml("".join(parts))
+
+
+class PreferencesDialog(QDialog):
+    """Preferences; changes apply live (``changed``) and are saved on close."""
+
+    changed = Signal()
+
+    def __init__(self, preferences: Preferences, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Preferences")
+        self.preferences = preferences
+        form = QFormLayout(self)
+        for attribute, text, tip in (
+            (
+                "xray_building_alpha",
+                "X-ray: building blocks",
+                "How visible building blocks (stone, planks, …) stay in both X-ray levels.",
+            ),
+            (
+                "xray_circuit_alpha",
+                "X-ray: circuit blocks",
+                "How visible circuit parts stay in the 'everything' X-ray level.",
+            ),
+        ):
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setRange(0, 100)
+            slider.setValue(round(getattr(preferences, attribute) * 100))
+            slider.setToolTip(tip)
+            value = QLabel(f"{slider.value()} %")
+            slider.valueChanged.connect(lambda v, a=attribute, label=value: self._set(a, v, label))
+            row = QHBoxLayout()
+            row.addWidget(slider)
+            row.addWidget(value)
+            form.addRow(text, row)
+        close = QPushButton("Close")
+        close.clicked.connect(self.accept)
+        form.addRow(close)
+
+    def _set(self, attribute: str, value: int, label: QLabel) -> None:
+        setattr(self.preferences, attribute, value / 100)
+        label.setText(f"{value} %")
+        self.changed.emit()
 
 
 class ContraptionsPanel(QTabWidget):

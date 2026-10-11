@@ -36,6 +36,7 @@ from redsim.ui.panels import (
     HotkeysPanel,
     InspectorPanel,
     PalettePanel,
+    PreferencesDialog,
     SectionsPanel,
     SimulationPanel,
 )
@@ -261,15 +262,23 @@ class MainWindow(QMainWindow):
             toggle.setChecked(True)
             toggle.setToolTip(tip)
             toggle.setStatusTip(tip)
-        for attribute, text, keymap_id in (
-            ("show_info", "Info overlay (signal values)", "view.info"),
-            ("xray", "X-ray", "view.xray"),
-        ):
-            toggle = self._action(
-                view_menu, text, lambda on, a=attribute: self._set_view_flag(a, on), keymap_id
-            )
-            toggle.setCheckable(True)
-            toggle.setToolTip(SPECS[keymap_id].title)
+        info = self._action(
+            view_menu,
+            "Info overlay (signal values)",
+            lambda on: self._set_view_flag("show_info", on),
+            "view.info",
+        )
+        info.setCheckable(True)
+        info.setToolTip(SPECS["view.info"].title)
+        self._action(view_menu, "Cycle X-ray", self._cycle_xray, "view.xray")
+        xray_group = QActionGroup(self)
+        self._xray_actions = []
+        for level, text in enumerate(("X-ray off", "X-ray: building blocks", "X-ray: everything")):
+            action = self._action(view_menu, text, lambda _=False, v=level: self._set_xray(v))
+            action.setCheckable(True)
+            action.setChecked(level == 0)
+            xray_group.addAction(action)
+            self._xray_actions.append(action)
         view_menu.setToolTipsVisible(True)
         view_menu.addSeparator()
         for dock in self.findChildren(QDockWidget):
@@ -284,6 +293,7 @@ class MainWindow(QMainWindow):
                 f"hotbar.{index}",
             )
         settings_menu = bar.addMenu("Se&ttings")
+        self._action(settings_menu, "Preferences…", self._preferences)
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
         self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
@@ -310,6 +320,22 @@ class MainWindow(QMainWindow):
         """Bring the Controls dock to the front (it shares a tab group with the palette)."""
         self.help_dock.show()
         self.help_dock.raise_()
+
+    def _cycle_xray(self) -> None:
+        self._set_xray((self.viewport.xray + 1) % 3)
+
+    def _set_xray(self, level: int) -> None:
+        self.viewport.xray = level
+        self._xray_actions[level].setChecked(True)
+        labels = ("off", "building blocks see-through", "everything see-through")
+        self._message(f"X-ray: {labels[level]} (Alt+Z cycles; levels in Settings → Preferences)")
+        self.viewport.update()
+
+    def _preferences(self) -> None:
+        dialog = PreferencesDialog(self.viewport.preferences, self)
+        dialog.changed.connect(self.viewport.update)
+        dialog.exec()
+        self.viewport.preferences.save()
 
     def _set_view_flag(self, attribute: str, on: bool) -> None:
         setattr(self.viewport, attribute, on)
