@@ -15,14 +15,11 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QFontMetrics, QMouseEvent, QPainter, QPen
 from PySide6.QtWidgets import (
-    QBoxLayout,
-    QFrame,
     QHBoxLayout,
     QLabel,
-    QScrollArea,
     QSizePolicy,
     QSpinBox,
     QToolButton,
@@ -31,7 +28,8 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.editor import sources
-from redsim.ui.icons import block_icon
+from redsim.ui import theme
+from redsim.ui.icons import block_pixmap
 from redsim.ui.preferences import config_dir
 from redsim.world import blocks
 from redsim.world.block import Block
@@ -202,9 +200,202 @@ def all_blocks(folder: Folder = INVENTORY, path: tuple[str, ...] = ()) -> list[t
     return found
 
 
+def first_block(folder: Folder) -> str | None:
+    """The block a folder shows as its icon (its first block, depth first)."""
+    for child in folder.children:
+        if isinstance(child, str):
+            return child
+        found = first_block(child)
+        if found is not None:
+            return found
+    return None
+
+
+@dataclass
+class _Spot:
+    """A clickable area of the inventory canvas."""
+
+    rect: QRect
+    kind: str  # "slot" (current level), "tab" (an upper level), "recent"
+    depth: int
+    index: int
+    block: str | None
+    title: str
+
+
+class InventoryCanvas(QWidget):
+    """The painted part of the inventory, Minecraft-style: the current folder as hotbar
+    slots on top, each folder level above it as a row of tabs below, root at the bottom,
+    so the stack grows upwards as you go deeper. The name of the chosen or hovered block
+    floats above the slots like in the game. Recent blocks sit on the right."""
+
+    SLOT = 46
+    TAB = 26
+    NAME = 22
+
+    def __init__(self, bar: InventoryBar) -> None:
+        super().__init__()
+        self.bar = bar
+        self.spots: list[_Spot] = []
+        self.hovered: _Spot | None = None
+        self.setMouseTracking(True)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def rows_height(self) -> int:
+        return self.NAME + self.SLOT + 8 + len(self.bar.nav.path) * (self.TAB + 4)
+
+    def sizeHint(self) -> QSize:
+        return QSize(800, self.rows_height())
+
+    # ------------------------------------------------------------------ layout
+    def _layout(self) -> list[_Spot]:
+        nav = self.bar.nav
+        spots: list[_Spot] = []
+        x0 = 8
+        top = self.NAME
+        folder = nav.folder()
+        for index, child in enumerate(folder.children):
+            rect = QRect(x0 + index * (self.SLOT + 4), top, self.SLOT, self.SLOT)
+            if isinstance(child, Folder):
+                spots.append(
+                    _Spot(rect, "slot", len(nav.path), index, first_block(child), child.title)
+                )
+            else:
+                spots.append(_Spot(rect, "slot", len(nav.path), index, child, block_label(child)))
+        # Upper levels as tab rows below the slots: the deepest parent first, root last.
+        levels: list[tuple[int, Folder, int]] = []
+        parent = nav.root
+        for depth, chosen in enumerate(nav.path):
+            levels.append((depth, parent, chosen))
+            child = parent.children[chosen]
+            assert isinstance(child, Folder)
+            parent = child
+        y = top + self.SLOT + 8
+        for depth, level, _ in reversed(levels):
+            x = x0
+            for index, child in enumerate(level.children):
+                title = child.title if isinstance(child, Folder) else block_label(child)
+                block = first_block(child) if isinstance(child, Folder) else child
+                width = QFontMetrics(self.font()).horizontalAdvance(title) + 40
+                spots.append(_Spot(QRect(x, y, width, self.TAB), "tab", depth, index, block, title))
+                x += width + 3
+            y += self.TAB + 4
+        # Recent blocks, right-aligned.
+        recent = self.bar.recent
+        size = 34
+        x = self.width() - 8 - len(recent) * (size + 3)
+        for index, block_id in enumerate(recent):
+            rect = QRect(x + index * (size + 3), top + (self.SLOT - size) // 2, size, size)
+            spots.append(_Spot(rect, "recent", -1, index, block_id, block_label(block_id)))
+        return spots
+
+    # ------------------------------------------------------------------ painting
+    def paintEvent(self, event: object) -> None:
+        self.spots = self._layout()
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(theme.PANEL))
+        nav = self.bar.nav
+        chosen_at = {depth: index for depth, index in enumerate(nav.path)}
+        for spot in self.spots:
+            hovered = self.hovered is not None and self.hovered.rect == spot.rect
+            if spot.kind == "tab":
+                self._paint_tab(painter, spot, chosen_at.get(spot.depth) == spot.index, hovered)
+            else:
+                selected = (
+                    spot.block == self.bar.current
+                    and spot.kind == "recent"
+                    or (
+                        spot.kind == "slot"
+                        and isinstance(nav.folder().children[spot.index], str)
+                        and spot.block == self.bar.current
+                    )
+                )
+                self._paint_slot(painter, spot, selected, hovered)
+        recent = [s for s in self.spots if s.kind == "recent"]
+        if recent:
+            label = "Recent"
+            x = self.width() - theme.text_width(label) - 10
+            theme.draw_text(painter, x, 3, label, theme.TEXT_DIM, 2, shadow=False)
+        name = self.hovered.title if self.hovered is not None else self._current_name()
+        if name:
+            theme.draw_text(painter, 10, 3, name, theme.GOLD)
+        painter.end()
+
+    def _current_name(self) -> str:
+        current = self.bar.current
+        if current is None:
+            return " › ".join(["Inventory", *self.bar.nav.breadcrumb()])
+        return block_label(current)
+
+    def _paint_slot(self, painter: QPainter, spot: _Spot, selected: bool, hovered: bool) -> None:
+        r = spot.rect
+        painter.fillRect(r, QColor(theme.SUNKEN))
+        # Minecraft slot bevel: dark top/left, light bottom/right.
+        painter.fillRect(QRect(r.left(), r.top(), r.width(), 2), QColor("#0b0b0c"))
+        painter.fillRect(QRect(r.left(), r.top(), 2, r.height()), QColor("#0b0b0c"))
+        painter.fillRect(QRect(r.left(), r.bottom() - 1, r.width(), 2), QColor(theme.LINE))
+        painter.fillRect(QRect(r.right() - 1, r.top(), 2, r.height()), QColor(theme.LINE))
+        if hovered:
+            painter.fillRect(r.adjusted(2, 2, -2, -2), QColor(255, 255, 255, 28))
+        if spot.block is not None:
+            size = r.width() - 12
+            painter.drawPixmap(r.left() + 6, r.top() + 6, block_pixmap(spot.block, size))
+        if spot.kind == "slot":
+            child = self.bar.nav.folder().children[spot.index]
+            if isinstance(child, Folder):  # a folder: a small marker in the corner
+                painter.fillRect(QRect(r.right() - 11, r.top() + 3, 9, 9), QColor(theme.ACCENT))
+            number = str(spot.index + 1)
+            theme.draw_text(
+                painter, r.right() - theme.text_width(number) - 1, r.bottom() - 17, number
+            )
+        if selected:
+            pen = QPen(QColor("#ffffff"), 2)
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(r.adjusted(-1, -1, 0, 0))
+
+    def _paint_tab(self, painter: QPainter, spot: _Spot, chosen: bool, hovered: bool) -> None:
+        r = spot.rect
+        background = (
+            theme.ACCENT_SOFT if chosen else theme.WIDGET_HOVER if hovered else theme.WIDGET
+        )
+        painter.fillRect(r, QColor(background))
+        if chosen:
+            painter.fillRect(QRect(r.left(), r.bottom() - 1, r.width(), 2), QColor(theme.ACCENT))
+        if spot.block is not None:
+            painter.drawPixmap(r.left() + 5, r.top() + 4, block_pixmap(spot.block, 18))
+        painter.setPen(QColor("#ffffff" if chosen else theme.TEXT))
+        painter.drawText(r.adjusted(28, 0, 0, 0), int(Qt.AlignmentFlag.AlignVCenter), spot.title)
+
+    # ------------------------------------------------------------------ input
+    def _spot_at(self, point: QPoint) -> _Spot | None:
+        return next((spot for spot in self.spots if spot.rect.contains(point)), None)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        spot = self._spot_at(event.position().toPoint())
+        if spot != self.hovered:
+            self.hovered = spot
+            self.update()
+
+    def leaveEvent(self, event: object) -> None:
+        self.hovered = None
+        self.update()
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        spot = self._spot_at(event.position().toPoint())
+        if spot is None or event.button() != Qt.MouseButton.LeftButton:
+            return
+        if spot.kind == "slot":
+            self.bar.press(spot.index + 1)
+        elif spot.kind == "tab":
+            self.bar.pick_at_level(spot.depth, spot.index)
+        elif spot.block is not None:
+            self.bar.select_block(blocks.get(spot.block))
+
+
 class InventoryBar(QWidget):
-    """The bar: the folder path (click a level to go back), recently used blocks, and the
-    numbered tiles of the current folder with block previews; source strength."""
+    """The inventory: the painted hotbar and folder rows (``InventoryCanvas``), and on the
+    right the search button and the source strength."""
 
     block_chosen = Signal(object)  # Block
     search_requested = Signal()
@@ -214,33 +405,21 @@ class InventoryBar(QWidget):
         self.nav = InventoryNav()
         self.current: str | None = None
         self.recent: list[str] = load_recent()
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(6, 2, 6, 2)
-        outer.setSpacing(2)
-        top = QHBoxLayout()
-        top.setSpacing(2)
-        outer.addLayout(top)
-        self.back = QToolButton()
-        self.back.setText("⌫")
-        self.back.setToolTip("Up one folder (Backspace)")
-        self.back.clicked.connect(self.go_up)
-        top.addWidget(self.back)
-        self.path_label = QLabel()
-        top.addWidget(self.path_label)
-        top.addStretch(1)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 8, 0)
+        layout.setSpacing(6)
+        self.canvas = InventoryCanvas(self)
+        layout.addWidget(self.canvas, 1)
+        side = QVBoxLayout()
+        side.setSpacing(4)
+        side.setContentsMargins(0, 6, 0, 6)
         search = QToolButton()
-        search.setText("🔍 Search")
+        search.setText("🔍  Search blocks")
         search.setToolTip("Search blocks by name (Ctrl+Space, /, or press Shift twice)")
         search.clicked.connect(self.search_requested.emit)
-        top.addWidget(search)
-        top.addSpacing(10)
-        top.addWidget(QLabel("Recent:"))
-        self.recent_row = QHBoxLayout()
-        self.recent_row.setSpacing(2)
-        top.addLayout(self.recent_row)
-        top.addSpacing(10)
+        side.addWidget(search)
         self.strength_label = QLabel("Source strength")
-        top.addWidget(self.strength_label)
+        side.addWidget(self.strength_label)
         self.strength = QSpinBox()
         self.strength.setRange(0, 15)
         self.strength.setValue(15)
@@ -249,122 +428,17 @@ class InventoryBar(QWidget):
             "barrels get the fewest items, lecterns a 15-page book open at the right page, "
             "cakes the matching bites (even values only)."
         )
-        top.addWidget(self.strength)
-        #: Trackmania-style: one compact row per folder level above the current one, with
-        #: the chosen folder highlighted, then the current folder's big numbered tiles.
-        self.levels = QVBoxLayout()
-        self.levels.setSpacing(1)
-        outer.addLayout(self.levels)
-        tiles = QWidget()
-        self.tiles_row = QHBoxLayout(tiles)
-        self.tiles_row.setContentsMargins(0, 0, 0, 0)
-        self.tiles_row.setSpacing(4)
-        self.tiles_row.addStretch(1)
-        scroller = QScrollArea()  # never let nine tiles force the window wider
-        scroller.setWidget(tiles)
-        scroller.setWidgetResizable(True)
-        scroller.setFrameShape(QFrame.Shape.NoFrame)
-        scroller.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroller.setFixedHeight(TILE_HEIGHT + 14)  # tiles plus a horizontal scrollbar
-        outer.addWidget(scroller)
-        self._tiles: list[QWidget] = []
-        self._path_widgets: list[QWidget] = []
-        self._recent_widgets: list[QWidget] = []
+        side.addWidget(self.strength)
+        side.addStretch(1)
+        layout.addLayout(side)
         self.refresh()
 
-    # ------------------------------------------------------------------ display
-    def _clear(self, layout: QBoxLayout, widgets: list[QWidget]) -> None:
-        for widget in widgets:
-            layout.removeWidget(widget)
-            widget.setParent(None)
-            widget.deleteLater()
-        widgets.clear()
-
     def refresh(self) -> None:
-        self._clear(self.tiles_row, self._tiles)
-        self._clear(self.levels, self._path_widgets)
-        self._clear(self.recent_row, self._recent_widgets)
-        self._build_levels()
-        self._build_recent()
-        self.back.setEnabled(bool(self.nav.path))
-        for number, child in enumerate(self.nav.folder().children, start=1):
-            tile = QToolButton()
-            tile.setAutoRaise(False)
-            tile.setFixedHeight(TILE_HEIGHT)
-            tile.setMinimumWidth(64)
-            if isinstance(child, Folder):
-                tile.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-                tile.setIcon(folder_icon(child))
-                tile.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
-                tile.setText(f"{number}  {child.title} ›")
-                tile.setToolTip(f"Open {child.title} ({number})")
-            else:
-                tile.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-                tile.setIcon(block_icon(blocks.get(child), ICON_SIZE))
-                tile.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
-                tile.setText(f"{number}  {block_label(child)}")
-                kind = sources.SOURCE_BLOCKS.get(child)
-                tile.setToolTip(sources.KINDS[kind].tooltip if kind else child)
-                tile.setCheckable(True)
-                tile.setChecked(child == self.current)
-            tile.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-            tile.clicked.connect(lambda _=False, n=number: self.press(n))
-            self.tiles_row.insertWidget(self.tiles_row.count() - 1, tile)
-            self._tiles.append(tile)
+        self.canvas.setFixedHeight(self.canvas.rows_height())
+        self.canvas.update()
         is_source = self.current in sources.SOURCE_BLOCKS
         self.strength_label.setVisible(is_source)
         self.strength.setVisible(is_source)
-
-    def _build_levels(self) -> None:
-        """A row for each folder level above the current one (the chosen folder
-        highlighted); clicking a tile there goes to that level."""
-        crumbs = ["Inventory", *self.nav.breadcrumb()]
-        self.path_label.setText(" › ".join(crumbs[:-1] + [f"<b>{crumbs[-1]}</b>"]))
-        folder = self.nav.root
-        for depth, chosen in enumerate(self.nav.path):
-            row = QWidget()
-            layout = QHBoxLayout(row)
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(2)
-            for index, child in enumerate(folder.children):
-                tile = QToolButton()
-                tile.setAutoRaise(True)
-                tile.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-                tile.setIconSize(QSize(18, 18))
-                if isinstance(child, Folder):
-                    tile.setIcon(folder_icon(child))
-                    tile.setText(child.title)
-                else:
-                    tile.setIcon(block_icon(blocks.get(child), 18))
-                    tile.setText(block_label(child))
-                tile.setCheckable(True)
-                tile.setChecked(index == chosen)
-                tile.clicked.connect(lambda _=False, d=depth, i=index: self._pick_at_level(d, i))
-                layout.addWidget(tile)
-            layout.addStretch(1)
-            self.levels.addWidget(row)
-            self._path_widgets.append(row)
-            child = folder.children[chosen]
-            assert isinstance(child, Folder)
-            folder = child
-
-    def _pick_at_level(self, depth: int, index: int) -> None:
-        """A tile in an upper row: open that folder there, or choose that block."""
-        self.nav.path = self.nav.path[:depth]
-        self.press(index + 1)
-
-    def _build_recent(self) -> None:
-        for block_id in self.recent:
-            button = QToolButton()
-            button.setAutoRaise(True)
-            button.setIcon(block_icon(blocks.get(block_id), 22))
-            button.setIconSize(QSize(22, 22))
-            button.setToolTip(f"{block_label(block_id)} (recently used)")
-            button.setCheckable(True)
-            button.setChecked(block_id == self.current)
-            button.clicked.connect(lambda _=False, b=block_id: self.select_block(blocks.get(b)))
-            self.recent_row.addWidget(button)
-            self._recent_widgets.append(button)
 
     # ------------------------------------------------------------------ navigation
     def press(self, number: int) -> None:
@@ -379,6 +453,13 @@ class InventoryBar(QWidget):
         if depth < len(self.nav.path) + 1:
             self.nav.path = self.nav.path[:depth]
             self.refresh()
+
+    def pick_at_level(self, depth: int, index: int) -> None:
+        """A tab of an upper level: open that folder there, or choose that block."""
+        self.nav.path = self.nav.path[:depth]
+        self.press(index + 1)
+
+    _pick_at_level = pick_at_level
 
     def _fit_strength(self, block_id: str) -> None:
         """The strength box offers what the chosen source can give (cakes: even 2-14)."""
@@ -415,11 +496,3 @@ class InventoryBar(QWidget):
         except OSError:
             pass
         self.refresh()
-
-
-def folder_icon(folder: Folder) -> QIcon:
-    """A folder tile shows its first block."""
-    first: Folder | str = folder
-    while isinstance(first, Folder) and first.children:
-        first = first.children[0]
-    return block_icon(blocks.get(first), ICON_SIZE) if isinstance(first, str) else QIcon()

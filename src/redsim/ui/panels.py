@@ -35,6 +35,7 @@ from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
+from redsim.ui import theme
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.preferences import Preferences
 from redsim.world import blocks
@@ -544,14 +545,18 @@ class SectionsPanel(QWidget):
             self.refresh()
 
 
-MODE_TINTS = {"normal": "#c9d8ee", "build": "#cfe8d0", "select": "#f3dcc0"}
+#: Section header colors: the current mode's section in its mode color, others neutral.
+MODE_TINTS = {"normal": "#2b4f80", "build": "#2c6a34", "select": "#8a5418"}
 
 
 def keycaps(bindings: tuple[str, ...]) -> str:
     """Rich text with each key drawn as a keycap; alternatives separated by "or"."""
     if not bindings:
         return "<i>unbound</i>"
-    cap = '<span style="background-color:#dedede; color:#111;">&nbsp;{}&nbsp;</span>'
+    cap = (
+        f'<span style="background-color:{theme.WIDGET_HOVER}; color:{theme.TEXT};">'
+        "&nbsp;{}&nbsp;</span>"
+    )
     shown = []
     for binding in bindings:
         *mods, last = binding.split("+")
@@ -609,7 +614,7 @@ class HotkeysPanel(QWidget):
             rows = [(a, b) for a, b in entries if (title, a) in shown]
             if not rows:
                 continue
-            tint = MODE_TINTS.get(mode) if section_mode == mode else "#e9e9e9"
+            tint = MODE_TINTS.get(mode) if section_mode == mode else theme.WIDGET
             parts.append('<table width="100%" cellspacing="0" cellpadding="3">')
             parts.append(
                 f'<tr><td style="background-color:{tint};"><b>{html.escape(title)}</b></td></tr>'

@@ -11,6 +11,7 @@ from typing import Any
 from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QKeySequence
 from PySide6.QtWidgets import (
+    QApplication,
     QDockWidget,
     QFileDialog,
     QInputDialog,
@@ -28,6 +29,7 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
+from redsim.ui import theme
 from redsim.ui.block_search import BlockSearch
 from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import world_lines
@@ -62,6 +64,10 @@ PANEL_REFRESH_SECONDS = 0.1
 class MainWindow(QMainWindow):
     def __init__(self, document: Document | None = None, keymap: Keymap | None = None) -> None:
         super().__init__()
+        app = QApplication.instance()
+        if isinstance(app, QApplication) and not app.property("redsim_theme"):
+            theme.apply(app)  # the dark Minecraft-meets-Blender look, once per app
+            app.setProperty("redsim_theme", True)
         self.document = document or Document.new_flat()
         self.keymap = keymap if keymap is not None else Keymap.load()
         self.current_block = blocks.STONE
@@ -87,8 +93,10 @@ class MainWindow(QMainWindow):
         self.contraptions = ContraptionsPanel()
         self.hotkeys = HotkeysPanel(self.keymap)
         self.tabs = QTabWidget()
+        self.tabs.setDocumentMode(True)  # flat tabs, no frame (Blender-like)
         self.tabs.addTab(self.inspector, "Inspector")
         circuit = QTabWidget()
+        circuit.setDocumentMode(True)
         circuit.addTab(self.sections, "Sections")
         circuit.addTab(self.contraptions, "Groups && prefabs")
         self.tabs.addTab(circuit, "Circuit")

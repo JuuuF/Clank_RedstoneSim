@@ -23,7 +23,6 @@ from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QFocusEvent,
-    QFontDatabase,
     QKeyEvent,
     QKeySequence,
     QMouseEvent,
@@ -39,6 +38,7 @@ from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
 from redsim.editor.placement import PlaceRequest, placement_state
+from redsim.ui import theme
 from redsim.ui.assets import Assets
 from redsim.ui.atlas import Atlas
 from redsim.ui.camera import Camera
@@ -475,49 +475,44 @@ class Viewport(QOpenGLWidget):
         self._draw_overlays()
 
     def _draw_overlays(self) -> None:
+        """2D overlays in the game's pixel font (``theme.draw_text``): status lines, the
+        mode badge with the mouse hints, view tags, F3 columns and signal labels."""
         painter = QPainter(self)
-        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-        painter.setFont(font)
+        line = theme.line_height(2)
         if self.show_info:
             self._draw_info_labels(painter)
             self._draw_debug_columns(painter)
-        metrics = painter.fontMetrics()
-        line_height = metrics.height()
         if self.overlay_text and not self.show_info:
-            width = max(metrics.horizontalAdvance(line) for line in self.overlay_text) + 12
-            height = line_height * len(self.overlay_text) + 8
-            painter.fillRect(6, 6, width, height, QColor(0, 0, 0, 120))
-            painter.setPen(QColor(255, 255, 255))
-            for index, line in enumerate(self.overlay_text):
-                painter.drawText(12, 10 + metrics.ascent() + index * line_height, line)
+            for index, text in enumerate(self.overlay_text):
+                top = 8 + index * (line + 4)
+                painter.fillRect(
+                    8, top, theme.text_width(text) + 12, line + 4, QColor(0, 0, 0, 110)
+                )
+                theme.draw_text(painter, 14, top + 3, text, "#ffffff")
         # Mode badge (bottom left) with what the mouse buttons do in this mode.
         pasting = self.paste_preview is not None
-        badge = " PASTE " if pasting else f" {self.mode.upper()} "
-        top = self.height() - line_height - 14
-        badge_width = metrics.horizontalAdvance(badge) + 8
-        room = max(0, self.width() - badge_width - 30)  # the full list is in the help (F1)
-        text = self.paste_hint() if pasting else self.mode_hint()
-        hint = metrics.elidedText(text, Qt.TextElideMode.ElideRight, room)
+        badge = "PASTE" if pasting else self.mode.upper()
+        top = self.height() - line - 16
+        badge_width = theme.text_width(badge) + 16
+        room = max(0, self.width() - badge_width - 40)
+        hint = _elide(self.paste_hint() if pasting else self.mode_hint(), room)
         color = PASTE_COLOR if pasting else MODE_COLORS[self.mode]
-        painter.fillRect(6, top, badge_width, line_height + 8, color)
-        painter.fillRect(
-            6 + badge_width,
-            top,
-            metrics.horizontalAdvance(hint) + 16,
-            line_height + 8,
-            QColor(0, 0, 0, 120),
-        )
-        painter.setPen(QColor(255, 255, 255))
-        painter.drawText(10, top + 4 + metrics.ascent(), badge)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 120))
+        painter.drawRoundedRect(8, top, badge_width + theme.text_width(hint) + 22, line + 8, 5, 5)
+        painter.setBrush(color)
+        painter.drawRoundedRect(8, top, badge_width, line + 8, 5, 5)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        theme.draw_text(painter, 16, top + 5, badge, "#ffffff")
+        theme.draw_text(painter, 18 + badge_width, top + 5, hint, theme.TEXT)
         xray_tag = ("", "X-RAY", "X-RAY ALL")[self.xray]
         flags = [name for name, on in ((xray_tag, self.xray), ("INFO", self.show_info)) if on]
         if flags:
-            tag = " " + " · ".join(flags) + " "
-            tag_width = metrics.horizontalAdvance(tag) + 8
-            tag_top = top - line_height - 12
-            painter.fillRect(6, tag_top, tag_width, line_height + 8, QColor(30, 30, 30, 200))
-            painter.drawText(10, tag_top + 4 + metrics.ascent(), tag)
-        painter.drawText(14 + badge_width, top + 4 + metrics.ascent(), hint)
+            tag = " · ".join(flags)
+            tag_top = top - line - 14
+            painter.fillRect(8, tag_top, theme.text_width(tag) + 16, line + 8, QColor(0, 0, 0, 150))
+            theme.draw_text(painter, 16, tag_top + 5, tag, theme.GOLD)
         painter.end()
 
     def info_labels(self, max_distance: float = 48.0) -> list[tuple[np.ndarray, str, str]]:
@@ -553,23 +548,22 @@ class Viewport(QOpenGLWidget):
         return [(point, text, kind) for _, point, text, kind in labels[-INFO_LABEL_LIMIT:]]
 
     def _draw_debug_columns(self, painter: QPainter) -> None:
-        """Minecraft-like F3 text: world state on the left, the targeted block on the right."""
-        metrics = painter.fontMetrics()
-        line_height = metrics.height() + 2
+        """Minecraft's F3 text: world state on the left, the targeted block on the right,
+        each line on its own grey strip."""
+        line = theme.line_height(2) + 2
         right = block_lines(self.document, self.hover.pos) if self.hover is not None else []
         for lines, align_right in ((self.debug_left, False), (right, True)):
-            for index, line in enumerate(lines):
-                width = metrics.horizontalAdvance(line) + 8
-                left = self.width() - width - 6 if align_right else 6
-                top = 6 + index * line_height
-                painter.fillRect(left, top, width, line_height, QColor(0, 0, 0, 130))
-                painter.setPen(QColor(235, 235, 235))
-                painter.drawText(left + 4, top + 1 + metrics.ascent(), line)
+            for index, text in enumerate(lines):
+                width = theme.text_width(text) + 6
+                left = self.width() - width - 4 if align_right else 4
+                top = 4 + index * line
+                painter.fillRect(left, top, width, line, QColor(80, 80, 80, 144))
+                theme.draw_text(painter, left + 3, top + 2, text, "#e0e0e0")
 
     def _draw_info_labels(self, painter: QPainter) -> None:
-        metrics = painter.fontMetrics()
         width, height = max(self.width(), 1), max(self.height(), 1)
         mvp = self.camera.projection_matrix(width / height) @ self.camera.view_matrix()
+        line = theme.line_height(2)
         for point, text, kind in self.info_labels():
             clip = mvp @ np.array([*point, 1.0])
             if clip[3] <= 0.05:
@@ -578,15 +572,14 @@ class Viewport(QOpenGLWidget):
             y = (1 - clip[1] / clip[3]) / 2 * height
             if not (0 <= x <= width and 0 <= y <= height):
                 continue
-            box_width = metrics.horizontalAdvance(text) + 8
-            box_height = metrics.height() + 2
+            box_width = theme.text_width(text) + 10
+            box_height = line + 4
             left, top = int(x - box_width / 2), int(y - box_height / 2)
             background = INFO_COLORS[kind]
             if text == "0":
                 background = QColor(70, 70, 70, 170)
             painter.fillRect(left, top, box_width, box_height, background)
-            painter.setPen(QColor(255, 255, 255))
-            painter.drawText(left + 4, top + 1 + metrics.ascent(), text)
+            theme.draw_text(painter, left + 5, top + 3, text, "#ffffff")
 
     def paste_hint(self) -> str:
         return (
@@ -1232,6 +1225,15 @@ class _StackDrag:
 
 
 _HANDLES = tuple(Handle(axis, high) for axis in range(3) for high in (False, True))
+
+
+def _elide(text: str, room: int) -> str:
+    """Cut ``text`` (pixel font) to ``room`` pixels with an ellipsis."""
+    if theme.text_width(text) <= room:
+        return text
+    while text and theme.text_width(text + "…") > room:
+        text = text[:-1]
+    return text + "…"
 
 
 def _ghost_key(ghost: tuple[np.ndarray, Pos] | None) -> tuple[int, Pos] | None:

@@ -42,11 +42,12 @@ from PySide6.QtWidgets import (
 
 from redsim.core.pos import Pos
 from redsim.editor.document import EDIT_ROWS, Document, EditBatch
+from redsim.ui import theme
 
-BACKGROUND = QColor(40, 43, 48)
-RECORDED = QColor(58, 62, 69)
-GRID = QColor(78, 83, 92)
-TEXT = QColor(205, 208, 214)
+BACKGROUND = QColor(theme.PANEL)
+RECORDED = QColor(theme.WIDGET)
+GRID = QColor(theme.LINE)
+TEXT = QColor(theme.TEXT)
 ROW_COLORS = {
     "build": QColor(110, 200, 95),
     "remove": QColor(235, 85, 70),
@@ -54,8 +55,8 @@ ROW_COLORS = {
     "interact": QColor(240, 196, 60),
 }
 ROW_TITLES = {"build": "Placed", "remove": "Removed", "edit": "Changed", "interact": "Used"}
-PLAYHEAD = QColor(80, 150, 255)
-SIGNAL = QColor(235, 60, 50)
+PLAYHEAD = QColor(theme.ACCENT)
+SIGNAL = QColor(theme.ACCENT)
 
 
 @dataclass

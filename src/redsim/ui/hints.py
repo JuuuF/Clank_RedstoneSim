@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QWidget
 
+from redsim.ui import theme
 from redsim.ui.keymap import Keymap
 
 
@@ -101,7 +102,10 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
 
 
 def keycaps_html(keys: str) -> str:
-    cap = '<span style="background-color:#dedede; color:#111;">&nbsp;{}&nbsp;</span>'
+    cap = (
+        f'<span style="background-color:{theme.WIDGET_HOVER}; color:{theme.TEXT};">'
+        "&nbsp;{}&nbsp;</span>"
+    )
     return "".join(cap.format(html.escape(part)) if part else "+" for part in keys.split("+"))
 
 
@@ -115,7 +119,7 @@ class HintBar(QWidget):
         layout.addWidget(self.hints, 3)
         self.hover = QLabel()
         self.hover.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        self.hover.setStyleSheet("color: #666;")
+        self.hover.setStyleSheet(f"color: {theme.TEXT_DIM};")
         layout.addWidget(self.hover, 1)
         self.message = QLabel()
         layout.addWidget(self.message)
@@ -135,6 +139,6 @@ class HintBar(QWidget):
         self.hover.setText(text)
 
     def show_message(self, text: str, error: bool = False) -> None:
-        color = "#c0392b" if error else "#444"
+        color = theme.ACCENT if error else theme.GOLD
         self.message.setText(f'<span style="color:{color};">{html.escape(text)}</span>')
         self._clear.start(6000 if error else 3500)

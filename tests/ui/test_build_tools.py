@@ -151,3 +151,33 @@ def test_build_mode_places_on_the_camera_layer(app: Any) -> None:
     assert keymap.mouse_action("build", frozenset({"Ctrl"}), None, "Wheel") == "build.zoom"
     window.document.dirty = False
     window.close()
+
+
+def test_inventory_stack_grows_upwards(app: Any) -> None:
+    """Trackmania-style: the current folder's slots on top, each upper level as a tab row
+    below them, the root lowest; going deeper adds a row and keeps the root at the bottom."""
+    from redsim.ui.inventory import InventoryBar
+
+    bar = InventoryBar()
+    bar.resize(1200, 200)
+    root_height = bar.canvas.rows_height()
+    bar.press(1)  # Redstone
+    bar.press(9)  # Switches
+    assert bar.canvas.rows_height() > root_height
+    spots = bar.canvas._layout()
+    slots = [s for s in spots if s.kind == "slot"]
+    tabs = {s.depth: s.rect.top() for s in spots if s.kind == "tab"}
+    assert [s.title for s in slots] == ["lever", "stone button", "oak button"]
+    assert max(s.rect.bottom() for s in slots) < tabs[1] < tabs[0]  # root at the bottom
+    bar.pick_at_level(0, 1)  # the Movement tab of the root row
+    assert bar.nav.breadcrumb() == ["Movement"]
+
+
+def test_pixel_font_and_theme(app: Any) -> None:
+    from redsim.ui import theme
+
+    assert theme.text_width("Redstone") > 0 and theme.line_height(2) >= 16
+    font = theme.PixelFont.load()
+    if font is not None:  # the client jar is there: the game's font
+        assert font.advance("i") < font.advance("W")  # proportional, like the game
+        assert font.advance(" ") == 4
