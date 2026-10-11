@@ -24,9 +24,10 @@ controls: [[controls]].
 3. **Dust and repeater (delay 4).** Flip the lever: the dust lights instantly, and the lamp
    follows after 8 ticks. Right-click the repeater to change its delay.
 4. **AND gate.** The lamp only lights when both levers are on.
-5. **Comparator (subtract).** The cake behind it gives 14. Flip the side lever: the side
-   input becomes 14, so the output drops to 0. Right-click the cake to eat a slice and
-   watch the values change. Left-click the comparator to see its stored output in the
+5. **Comparator (subtract).** The barrel behind it is a signal source giving 14 (it holds
+   1 605 redstone dust). Flip the side lever: the side input becomes 14, so the output
+   drops to 0. Left-click the barrel to change its strength or swap it for a lectern or
+   a cake in the inspector. Left-click the comparator to see its stored output in the
    inspector.
 6. **Sliding block.** Flip the lever: the sticky piston pushes the planks, and pulls them
    back when switched off.

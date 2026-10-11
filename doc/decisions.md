@@ -267,3 +267,23 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Consequences:** A moved circuit keeps running (its pending ticks come along); one drag
   is one undo step. Paste of a stored prefab still uses the placement half only (no
   ticks), since prefabs are snapshots.
+
+## ADR-020
+
+**One "signal source" in the UI, real blocks underneath, set with `/setblock` data**
+
+- **Context:** The owner found the cake odd as the comparator source and asked for a generic
+  signal-strength source backed by real blocks, hot-swappable, with tooltips on how they
+  differ ([[ui-direction]]).
+- **Decision:** Barrel and lectern are implemented as real blocks with block entities
+  ([[mechanics/analog-sources]]). The editor's source operations (place, change strength,
+  swap kind) are `/setblock <state>{<data>}` edits: barrels get the fewest redstone dust for
+  the strength, lecterns a 15-page book at page `strength − 1`, cakes the matching bites
+  (even values only). Turning a lectern page like a player is a separate action, because it
+  also pulses.
+- **Why `/setblock` with data:** one action per change (one undo step), deterministic, and
+  checkable on the test server (EXP-024, EXP-025). The game has no command for a player's
+  page turn; that path is verified from the source.
+- **Trade-offs:** A barrel's strength is not visible on the block itself (it lives in the
+  block entity); the inspector and the comparator show it. Swapping kinds keeps the facing
+  when the new block can take it (barrel up → lectern north).

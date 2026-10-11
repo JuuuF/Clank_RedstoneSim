@@ -70,6 +70,15 @@ reason the old Shift+T rewind was disliked).
 | 1–9 | hotbar |
 | F1 | controls panel |
 
+## Signal sources
+
+The palette's **Signal sources** section (barrel, lectern, cake; hover for how they
+differ) places a source at the **Source strength** chosen below the list. In the inspector,
+a source shows a **Signal source** row: pick a kind and strength and press *Set* to change
+it or swap the block in place (one `/setblock` edit each). Lecterns also get *◀ Page* /
+*Page ▶*, which turn the page like a player (the comparator value changes and the lectern
+sends a 2-tick pulse into the block below). Details: [[mechanics/analog-sources]].
+
 ## Changing placed blocks
 
 - **Q / Shift+Q** turns the block under the cursor (repeaters, comparators, pistons facing

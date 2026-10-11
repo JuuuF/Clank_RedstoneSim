@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, branch `feat/selections` (merged into `main`).*
+*Last updated: 2026-10-11, branch `feat/analog-source` (merged into `main`).*
 
 ## Summary
 
@@ -14,11 +14,11 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   steppable engine with snapshots.
 - **Components (M4):** done for the initial scope: lever, stone/oak buttons, redstone
   lamp, redstone torch and wall torch (including deterministic burnout), redstone wire,
-  repeater, comparator (block entity, compare/subtract, side inputs, analog input), cake
-  (analog source), the redstone block, and simple and non-conducting blocks. Open: a
-  container analog source (barrel with inventory).
+  repeater, comparator (block entity, compare/subtract, side inputs, analog input), analog
+  sources (barrel, lectern, cake; [[analog-sources]]), the redstone block, and simple and
+  non-conducting blocks.
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
-  tick. All 23 recorded scenarios match ([[experiments/index]]).
+  tick. All 25 recorded scenarios match ([[experiments/index]]).
 - **Editor (M2):** done for the minimal scope. PySide6 window with a 3D viewport, orbit
   camera, vim-like modes and a rebindable keymap ([[controls]]), cursor picking, place/break/use with player-like orientation, block palette and hotbar,
   inspector (`/setblock` edits), sections (color annotations), simulation controls (run,
@@ -87,13 +87,15 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | comparator (+ block entity) | `comparator.py` | mode click refresh, double front update | EXP-012…EXP-014 |
 | piston, sticky piston, head, moving piston (+ block entity) | `piston.py` | push limit, immovables, popping, slime/honey, pull, head removal | EXP-015…EXP-020 |
 | cake (analog source) | `cake.py` | via comparator tests | EXP-012, EXP-013 |
+| barrel (+ block entity, 27 slots) | `container.py` | thresholds, `/item replace` updates, immovable, save | EXP-024 |
+| lectern (+ block entity) | `lectern.py` | page formula, page-turn pulse, save | EXP-025 (signals; pulse: source only) |
 
 ## Verification status
 
-- `python -m pytest`: **176 tests pass** (2026-10-11), including the JDK oracle, the 23
+- `python -m pytest`: **200 tests pass** (2026-10-11), including the JDK oracle, the 25
   game-recording replays, save round trips, chunked-mesh consistency, run pacing and
   offscreen UI smoke tests. `ruff check`, `ruff format --check` and `mypy src tools` are clean.
-- Real-game comparisons (`python -m tools.gameserver.run`): 23 of 23 scenarios match in one
+- Real-game comparisons (`python -m tools.gameserver.run`): 25 of 25 scenarios match in one
   fresh full run (2026-10-11, ~3 min); the harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay ([[experiments/index]]).
 
@@ -120,10 +122,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-Owner feedback of 2026-10-11 ([[ui-direction]]) comes first. Real-time speed (ADR-017),
-the new controls (ADR-018) and Axiom-like selections (ADR-019) are done; next is the
-hot-swappable analog source block (container, lectern), then selection rotate/flip in place
-and stack/repeat.
+Owner feedback of 2026-10-11 ([[ui-direction]]) is done: real-time speed (ADR-017), the new
+controls (ADR-018), Axiom-like selections (ADR-019) and the hot-swappable signal source
+(ADR-020). Next: selection rotate/flip in place and stack/repeat, then more mechanics
+(observers, hoppers, target blocks) and the "technical Minecraft" look.
 
 All seven roadmap milestones have a working core. Suggested next steps:
 

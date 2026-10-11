@@ -35,8 +35,9 @@ Implementation status is tracked in [[roadmap]] and [[project-state]].
 
 **Status (2026-10-11):** camera, modes, build clicks and the rebindable keymap are
 implemented ([[controls]], ADR-018), as are Axiom-like selections: face handles to resize,
-drag to move, Ctrl+drag to copy, paste preview (ADR-019). Open: rotate/flip in place,
-stack/repeat, and the analog source block.
+drag to move, Ctrl+drag to copy, paste preview (ADR-019), and the hot-swappable signal
+source backed by barrel, lectern or cake (ADR-020). Open: rotate/flip in place,
+stack/repeat.
 
 ## Looks
 

@@ -49,6 +49,7 @@
 | piston head, moving piston | no | — | IMMOVEABLE | moving piston: destroy speed −1 |
 | wire, repeater, comparator, torches, lever, buttons, cake | no | — | POPPED | destroyed when pushed |
 | barrel | yes | all | PUSH_PULL but has block entity → immovable | comparator analog source |
+| lectern | no (2-px slab + 8-px post) | DOWN only (full bottom) | PUSH_PULL but has block entity → immovable | analog source; 2-tick pulse on page turns ([[analog-sources]]) |
 
 ## Edge cases and quirks
 

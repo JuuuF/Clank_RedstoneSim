@@ -1,6 +1,6 @@
 # Comparator
 
-- **Status:** researched; implemented in `world/blocks/comparator.py` (block + block entity) with cake as analog source (`cake.py`); unit-tested; confirmed in game (EXP-012 to EXP-014). Container (inventory) input not implemented yet.
+- **Status:** researched; implemented in `world/blocks/comparator.py` (block + block entity) with cake, barrel and lectern as analog sources ([[analog-sources]]); unit-tested; confirmed in game (EXP-012 to EXP-014, EXP-024, EXP-025).
 - **Summary:** A diode with a fixed 2-tick delay that outputs an analog signal stored in its
   block entity. It reads containers and other analog blocks directly or through one
   conductor, and compares or subtracts its side inputs.

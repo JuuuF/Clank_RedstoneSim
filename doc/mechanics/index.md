@@ -8,10 +8,11 @@
 | [[power-queries]] | Weak/strong power, signal queries | researched | implemented (`Level` signal methods) | unit tests; game |
 | [[redstone-wire]] | Dust connectivity, power, update order | researched | implemented | unit tests; JDK oracle (hash order); game EXP-002…004, 007 |
 | [[repeater]] | Delay, locking, priorities | researched | implemented (`world/blocks/diode.py`) | unit tests; game EXP-008…011 |
-| [[comparator]] | Compare/subtract, side inputs, analog input | researched | implemented (containers pending) | unit tests; game EXP-012…014 |
+| [[comparator]] | Compare/subtract, side inputs, analog input | researched | implemented | unit tests; game EXP-012…014 |
 | [[redstone-torch]] | Inversion, timing, burnout | researched | implemented (incl. burnout) | unit tests; game EXP-002, 004, 005, 006 |
 | [[manual-sources]] | Lever, buttons, redstone block, lamp | researched | implemented | unit tests; game (lamp, redstone block) |
 | [[pistons]] | Extension/retraction, QC, moved blocks | researched | implemented (`world/blocks/piston.py`) | unit tests; game EXP-015…020 |
+| [[analog-sources]] | Barrel (container fill), lectern (book page, page-turn pulse), cake | researched | implemented (`world/blocks/container.py`, `lectern.py`, `cake.py`) | unit tests; game EXP-012/013, 024, 025 |
 
 Source locations for all of these: [[research/source-map]]. Quirks: [[quirks]]. Overall
 state: [[project-state]].

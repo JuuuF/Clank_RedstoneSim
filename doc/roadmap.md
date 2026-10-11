@@ -9,11 +9,11 @@ state is in [[project-state]].
 | 1 | Source research and mechanics reference | ☑ | [[mechanics/index]], [[quirks]], [[research/open-questions]], [[research/wiki-hints]] |
 | 2 | Minimal 3D editor and world model | ☑ | `python -m redsim`: viewport, place/break/use, inspector, sections, save/open, sim controls |
 | 3 | Deterministic simulation foundation | ☑ | engine, neighbor updater, scheduled ticks, block events, block-entity tickers, trace, snapshots |
-| 4 | Core redstone logic | ☑ | lever, buttons, lamp, torch (+ burnout), wire, repeater, comparator, cake; follow-up: barrel/container source |
+| 4 | Core redstone logic | ☑ | lever, buttons, lamp, torch (+ burnout), wire, repeater, comparator, cake, barrel, lectern |
 | 5 | Pistons and timing-sensitive behavior | ◐ | core done and game-verified (EXP-015…020); open: scheduled-tick-driven 0-tick cases, observers |
 | 6 | Playback, history, diagnostics | ☑ | timeline rewind/replay, step/tick back, slider, warp, diagnostics panel; polish open (trace tree) |
 | 7 | Contraptions and abstraction | ☑ | selection, /clone paste, rotation, /fill delete, prefab library, groups with ports; abstract models deferred (ADR-016) |
-| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (23/23 match) |
+| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (25/25 match) |
 
 Order note: the world model was built before the editor because both the editor and the
 engine depend on it ([[decisions]] ADR-007).
@@ -26,7 +26,9 @@ engine depend on it ([[decisions]] ADR-007).
    rebindable keymap (ADR-018, [[controls]]).
 0. ☑ **Interaction redesign, part 2:** Axiom-like selections: handles, drag to move/copy
    (`/clone … move|force`, ADR-019), paste preview.
-0. **Next:** hot-swappable analog source block; selection rotate/flip, stack/repeat.
+0. ☑ **Signal sources:** barrel and lectern (game-verified EXP-024/025), one hot-swappable
+   source in the UI (ADR-020).
+0. **Next:** selection rotate/flip, stack/repeat; observers, hoppers, target blocks.
 
 1. Owner review of the editor on the real desktop.
 2. Diagnostics polish (causal trace tree, "why did this change?").
