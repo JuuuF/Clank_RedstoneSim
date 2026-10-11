@@ -480,6 +480,27 @@ LECTERN_SIGNALS = Scenario(
     ticks=4,
 )
 
+CLONE_STRICT_BUD = Scenario(
+    name="clone_strict_bud",
+    description=(
+        "A budded piston (powered only by quasi-connectivity, never updated) is cloned: "
+        "with /clone ... strict the copy stays budded (no updates); with a normal /clone the "
+        "final neighbor updates make the copy extend; a strict move leaves both budded."
+    ),
+    size=(4, 18),
+    setup=[((1, 1, z), "minecraft:piston[facing=east]") for z in (1, 7, 13)]
+    + [((1, 3, z), RB) for z in (1, 7, 13)],
+    watch=[(x, 1, z) for z in (1, 4, 7, 10, 13, 16) for x in (1, 2)],
+    ticks=8,
+    commands={
+        2: [
+            ("clone_strict", (1, 1, 1), (1, 3, 1), (1, 1, 4)),
+            ("clone", (1, 1, 7), (1, 3, 7), (1, 1, 10)),
+            ("clone_move_strict", (1, 1, 13), (1, 3, 13), (1, 1, 16)),
+        ]
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -506,6 +527,7 @@ ALL = [
     CLONE_MOVE_RUNNING,
     BARREL_SIGNALS,
     LECTERN_SIGNALS,
+    CLONE_STRICT_BUD,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

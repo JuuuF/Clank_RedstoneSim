@@ -66,6 +66,7 @@ reading and unit tests only.
 | EXP-023 | `clone_move_running`: `/clone … replace move` of a repeater with a pending tick (the tick is copied; the moved repeater turns on at its old trigger time) and of a powered wire line onto itself (overlap) | 16 | match | 2026-10-11 |
 | EXP-024 | `barrel_signals`: comparators read barrels at the 1/2, 7/8 and 14/15 fill thresholds and an ender-pearl fill; `/item replace` changes update them after the comparator delay | 12 | match | 2026-10-11 |
 | EXP-025 | `lectern_signals`: lecterns with 1-100 page books at various pages (incl. a clamped page), no book, and `has_book=false` with a book | 4 | match | 2026-10-11 |
+| EXP-026 | `clone_strict_bud`: a budded (QC-powered, never updated) piston cloned with `/clone … strict` stays budded; a normal `/clone` makes the copy extend; a strict move keeps it budded | 8 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 

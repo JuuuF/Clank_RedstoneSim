@@ -47,6 +47,9 @@ ActionKind = Literal[
 #: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
 MAX_BLOCK_MODIFICATIONS = 32768
 CLONE_MODES = ("normal", "force", "move")
+#: ``2 | 816``: the flags of ``/clone … strict`` (no shape updates, no drops, no block-entity
+#: side effects, no ``onPlace``); also always used for the barrier placeholders.
+STRICT_FLAGS = 818
 
 
 @dataclass(frozen=True)
@@ -59,12 +62,14 @@ class Action:
       ``payload={"nbt": {...}}`` adds block-entity data like ``/setblock … {…}``.
     * ``set_block``: a raw ``Level.setBlock`` with explicit flags (editor tool, not vanilla).
     * ``fill``: ``/fill <pos> <payload["to"]> <state>`` in replace mode (``FillCommand``).
-    * ``clone``: place a captured region at ``pos`` like ``/clone`` (replace mode, not strict)
-      would place it (``CloneCommands.clone``); ``payload`` holds the blocks (see
-      ``redsim.editor.clipboard``). Scheduled ticks are not copied.
-    * ``clone_region``: the full ``/clone <begin> <end> <pos> replace <mode>`` reading the
-      live source region (``payload``: ``begin``, ``end``, ``mode`` = normal/force/move);
-      scheduled ticks inside the region are copied. Used to drag selections.
+    * ``clone``: place a captured region at ``pos`` like ``/clone`` (replace mode) would place
+      it (``CloneCommands.clone``); ``payload`` holds the blocks (see
+      ``redsim.editor.clipboard``) and optionally ``strict`` (``/clone … strict``: no block
+      updates). Scheduled ticks are not copied.
+    * ``clone_region``: the full ``/clone <begin> <end> <pos> [strict] replace <mode>``
+      reading the live source region (``payload``: ``begin``, ``end``, ``mode`` =
+      normal/force/move, optional ``strict``); scheduled ticks inside the region are
+      copied. Used to drag selections.
     * ``container_item``: ``/item replace block <pos> container.<slot> with <item> <count>``
       (``payload``: ``slot``, ``item`` or None for empty, ``count``): ``Container.setItem``.
     * ``lectern_page``: a player turning a lectern's book to ``payload["page"]``
@@ -304,7 +309,8 @@ class Engine:
             elif action.kind == "clone_region":
                 payload = action.payload
                 begin, end = tuple(payload["begin"]), tuple(payload["end"])
-                count = self._clone_region_command(begin, end, action.pos, payload["mode"])
+                strict = bool(payload.get("strict", False))
+                count = self._clone_region_command(begin, end, action.pos, payload["mode"], strict)
                 info.detail["info"] = f"clone {payload['mode']}: {count} blocks"
             elif action.kind == "set_block":
                 assert action.state is not None
@@ -439,9 +445,11 @@ class Engine:
                 other.append(info)
             else:
                 solid.append(info)
-        self._clone_place(solid, entities, other)
+        self._clone_place(solid, entities, other, bool(payload.get("strict", False)))
 
-    def _clone_region_command(self, begin: Pos, end: Pos, destination: Pos, mode: str) -> int:
+    def _clone_region_command(
+        self, begin: Pos, end: Pos, destination: Pos, mode: str, strict: bool = False
+    ) -> int:
         """``CloneCommands.clone`` (L198) in replace mode, not strict, within this level.
 
         Reads the source live (z outer, then y, then x). Classification: blocks with a block
@@ -449,9 +457,9 @@ class Engine:
         requires ``!isSolidRender``, which only differs for blocks with a full occlusion but
         partial collision shape, none of which are in scope); else solid. The clear list gets
         "other" positions at the front and the rest at the back. ``move`` first sets every
-        cleared position to barrier (flags 818), then to air (flags 3), then places as usual.
-        Finally the scheduled ticks inside the source box are copied (``copyAreaFrom``).
-        Returns the number of blocks set.
+        cleared position to barrier (flags 818), then to air (flags 3; strict: 818), then
+        places as usual. Finally the scheduled ticks inside the source box are copied
+        (``copyAreaFrom``). Returns the number of blocks set.
         """
         from redsim.world import blocks
 
@@ -490,10 +498,10 @@ class Engine:
         if mode == "move":
             barrier, air = blocks.BARRIER.default_state, blocks.AIR.default_state
             for pos in clear:
-                level.set_block(pos, barrier, 818)
+                level.set_block(pos, barrier, STRICT_FLAGS)
             for pos in clear:
-                level.set_block(pos, air, UpdateFlags.ALL)
-        count = self._clone_place(solid, entities, other)
+                level.set_block(pos, air, STRICT_FLAGS if strict else UpdateFlags.ALL)
+        count = self._clone_place(solid, entities, other, strict)
         level.block_ticks.copy_area(low, high, offset)
         return count
 
@@ -502,21 +510,24 @@ class Engine:
         solid: list[tuple[Pos, BlockState, Any, BlockState]],
         entities: list[tuple[Pos, BlockState, Any, BlockState]],
         other: list[tuple[Pos, BlockState, Any, BlockState]],
+        strict: bool = False,
     ) -> int:
         """Placement passes of ``CloneCommands.clone``: barriers in reverse order (flags
-        818), every block with flags 2, block-entity data loaded (``setChanged``) and the
-        state set again, then ``updateNeighboursOnBlockSet`` in reverse order with the state
+        818), every block with flags 2 (strict: 818, i.e. no shape updates, no ``onPlace``),
+        block-entity data loaded (``setChanged``, also when strict) and the state set again,
+        then, unless strict, ``updateNeighboursOnBlockSet`` in reverse order with the state
         found at the destination before the clone. Returns the number of blocks set."""
         from redsim.world import blocks
 
         level = self.level
+        flags = STRICT_FLAGS if strict else UpdateFlags.CLIENTS
         ordered = solid + entities + other
         barrier = blocks.BARRIER.default_state
         for pos, _, _, _ in reversed(ordered):
-            level.set_block(pos, barrier, 818)
+            level.set_block(pos, barrier, STRICT_FLAGS)
         count = 0
         for pos, state, _, _ in ordered:
-            if level.set_block(pos, state, UpdateFlags.CLIENTS):
+            if level.set_block(pos, state, flags):
                 count += 1
         for pos, state, entity_data, _ in entities:
             entity = level.get_block_entity(pos)
@@ -524,9 +535,10 @@ class Engine:
                 entity.load_json(entity_data)
                 if not state.is_air:  # BlockEntity.setChanged
                     level.update_neighbour_for_output_signal(pos, state.block)
-            level.set_block(pos, state, UpdateFlags.CLIENTS)
-        for pos, _, _, previous in reversed(ordered):
-            level.update_neighbours_on_block_set(pos, previous)
+            level.set_block(pos, state, flags)
+        if not strict:
+            for pos, _, _, previous in reversed(ordered):
+                level.update_neighbours_on_block_set(pos, previous)
         return count
 
     def _break(self, pos: Pos) -> None:

@@ -267,6 +267,12 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Consequences:** A moved circuit keeps running (its pending ticks come along); one drag
   is one undo step. Paste of a stored prefab still uses the placement half only (no
   ticks), since prefabs are snapshots.
+- **Amendment (owner, 2026-10-11): editor clones cause no block updates.** Paste, move,
+  copy and stack use `/clone … strict` (flags 818: no shape updates, no `onPlace`, no final
+  `updateNeighboursOnBlockSet`; block-entity `setChanged` still runs, as in the game).
+  Budded components stay budded. Game-verified against a normal clone (EXP-026). Deleting
+  a selection (`/fill` with air) still updates neighbors, so blocks that lose their support
+  pop as in the game.
 
 ## ADR-020
 

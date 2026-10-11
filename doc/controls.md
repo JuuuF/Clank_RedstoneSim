@@ -35,7 +35,10 @@ panel is generated from the active keymap, so it always shows the real bindings.
   the original). The selection follows the moved or copied blocks.
 - **Paste:** Ctrl+C copies the box; Ctrl+V shows the clipboard as a ghost at the cursor;
   left click places it (`/clone` semantics), R rotates it, right click or Esc cancels.
-- **Delete:** Del fills the box with air (`/fill`).
+- **No block updates:** pasting, moving, copying and stacking are editor operations and
+  cause no block updates (`/clone … strict`), so budded components stay budded
+  ([[decisions]] ADR-019). Pending scheduled ticks inside a moved selection come along.
+- **Delete:** Del fills the box with air (`/fill`); this does update neighbors.
 
 ## Camera (orbit around a pivot)
 

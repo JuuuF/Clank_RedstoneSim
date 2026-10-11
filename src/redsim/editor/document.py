@@ -145,20 +145,28 @@ class Document:
         return self.clipboard
 
     def paste(self, origin: Pos, prefab: Prefab | None = None) -> None:
-        """Place a prefab with ``/clone`` semantics, its minimum corner at ``origin``."""
+        """Place a prefab with ``/clone … strict`` semantics (no block updates: pasting is an
+        editor operation, so budded components stay budded), minimum corner at ``origin``."""
         source = prefab or self.clipboard
         if source is None:
             raise EditError("The clipboard is empty.")
-        self._apply(Action("clone", origin, payload=source.payload()), f"paste {source.name}")
+        payload = {**source.payload(), "strict": True}
+        self._apply(Action("clone", origin, payload=payload), f"paste {source.name}")
 
     def clone_region(self, region: Region, offset: Pos, mode: str = "move") -> Region:
         """Move (``mode="move"``) or copy (``"force"``) a region in place by ``offset``, as
-        ``/clone <low> <high> <low + offset> replace <mode>``: one action, one undo step,
-        scheduled ticks inside come along. Returns the region at its new place."""
+        ``/clone <low> <high> <low + offset> strict replace <mode>``: one action, one undo
+        step, no block updates, scheduled ticks inside come along. Returns the region at
+        its new place."""
         if offset == (0, 0, 0):
             raise EditError("The selection did not move.")
         low = (region.low[0] + offset[0], region.low[1] + offset[1], region.low[2] + offset[2])
-        payload = {"begin": list(region.low), "end": list(region.high), "mode": mode}
+        payload = {
+            "begin": list(region.low),
+            "end": list(region.high),
+            "mode": mode,
+            "strict": True,
+        }
         size = "×".join(str(v) for v in region.size)
         label = f"{'move' if mode == 'move' else 'copy'} {size} selection"
         self._apply(Action("clone_region", low, payload=payload), label)

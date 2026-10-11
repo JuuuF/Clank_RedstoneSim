@@ -47,6 +47,7 @@ class Scenario:
     #: Region commands after ``t`` ticks (applied after ``inputs``):
     #: ``("fill", rel_a, rel_b, state)``, ``("clone", rel_a, rel_b, rel_destination)``, or
     #: ``("clone_move" | "clone_force", rel_a, rel_b, rel_destination)`` (``replace move/force``),
+    #: ``("clone_strict", …)`` (prefab paste, ``/clone … strict``), ``("clone_move_strict", …)``,
     #: or ``("item", rel, slot, (item_id | None, count))`` (``/item replace block``).
     #: The cloned area must have no pending scheduled ticks (the simulator's paste does
     #: not copy ticks, ``/clone`` does).
@@ -123,11 +124,13 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
     a, b = absolute(origin, rel_a), absolute(origin, rel_b)
     if kind == "fill":
         return Action("fill", a, last, payload={"to": list(b)})
-    if kind in ("clone_move", "clone_force"):
-        payload = {"begin": list(a), "end": list(b), "mode": kind.removeprefix("clone_")}
+    if kind in ("clone_move", "clone_force", "clone_move_strict"):
+        mode = kind.removeprefix("clone_").removesuffix("_strict")
+        payload = {"begin": list(a), "end": list(b), "mode": mode, "strict": "strict" in kind}
         return Action("clone_region", absolute(origin, last), payload=payload)
     prefab = Prefab.capture(engine.level, Region.from_corners(a, b))
-    return Action("clone", absolute(origin, last), payload=prefab.payload())
+    payload = {**prefab.payload(), "strict": kind == "clone_strict"}
+    return Action("clone", absolute(origin, last), payload=payload)
 
 
 def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
@@ -142,9 +145,14 @@ def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
     if kind == "fill":
         return f"fill {corners} {last}"
     d = absolute(origin, last)
+    target = f"{d[0]} {d[1]} {d[2]}"
+    if kind == "clone_move_strict":
+        return f"clone {corners} {target} strict replace move"
     if kind in ("clone_move", "clone_force"):
-        return f"clone {corners} {d[0]} {d[1]} {d[2]} replace {kind.removeprefix('clone_')}"
-    return f"clone {corners} {d[0]} {d[1]} {d[2]}"
+        return f"clone {corners} {target} replace {kind.removeprefix('clone_')}"
+    if kind == "clone_strict":
+        return f"clone {corners} {target} strict"
+    return f"clone {corners} {target}"
 
 
 def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, str]:

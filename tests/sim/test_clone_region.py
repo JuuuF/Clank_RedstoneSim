@@ -56,3 +56,21 @@ def test_move_copies_pending_scheduled_ticks() -> None:
     assert ((1, 1, 4), "minecraft:repeater") in pending
     engine.run_ticks(8)
     assert engine.level.get_block_state((1, 1, 4)).get(POWERED) is True
+
+
+def test_strict_clone_leaves_a_budded_piston_budded() -> None:
+    """EXP-026: ``/clone … strict`` causes no block updates; a normal clone does."""
+    from redsim.world.properties import EXTENDED
+
+    engine = Engine()
+    floor(engine, 16)
+    for z in (0, 6):
+        engine.apply(Action("setblock", (1, 1, z), "minecraft:piston[facing=east]"))
+        engine.apply(Action("setblock", (1, 3, z), "minecraft:redstone_block"))  # QC only
+    payload = {"begin": [1, 1, 0], "end": [1, 3, 0], "mode": "force", "strict": True}
+    engine.apply(Action("clone_region", (1, 1, 3), payload=payload))
+    payload = {"begin": [1, 1, 6], "end": [1, 3, 6], "mode": "force"}
+    engine.apply(Action("clone_region", (1, 1, 9), payload=payload))
+    engine.run_ticks(3)
+    assert engine.level.get_block_state((1, 1, 3)).get(EXTENDED) is False  # still budded
+    assert engine.level.get_block_state((1, 1, 9)).get(EXTENDED) is True  # updated: extends
