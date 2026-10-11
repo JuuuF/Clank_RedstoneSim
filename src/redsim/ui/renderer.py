@@ -1,7 +1,8 @@
 """OpenGL drawing with PySide6's own GL wrappers (no PyOpenGL; doc/decisions.md ADR-002).
 
-One shader draws three kinds of vertex streams: opaque triangles, translucent triangles
-(drawn after, without depth writes) and lines (outlines, sections, grid). The world mesh is
+One shader draws four kinds of vertex streams: opaque triangles, translucent triangles
+(drawn after, without depth writes), lines (outlines, sections) and lines drawn on top of
+everything (the camera pivot). The world mesh is
 split into chunks (``redsim.ui.geometry.ChunkedMesh``), each with its own buffers, so a change
 re-uploads only the chunks it touched. Vertices are ``x, y, z, r, g, b, a`` float32.
 """
@@ -88,6 +89,7 @@ class Renderer:
         #: Chunk key → (opaque, translucent) streams.
         self.chunks: dict[object, tuple[_Stream, _Stream]] = {}
         self.lines = _Stream()
+        self.top_lines = _Stream()
 
     def set_chunk(self, key: object, opaque: np.ndarray, translucent: np.ndarray) -> None:
         streams = self.chunks.get(key)
@@ -106,6 +108,10 @@ class Renderer:
     def upload_lines(self, lines: np.ndarray) -> None:
         self.program.bind()
         self.lines.upload(self.program, lines)
+
+    def upload_top_lines(self, lines: np.ndarray) -> None:
+        self.program.bind()
+        self.top_lines.upload(self.program, lines)
 
     def draw(self, mvp: np.ndarray, width: int, height: int, background: tuple[float, ...]) -> None:
         gl = self.gl
@@ -139,4 +145,9 @@ class Renderer:
                 gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
+        if self.top_lines.count:
+            gl.glDisable(GL_DEPTH_TEST)
+            self.top_lines.vao.bind()
+            gl.glDrawArrays(GL_LINES, 0, self.top_lines.count)
+            gl.glEnable(GL_DEPTH_TEST)
         self.lines.vao.release()

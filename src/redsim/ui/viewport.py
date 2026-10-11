@@ -1,9 +1,11 @@
-"""3D viewport: camera control, targeting and edit requests (Minecraft-style controls).
+"""3D viewport: orbit camera, modes, targeting and edit requests.
 
-Controls (confirmed by the owner): WASD move, Space up, Shift down, Ctrl faster; hold the
-right mouse button and drag to look around; left click breaks, right click places (or uses a
-usable block; Shift+right click always places), middle click picks the block type,
-Ctrl+left click selects a block for the inspector.
+Controls follow the owner's decisions (doc/ui-direction.md) and are rebindable through the
+keymap (``redsim.ui.keymap``). By default: middle-drag orbits around the highlighted pivot,
+Shift+middle-drag pans it, Ctrl+wheel moves it up and down, the wheel zooms, WASD moves the
+pivot. Clicks depend on the mode: NORMAL (left inspects, right uses), BUILD (left breaks,
+right places) and SELECT (left click or drag selects boxes); middle click picks a block type
+in every mode.
 
 The viewport never edits the world itself; it emits signals that the main window turns into
 document edits.
@@ -11,6 +13,7 @@ document edits.
 
 from __future__ import annotations
 
+import math
 import time
 
 import numpy as np
@@ -20,6 +23,7 @@ from PySide6.QtGui import (
     QFocusEvent,
     QFontDatabase,
     QKeyEvent,
+    QKeySequence,
     QMouseEvent,
     QPainter,
     QWheelEvent,
@@ -28,44 +32,96 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QWidget
 
 from redsim.core.direction import Direction
-from redsim.core.pos import Pos
+from redsim.core.pos import Pos, offset
 from redsim.editor.clipboard import Region
 from redsim.editor.document import Document
 from redsim.ui.camera import Camera
 from redsim.ui.geometry import ChunkedMesh, Hit, block_outline, box_lines, pick
+from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.pacing import RateMeter
 from redsim.ui.renderer import Renderer
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
-LOOK_SENSITIVITY = 0.25
+ORBIT_DEGREES_PER_PIXEL = 0.3
+ZOOM_PER_NOTCH = 1.15
 DRAG_THRESHOLD = 4
-SPEED = 6.0  # blocks per second
+PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
+
+NORMAL, BUILD, SELECT = "normal", "build", "select"
+MODE_COLORS = {
+    NORMAL: QColor(60, 100, 160),
+    BUILD: QColor(50, 140, 60),
+    SELECT: QColor(200, 115, 25),
+}
+#: Short verbs for the mode badge.
+CLICK_VERBS = {
+    "normal.inspect": "inspect",
+    "normal.use": "use",
+    "build.break": "break",
+    "build.place": "place",
+    "build.use": "use",
+    "select.block": "select",
+    "select.box": "box",
+    "select.extend": "extend",
+    "pick": "pick",
+}
+
+_BUTTON_NAMES = {
+    Qt.MouseButton.LeftButton: "Left",
+    Qt.MouseButton.RightButton: "Right",
+    Qt.MouseButton.MiddleButton: "Middle",
+}
+
+
+def _modifier_names(modifiers: Qt.KeyboardModifier) -> frozenset[str]:
+    names = set()
+    if modifiers & Qt.KeyboardModifier.ControlModifier:
+        names.add("Ctrl")
+    if modifiers & Qt.KeyboardModifier.ShiftModifier:
+        names.add("Shift")
+    if modifiers & Qt.KeyboardModifier.AltModifier:
+        names.add("Alt")
+    if modifiers & Qt.KeyboardModifier.MetaModifier:
+        names.add("Meta")
+    return frozenset(names)
 
 
 class Viewport(QOpenGLWidget):
     hover_changed = Signal(object)  # Hit | None
-    place_requested = Signal(object, bool)  # Hit, force_place (shift)
+    place_requested = Signal(object)  # Hit
+    use_requested = Signal(object)  # Pos
     break_requested = Signal(object)  # Pos
     pick_requested = Signal(object)  # Pos
-    select_requested = Signal(object)  # Pos | None
+    select_requested = Signal(object)  # Pos | None (inspector selection)
+    region_changed = Signal(object)  # Region | None
+    mode_changed = Signal(str)
 
-    def __init__(self, document: Document, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, document: Document, keymap: Keymap | None = None, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self.document = document
         self.camera = Camera()
         self.renderer: Renderer | None = None
+        self.mode = NORMAL
         self.hover: Hit | None = None
+        self._hover_direction: np.ndarray | None = None
         self.selection: Pos | None = None
         self.region: Region | None = None
+        self._region_anchor: Pos | None = None
         self.world_mesh = ChunkedMesh()
         self._mesh_revision = -1
         #: Lines of text drawn over the top-left corner (run status, achieved rates).
         self.overlay_text: list[str] = []
         self.frame_rate = RateMeter()
-        self._keys: set[int] = set()
-        self._press_pos: QPoint | None = None
-        self._press_button: Qt.MouseButton | None = None
-        self._looking = False
+        self.keymap = Keymap()
+        self._held_actions: dict[int, str] = {}
+        self.set_keymap(keymap if keymap is not None else Keymap())
+        self._held: set[str] = set()
+        # Mouse gesture in progress: press point, button, modifiers; drag action once moving.
+        self._press: tuple[QPoint, Qt.MouseButton, frozenset[str]] | None = None
+        self._drag_action: str | None = None
+        self._drag_last: QPoint | None = None
         self._last_mouse: QPoint | None = None
         self._last_frame = time.monotonic()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -75,10 +131,28 @@ class Viewport(QOpenGLWidget):
         self._timer.timeout.connect(self._tick_camera)
         self._timer.start(16)
 
-    # ------------------------------------------------------------------ document
+    # ------------------------------------------------------------------ setup
+    def set_keymap(self, keymap: Keymap) -> None:
+        self.keymap = keymap
+        self._held_actions = {}
+        for action in keymap.actions(HOLD):
+            for binding in keymap.bindings(action):
+                sequence = QKeySequence(binding)
+                if sequence.count():
+                    key = sequence[0].key()  # type: ignore[index]
+                    self._held_actions[int(key.value)] = action
+        self.update()
+
+    def set_mode(self, mode: str) -> None:
+        if mode != self.mode:
+            self.mode = mode
+            self.mode_changed.emit(mode)
+        self.update()
+
     def set_document(self, document: Document) -> None:
         self.document = document
         self.selection = None
+        self.region = None
         self._mesh_revision = -1  # the diff against the old world drops what is gone
         self.update()
 
@@ -111,28 +185,55 @@ class Viewport(QOpenGLWidget):
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
         renderer.upload_lines(self._overlay_lines())
+        renderer.upload_top_lines(self._pivot_lines())
         ratio = self.devicePixelRatioF()
         width, height = int(self.width() * ratio), int(self.height() * ratio)
         aspect = max(width, 1) / max(height, 1)
         mvp = self.camera.projection_matrix(aspect) @ self.camera.view_matrix()
         renderer.draw(mvp, width, height, BACKGROUND)
         self.frame_rate.record(time.monotonic())
-        if self.overlay_text:
-            self._draw_overlay_text()
+        self._draw_overlays()
 
-    def _draw_overlay_text(self) -> None:
+    def _draw_overlays(self) -> None:
         painter = QPainter(self)
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         painter.setFont(font)
         metrics = painter.fontMetrics()
         line_height = metrics.height()
-        width = max(metrics.horizontalAdvance(line) for line in self.overlay_text) + 12
-        height = line_height * len(self.overlay_text) + 8
-        painter.fillRect(6, 6, width, height, QColor(0, 0, 0, 120))
+        if self.overlay_text:
+            width = max(metrics.horizontalAdvance(line) for line in self.overlay_text) + 12
+            height = line_height * len(self.overlay_text) + 8
+            painter.fillRect(6, 6, width, height, QColor(0, 0, 0, 120))
+            painter.setPen(QColor(255, 255, 255))
+            for index, line in enumerate(self.overlay_text):
+                painter.drawText(12, 10 + metrics.ascent() + index * line_height, line)
+        # Mode badge (bottom left) with what the mouse buttons do in this mode.
+        badge = f" {self.mode.upper()} "
+        hint = self.mode_hint()
+        top = self.height() - line_height - 14
+        badge_width = metrics.horizontalAdvance(badge) + 8
+        painter.fillRect(6, top, badge_width, line_height + 8, MODE_COLORS[self.mode])
+        painter.fillRect(
+            6 + badge_width,
+            top,
+            metrics.horizontalAdvance(hint) + 16,
+            line_height + 8,
+            QColor(0, 0, 0, 120),
+        )
         painter.setPen(QColor(255, 255, 255))
-        for index, line in enumerate(self.overlay_text):
-            painter.drawText(12, 10 + metrics.ascent() + index * line_height, line)
+        painter.drawText(10, top + 4 + metrics.ascent(), badge)
+        painter.drawText(14 + badge_width, top + 4 + metrics.ascent(), hint)
         painter.end()
+
+    def mode_hint(self) -> str:
+        """``Left Click: break · Right Click: place · …`` for the current mode."""
+        parts = []
+        for action, verb in CLICK_VERBS.items():
+            prefix = action.split(".")[0]
+            bindings = self.keymap.bindings(action)
+            if bindings and prefix in (self.mode, "pick"):
+                parts.append(f"{bindings[0]}: {verb}")
+        return " · ".join(parts)
 
     def _overlay_lines(self) -> np.ndarray:
         level = self.document.level
@@ -159,100 +260,217 @@ class Viewport(QOpenGLWidget):
             parts.append(block_outline(level, self.selection, (1.0, 0.85, 0.1, 1.0)))
         if self.hover is not None:
             parts.append(block_outline(level, self.hover.pos, (0.05, 0.05, 0.05, 1.0)))
+            if self.mode == BUILD:
+                target = offset(self.hover.pos, self.hover.face)  # where a block would go
+                parts.append(
+                    box_lines(target, (target[0] + 1, target[1] + 1, target[2] + 1), (1, 1, 1, 1))
+                )
         if not parts:
             return np.zeros((0, 7), dtype=np.float32)
         return np.vstack(parts)
 
-    # ------------------------------------------------------------------ input
+    def _pivot_lines(self) -> np.ndarray:
+        """A small cross and ring at the pivot, drawn on top of everything."""
+        x, y, z = (float(v) for v in self.camera.pivot)
+        size = 0.12 + self.camera.distance * 0.015
+        rows = [
+            (x - size, y, z), (x + size, y, z),
+            (x, y - size, z), (x, y + size, z),
+            (x, y, z - size), (x, y, z + size),
+        ]  # fmt: skip
+        ring = [
+            (x + math.cos(a) * size * 1.6, y, z + math.sin(a) * size * 1.6)
+            for a in (i * math.pi / 8 for i in range(17))
+        ]
+        for a, b in zip(ring, ring[1:], strict=False):
+            rows.extend((a, b))
+        return np.array([(*row, *PIVOT_COLOR) for row in rows], dtype=np.float32)
+
+    # ------------------------------------------------------------------ keyboard
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        self._keys.add(event.key())
+        action = self._held_actions.get(event.key())
+        if action is not None and not event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier:
+            self._held.add(action)
+            return
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
-        self._keys.discard(event.key())
+        action = self._held_actions.get(event.key())
+        if action is not None and not event.isAutoRepeat():
+            self._held.discard(action)
+            return
         super().keyReleaseEvent(event)
 
     def focusOutEvent(self, event: QFocusEvent) -> None:
-        self._keys.clear()
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        self.setFocus()
-        self._press_pos = event.position().toPoint()
-        self._press_button = event.button()
-        self._last_mouse = self._press_pos
-        self._looking = False
-
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        pos = event.position().toPoint()
-        if event.buttons() & Qt.MouseButton.RightButton and self._last_mouse is not None:
-            assert self._press_pos is not None
-            if (pos - self._press_pos).manhattanLength() > DRAG_THRESHOLD:
-                self._looking = True
-            if self._looking:
-                delta = pos - self._last_mouse
-                self.camera.rotate(delta.x() * LOOK_SENSITIVITY, delta.y() * LOOK_SENSITIVITY)
-        self._last_mouse = pos
-        self._update_hover(pos)
-
-    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        button = event.button()
-        modifiers = event.modifiers()
-        if button == self._press_button and not self._looking:
-            self._update_hover(event.position().toPoint())
-            hit = self.hover
-            if button == Qt.MouseButton.LeftButton:
-                if modifiers & Qt.KeyboardModifier.ControlModifier:
-                    self.selection = hit.pos if hit else None
-                    self.select_requested.emit(self.selection)
-                elif hit is not None:
-                    self.break_requested.emit(hit.pos)
-            elif button == Qt.MouseButton.RightButton and hit is not None:
-                self.place_requested.emit(hit, bool(modifiers & Qt.KeyboardModifier.ShiftModifier))
-            elif button == Qt.MouseButton.MiddleButton and hit is not None:
-                self.pick_requested.emit(hit.pos)
-        self._looking = False
-        self._press_button = None
-        self.update()
-
-    def wheelEvent(self, event: QWheelEvent) -> None:
-        self.camera.fov = max(20.0, min(100.0, self.camera.fov - event.angleDelta().y() / 60.0))
-        self.update()
-
-    def _update_hover(self, point: QPoint) -> None:
-        width, height = max(self.width(), 1), max(self.height(), 1)
-        ndc_x = 2.0 * point.x() / width - 1.0
-        ndc_y = 1.0 - 2.0 * point.y() / height
-        origin, direction = self.camera.ray_through(ndc_x, ndc_y, width / height)
-        hit = pick(self.document.level, origin, direction)
-        if hit != self.hover:
-            self.hover = hit
-            self.hover_changed.emit(hit)
-            self.update()
+        self._held.clear()
 
     def _tick_camera(self) -> None:
         now = time.monotonic()
         dt = min(now - self._last_frame, 0.1)
         self._last_frame = now
-        keys = self._keys
-        if not keys:
+        held = self._held
+        if not held:
             return
-        speed = SPEED * (3.0 if Qt.Key.Key_Control in keys else 1.0) * dt
-        forward = (Qt.Key.Key_W in keys) - (Qt.Key.Key_S in keys)
-        strafe = (Qt.Key.Key_D in keys) - (Qt.Key.Key_A in keys)
-        up = (Qt.Key.Key_Space in keys) - (Qt.Key.Key_Shift in keys)
+        speed = max(4.0, self.camera.distance * 0.8) * dt
+        forward = ("camera.forward" in held) - ("camera.back" in held)
+        strafe = ("camera.right" in held) - ("camera.left" in held)
+        up = ("camera.up" in held) - ("camera.down" in held)
+        if forward or strafe:
+            self.camera.pan(forward * speed, strafe * speed)
+        if up:
+            self.camera.raise_pivot(up * speed)
         if forward or strafe or up:
-            self.camera.move(forward * speed, strafe * speed, up * speed)
-            if self._last_mouse is not None:
-                self._update_hover(self._last_mouse)
+            self._camera_moved()
+
+    # ------------------------------------------------------------------ mouse
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        self.setFocus()
+        if self._press is not None:
+            return  # one gesture at a time
+        point = event.position().toPoint()
+        self._press = (point, event.button(), _modifier_names(event.modifiers()))
+        self._drag_action = None
+        self._drag_last = point
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        point = event.position().toPoint()
+        self._last_mouse = point
+        self._update_hover(point)
+        if self._press is None:
+            return
+        start, button, modifiers = self._press
+        if self._drag_action is None:
+            if (point - start).manhattanLength() <= DRAG_THRESHOLD:
+                return
+            name = _BUTTON_NAMES.get(button)
+            action = self.keymap.mouse_action(self.mode, modifiers, name, "Drag")
+            self._drag_action = action or ""
+            if self._drag_action == "select.box":
+                self._begin_box(start)
+        last = self._drag_last or point
+        self._drag(self._drag_action, point.x() - last.x(), point.y() - last.y())
+        self._drag_last = point
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if self._press is None or event.button() != self._press[1]:
+            return
+        _, button, modifiers = self._press
+        drag_action = self._drag_action
+        self._press = None
+        self._drag_action = None
+        if drag_action is None:
+            self._update_hover(event.position().toPoint())
+            name = _BUTTON_NAMES.get(button)
+            action = self.keymap.mouse_action(self.mode, modifiers, name, "Click")
+            if action is not None:
+                self._click(action)
+        elif drag_action == "select.box":
+            self.region_changed.emit(self.region)
+        self.update()
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        delta = event.angleDelta()
+        steps = (delta.y() or delta.x()) / 120.0  # some systems turn Shift+wheel sideways
+        if not steps:
+            return
+        modifiers = _modifier_names(event.modifiers())
+        action = self.keymap.mouse_action(self.mode, modifiers, None, "Wheel")
+        if action == "camera.zoom":
+            self.camera.zoom(ZOOM_PER_NOTCH**-steps)
+        elif action == "camera.vertical":
+            self.camera.raise_pivot(steps)  # one block per notch
+        else:
+            return
+        self._camera_moved()
+
+    def _drag(self, action: str, dx: int, dy: int) -> None:
+        camera = self.camera
+        if action == "camera.orbit":
+            camera.orbit(dx * ORBIT_DEGREES_PER_PIXEL, dy * ORBIT_DEGREES_PER_PIXEL)
+        elif action == "camera.pan":
+            # The world follows the mouse: blocks per pixel at the pivot's distance.
+            scale = 2 * camera.distance * math.tan(math.radians(camera.fov) / 2)
+            scale /= max(self.height(), 1)
+            camera.pan(dy * scale, -dx * scale)
+        elif action == "select.box":
+            self._extend_box()
+            return
+        else:
+            return
+        self._camera_moved()
+
+    def _click(self, action: str) -> None:
+        hit = self.hover
+        if action == "normal.inspect":
+            self.selection = hit.pos if hit else None
+            self.select_requested.emit(self.selection)
+        elif action == "select.block":
+            self._region_anchor = hit.pos if hit else None
+            self.region = Region.from_corners(hit.pos, hit.pos) if hit else None
+            self.region_changed.emit(self.region)
+        elif action == "select.extend" and hit is not None:
+            anchor = self._region_anchor or hit.pos
+            self._region_anchor = anchor
+            self.region = Region.from_corners(anchor, hit.pos)
+            self.region_changed.emit(self.region)
+        elif hit is None:
+            return
+        elif action == "pick":
+            self.pick_requested.emit(hit.pos)
+        elif action in ("normal.use", "build.use"):
+            self.use_requested.emit(hit.pos)
+        elif action == "build.break":
+            self.break_requested.emit(hit.pos)
+        elif action == "build.place":
+            self.place_requested.emit(hit)
+
+    def _begin_box(self, start: QPoint) -> None:
+        hit = self._pick_at(start)
+        self._region_anchor = hit.pos if hit else None
+        self._extend_box()
+
+    def _extend_box(self) -> None:
+        if self._region_anchor is not None and self.hover is not None:
+            self.region = Region.from_corners(self._region_anchor, self.hover.pos)
             self.update()
+
+    # ------------------------------------------------------------------ targeting
+    def _pick_at(self, point: QPoint) -> Hit | None:
+        width, height = max(self.width(), 1), max(self.height(), 1)
+        ndc_x = 2.0 * point.x() / width - 1.0
+        ndc_y = 1.0 - 2.0 * point.y() / height
+        origin, direction = self.camera.ray_through(ndc_x, ndc_y, width / height)
+        self._hover_direction = direction
+        return pick(self.document.level, origin, direction)
+
+    def _update_hover(self, point: QPoint) -> None:
+        hit = self._pick_at(point)
+        if hit != self.hover:
+            self.hover = hit
+            self.hover_changed.emit(hit)
+            self.update()
+
+    def _camera_moved(self) -> None:
+        if self._last_mouse is not None:
+            self._update_hover(self._last_mouse)
+        self.update()
 
     # ------------------------------------------------------------------ helpers
     def look_at(self, target: Pos) -> None:
-        self.camera.position = np.array([target[0] + 0.5, target[1] + 5.0, target[2] - 6.0])
-        self.camera.yaw, self.camera.pitch = 0.0, 35.0
+        self.camera.focus(np.array(target, dtype=float) + 0.5)
         self.update()
 
+    def focus_hover(self) -> bool:
+        """Move the pivot to the center of the block under the cursor."""
+        if self.hover is None:
+            return False
+        self.look_at(self.hover.pos)
+        return True
+
     def player_view(self) -> tuple[float, float]:
+        """Yaw and pitch of a player looking at the targeted block from the camera."""
+        if self._hover_direction is not None:
+            return Camera.angles_of(self._hover_direction)
         return self.camera.yaw, self.camera.pitch
 
 
@@ -261,4 +479,4 @@ def _hex_color(text: str) -> tuple[float, float, float, float]:
     return (int(text[0:2], 16) / 255, int(text[2:4], 16) / 255, int(text[4:6], 16) / 255, 1.0)
 
 
-__all__ = ["Direction", "Viewport"]
+__all__ = ["BUILD", "NORMAL", "SELECT", "Direction", "Viewport"]

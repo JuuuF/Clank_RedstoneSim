@@ -7,9 +7,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QKeySequence
 from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
@@ -24,7 +23,9 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
+from redsim.ui.camera import Camera
 from redsim.ui.geometry import Hit
+from redsim.ui.keymap import SPECS, Keymap, default_path
 from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panels import (
     HOTBAR,
@@ -35,8 +36,9 @@ from redsim.ui.panels import (
     SectionsPanel,
     SimulationPanel,
     controls_help,
+    controls_help_html,
 )
-from redsim.ui.viewport import Viewport
+from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
 from redsim.world import blocks
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
 
@@ -49,12 +51,13 @@ PANEL_REFRESH_SECONDS = 0.1
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, document: Document | None = None) -> None:
+    def __init__(self, document: Document | None = None, keymap: Keymap | None = None) -> None:
         super().__init__()
         self.document = document or Document.new_flat()
+        self.keymap = keymap if keymap is not None else Keymap.load()
         self.current_block = blocks.STONE
         self.last_steps: list[Any] = []
-        self.viewport = Viewport(self.document)
+        self.viewport = Viewport(self.document, self.keymap)
         self.setCentralWidget(self.viewport)
 
         self.block_palette = PalettePanel()
@@ -65,7 +68,8 @@ class MainWindow(QMainWindow):
         left = Qt.DockWidgetArea.LeftDockWidgetArea
         right = Qt.DockWidgetArea.RightDockWidgetArea
         blocks_dock = self._dock("Blocks", self.block_palette, left)
-        self.help_dock = self._dock("Controls", controls_help(), left)
+        self.help_label = controls_help(self.keymap)
+        self.help_dock = self._dock("Controls", self.help_label, left)
         self.tabifyDockWidget(blocks_dock, self.help_dock)
         blocks_dock.raise_()
         simulation_dock = self._dock("Simulation", self.simulation, right)
@@ -82,18 +86,20 @@ class MainWindow(QMainWindow):
         self.resizeDocks([blocks_dock, simulation_dock], [210, 320], Qt.Orientation.Horizontal)
         self.resizeDocks([self.diagnostics_dock], [190], Qt.Orientation.Vertical)
 
-        self._corner: Pos | None = None
-        self._corner_done = False
         self.play_timer = QTimer(self)
         self.play_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self.play_timer.timeout.connect(self._play_tick)
         self.pacer = TickPacer(self.simulation.speed.value())
         self.tick_rate = RateMeter()
         self._panels_refreshed = 0.0
+        self._actions: dict[str, QAction] = {}
+        self._mode_actions: dict[str, QAction] = {}
         self._connect()
         self._build_menus()
         self._apply_saved_camera()
         self._changed()
+        if self.keymap.warnings:
+            self._message("Keymap: " + "; ".join(self.keymap.warnings), error=True)
 
     # ------------------------------------------------------------------ setup
     def _dock(self, title: str, widget: QWidget, area: Qt.DockWidgetArea) -> QDockWidget:
@@ -107,9 +113,12 @@ class MainWindow(QMainWindow):
         self.block_palette.block_chosen.connect(self._choose_block)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
+        self.viewport.use_requested.connect(self._use)
         self.viewport.break_requested.connect(self._break)
         self.viewport.pick_requested.connect(self._pick)
         self.viewport.select_requested.connect(self._select)
+        self.viewport.region_changed.connect(self._region_changed)
+        self.viewport.mode_changed.connect(self._mode_changed)
         self.inspector.apply_requested.connect(self._apply_state)
         self.inspector.section_requested.connect(self._assign_section)
         self.sections.changed.connect(lambda: self._changed())
@@ -130,46 +139,59 @@ class MainWindow(QMainWindow):
         self.contraptions.delete_group.connect(self._delete_group)
         self.simulation.speed_changed.connect(self._speed)
 
-    def _action(
-        self,
-        menu: Any,
-        text: str,
-        slot: Any,
-        shortcut: str | QKeySequence | QKeySequence.StandardKey | None = None,
-    ) -> QAction:
+    def _action(self, menu: Any, text: str, slot: Any, keymap_id: str | None = None) -> QAction:
+        """A menu action; its shortcuts come from the keymap entry ``keymap_id``."""
         action = QAction(text, self)
-        if shortcut is not None:
-            action.setShortcut(QKeySequence(shortcut))
         action.triggered.connect(slot)
         menu.addAction(action)
         self.addAction(action)
+        if keymap_id is not None:
+            self._actions[keymap_id] = action
+            self._apply_shortcuts(keymap_id)
         return action
+
+    def _apply_shortcuts(self, keymap_id: str) -> None:
+        shortcuts = [QKeySequence(binding) for binding in self.keymap.bindings(keymap_id)]
+        self._actions[keymap_id].setShortcuts(shortcuts)
 
     def _build_menus(self) -> None:
         bar = self.menuBar()
         file_menu = bar.addMenu("&File")
-        self._action(file_menu, "&New", self._new, QKeySequence.StandardKey.New)
-        self._action(file_menu, "&Open…", self._open, QKeySequence.StandardKey.Open)
-        self._action(file_menu, "&Save", self._save, QKeySequence.StandardKey.Save)
-        self._action(file_menu, "Save &as…", self._save_as, QKeySequence.StandardKey.SaveAs)
+        self._action(file_menu, "&New", self._new, "file.new")
+        self._action(file_menu, "&Open…", self._open, "file.open")
+        self._action(file_menu, "&Save", self._save, "file.save")
+        self._action(file_menu, "Save &as…", self._save_as, "file.save_as")
         file_menu.addSeparator()
-        self._action(file_menu, "&Quit", self.close, QKeySequence.StandardKey.Quit)
+        self._action(file_menu, "&Quit", self.close, "file.quit")
         edit_menu = bar.addMenu("&Edit")
-        self._action(edit_menu, "&Undo", self._undo, QKeySequence.StandardKey.Undo)
-        self._action(edit_menu, "&Redo", self._redo, QKeySequence.StandardKey.Redo)
-        self._action(edit_menu, "Clear selection", lambda: self._select(None), "Esc")
+        self._action(edit_menu, "&Undo", self._undo, "edit.undo")
+        self._action(edit_menu, "&Redo", self._redo, "edit.redo")
+        mode_menu = bar.addMenu("&Mode")
+        group = QActionGroup(self)
+        for mode, text in ((NORMAL, "&Normal"), (BUILD, "&Build"), (SELECT, "&Select")):
+            action = self._action(mode_menu, text, lambda _=False, m=mode: self._mode_key(m))
+            self._actions[f"mode.{mode}"] = action
+            self._apply_shortcuts(f"mode.{mode}")
+            action.setCheckable(True)
+            action.setToolTip(SPECS[f"mode.{mode}"].title)
+            group.addAction(action)
+            self._mode_actions[mode] = action
+        self._mode_actions[self.viewport.mode].setChecked(True)
+        mode_menu.addSeparator()
+        self._action(mode_menu, "Move pivot to the block", self._focus_pivot, "camera.focus")
         sim_menu = bar.addMenu("&Simulation")
-        self._action(sim_menu, "Run / pause", self.simulation.play.toggle, "P")
-        self._action(sim_menu, "Step tick", self._step_tick, "T")
-        self._action(sim_menu, "Step event", self._step_event, "E")
-        self._action(sim_menu, "Tick back", self._tick_back, "Shift+T")
-        self._action(sim_menu, "Step back", self._step_back, "Shift+E")
+        self._action(sim_menu, "Run / pause", self.simulation.play.toggle, "sim.run")
+        self._action(sim_menu, "Step tick", self._step_tick, "sim.tick")
+        self._action(sim_menu, "Step event", self._step_event, "sim.event")
+        self._action(sim_menu, "Tick back", self._tick_back, "sim.tick_back")
+        self._action(sim_menu, "Step back", self._step_back, "sim.step_back")
         region_menu = bar.addMenu("&Region")
-        self._action(region_menu, "Mark selection corner", self._mark_corner, "B")
-        self._action(region_menu, "Copy selection", self._copy, QKeySequence.StandardKey.Copy)
-        self._action(region_menu, "Paste at target", self._paste, QKeySequence.StandardKey.Paste)
-        self._action(region_menu, "Rotate clipboard 90°", self._rotate_clipboard, "R")
-        self._action(region_menu, "Clear selection (fill with air)", self._delete_region, "Del")
+        self._action(region_menu, "Copy selection", self._copy, "edit.copy")
+        self._action(region_menu, "Paste at target", self._paste, "edit.paste")
+        self._action(region_menu, "Rotate clipboard 90°", self._rotate_clipboard, "edit.rotate")
+        self._action(
+            region_menu, "Clear selection (fill with air)", self._delete_region, "edit.delete"
+        )
         view_menu = bar.addMenu("&View")
         for dock in self.findChildren(QDockWidget):
             view_menu.addAction(dock.toggleViewAction())
@@ -180,10 +202,53 @@ class MainWindow(QMainWindow):
                 hotbar_menu,
                 f"{index}: {block.name}",
                 lambda _=False, b=block: self.block_palette.select_block(b),
-                str(index),
+                f"hotbar.{index}",
             )
+        settings_menu = bar.addMenu("Se&ttings")
+        self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
+        self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
-        self._action(help_menu, "Controls", lambda: self.help_dock.setVisible(True), "F1")
+        self._action(
+            help_menu, "Controls", lambda: self.help_dock.setVisible(True), "help.controls"
+        )
+
+    # ------------------------------------------------------------------ modes and keymap
+    def _mode_key(self, mode: str) -> None:
+        """Mode shortcuts; the NORMAL key pressed in NORMAL mode clears the selections."""
+        if mode == NORMAL and self.viewport.mode == NORMAL:
+            self.viewport.region = None
+            self._select(None)
+            return
+        self.viewport.set_mode(mode)
+
+    def _mode_changed(self, mode: str) -> None:
+        self._mode_actions[mode].setChecked(True)
+        self._message(f"{mode.upper()} mode: {self.viewport.mode_hint()}")
+
+    def _focus_pivot(self) -> None:
+        if not self.viewport.focus_hover():
+            self._message("Point at a block to move the pivot there.")
+
+    def _edit_keymap(self) -> None:
+        path = default_path()
+        if not path.exists():
+            Keymap.write_defaults(path)
+        self._message(f"Keymap file: {path} (Settings → Reload keymap after editing)")
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+
+    def _reload_keymap(self) -> None:
+        self.set_keymap(Keymap.load())
+        if self.keymap.warnings:
+            self._message("Keymap: " + "; ".join(self.keymap.warnings), error=True)
+        else:
+            self._message(f"Keymap reloaded from {default_path()}")
+
+    def set_keymap(self, keymap: Keymap) -> None:
+        self.keymap = keymap
+        for keymap_id in self._actions:
+            self._apply_shortcuts(keymap_id)
+        self.viewport.set_keymap(keymap)
+        self.help_label.setText(controls_help_html(keymap))
 
     # ------------------------------------------------------------------ refresh
     def _changed(self, running: bool = False) -> None:
@@ -224,7 +289,9 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------ editing
     def _choose_block(self, block: Any) -> None:
+        """Choosing a block to place (palette, hotbar, pick) enters BUILD mode."""
         self.current_block = block
+        self.viewport.set_mode(BUILD)
         self._message(f"Placing: {block.name}")
 
     def _hover(self, hit: Hit | None) -> None:
@@ -244,15 +311,18 @@ class MainWindow(QMainWindow):
             self._message(self.document.notice)
         self._changed()
 
-    def _place(self, hit: Hit, force: bool) -> None:
-        state = self.document.state_at(hit.pos)
-        if not force and Document.is_usable(state.block):
-            self._edit(self.document.use, hit.pos)
-            return
+    def _place(self, hit: Hit) -> None:
         target: Pos = offset(hit.pos, hit.face)
         yaw, pitch = self.viewport.player_view()
         request = PlaceRequest(hit.face, yaw, pitch)
         self._edit(self.document.place, target, self.current_block, request)
+
+    def _use(self, pos: Pos) -> None:
+        block = self.document.state_at(pos).block
+        if Document.is_usable(block):
+            self._edit(self.document.use, pos)
+        else:
+            self._message(f"{block.name} cannot be used (to place blocks, switch to BUILD mode).")
 
     def _break(self, pos: Pos) -> None:
         self._edit(self.document.break_block, pos)
@@ -286,26 +356,16 @@ class MainWindow(QMainWindow):
         self._changed()
 
     # ------------------------------------------------------------------ regions
-    def _mark_corner(self) -> None:
-        hit = self.viewport.hover
-        if hit is None:
-            self._message("Point at a block to mark a selection corner.")
-            return
-        if self._corner is None or self.viewport.region is not None and self._corner_done:
-            self._corner = hit.pos
-            self._corner_done = False
-            self.viewport.region = Region.from_corners(hit.pos, hit.pos)
-            self._message(f"Selection corner 1 at {hit.pos}; press B again for corner 2.")
-        else:
-            self.viewport.region = Region.from_corners(self._corner, hit.pos)
-            self._corner_done = True
-            size = self.viewport.region.size
+    def _region_changed(self, region: Region | None) -> None:
+        if region is not None:
+            size = region.size
             self._message(f"Selected {size[0]}×{size[1]}×{size[2]} blocks.")
-        self.viewport.update()
 
     def _region(self) -> Region | None:
         if self.viewport.region is None:
-            self._message("No selection: press B on two corner blocks first.", error=True)
+            self._message(
+                "No selection: press V (select mode), then click or drag over blocks.", error=True
+            )
         return self.viewport.region
 
     def _copy(self) -> None:
@@ -491,21 +551,11 @@ class MainWindow(QMainWindow):
     def _apply_saved_camera(self) -> None:
         """Restore the camera stored in the file (``extra["camera"]``), else a default view."""
         camera = self.document.extra.get("camera")
-        if not camera:
-            self.viewport.look_at((0, 1, 0))
-            return
-        self.viewport.camera.position = np.array(camera["position"], dtype=float)
-        self.viewport.camera.yaw = float(camera["yaw"])
-        self.viewport.camera.pitch = float(camera["pitch"])
+        self.viewport.camera = Camera.from_json(camera) if camera else Camera()
         self.viewport.update()
 
     def _store_camera(self) -> None:
-        camera = self.viewport.camera
-        self.document.extra["camera"] = {
-            "position": [round(float(v), 3) for v in camera.position],
-            "yaw": round(camera.yaw, 2),
-            "pitch": round(camera.pitch, 2),
-        }
+        self.document.extra["camera"] = self.viewport.camera.to_json()
 
     def _new(self) -> None:
         if self._confirm_discard():

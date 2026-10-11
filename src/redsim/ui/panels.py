@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 from redsim.core.pos import Pos
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
+from redsim.ui.keymap import Keymap
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 
@@ -412,29 +413,27 @@ class SectionsPanel(QWidget):
             self.refresh()
 
 
-CONTROLS_HELP = """<b>Camera</b><br>
-W A S D: move &nbsp; Space / Shift: up / down &nbsp; Ctrl: faster<br>
-Hold right mouse button and drag: look around &nbsp; Wheel: zoom (field of view)<br><br>
-<b>Building</b><br>
-Left click: break block<br>
-Right click: place the palette block (or use a lever, button, repeater, comparator,
-dust or cake)<br>
-Shift + right click: always place<br>
-Middle click: pick the block type<br>
-Ctrl + left click: select a block for the inspector; Esc clears<br>
-1-9: hotbar (stone, dust, torch, repeater, comparator, lever, lamp, redstone block,
-sticky piston)<br><br>
-<b>Simulation</b><br>
-P: run/pause &nbsp; T: step tick &nbsp; E: step event<br>
-Shift+T: tick back &nbsp; Shift+E: step back &nbsp; timeline slider: rewind/replay<br>
-Ctrl+Z / Ctrl+Y: undo / redo the last edit (rewinds to just before it)<br>
-Edits are only possible between ticks, like player actions in the game. Editing after a
-rewind discards the recorded future.
-"""
+def controls_help_html(keymap: Keymap) -> str:
+    """The controls, generated from the keymap (Settings → Edit keymap file to rebind)."""
+    from redsim.ui.keymap import ACTIONS, CATEGORIES
+
+    rows: list[str] = []
+    current = ""
+    for spec in ACTIONS:
+        category = CATEGORIES[spec.id.split(".")[0]]
+        if category != current:
+            current = category
+            rows.append(f"<br><b>{category}</b><br>")
+        rows.append(f"{keymap.describe(spec.id)}: {spec.title}<br>")
+    rows.append(
+        "<br>Edits are only possible between ticks, like player actions in the game. Editing "
+        "after a rewind discards the recorded future."
+    )
+    return "".join(rows)
 
 
-def controls_help() -> QLabel:
-    label = QLabel(CONTROLS_HELP)
+def controls_help(keymap: Keymap) -> QLabel:
+    label = QLabel(controls_help_html(keymap))
     label.setWordWrap(True)
     label.setAlignment(Qt.AlignmentFlag.AlignTop)
     label.setMargin(8)

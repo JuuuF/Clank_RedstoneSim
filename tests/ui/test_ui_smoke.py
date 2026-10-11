@@ -8,9 +8,11 @@ from collections.abc import Iterator
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ["REDSIM_KEYMAP"] = os.devnull + ".missing"  # defaults, not the user's keymap
 QtWidgets = pytest.importorskip("PySide6.QtWidgets")
 
 from redsim.core.direction import Direction  # noqa: E402
+from redsim.editor.clipboard import Region  # noqa: E402
 from redsim.ui.app import configure_gl  # noqa: E402
 from redsim.ui.geometry import Hit  # noqa: E402
 from redsim.world import blocks  # noqa: E402
@@ -34,16 +36,16 @@ def test_window_edits_steps_and_renders(app: object) -> None:
 
     # Right click on the floor with a lever selected, then a lamp next to it.
     window.block_palette.select_block(blocks.LEVER)
-    window._place(Hit((0, 0, 0), Direction.UP, 5.0), False)
+    window._place(Hit((0, 0, 0), Direction.UP, 5.0))
     window.block_palette.select_block(blocks.REDSTONE_LAMP)
-    window._place(Hit((1, 0, 0), Direction.UP, 5.0), False)
+    window._place(Hit((1, 0, 0), Direction.UP, 5.0))
     # Right click on the lever uses it (no Shift): the lamp lights immediately.
-    window._place(Hit((0, 1, 0), Direction.UP, 5.0), False)
+    window._use((0, 1, 0))
     document = window.document
     assert document.state_at((0, 1, 0)).get(POWERED) is True
     assert document.state_at((1, 1, 0)).get(LIT) is True
 
-    window._place(Hit((0, 1, 0), Direction.UP, 5.0), False)  # lever off
+    window._use((0, 1, 0))  # lever off
     for _ in range(4):
         window._step_tick()
     assert document.state_at((1, 1, 0)).get(LIT) is False
@@ -61,10 +63,7 @@ def test_window_edits_steps_and_renders(app: object) -> None:
     assert document.engine.game_time == 0
 
     # Region tools: mark two corners on the lever and lamp, copy, paste elsewhere, delete.
-    window.viewport.hover = Hit((0, 1, 0), Direction.UP, 5.0)
-    window._mark_corner()
-    window.viewport.hover = Hit((1, 1, 0), Direction.UP, 5.0)
-    window._mark_corner()
+    window.viewport.region = Region.from_corners((0, 1, 0), (1, 1, 0))  # SELECT-mode box
     window._copy()
     window.viewport.hover = Hit((0, 0, 5), Direction.UP, 5.0)  # floor block: paste above it
     window._paste()

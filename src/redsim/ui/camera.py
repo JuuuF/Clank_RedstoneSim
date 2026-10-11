@@ -1,4 +1,10 @@
-"""Fly camera with Minecraft's yaw/pitch conventions (yaw 0 looks south, pitch > 0 looks down)."""
+"""Orbit camera around a pivot, with Minecraft's yaw/pitch conventions.
+
+Yaw 0 looks south (+z), yaw 90 looks west; pitch > 0 looks down. The eye sits ``distance``
+blocks behind the pivot along the view direction, so orbiting turns the view around the
+pivot, panning and the vertical controls move the pivot, and zooming changes the distance
+(owner decision, doc/ui-direction.md).
+"""
 
 from __future__ import annotations
 
@@ -7,14 +13,20 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+MIN_DISTANCE = 1.5
+MAX_DISTANCE = 300.0
+MAX_PITCH = 89.0
+
 
 @dataclass
 class Camera:
-    position: np.ndarray = field(default_factory=lambda: np.array([0.5, 6.0, -8.0]))
+    pivot: np.ndarray = field(default_factory=lambda: np.array([0.5, 1.0, 0.5]))
+    distance: float = 12.0
     yaw: float = 0.0
-    pitch: float = 30.0
+    pitch: float = 35.0
     fov: float = 70.0
 
+    # ------------------------------------------------------------------ directions
     def forward(self) -> np.ndarray:
         yaw, pitch = math.radians(self.yaw), math.radians(self.pitch)
         return np.array(
@@ -29,18 +41,64 @@ class Camera:
         f = self.horizontal_forward()
         return np.array([-f[2], 0.0, f[0]])  # forward × up
 
-    def rotate(self, d_yaw: float, d_pitch: float) -> None:
-        self.yaw = (self.yaw + d_yaw) % 360.0
-        self.pitch = max(-89.9, min(89.9, self.pitch + d_pitch))
+    @property
+    def position(self) -> np.ndarray:
+        """The eye."""
+        return np.asarray(self.pivot, dtype=float) - self.forward() * self.distance
 
-    def move(self, forward: float, strafe: float, up: float) -> None:
-        self.position = (
-            self.position
+    @staticmethod
+    def angles_of(direction: np.ndarray) -> tuple[float, float]:
+        """Yaw and pitch of a player looking along ``direction`` (Minecraft conventions)."""
+        dx, dy, dz = (float(v) for v in direction / np.linalg.norm(direction))
+        yaw = math.degrees(math.atan2(-dx, dz)) % 360.0
+        pitch = math.degrees(-math.asin(max(-1.0, min(1.0, dy))))
+        return yaw, pitch
+
+    # ------------------------------------------------------------------ controls
+    def orbit(self, d_yaw: float, d_pitch: float) -> None:
+        self.yaw = (self.yaw + d_yaw) % 360.0
+        self.pitch = max(-MAX_PITCH, min(MAX_PITCH, self.pitch + d_pitch))
+
+    def pan(self, forward: float, strafe: float) -> None:
+        """Move the pivot in the horizontal plane, relative to the view direction."""
+        self.pivot = (
+            np.asarray(self.pivot, dtype=float)
             + self.horizontal_forward() * forward
             + self.right() * strafe
-            + np.array([0.0, up, 0.0])
         )
 
+    def raise_pivot(self, amount: float) -> None:
+        self.pivot = np.asarray(self.pivot, dtype=float) + np.array([0.0, amount, 0.0])
+
+    def zoom(self, factor: float) -> None:
+        """Multiply the distance to the pivot (factor < 1 zooms in)."""
+        self.distance = max(MIN_DISTANCE, min(MAX_DISTANCE, self.distance * factor))
+
+    def focus(self, point: np.ndarray) -> None:
+        self.pivot = np.asarray(point, dtype=float)
+
+    # ------------------------------------------------------------------ persistence
+    def to_json(self) -> dict[str, object]:
+        return {
+            "pivot": [round(float(v), 3) for v in self.pivot],
+            "distance": round(self.distance, 3),
+            "yaw": round(self.yaw, 2),
+            "pitch": round(self.pitch, 2),
+        }
+
+    @staticmethod
+    def from_json(data: dict[str, object]) -> Camera:
+        """Read a stored view; older files store the eye ``position`` of the fly camera."""
+        camera = Camera(yaw=float(data["yaw"]), pitch=float(data["pitch"]))  # type: ignore[arg-type]
+        if "pivot" in data:
+            camera.pivot = np.array(data["pivot"], dtype=float)
+            camera.distance = float(data.get("distance", camera.distance))  # type: ignore[arg-type]
+        else:
+            eye = np.array(data["position"], dtype=float)
+            camera.pivot = eye + camera.forward() * camera.distance
+        return camera
+
+    # ------------------------------------------------------------------ matrices
     def view_matrix(self) -> np.ndarray:
         f = self.forward()
         f = f / np.linalg.norm(f)
@@ -54,7 +112,7 @@ class Camera:
         return m
 
     def projection_matrix(
-        self, aspect: float, near: float = 0.05, far: float = 600.0
+        self, aspect: float, near: float = 0.05, far: float = 1000.0
     ) -> np.ndarray:
         f = 1.0 / math.tan(math.radians(self.fov) / 2)
         m = np.zeros((4, 4))
