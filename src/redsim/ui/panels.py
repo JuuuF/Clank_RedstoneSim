@@ -28,11 +28,14 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.core.pos import Pos
+from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui.keymap import Keymap
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
+
+NO_SELECTION = "Left-click a block in NORMAL mode (Esc) to inspect it."
 
 #: Palette order; the first nine are the hotbar (keys 1-9).
 PALETTE: list[tuple[str, list[str]]] = [
@@ -50,8 +53,11 @@ PALETTE: list[tuple[str, list[str]]] = [
             "minecraft:oak_button",
             "minecraft:piston",
             "minecraft:sticky_piston",
-            "minecraft:cake",
         ],
+    ),
+    (
+        "Signal sources",
+        ["minecraft:barrel", "minecraft:lectern", "minecraft:cake"],
     ),
     (
         "Building",
@@ -90,37 +96,61 @@ HOTBAR = [
 ]
 
 
-class PalettePanel(QListWidget):
+class PalettePanel(QWidget):
+    """Block list; signal sources are placed at the strength chosen below the list."""
+
     block_chosen = Signal(object)  # Block
 
     def __init__(self) -> None:
         super().__init__()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.list = QListWidget()
+        layout.addWidget(self.list)
         for title, ids in PALETTE:
             header = QListWidgetItem(title)
             header.setFlags(Qt.ItemFlag.NoItemFlags)
             font = header.font()
             font.setBold(True)
             header.setFont(font)
-            self.addItem(header)
+            self.list.addItem(header)
             for block_id in ids:
                 item = QListWidgetItem("   " + blocks.get(block_id).name.replace("_", " "))
                 item.setData(Qt.ItemDataRole.UserRole, block_id)
-                self.addItem(item)
-        self.currentItemChanged.connect(self._changed)
+                kind = sources.SOURCE_BLOCKS.get(block_id)
+                if kind is not None:
+                    item.setToolTip(sources.KINDS[kind].tooltip)
+                self.list.addItem(item)
+        row = QHBoxLayout()
+        row.setContentsMargins(6, 0, 6, 6)
+        row.addWidget(QLabel("Source strength:"))
+        self.strength = QSpinBox()
+        self.strength.setRange(0, 15)
+        self.strength.setValue(15)
+        self.strength.setToolTip(
+            "Comparator reading of placed signal sources (barrel, lectern, cake). The block "
+            "is set up for it: barrels get the fewest items, lecterns a 15-page book open at "
+            "the right page, cakes the matching bites (even values only)."
+        )
+        row.addWidget(self.strength)
+        layout.addLayout(row)
+        self.list.currentItemChanged.connect(self._changed)
         self.select_block(blocks.STONE)
 
     def _changed(self, item: QListWidgetItem | None) -> None:
         if item is not None and item.data(Qt.ItemDataRole.UserRole):
-            self.block_chosen.emit(blocks.get(item.data(Qt.ItemDataRole.UserRole)))
+            block_id = item.data(Qt.ItemDataRole.UserRole)
+            self.strength.setEnabled(block_id in sources.SOURCE_BLOCKS)
+            self.block_chosen.emit(blocks.get(block_id))
 
     def select_block(self, block: Block) -> None:
-        for row in range(self.count()):
-            if self.item(row).data(Qt.ItemDataRole.UserRole) == block.id:
-                self.setCurrentRow(row)
+        for row in range(self.list.count()):
+            if self.list.item(row).data(Qt.ItemDataRole.UserRole) == block.id:
+                self.list.setCurrentRow(row)
                 return
 
     def current_block(self) -> Block:
-        item = self.currentItem()
+        item = self.list.currentItem()
         block_id = item.data(Qt.ItemDataRole.UserRole) if item else None
         return blocks.get(block_id) if block_id else blocks.STONE
 
@@ -130,6 +160,8 @@ class InspectorPanel(QWidget):
 
     apply_requested = Signal(object, object)  # Pos, BlockState
     section_requested = Signal(object, object)  # Pos, str | None
+    source_requested = Signal(object, str, int)  # Pos, kind, strength
+    page_requested = Signal(object, int)  # Pos, page (a player turning the page)
 
     def __init__(self) -> None:
         super().__init__()
@@ -137,7 +169,7 @@ class InspectorPanel(QWidget):
         self._state: BlockState | None = None
         self._editors: dict[str, QComboBox] = {}
         layout = QVBoxLayout(self)
-        self.title = QLabel("Ctrl+click a block to inspect it.")
+        self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
         layout.addWidget(self.title)
         self.form = QFormLayout()
@@ -152,6 +184,42 @@ class InspectorPanel(QWidget):
         )
         self.apply_button.clicked.connect(self._apply)
         layout.addWidget(self.apply_button)
+        self.source_box = QWidget()
+        source_layout = QVBoxLayout(self.source_box)
+        source_layout.setContentsMargins(0, 6, 0, 0)
+        source_layout.addWidget(QLabel("<b>Signal source</b>"))
+        source_row = QHBoxLayout()
+        self.source_kind = QComboBox()
+        for kind in sources.KINDS.values():
+            self.source_kind.addItem(kind.title, kind.id)
+            self.source_kind.setItemData(
+                self.source_kind.count() - 1, kind.tooltip, Qt.ItemDataRole.ToolTipRole
+            )
+        self.source_kind.setToolTip("Swap the block behind this signal (keeps the strength).")
+        source_row.addWidget(self.source_kind)
+        self.source_strength = QSpinBox()
+        self.source_strength.setRange(0, 15)
+        source_row.addWidget(self.source_strength)
+        self.source_apply = QPushButton("Set")
+        self.source_apply.setToolTip(
+            "Sets the block up for this strength with /setblock and block-entity data."
+        )
+        self.source_apply.clicked.connect(self._apply_source)
+        source_row.addWidget(self.source_apply)
+        source_layout.addLayout(source_row)
+        page_row = QHBoxLayout()
+        self.page_back = QPushButton("◀ Page")
+        self.page_next = QPushButton("Page ▶")
+        for button, step in ((self.page_back, -1), (self.page_next, 1)):
+            button.setToolTip(
+                "Turn the page like a player: the signal changes and the lectern sends a "
+                "2-tick pulse into the block below (verified from the game source)."
+            )
+            button.clicked.connect(lambda _=False, d=step: self._turn_page(d))
+            page_row.addWidget(button)
+        source_layout.addLayout(page_row)
+        layout.addWidget(self.source_box)
+        self._page: int | None = None
         section_row = QHBoxLayout()
         section_row.addWidget(QLabel("Section:"))
         self.section_box = QComboBox()
@@ -168,8 +236,9 @@ class InspectorPanel(QWidget):
         self._pos = pos
         self._state = None
         self.section_box.clear()
+        self.source_box.setVisible(False)
         if document is None or pos is None:
-            self.title.setText("Ctrl+click a block to inspect it.")
+            self.title.setText(NO_SELECTION)
             self.entity.setText("")
             self.apply_button.setEnabled(False)
             self.section_box.setEnabled(False)
@@ -186,6 +255,17 @@ class InspectorPanel(QWidget):
             self._editors[prop.name] = box
         be = document.level.get_block_entity(pos, create=False)
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
+        kind = sources.kind_of(state)
+        if kind is not None:
+            self.source_box.setVisible(True)
+            self.source_kind.setCurrentIndex(self.source_kind.findData(kind))
+            self.source_strength.setValue(sources.strength_at(document.level, pos) or 0)
+            self.source_apply.setEnabled(document.can_edit)
+            page = getattr(be, "page", None) if getattr(be, "book", None) else None
+            self._page = page
+            for button in (self.page_back, self.page_next):
+                button.setVisible(kind == "lectern")
+                button.setEnabled(page is not None and document.can_edit)
         self.apply_button.setEnabled(bool(state.block.properties) and document.can_edit)
         self.section_box.setEnabled(True)
         self.section_box.addItem("(none)", None)
@@ -202,6 +282,15 @@ class InspectorPanel(QWidget):
         for prop in state.block.properties:
             state = state.with_(prop, self._editors[prop.name].currentData())
         self.apply_requested.emit(self._pos, state)
+
+    def _apply_source(self) -> None:
+        if self._pos is not None:
+            kind = str(self.source_kind.currentData())
+            self.source_requested.emit(self._pos, kind, self.source_strength.value())
+
+    def _turn_page(self, step: int) -> None:
+        if self._pos is not None and self._page is not None:
+            self.page_requested.emit(self._pos, self._page + step)
 
     def _section_changed(self, index: int) -> None:
         if self._pos is not None:

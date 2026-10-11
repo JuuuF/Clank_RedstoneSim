@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.core.pos import Pos, offset
+from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
@@ -127,6 +128,8 @@ class MainWindow(QMainWindow):
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
         self.inspector.apply_requested.connect(self._apply_state)
+        self.inspector.source_requested.connect(self._set_source)
+        self.inspector.page_requested.connect(self._turn_page)
         self.inspector.section_requested.connect(self._assign_section)
         self.sections.changed.connect(lambda: self._changed())
         self.simulation.play_toggled.connect(self._play)
@@ -339,7 +342,18 @@ class MainWindow(QMainWindow):
         target: Pos = offset(hit.pos, hit.face)
         yaw, pitch = self.viewport.player_view()
         request = PlaceRequest(hit.face, yaw, pitch)
-        self._edit(self.document.place, target, self.current_block, request)
+        kind = sources.SOURCE_BLOCKS.get(self.current_block.id)
+        if kind is not None:
+            strength = self.block_palette.strength.value()
+            self._edit(self.document.place_source, target, kind, strength, request)
+        else:
+            self._edit(self.document.place, target, self.current_block, request)
+
+    def _set_source(self, pos: Pos, kind: str, strength: int) -> None:
+        self._edit(self.document.set_source, pos, kind, strength)
+
+    def _turn_page(self, pos: Pos, page: int) -> None:
+        self._edit(self.document.turn_page, pos, page)
 
     def _use(self, pos: Pos) -> None:
         block = self.document.state_at(pos).block

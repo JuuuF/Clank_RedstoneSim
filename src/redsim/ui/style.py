@@ -20,6 +20,7 @@ from redsim.world.properties import (
     DELAY,
     EXTENDED,
     FACING,
+    HAS_BOOK,
     HORIZONTAL_FACING,
     LIT,
     LOCKED,
@@ -185,7 +186,37 @@ def block_boxes(state: BlockState) -> list[Box]:
     if block_id == "minecraft:cake":
         bites = int(state.get(BITES))
         return [Box((1 + 2 * bites, 0, 1), (15, 8, 15), rgb(0.95, 0.90, 0.88))]
+    if block_id == "minecraft:barrel":
+        return face_any(_barrel(), state.get(FACING))
+    if block_id == "minecraft:lectern":
+        model = _lectern(state.get(HAS_BOOK), state.get(POWERED))
+        return face_horizontally(model, state.get(HORIZONTAL_FACING))
     return full(UNKNOWN)
+
+
+BARREL_WOOD = rgb(0.52, 0.38, 0.22)
+LECTERN_WOOD = rgb(0.62, 0.47, 0.30)
+
+
+def _barrel() -> list[Box]:
+    # Facing north: the lid (darker) is the z = 0 side.
+    return [
+        Box((0, 0, 1), (16, 16, 16), BARREL_WOOD),
+        Box((0, 0, 0), (16, 16, 1), rgb(0.34, 0.24, 0.13)),
+    ]
+
+
+def _lectern(has_book: bool, powered: bool) -> list[Box]:
+    boxes = [
+        Box((0, 0, 0), (16, 2, 16), LECTERN_WOOD),
+        Box((4, 2, 4), (12, 12, 12), LECTERN_WOOD),
+        Box((0, 12, 2), (16, 15, 14), rgb(0.56, 0.42, 0.26)),
+    ]
+    if has_book:
+        boxes.append(Box((2, 15, 4), (14, 16, 12), rgb(0.93, 0.91, 0.84)))
+    if powered:  # the 2-tick page-turn pulse
+        boxes.append(Box((6, 2, 0), (10, 3, 4), LIT_RED))
+    return boxes
 
 
 def _wire(state: BlockState) -> list[Box]:
