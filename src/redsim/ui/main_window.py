@@ -119,6 +119,9 @@ class MainWindow(QMainWindow):
         self.block_palette.block_chosen.connect(self._choose_block)
         # Hand the keyboard back to the viewport, so mode and hotbar keys keep working.
         self.block_palette.strength.editingFinished.connect(self.viewport.setFocus)
+        self.block_palette.strength.valueChanged.connect(
+            lambda value: self.viewport.set_build_block(self.current_block, value)
+        )
         self.block_palette.list.itemClicked.connect(lambda _item: self.viewport.setFocus())
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
@@ -348,6 +351,7 @@ class MainWindow(QMainWindow):
     def _choose_block(self, block: Any) -> None:
         """Choosing a block to place (palette, hotbar, pick) enters BUILD mode."""
         self.current_block = block
+        self.viewport.set_build_block(block, self.block_palette.strength.value())
         self.viewport.set_mode(BUILD)
         self._message(f"Placing: {block.name}")
 

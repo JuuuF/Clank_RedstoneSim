@@ -18,7 +18,9 @@ panel is generated from the active keymap, so it always shows the real bindings.
 - The badge in the bottom-left corner shows the mode and what the mouse buttons do.
 - Choosing a block (palette, hotbar keys 1–9, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and the selection box.
-- In BUILD, a white outline shows where a right click will put the block.
+- In BUILD, a translucent preview shows the block exactly as a right click would place it
+  (orientation from the cursor ray, wire connections, source setup) inside a white outline;
+  the outline turns red where the block cannot be placed.
 - Placed blocks are oriented like a player looking at the target from the camera along the
   cursor ray (`Viewport.player_view`).
 

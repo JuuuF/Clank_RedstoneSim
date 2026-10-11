@@ -33,8 +33,10 @@ from PySide6.QtWidgets import QWidget
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos, offset
+from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
+from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.ui.camera import Camera
 from redsim.ui.geometry import (
     ChunkedMesh,
@@ -62,6 +64,7 @@ from redsim.ui.selection_tools import (
     steps_along,
 )
 from redsim.world import blocks
+from redsim.world.block import Block, BlockState
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 ORBIT_DEGREES_PER_PIXEL = 0.3
@@ -149,6 +152,12 @@ class Viewport(QOpenGLWidget):
         self.paste_preview: Prefab | None = None
         self._ghost: tuple[np.ndarray, Pos] | None = None  # vertices at offset 0, offset
         self._paste_base = np.zeros((0, 7), dtype=np.float32)
+        #: BUILD mode preview: the block as it would be placed, translucent.
+        self.build_block: Block | None = None
+        self.build_strength = 15
+        self._build_ghost: tuple[np.ndarray, Pos] | None = None
+        self._build_meshes: dict[BlockState, np.ndarray] = {}
+        self.build_blocked: Pos | None = None  # target cell where placing is impossible
         self._ghost_uploaded: tuple[int, Pos] | None = None
         self.world_mesh = ChunkedMesh()
         self._mesh_revision = -1
@@ -188,6 +197,7 @@ class Viewport(QOpenGLWidget):
         if mode != self.mode:
             self.mode = mode
             self.mode_changed.emit(mode)
+            self._update_build_ghost()
         self.update()
 
     def set_document(self, document: Document) -> None:
@@ -199,7 +209,42 @@ class Viewport(QOpenGLWidget):
 
     def refresh(self) -> None:
         """Call after the world changed (edits or simulation steps)."""
+        self._update_build_ghost()
         self.update()
+
+    def set_build_block(self, block: Block, strength: int) -> None:
+        self.build_block = block
+        self.build_strength = strength
+        self._update_build_ghost()
+
+    def _update_build_ghost(self) -> None:
+        """Preview of the block to place: oriented like the placement would orient it
+        (cursor-ray yaw/pitch, wire connections, source setup), or a red outline."""
+        ghost, blocked = None, None
+        hit, block = self.hover, self.build_block
+        busy = self.paste_preview is not None or self._move is not None
+        if self.mode == BUILD and hit is not None and block is not None and not busy:
+            level = self.document.level
+            target = offset(hit.pos, hit.face)
+            state = None
+            if level.get_block_state(target).is_air:
+                request = PlaceRequest(hit.face, *self.player_view())
+                state = placement_state(block, request, level, target)
+                kind = sources.SOURCE_BLOCKS.get(block.id)
+                if state is not None and kind is not None:
+                    text, _ = sources.source_setblock(kind, self.build_strength, state)
+                    state = blocks.parse_state(text)
+            if state is None or not state.can_survive(level, target):
+                blocked = target
+            else:
+                vertices = self._build_meshes.get(state)
+                if vertices is None:
+                    vertices = ghost_mesh({(0, 0, 0): state}, 0.5, self.world_mesh.mesher)
+                    self._build_meshes[state] = vertices
+                ghost = (vertices, target)
+        if _ghost_key(ghost) != _ghost_key(self._build_ghost) or blocked != self.build_blocked:
+            self._build_ghost, self.build_blocked = ghost, blocked
+            self.update()
 
     # ------------------------------------------------------------------ GL
     def initializeGL(self) -> None:
@@ -315,7 +360,8 @@ class Viewport(QOpenGLWidget):
             parts.append(block_outline(level, self.hover.pos, (0.05, 0.05, 0.05, 1.0)))
             if self.mode == BUILD and self.paste_preview is None:
                 cell = offset(self.hover.pos, self.hover.face)  # where a block would go
-                parts.append(box_lines(cell, (cell[0] + 1, cell[1] + 1, cell[2] + 1), (1, 1, 1, 1)))
+                color = (1.0, 0.2, 0.2, 1.0) if cell == self.build_blocked else (1, 1, 1, 1)
+                parts.append(box_lines(cell, (cell[0] + 1, cell[1] + 1, cell[2] + 1), color))
         if not parts:
             return np.zeros((0, 7), dtype=np.float32)
         return np.vstack(parts)
@@ -398,8 +444,8 @@ class Viewport(QOpenGLWidget):
         return parts
 
     def _upload_ghost(self, renderer: Renderer) -> None:
-        ghost = self._ghost
-        key = None if ghost is None else (id(ghost[0]), ghost[1])
+        ghost = self._ghost or self._build_ghost
+        key = _ghost_key(ghost)
         if key == self._ghost_uploaded:
             return
         self._ghost_uploaded = key
@@ -726,11 +772,13 @@ class Viewport(QOpenGLWidget):
             self.hover_changed.emit(hit)
             self._update_paste_ghost()
             self.update()
+        self._update_build_ghost()  # orientation follows the cursor ray even on one cell
 
     def _camera_moved(self) -> None:
         if self._last_mouse is not None:
             self._update_hover(self._last_mouse)
         self._update_paste_ghost()
+        self._update_build_ghost()
         self.update()
 
     # ------------------------------------------------------------------ helpers
@@ -771,6 +819,11 @@ class _MoveDrag:
 
 
 _HANDLES = tuple(Handle(axis, high) for axis in range(3) for high in (False, True))
+
+
+def _ghost_key(ghost: tuple[np.ndarray, Pos] | None) -> tuple[int, Pos] | None:
+    """Compare ghosts by mesh identity and place (comparing arrays would be elementwise)."""
+    return None if ghost is None else (id(ghost[0]), ghost[1])
 
 
 def _bounds(region: Region) -> tuple[np.ndarray, np.ndarray]:
