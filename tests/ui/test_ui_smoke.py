@@ -264,6 +264,57 @@ def test_inspector_edits_container_slots(app: object) -> None:
     window.close()
 
 
+def test_timeline_keyframes_drag_merge_and_delete(app: object) -> None:
+    from PySide6.QtCore import QEvent, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtTest import QTest
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1200, 800)
+    window.show()
+    document = window.document
+    document.run_ticks(3)
+    document.setblock((0, 1, 0), blocks.STONE.default_state)
+    document.run_ticks(3)
+    document.setblock((1, 1, 0), blocks.STONE.default_state)
+    document.run_ticks(4)
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.view_start, canvas.view_span = 0.0, 20.0
+    row_y = canvas._row_top(2) + canvas.EDIT_ROW_HEIGHT // 2  # "Changed" row (/setblock)
+
+    def send(kind: QEvent.Type, tick: int, buttons: Qt.MouseButton) -> None:
+        point = QPointF(canvas._x(tick), row_y)
+        button = (
+            Qt.MouseButton.NoButton if kind == QEvent.Type.MouseMove else Qt.MouseButton.LeftButton
+        )
+        event = QMouseEvent(
+            kind, point, canvas.mapToGlobal(point), button, buttons, Qt.KeyboardModifier.NoModifier
+        )
+        QtWidgets.QApplication.sendEvent(canvas, event)
+
+    left = Qt.MouseButton.LeftButton
+    send(QEvent.Type.MouseButtonPress, 3, left)
+    send(QEvent.Type.MouseMove, 4, left)
+    send(QEvent.Type.MouseMove, 5, left)
+    send(QEvent.Type.MouseButtonRelease, 5, Qt.MouseButton.NoButton)
+    assert [b.tick for b in document.edit_batches()] == [5, 6]
+    window._changed()
+    canvas.selected = {(5, "edit"), (6, "edit")}
+    canvas.setFocus()
+    QTest.keyClick(canvas, Qt.Key.Key_M)
+    assert [b.tick for b in document.edit_batches()] == [5]
+    window._changed()
+    canvas.selected = {(5, "edit")}
+    QTest.keyClick(canvas, Qt.Key.Key_Delete)
+    assert document.edit_batches() == []
+    assert document.undo() and [b.tick for b in document.edit_batches()] == [5]
+    window.document.dirty = False
+    window.close()
+
+
 def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
     from redsim.ui.main_window import MainWindow
 

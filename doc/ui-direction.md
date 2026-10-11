@@ -82,6 +82,27 @@ inspector with arrows/toggles/steppers, rotate/flip/stack in place (ADR-021).
 | Verification | Build bigger circuits and stress-test against the game, including 0-ticking and block-event manipulation. |
 | Next mechanics | Observers, rails, target blocks, then hoppers. |
 
+Status: all of the third round is implemented (see [[controls]], [[project-state]]).
+
+## Fourth round of feedback (2026-10-11, after using the third-round build)
+
+| Topic | Request |
+|---|---|
+| Drag placement | Drag to place a line of blocks (wire especially); straight lines are enough for now. |
+| Preview flicker | The translucent build preview z-fights with the block below it (its back faces); raising or minimally shrinking the preview is fine. |
+| Inventory | Keep the hierarchy, but add recent/favourite blocks on top, show the folder path up to the current level, and show a preview of each block, not just a name and a color. |
+| Quick search | A quick block search in BUILD mode, like Blender's quick favourites, Rider's double Shift or macOS Cmd+Space. |
+| Build clicks | Change again: **left click places, right click rotates, DEL removes**. |
+| Timeline start | Why does the simulation start at tick 4, not 0? Fix it unless there is a reason. |
+| Shift+Left | Jump-to-start did not work because Shift+Left was bound twice. |
+| Atomic placements | Block placements in one time step form one event: all blocks appear at once, not one after another. |
+| Replay error | Replaying placements often fails with "player actions happen between ticks; finish the tick first", which blocks the timeline. |
+| Quick placing | Fast consecutive placements sometimes get lost (something seems to block new actions). |
+| Keyframes | Move and merge keyframes; color-coded rows (placements, block actions, …); merging should combine all placements made while the simulation ran. |
+| Tick 0 | A build state at tick 0 that is not replayed: build something, then simulate from there. Replaying the whole build history wastes time. |
+| Step back | Stepping backwards is much slower than forwards. |
+| Observer | The model should show clearly which way it faces. |
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

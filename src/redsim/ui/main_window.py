@@ -134,6 +134,17 @@ class MainWindow(QMainWindow):
         self.simulation.jump.connect(self._jump)
         self.simulation.canvas.scrub.connect(self._scrub)
         self.simulation.canvas.remove_monitor.connect(self._toggle_monitor)
+        canvas = self.simulation.canvas
+        canvas.move_edits.connect(
+            lambda indices, delta: self._history_edit(self.document.move_edits, indices, delta)
+        )
+        canvas.merge_edits.connect(
+            lambda indices, tick: self._history_edit(self.document.merge_edits, indices, tick)
+        )
+        canvas.delete_edits.connect(
+            lambda indices: self._history_edit(self.document.delete_edits, indices)
+        )
+        canvas.set_tick_zero.connect(lambda: self._history_edit(self.document.set_tick_zero))
         self.inspector.monitor_requested.connect(self._toggle_monitor)
         self.inspector.hit_requested.connect(self._projectile_hit)
         self.inspector.contents_requested.connect(self._set_container_slot)
@@ -411,9 +422,9 @@ class MainWindow(QMainWindow):
         )
 
     def _overlay_text(self, running: bool) -> list[str]:
-        game_time = self.document.engine.game_time
+        tick = self.document.tick
         if not running:
-            return [f"paused · game time {game_time}"]
+            return ["paused · the build (tick 0)" if tick == 0 else f"paused · tick {tick}"]
         now = time.monotonic()
         if self.simulation.warp.isChecked():
             target = "warp"
@@ -421,7 +432,7 @@ class MainWindow(QMainWindow):
             target = f"target {self.simulation.speed.value()}"
         return [
             f"running · {self.tick_rate.rate(now):5.1f} ticks/s ({target})",
-            f"game time {game_time} · {self.viewport.frame_rate.rate(now):3.0f} frames/s",
+            f"tick {tick} · {self.viewport.frame_rate.rate(now):3.0f} frames/s",
         ]
 
     def _message(self, text: str, error: bool = False) -> None:
@@ -462,6 +473,12 @@ class MainWindow(QMainWindow):
         return world_lines(
             self.document, rates, view, viewport.mode, viewport.region, viewport.region_locked
         )
+
+    def _history_edit(self, function: Any, *args: Any) -> None:
+        """Keyframe operations re-run the history; the run stops first."""
+        self.simulation.play.setChecked(False)
+        self.last_steps = []
+        self._edit(function, *args)
 
     def _scrub(self, tick: int) -> None:
         self.simulation.play.setChecked(False)

@@ -98,6 +98,8 @@ class Action:
     state: str | None = None
     flags: int = UpdateFlags.ALL
     payload: Any = None  # JSON-compatible data for fill/clone
+    #: Editor label (e.g. "place wire"); ignored by the engine.
+    label: str = ""
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -106,13 +108,19 @@ class Action:
             "state": self.state,
             "flags": self.flags,
             "payload": self.payload,
+            "label": self.label,
         }
 
     @staticmethod
     def from_json(data: dict[str, Any]) -> Action:
         x, y, z = data["pos"]
         return Action(
-            data["kind"], (x, y, z), data.get("state"), data.get("flags", 3), data.get("payload")
+            data["kind"],
+            (x, y, z),
+            data.get("state"),
+            data.get("flags", 3),
+            data.get("payload"),
+            data.get("label", ""),
         )
 
 

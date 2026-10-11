@@ -13,7 +13,9 @@ a new branch (the old future is dropped). Section annotations are not part of th
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -25,9 +27,9 @@ from redsim.editor.groups import Groups
 from redsim.editor.monitor import monitor_value
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
-from redsim.sim.engine import Action, ActionError, Engine, StepInfo
+from redsim.sim.engine import Action, ActionError, Engine, EngineSnapshot, StepInfo
 from redsim.sim.level import Level
-from redsim.sim.timeline import Timeline
+from redsim.sim.timeline import Plan, Timeline
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
@@ -38,6 +40,47 @@ FLOOR_HALF_SIZE = 16
 
 class EditError(Exception):
     """An edit that cannot be applied (message is shown to the user)."""
+
+
+#: Timeline rows for recorded edits (color-coded in the UI).
+EDIT_ROWS = ("build", "remove", "edit", "interact")
+
+
+def edit_row(action: Action) -> str:
+    """Which timeline row an edit belongs to: placing blocks, removing them, changing
+    placed blocks (inspector, selections), or interacting like a player."""
+    kind = action.kind
+    if kind in ("use", "lectern_page", "projectile_hit", "container_item"):
+        return "interact"
+    if kind == "break":
+        return "remove"
+    if kind in ("fill", "setblock", "set_block"):
+        if (action.state or "").split("[")[0] in ("minecraft:air", "air"):
+            return "remove"
+        return "build" if kind == "fill" or action.label.startswith("place") else "edit"
+    if kind in ("place", "clone", "stack_region"):
+        return "build"
+    return "edit"
+
+
+@dataclass(frozen=True)
+class HistoryState:
+    """Everything that defines the recorded history; undo and redo restore one."""
+
+    base: EngineSnapshot
+    plan: Plan
+    end_tick: int
+    tick: int  # where the user was
+
+
+@dataclass(frozen=True)
+class EditBatch:
+    """The edits of one row at one tick (one keyframe diamond)."""
+
+    tick: int
+    row: str
+    indices: tuple[int, ...]
+    labels: tuple[str, ...]
 
 
 @dataclass
@@ -53,19 +96,22 @@ class Document:
     groups: Groups = field(default_factory=Groups)
     prefabs: dict[str, Prefab] = field(default_factory=dict)
     clipboard: Prefab | None = None
-    #: Timeline view (not saved; rebuilt as the history runs): game time → step index at
-    #: that tick boundary, action step index → game time, and the last recorded tick.
+    #: Timeline view (not saved; rebuilt as the history runs), in ticks since the base
+    #: (tick 0): tick → step index at that tick boundary (after its edits), and recorded
+    #: edit step index → tick.
     tick_steps: dict[int, int] = field(default_factory=dict)
     edit_ticks: dict[int, int] = field(default_factory=dict)
-    end_tick: int = 0
     #: Monitored blocks (saved) and their recorded values per tick (not saved).
     monitors: list[Pos] = field(default_factory=list)
     samples: dict[Pos, dict[int, int]] = field(default_factory=dict)
+    _undo: list[HistoryState] = field(default_factory=list)
+    _redo: list[HistoryState] = field(default_factory=list)
+    _batch_depth: int = 0
+    _batch_saved: bool = False
 
     def __post_init__(self) -> None:
         if self.timeline is None:
             self.timeline = Timeline(self.engine)
-        self.end_tick = self.engine.game_time
         self._observe()
 
     @property
@@ -95,21 +141,73 @@ class Document:
     def can_edit(self) -> bool:
         return self.engine.at_tick_boundary()
 
+    @property
+    def tick(self) -> int:
+        """Ticks since the base (tick 0, the build state)."""
+        return self.history.tick()
+
+    @property
+    def end_tick(self) -> int:
+        return max(self.history.end_tick(), self.tick)
+
     # ------------------------------------------------------------------ edits
     def _apply(self, action: Action, label: str) -> None:
+        """Apply an edit. At tick 0 it changes the build state (not recorded, never
+        replayed); later it is recorded at its tick. Edits at one tick form one batch."""
         if not self.can_edit:
             raise EditError("Finish the current tick before editing (edits happen between ticks).")
-        discarded = self.history.end - self.history.position
-        index = self.history.position
+        history = self.history
+        before = None if self._batch_saved else self._history_state()
+        future = history.end_tick() - self.tick if history.position < history.end else 0
+        index = history.position
+        action = replace(action, label=label)
         try:
-            self.history.apply(action)
+            if history.at_base:
+                history.apply_to_base(action)
+            else:
+                history.apply(action)
         except ActionError as exc:
             raise EditError(str(exc)) from exc
-        if discarded:
-            self._forget_after(index, self.engine.game_time)
-        self.edit_ticks[index] = self.engine.game_time
-        self.notice = f"Discarded {discarded} recorded later steps." if discarded else ""
+        if before is not None:
+            self._undo.append(before)
+            self._redo.clear()
+            self._batch_saved = self._batch_depth > 0
+        if future or history.at_base:
+            self._forget_after(self.tick)
+        if not history.at_base:
+            self.edit_ticks[index] = self.tick
+        if future:
+            self.notice = f"Discarded the recorded {future} ticks after this point."
         self._changed()
+
+    @contextmanager
+    def batch(self) -> Iterator[None]:
+        """Several edits as one undo step (e.g. a dragged line of blocks)."""
+        self._batch_depth += 1
+        try:
+            yield
+        finally:
+            self._batch_depth -= 1
+            if not self._batch_depth:
+                self._batch_saved = False
+
+    def place_many(self, positions: Iterable[Pos], block: Block, request: PlaceRequest) -> int:
+        """Place ``block`` at each free position that can hold it, as one edit batch and one
+        undo step; returns how many were placed."""
+        placed = 0
+        with self.batch():
+            for pos in positions:
+                if not self.state_at(pos).is_air:
+                    continue
+                state = placement_state(block, request, self.engine.level, pos)
+                if state is None:
+                    continue
+                try:
+                    self._apply(Action("place", pos, repr(state)), f"place {block.name}")
+                except EditError:
+                    continue
+                placed += 1
+        return placed
 
     def place(self, pos: Pos, block: Block, request: PlaceRequest) -> None:
         state = placement_state(block, request, self.engine.level, pos)
@@ -286,23 +384,116 @@ class Document:
         return type(block).use_without_item is not Block.use_without_item
 
     # ------------------------------------------------------------------ undo
+    def _history_state(self) -> HistoryState:
+        history = self.history
+        return HistoryState(history.base, history.plan(), self.end_tick, self.tick)
+
     def undo(self) -> bool:
-        """Rewind to just before the most recent edit (simulation steps after it go too)."""
-        target = self.history.undo_target()
-        if target is None:
+        """Undo the last edit (or edit batch, history change): the history is rebuilt
+        without it, the simulation re-run, and the view returns to where it was made."""
+        if not self._undo or not self.can_edit:
             return False
-        self.history.seek(target)
-        self._changed()
+        current = self._history_state()
+        self._redo.append(current)
+        state = self._undo.pop()
+        # Keep the simulated length: the history is re-run without the edit.
+        self._rebuild(replace(state, end_tick=max(state.end_tick, current.end_tick)))
         return True
 
     def redo(self) -> bool:
-        """Replay forward through the next recorded edit."""
-        target = self.history.redo_target()
-        if target is None:
+        if not self._redo or not self.can_edit:
             return False
-        self.history.seek(target)
-        self._changed()
+        self._undo.append(self._history_state())
+        self._rebuild(self._redo.pop())
         return True
+
+    def _rebuild(self, state: HistoryState) -> list[tuple[int, Action, str]]:
+        """Re-create the history from a base and an edit plan, re-running the simulation."""
+        self.tick_steps, self.edit_ticks = {}, {}
+        for values in self.samples.values():
+            values.clear()
+        history = self.history
+        failures = history.rewrite(state.base, state.plan, state.end_tick, self._observe)
+        self.edit_ticks = {i: t - history.base_time for i, t in history.input_times.items()}
+        self.seek_tick(min(state.tick, self.end_tick))
+        self._changed()
+        return failures
+
+    # ------------------------------------------------------------------ edit batches
+    def edit_batches(self) -> list[EditBatch]:
+        """The recorded edits grouped by tick and row (the timeline's keyframes)."""
+        grouped: dict[tuple[int, str], list[int]] = {}
+        for index in sorted(self.history.inputs):
+            action = self.history.inputs[index]
+            key = (self.edit_ticks.get(index, 0), edit_row(action))
+            grouped.setdefault(key, []).append(index)
+        return [
+            EditBatch(
+                tick,
+                row,
+                tuple(indices),
+                tuple(self.history.inputs[i].label or self.history.inputs[i].kind for i in indices),
+            )
+            for (tick, row), indices in sorted(grouped.items())
+        ]
+
+    def _replan(self, new_ticks: dict[int, int | None], label: str) -> int:
+        """Move recorded edits (index → new tick; None deletes) and rebuild the history.
+        Tick 0 folds edits into the build state. Returns how many edits failed."""
+        if not self.can_edit:
+            raise EditError("Finish the current tick first.")
+        history = self.history
+        before = self._history_state()
+        moved: list[tuple[int, int, Action]] = []
+        for index in sorted(history.inputs):
+            tick = new_ticks[index] if index in new_ticks else self.edit_ticks.get(index, 0)
+            if tick is None:
+                continue
+            moved.append((max(0, tick), index, history.inputs[index]))
+        plan: Plan = {}
+        for tick, _, action in sorted(moved, key=lambda m: (m[0], m[1])):
+            plan.setdefault(tick, []).append(action)
+        failures = self._rebuild(HistoryState(before.base, plan, before.end_tick, before.tick))
+        self._undo.append(before)
+        self._redo.clear()
+        self.notice = f"{label}." + (
+            f" {len(failures)} edits could not be applied there and were dropped."
+            if failures
+            else ""
+        )
+        return len(failures)
+
+    def move_edits(self, indices: Iterable[int], delta: int) -> int:
+        """Shift recorded edits by ``delta`` ticks (to tick 0 or earlier: into the build)."""
+        new_ticks: dict[int, int | None] = {i: self.edit_ticks.get(i, 0) + delta for i in indices}
+        return self._replan(new_ticks, f"Moved {len(new_ticks)} edits by {delta:+d} ticks")
+
+    def merge_edits(self, indices: Iterable[int], tick: int | None = None) -> int:
+        """Gather recorded edits into one tick (default: the earliest of them), keeping
+        their order."""
+        chosen = list(indices)
+        if not chosen:
+            return 0
+        target = min(self.edit_ticks.get(i, 0) for i in chosen) if tick is None else tick
+        where = "the build (tick 0)" if target == 0 else f"tick {target}"
+        new_ticks: dict[int, int | None] = {i: target for i in chosen}
+        return self._replan(new_ticks, f"Merged {len(chosen)} edits into {where}")
+
+    def delete_edits(self, indices: Iterable[int]) -> int:
+        new_ticks: dict[int, int | None] = {i: None for i in indices}
+        return self._replan(new_ticks, f"Deleted {len(new_ticks)} edits")
+
+    def set_tick_zero(self) -> None:
+        """Make the current state the build state (tick 0); the history before it goes."""
+        if not self.can_edit:
+            raise EditError("Finish the current tick first.")
+        self._undo.append(self._history_state())
+        self._redo.clear()
+        self.history.rebase()
+        self.tick_steps, self.edit_ticks = {}, {}
+        for values in self.samples.values():
+            values.clear()
+        self._changed()
 
     # ------------------------------------------------------------------ simulation
     def step(self) -> StepInfo:
@@ -336,23 +527,25 @@ class Document:
         return True
 
     def jump(self, where: str) -> bool:
-        """Blender-like jumps: ``"start"``/``"end"`` of the recorded history, or the
-        ``"previous"``/``"next"`` edit (landing just after it). False if already there."""
+        """Blender-like jumps: ``"start"`` (tick 0) / ``"end"`` of the recorded history, or
+        the tick of the ``"previous"``/``"next"`` edit batch (after its edits). False if
+        already there."""
         history = self.history
         position = history.position
-        after_edits = [index + 1 for index in history.action_indices()]
         if where == "start":
             target = history.start
         elif where == "end":
             target = history.end
-        elif where == "previous":
-            earlier = [p for p in after_edits if p < position]
-            target = max(earlier) if earlier else history.start
         else:
-            later = [p for p in after_edits if p > position]
-            if not later:
-                return False
-            target = min(later)
+            ticks = sorted(set(self.edit_ticks.values()))
+            if where == "previous":
+                earlier = [t for t in ticks if t < self.tick]
+                if earlier:
+                    return self.seek_tick(max(earlier))
+                target = history.start
+            else:
+                later = [t for t in ticks if t > self.tick]
+                return bool(later) and self.seek_tick(min(later))
         if target == position:
             return False
         self.seek(target)
@@ -398,23 +591,21 @@ class Document:
     def _observe(self) -> None:
         """Record where this tick boundary is in the history and sample monitored blocks."""
         engine, history = self.engine, self.history
-        tick = engine.game_time
-        if history.position >= history.end:
-            self.end_tick = tick
+        tick = self.tick
         if engine.at_tick_boundary():
             self.tick_steps[tick] = max(self.tick_steps.get(tick, -1), history.position)
             for pos in self.monitors:
                 self.samples.setdefault(pos, {})[tick] = monitor_value(engine.level, pos)
 
-    def _forget_after(self, index: int, tick: int) -> None:
-        """An edit after a rewind dropped the recorded future: drop what described it."""
-        self.tick_steps = {t: s for t, s in self.tick_steps.items() if s <= index or t < tick}
+    def _forget_after(self, tick: int) -> None:
+        """An edit dropped the recorded future after ``tick``: drop what described it (and
+        stale step positions, which the edit changed)."""
+        self.tick_steps = {t: s for t, s in self.tick_steps.items() if t < tick}
         actions = set(self.history.action_indices())
         self.edit_ticks = {i: t for i, t in self.edit_ticks.items() if i in actions}
         for values in self.samples.values():
             for stale in [t for t in values if t > tick]:
                 del values[stale]
-        self.end_tick = tick
 
     def seek_tick(self, tick: int) -> bool:
         """Scrub to a tick boundary of the recorded history (after that moment's edits)."""
