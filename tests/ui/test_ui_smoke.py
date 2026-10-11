@@ -103,3 +103,22 @@ def test_run_loop_keeps_real_time(app: object) -> None:
     assert window.viewport.overlay_text[0].startswith("paused")
     window.document.dirty = False
     window.close()
+
+
+def test_f1_brings_the_controls_to_the_front(app: object) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1000, 700)
+    window.show()
+    QtWidgets.QApplication.processEvents()
+    assert window.help_dock.visibleRegion().isEmpty()  # behind the block palette tab
+    window.viewport.setFocus()
+    QTest.keyClick(window.viewport, Qt.Key.Key_F1)
+    QtWidgets.QApplication.processEvents()
+    assert not window.help_dock.visibleRegion().isEmpty()
+    window.document.dirty = False
+    window.close()

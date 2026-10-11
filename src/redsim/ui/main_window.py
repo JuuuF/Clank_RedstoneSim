@@ -212,9 +212,7 @@ class MainWindow(QMainWindow):
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
         self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
-        self._action(
-            help_menu, "Controls", lambda: self.help_dock.setVisible(True), "help.controls"
-        )
+        self._action(help_menu, "Controls", self._show_controls, "help.controls")
 
     # ------------------------------------------------------------------ modes and keymap
     def _mode_key(self, mode: str) -> None:
@@ -228,6 +226,11 @@ class MainWindow(QMainWindow):
     def _mode_changed(self, mode: str) -> None:
         self._mode_actions[mode].setChecked(True)
         self._message(f"{mode.upper()} mode: {self.viewport.mode_hint()}")
+
+    def _show_controls(self) -> None:
+        """Bring the Controls dock to the front (it shares a tab group with the palette)."""
+        self.help_dock.show()
+        self.help_dock.raise_()
 
     def _focus_pivot(self) -> None:
         if not self.viewport.focus_hover():
