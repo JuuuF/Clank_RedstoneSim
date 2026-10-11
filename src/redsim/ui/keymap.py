@@ -83,6 +83,12 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("edit.copy", "Copy the selection", ("Ctrl+C",)),
     ActionSpec("edit.paste", "Paste at the block under the cursor", ("Ctrl+V",)),
     ActionSpec("edit.rotate", "Rotate the clipboard 90°", ("R",)),
+    ActionSpec("edit.rotate_block", "Rotate the block under the cursor clockwise", ("Q",)),
+    ActionSpec(
+        "edit.rotate_block_back",
+        "Rotate the block under the cursor counter-clockwise",
+        ("Shift+Q",),
+    ),
     ActionSpec("edit.delete", "Clear the selection (fill with air)", ("Del",)),
     ActionSpec("file.new", "New world", ("Ctrl+N",)),
     ActionSpec("file.open", "Open…", ("Ctrl+O",)),

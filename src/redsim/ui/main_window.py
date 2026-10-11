@@ -42,6 +42,7 @@ from redsim.ui.panels import (
 from redsim.ui.viewport import BUILD, NORMAL, SELECT, Viewport
 from redsim.world import blocks
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
+from redsim.world.rotation import rotate_state
 
 FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
 #: Run loop: timer period, the longest it may simulate in one go (keeps the UI responsive),
@@ -170,6 +171,16 @@ class MainWindow(QMainWindow):
         edit_menu = bar.addMenu("&Edit")
         self._action(edit_menu, "&Undo", self._undo, "edit.undo")
         self._action(edit_menu, "&Redo", self._redo, "edit.redo")
+        edit_menu.addSeparator()
+        self._action(
+            edit_menu, "Rotate block clockwise", lambda: self._rotate_block(1), "edit.rotate_block"
+        )
+        self._action(
+            edit_menu,
+            "Rotate block counter-clockwise",
+            lambda: self._rotate_block(3),
+            "edit.rotate_block_back",
+        )
         mode_menu = bar.addMenu("&Mode")
         group = QActionGroup(self)
         for mode, text in ((NORMAL, "&Normal"), (BUILD, "&Build"), (SELECT, "&Select")):
@@ -330,6 +341,23 @@ class MainWindow(QMainWindow):
             self._edit(self.document.use, pos)
         else:
             self._message(f"{block.name} cannot be used (to place blocks, switch to BUILD mode).")
+
+    def _rotate_block(self, quarter_turns: int) -> None:
+        """Rotate the block under the cursor (else the inspected one) with ``/setblock``."""
+        hit = self.viewport.hover
+        pos = hit.pos if hit is not None else self.viewport.selection
+        if pos is None:
+            self._message("Point at a block to rotate it.")
+            return
+        state = self.document.state_at(pos)
+        rotated = rotate_state(state, quarter_turns)
+        if rotated is state:
+            self._message(
+                f"{state.block.name} does not turn around the vertical axis; the inspector "
+                "can set any property."
+            )
+            return
+        self._edit(self.document.setblock, pos, rotated)
 
     def _break(self, pos: Pos) -> None:
         self._edit(self.document.break_block, pos)

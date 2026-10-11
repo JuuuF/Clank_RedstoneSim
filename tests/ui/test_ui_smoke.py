@@ -122,3 +122,21 @@ def test_f1_brings_the_controls_to_the_front(app: object) -> None:
     assert not window.help_dock.visibleRegion().isEmpty()
     window.document.dirty = False
     window.close()
+
+
+def test_rotate_block_under_the_cursor(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.world.properties import FACING
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("repeater[facing=north]"))
+    window.viewport.hover = Hit((0, 1, 0), Direction.UP, 5.0)
+    window._rotate_block(1)
+    assert document.state_at((0, 1, 0)).get(FACING) is Direction.EAST
+    window._rotate_block(3)
+    assert document.state_at((0, 1, 0)).get(FACING) is Direction.NORTH
+    window._undo()  # one undo per rotation
+    assert document.state_at((0, 1, 0)).get(FACING) is Direction.EAST
+    window.document.dirty = False
+    window.close()

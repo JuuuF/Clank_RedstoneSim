@@ -49,10 +49,21 @@ reason the old Shift+T rewind was disliked).
 | ← / Shift+← | tick back / step back |
 | Ctrl+Z / Ctrl+Y | undo / redo (rewinds to just before the last edit) |
 | Ctrl+C / Ctrl+V | copy the selection box / paste at the block under the cursor |
+| Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
 | R | rotate the clipboard 90° |
 | Del | clear the selection box (fill with air) |
 | 1–9 | hotbar |
 | F1 | controls panel |
+
+## Changing placed blocks
+
+- **Q / Shift+Q** turns the block under the cursor (repeaters, comparators, pistons facing
+  sideways, levers, buttons, torches, wire connections). Up/down facings do not turn.
+- **Inspector:** left-click a block in NORMAL mode, choose any property (facing, delay,
+  mode, …) and press *Apply (/setblock)*. This covers everything Q cannot.
+- Both are `/setblock` edits ([[decisions]] ADR-013): the new state is set directly, then
+  neighbors update. A wall torch turned away from its wall stays until a neighbor update
+  pops it, as in the game.
 
 ## Rebinding
 
