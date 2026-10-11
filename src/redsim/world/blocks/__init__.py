@@ -14,6 +14,7 @@ from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.diode import RepeaterBlock
 from redsim.world.blocks.lamp import RedstoneLampBlock
 from redsim.world.blocks.lectern import LecternBlock
+from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import MovingPistonBlock, PistonBaseBlock, PistonHeadBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
@@ -106,6 +107,7 @@ COMPARATOR = register(ComparatorBlock())
 CAKE = register(CakeBlock())
 BARREL = register(BarrelBlock())
 LECTERN = register(LecternBlock())
+OBSERVER = register(ObserverBlock())
 PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
 PISTON_HEAD = register(PistonHeadBlock())
@@ -134,6 +136,7 @@ __all__ = [
     "STONE_BUTTON",
     "OAK_PLANKS",
     "MOVING_PISTON",
+    "OBSERVER",
     "OBSIDIAN",
     "PISTON",
     "PISTON_HEAD",

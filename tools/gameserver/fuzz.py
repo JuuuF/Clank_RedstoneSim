@@ -50,6 +50,7 @@ def _palette(rng: random.Random) -> list[tuple[int, Callable[[], Entry | str]]]:
         (2, lambda: "minecraft:slime_block"),
         (1, lambda: "minecraft:honey_block"),
         (1, lambda: RB),
+        (4, lambda: f"minecraft:observer[facing={rng.choice(ALL_SIX)}]"),
         (
             2,
             lambda: (

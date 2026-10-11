@@ -188,6 +188,8 @@ def block_boxes(state: BlockState) -> list[Box]:
         return [Box((1 + 2 * bites, 0, 1), (15, 8, 15), rgb(0.95, 0.90, 0.88))]
     if block_id == "minecraft:barrel":
         return face_any(_barrel(), state.get(FACING))
+    if block_id == "minecraft:observer":
+        return face_any(_observer(state.get(POWERED)), state.get(FACING))
     if block_id == "minecraft:lectern":
         model = _lectern(state.get(HAS_BOOK), state.get(POWERED))
         return face_horizontally(model, state.get(HORIZONTAL_FACING))
@@ -196,6 +198,17 @@ def block_boxes(state: BlockState) -> list[Box]:
 
 BARREL_WOOD = rgb(0.52, 0.38, 0.22)
 LECTERN_WOOD = rgb(0.62, 0.47, 0.30)
+
+
+def _observer(powered: bool) -> list[Box]:
+    # Facing north: the watching face is z = 0, the output dot on the back (z = 16).
+    body = rgb(0.42, 0.42, 0.42)
+    return [
+        Box((0, 0, 1), (16, 16, 15), body),
+        Box((0, 0, 0), (16, 16, 1), rgb(0.22, 0.22, 0.24)),  # the face
+        Box((0, 0, 15), (16, 16, 16), rgb(0.36, 0.36, 0.36)),
+        Box((6, 6, 16), (10, 10, 16.4), LIT_RED if powered else UNLIT_RED),  # output dot
+    ]
 
 
 def _barrel() -> list[Box]:

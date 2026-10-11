@@ -72,6 +72,9 @@ reading and unit tests only.
 | EXP-029 | `wire_grid`: a 6×6 dust carpet powered from corners and edges at different ticks, with lamps: dust update order and shapes in a dense grid | 20 | match | 2026-10-11 |
 | EXP-030 | `torch_tower`: a 4-stage torch tower (repeater-driven) with short and long pulses, then 3-on/3-off toggling until the bottom torch burns out at tick 64 | 90 | match | 2026-10-11 |
 | EXP-031 | `fuzz_1` … `fuzz_40`: 40 seeded random circuits (every supported block, 2 layers, 4 toggled inputs with 0-tick pulses, 10 live edits inside the circuit), whole volume compared for 50 ticks | 50 each | match | 2026-10-11 |
+| EXP-032 | `observer_clock`: two observers facing each other oscillate, lamps behind them follow | 30 | match | 2026-10-11 |
+| EXP-033 | `observer_detects`: observers watching dust being powered, a lamp, a piston extending, and a chain of four observers fired by a placed block; lamps and dust behind. First run found the simulator treated observers as conductors | 24 | match | 2026-10-11 |
+| EXP-034 | `observer_pushed`: a sticky piston moves a pulsing observer back and forth (placement and removal rules) | 24 | match | 2026-10-11 |
 
 Evidence files: `experiments/results/<scenario>.json`.
 

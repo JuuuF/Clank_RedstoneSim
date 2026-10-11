@@ -620,6 +620,82 @@ TORCH_TOWER = Scenario(
     },
 )
 
+# ------------------------------------------------------------------ observers
+OBSERVER_CLOCK = Scenario(
+    name="observer_clock",
+    description="Two observers facing each other (a clock), each with a lamp behind it.",
+    size=(6, 3),
+    setup=[
+        ((2, 1, 1), "minecraft:observer[facing=east]"),
+        ((3, 1, 1), "minecraft:observer[facing=west]"),
+        ((1, 1, 1), "minecraft:redstone_lamp"),
+        ((4, 1, 1), "minecraft:redstone_lamp"),
+    ],
+    watch=[(x, 1, 1) for x in range(1, 5)],
+    ticks=30,
+)
+
+OBSERVER_DETECTS = Scenario(
+    name="observer_detects",
+    description=(
+        "Observers watching dust that gets powered, a lamp, a piston extending and a chain "
+        "of observers fired by a block placed in front of the first; lamps and dust behind."
+    ),
+    size=(12, 10),
+    setup=[
+        ((1, 1, 1), "minecraft:redstone_wire"),
+        ((2, 1, 1), "minecraft:redstone_wire"),
+        ((2, 1, 2), "minecraft:observer[facing=north]"),
+        ((2, 1, 3), "minecraft:redstone_lamp"),
+        ((5, 1, 1), "minecraft:redstone_lamp"),
+        ((5, 1, 2), "minecraft:observer[facing=north]"),
+        ((5, 1, 3), "minecraft:redstone_wire"),
+        ((5, 1, 4), "minecraft:redstone_wire"),
+        ((8, 1, 1), "minecraft:piston[facing=up]"),
+        ((8, 1, 2), "minecraft:observer[facing=north]"),
+        ((8, 1, 3), "minecraft:redstone_lamp"),
+        ((1, 1, 6), "minecraft:observer[facing=west]"),
+        ((2, 1, 6), "minecraft:observer[facing=west]"),
+        ((3, 1, 6), "minecraft:observer[facing=west]"),
+        ((4, 1, 6), "minecraft:observer[facing=west]"),
+        ((5, 1, 6), "minecraft:redstone_lamp"),
+    ],
+    watch=[(x, 1, z) for z in (1, 2, 3, 4) for x in (1, 2, 5, 8)]
+    + [(8, 2, 1)]
+    + [(x, 1, 6) for x in range(0, 6)],
+    ticks=24,
+    inputs={
+        2: [((0, 1, 1), RB), ((4, 1, 1), RB), ((7, 1, 1), RB), ((0, 1, 6), "minecraft:stone")],
+        12: [((0, 1, 1), AIR), ((4, 1, 1), AIR), ((7, 1, 1), AIR)],
+    },
+)
+
+OBSERVER_PUSHED = Scenario(
+    name="observer_pushed",
+    description=(
+        "A sticky piston moves an observer back and forth while the observer is pulsing "
+        "(onPlace and removal rules), with dust behind the observer."
+    ),
+    size=(8, 4),
+    setup=[
+        ((1, 1, 1), "minecraft:sticky_piston[facing=east]"),
+        ((2, 1, 1), "minecraft:observer[facing=north]"),
+        ((2, 1, 0), "minecraft:stone"),
+        ((2, 1, 2), "minecraft:redstone_wire"),
+        ((3, 1, 2), "minecraft:redstone_wire"),
+        ((4, 1, 2), "minecraft:redstone_lamp"),
+    ],
+    watch=[(x, 1, z) for z in (0, 1, 2) for x in range(1, 5)],
+    ticks=24,
+    inputs={
+        1: [((2, 1, 0), AIR)],
+        2: [((0, 1, 1), RB)],
+        3: [((0, 1, 1), AIR)],
+        9: [((0, 1, 1), RB)],
+        15: [((0, 1, 1), AIR)],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -651,6 +727,9 @@ ALL = [
     PISTON_RACE,
     WIRE_GRID,
     TORCH_TOWER,
+    OBSERVER_CLOCK,
+    OBSERVER_DETECTS,
+    OBSERVER_PUSHED,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

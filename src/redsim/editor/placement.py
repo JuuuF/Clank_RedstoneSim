@@ -32,6 +32,7 @@ from redsim.world.blocks.attached import FaceAttachedBlock
 from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.diode import DiodeBlock
 from redsim.world.blocks.lectern import LecternBlock
+from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import PistonBaseBlock
 from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
 from redsim.world.properties import ATTACH_FACE, FACING, HORIZONTAL_FACING
@@ -124,6 +125,9 @@ def placement_state(
             if candidate is not None and candidate.can_survive(level, pos):
                 return candidate
         return None
+    if isinstance(block, ObserverBlock):
+        # ObserverBlock.getStateForPlacement L157: FACING = the nearest looking direction.
+        return block.default_state.with_(FACING, ordered_by_nearest(request.yaw, request.pitch)[0])
     if isinstance(block, PistonBaseBlock | BarrelBlock):
         # PistonBaseBlock/BarrelBlock.getStateForPlacement: FACING = nearest looking
         # direction, reversed.

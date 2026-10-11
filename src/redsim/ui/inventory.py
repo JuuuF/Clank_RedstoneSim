@@ -45,11 +45,13 @@ INVENTORY = Folder(
                 "minecraft:redstone_torch",
                 "minecraft:repeater",
                 "minecraft:comparator",
+                "minecraft:observer",
                 "minecraft:redstone_lamp",
                 "minecraft:redstone_block",
-                "minecraft:lever",
-                "minecraft:stone_button",
-                "minecraft:oak_button",
+                Folder(
+                    "Switches",
+                    ("minecraft:lever", "minecraft:stone_button", "minecraft:oak_button"),
+                ),
             ),
         ),
         Folder(
