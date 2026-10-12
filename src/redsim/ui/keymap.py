@@ -69,7 +69,7 @@ LEGACY_DEFAULTS: dict[str, tuple[tuple[str, ...], ...]] = {
     "paste.zoom": (("Ctrl+Wheel",),),
     "build.layer": (("Wheel",),),
     "build.zoom": (("Ctrl+Wheel",),),
-    "sim.event": (("Shift+Right", "E"),),
+    "sim.event": (("Shift+Right", "E"), ("Ctrl+Right", "E")),
     "sim.step_back": (("Shift+Left",),),
     "build.break": (("Left Click",), ()),
     "build.place": (("Right Click",),),
@@ -116,6 +116,11 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("camera.up", "Move the pivot up", ("PgUp",), HOLD),
     ActionSpec("camera.down", "Move the pivot down", ("PgDown",), HOLD),
     ActionSpec("camera.focus", "Move the pivot to the block under the cursor", ("F",)),
+    ActionSpec(
+        "block.popup",
+        "Inspect the block under the cursor in a popup (contents, settings)",
+        ("E",),
+    ),
     ActionSpec("pick", "Pick the block type under the cursor", ("Middle Click",), MOUSE),
     ActionSpec(
         "paste.layer", "While pasting: move the paste layer up/down", ("Shift+Wheel",), MOUSE
@@ -152,7 +157,7 @@ ACTIONS: tuple[ActionSpec, ...] = (
         "sim.set_zero", "Set tick 0 here (the current state becomes the build)", ("Ctrl+0",)
     ),
     ActionSpec("sim.tick", "Step one tick", ("Right", "T")),
-    ActionSpec("sim.event", "Step one event (engine step)", ("Ctrl+Right", "E")),
+    ActionSpec("sim.event", "Step one event (engine step)", ("Ctrl+Right",)),
     ActionSpec("sim.tick_back", "Tick back", ("Left",)),
     ActionSpec("sim.step_back", "Step back (one engine step)", ("Ctrl+Left",)),
     ActionSpec("sim.start", "Jump to the start of the recorded history", ("Shift+Left",)),
@@ -462,7 +467,11 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         ),
     ),
     ("Modes", None, ("mode.normal", "mode.build", "mode.select")),
-    ("NORMAL mode: inspect and use", "normal", ("normal.inspect", "normal.use", "pick")),
+    (
+        "NORMAL mode: inspect and use",
+        "normal",
+        ("normal.inspect", "block.popup", "normal.use", "pick"),
+    ),
     (
         "BUILD mode: place and break",
         "build",

@@ -155,11 +155,8 @@ and textures (ADR-023), the dark Minecraft-meets-Blender theme (ADR-024).
 
 Suggested next steps:
 
-0. **Open owner request (2026-10-12):** press **E** while hovering over a block to open
-   its inspector as a popup in the viewport (contents and settings, like the Inspector
-   tab). E is currently the secondary key of "Step one event" (`sim.event`); it moves to
-   the popup (the keymap's `LEGACY_DEFAULTS` mechanism keeps old keymap files working).
-   Status: see the "Block popup" line in [[controls]] once done.
+0. **Done 2026-10-12 (owner request):** E over a block opens its inspector as a popup in
+   the viewport ([[controls]], "Block popup"); "Step one event" keeps Ctrl+→ only.
 1. **Owner review** of round 7 and the polish pass on the desktop
    (`redsim examples/showcase.redsim.json`); open questions are listed in the round-7
    summary (grass vs. stone ground, name fade, Lock/region button dimming).

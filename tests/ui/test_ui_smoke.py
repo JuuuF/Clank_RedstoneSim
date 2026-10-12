@@ -379,3 +379,26 @@ def test_unsaved_changes_prompt(app: object) -> None:
     assert window._confirm_discard(closing=True) is True
     window.document.dirty = False
     window.close()
+
+
+def test_e_opens_the_block_under_the_cursor_in_a_popup(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1000, 700)
+    window.show()
+    window.inventory.select_block(blocks.REDSTONE_LAMP)
+    window._place((2, 1, 0))
+    assert window.keymap.bindings("block.popup") == ("E",)
+    assert "E" not in window.keymap.bindings("sim.event")  # E moved to the popup
+    window.viewport.hover = Hit((2, 1, 0), Direction.UP, 4.0)
+    window._actions["block.popup"].trigger()
+    popup = window.block_popup
+    assert popup.isVisible() and popup.pos_ == (2, 1, 0)
+    assert "Redstone Lamp" in popup.inspector.title.text()
+    popup.inspector.apply_requested.emit((2, 1, 0), blocks.STONE.default_state)  # an edit
+    assert window.document.state_at((2, 1, 0)).is_(blocks.STONE)
+    popup.close()
+    assert not popup.isVisible() and popup.pos_ is None
+    window.document.dirty = False
+    window.close()

@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QAction,
     QActionGroup,
     QCloseEvent,
+    QCursor,
     QDesktopServices,
     QKeyEvent,
     QKeySequence,
@@ -42,6 +43,7 @@ from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
 from redsim.mcworld.importer import open_world, stream_chunks
 from redsim.ui import pixel_icons, theme
+from redsim.ui.block_popup import BlockPopup
 from redsim.ui.block_search import BlockSearch
 from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import world_lines
@@ -149,6 +151,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
 
         self.inspector = InspectorPanel()
+        self.block_popup = BlockPopup(self)
         self.diagnostics = DiagnosticsPanel()
         self.sections = SectionsPanel(self.document)
         self.contraptions = ContraptionsPanel()
@@ -237,10 +240,15 @@ class MainWindow(QMainWindow):
         canvas.rename_marker.connect(self._rename_marker)
         canvas.delete_marker.connect(lambda tick: self._name_marker(tick, ""))
         self.simulation.set_tick_zero.connect(self._set_tick_zero)
-        self.inspector.monitor_requested.connect(self._toggle_monitor)
-        self.inspector.hit_requested.connect(self._projectile_hit)
-        self.inspector.plate_requested.connect(self._plate_visitors)
-        self.inspector.contents_requested.connect(self._set_container_slot)
+        for inspector in (self.inspector, self.block_popup.inspector):
+            inspector.monitor_requested.connect(self._toggle_monitor)
+            inspector.hit_requested.connect(self._projectile_hit)
+            inspector.plate_requested.connect(self._plate_visitors)
+            inspector.contents_requested.connect(self._set_container_slot)
+            inspector.apply_requested.connect(self._apply_state)
+            inspector.source_requested.connect(self._set_source)
+            inspector.page_requested.connect(self._turn_page)
+            inspector.section_requested.connect(self._assign_section)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
         self.viewport.line_requested.connect(self._place_line)
@@ -256,10 +264,6 @@ class MainWindow(QMainWindow):
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
         self.viewport.mode_changed.connect(self.hotkeys.set_mode)
-        self.inspector.apply_requested.connect(self._apply_state)
-        self.inspector.source_requested.connect(self._set_source)
-        self.inspector.page_requested.connect(self._turn_page)
-        self.inspector.section_requested.connect(self._assign_section)
         self.sections.changed.connect(lambda: self._changed())
         self.simulation.play_toggled.connect(self._play)
         self.simulation.step_tick.connect(self._step_tick)
@@ -334,6 +338,7 @@ class MainWindow(QMainWindow):
         self._mode_actions[self.viewport.mode].setChecked(True)
         mode_menu.addSeparator()
         self._action(mode_menu, "Move pivot to the block", self._focus_pivot, "camera.focus")
+        self._action(mode_menu, "Inspect the block (popup)", self._open_block_popup, "block.popup")
         sim_menu = bar.addMenu("&Simulation")
         # The transport buttons' pixel icons, where a button does the same.
         for text, slot, keymap_id, icon in (
@@ -594,6 +599,19 @@ class MainWindow(QMainWindow):
         setattr(self.viewport, attribute, on)
         self.viewport.update()
 
+    def _open_block_popup(self) -> None:
+        """The inspector of the block under the cursor (else the selected one) as a popup
+        beside the cursor."""
+        hit = self.viewport.hover
+        pos = hit.pos if hit is not None else self.viewport.selection
+        if pos is None:
+            self._message("Point at a block to inspect it.")
+            return
+        self.block_popup.close_keys = tuple(
+            b.upper() for b in self.keymap.bindings("block.popup") if len(b) == 1
+        )
+        self.block_popup.open_at(self.document, pos, QCursor.pos())
+
     def _focus_pivot(self) -> None:
         if not self.viewport.focus_hover():
             self._message("Point at a block to move the pivot there.")
@@ -638,6 +656,7 @@ class MainWindow(QMainWindow):
             return
         self._panels_refreshed = now
         self.inspector.show_block(self.document, self.viewport.selection)
+        self.block_popup.refresh(self.document)
         self.simulation.show_status(self.document)
         self.sections.refresh()
         self.contraptions.show_document(self.document)

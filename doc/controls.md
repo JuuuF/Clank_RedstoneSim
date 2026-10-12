@@ -61,6 +61,10 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 | **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
 - Middle click picks the block type under the cursor in every mode.
+- **Block popup: E** over a block (any mode) opens its inspector next to the cursor:
+  the same controls as the Inspector tab (state, contents, signal source, pressure-plate
+  visitors, section, monitor); it follows the block while the simulation runs. Esc, E
+  again or a click outside closes it (`ui/block_popup.py`, keymap action `block.popup`).
 - The badge in the bottom-left corner shows the mode and what it works on; the hint bar below lists the keys.
 - Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and the selection box.
@@ -163,7 +167,7 @@ reason the old Shift+T rewind was disliked).
 | Ctrl+Shift+Space | play backwards / pause (stops at tick 0) |
 | Ctrl+0 | **Set tick 0 here** (also a button by the transport controls): the current state becomes the build; later edits move along |
 | → or T / ← | step one tick forward / back |
-| Ctrl+→ or E / Ctrl+← | step one event (engine step) forward / back |
+| Ctrl+→ / Ctrl+← | step one event (engine step) forward / back (E did this until 2026-10-12; it now opens the block popup) |
 | Shift+← / Shift+→ | jump to tick 0 / the end of the recorded history (Blender) |
 | ↑ / ↓ | jump to the next / previous edit (like Blender's keyframe jumps) |
 | Ctrl+Z / Ctrl+Y | undo / redo: the last edit (or line, or keyframe operation) is removed from the history and the simulation re-run; the view returns to where it was made |
