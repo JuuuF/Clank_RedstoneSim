@@ -141,19 +141,27 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 All seven owner feedback rounds ([[ui-direction]]) are done. Round 7 (2026-10-12): the
 wheel moves the camera up and down, uniform inventory rows, the game's block names, 1-pixel
-dust and rails, 30 %/50 % X-ray defaults, a fading layer grid. Then a UI polish pass
-(pixel-art icons, timeline and inventory restyle, ADR-025). Round 6: "Set tick 0 here" restarts the clock (every stored game time shifts), blocks are
-drawn with the game's own models and textures from the supplied jar (ADR-023), a dark
-Minecraft-meets-Blender theme with the game's pixel font, a hotbar-style inventory whose
-folder stack grows upwards, and a smooth camera (ADR-024).
+dust and rails, 30 %/50 % X-ray defaults, a fading layer grid. Then an overnight UI polish
+pass ([[ui-direction]], ADR-025): pixel-art icons everywhere, the game's hotbar sprites,
+a grass superflat horizon with the game's clouds (View → Scenery), a restyled timeline,
+container slot grids, Minecraft-style tooltips, remembered window layout, and fixes found
+on the way (guide-line blending, unpainted tab gaps, an unbounded text cache, late GL
+texture destruction). Round 6: "Set tick 0 here" restarts the clock, the game's models
+and textures (ADR-023), the dark Minecraft-meets-Blender theme (ADR-024).
 
 Suggested next steps:
 
-1. **Owner review** of round 4 on the desktop (`redsim examples/showcase.redsim.json`).
+1. **Owner review** of round 7 and the polish pass on the desktop
+   (`redsim examples/showcase.redsim.json`); open questions are listed in the round-7
+   summary (grass vs. stone ground, name fade, Lock/region button dimming).
 2. **Mechanics:** droppers/dispensers and chests (containers for hoppers), note blocks,
    pressure plates (need entities), scheduled-tick-driven piston 0-ticks.
-3. **Diagnostics polish:** interactive causal trace tree, "why did this block change?".
-4. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
+3. **Diagnostics:** an interactive causal trace ("why did this block change?"), hover
+   readouts on monitor tracks (value and tick under the cursor), a signal-strength
+   heat view in the viewport.
+4. **Editing comfort:** an undo history list, named bookmarks on the timeline, a
+   "compare two ticks" view (blocks that differ highlighted).
+5. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
    from tick 0, which is fine for hundreds of ticks but should keep keyframes for long
    histories.
 
