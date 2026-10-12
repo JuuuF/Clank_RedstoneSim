@@ -188,8 +188,16 @@ Not a feedback round; changes made while reviewing screenshots of every view
   with game names, fitting columns and empty-state rows; section color swatches;
   Preferences grouped with a reset button; block search shows the folder dim on the
   right; game block names in every message.
+- Scenery (View → Scenery, on by default): a superflat ground around the floor with
+  the game's stone texture, fading into the horizon, and the game's clouds drifting
+  high above. The sky gradient starts at the horizon line; fog is computed per fragment.
+- Inspector: container contents as a Minecraft slot grid (item icons, stack counts, a
+  click picks the slot for editing); pixel compass arrows on direction buttons; source
+  kinds show their block.
 - Fixes: document-mode tab widgets left unpainted gaps (now filled); Fusion's bevel
-  colors were light; the window size and dock layout are remembered (`window.json`).
+  colors were light; spin and combo boxes had no arrows; guide lines ignored their
+  alpha (blending was off), so the layer grid only looked faded where it z-fought with
+  block tops; the window size and dock layout are remembered (`window.json`).
 
 ## Looks
 
