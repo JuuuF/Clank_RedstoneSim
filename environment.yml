@@ -2,7 +2,7 @@
 #
 #   conda env create -f environment.yml
 #   conda activate redsim
-#   pip install -e . --no-deps      # makes `redsim` and `python -m redsim` available
+#   python -m pip install -e . --no-deps   # makes `redsim` and `python -m redsim` available
 #
 # Python comes from conda-forge; Python packages come from pip (the PySide6 wheel is the
 # build the project was tested with, see doc/implementation-notes.md).

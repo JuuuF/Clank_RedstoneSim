@@ -6,7 +6,7 @@ structure in [[architecture]], the current state in [[project-state]].
 ## Environment
 
 - Conda environment `redsim` (owner-approved, 2026-10-11): `conda env create -f
-  environment.yml`, then `pip install -e . --no-deps`. Python 3.12 comes from conda-forge
+  environment.yml`, then `python -m pip install -e . --no-deps`. Python 3.12 comes from conda-forge
   (avoiding the Anaconda defaults channel's terms prompt). numpy, PySide6 (pinned to the
   tested 6.9.2 wheel), pytest, ruff and mypy come from pip.
 - The base Anaconda interpreter also works (same PySide6 wheel). Code must type-check with

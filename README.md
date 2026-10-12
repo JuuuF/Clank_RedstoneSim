@@ -15,14 +15,18 @@ Details: [`doc/project-state.md`](doc/project-state.md).
 ```sh
 conda env create -f environment.yml   # once: Python 3.12 + PySide6 6.9.2, numpy, dev tools
 conda activate redsim
-pip install -e . --no-deps            # once: provides the `redsim` command
+python -m pip install -e . --no-deps  # once: provides the `redsim` command (the env's pip)
 redsim examples/showcase.redsim.json  # open the example world (guided tour: doc/tour.md)
 python -m pytest                      # run the test suite (~2 s)
 python -m tools.gameserver.run        # optional: compare against a sandboxed 26.3 server
                                       # (needs Java 25 and the JARs in data/)
 ```
 
-Without conda: Python 3.12 with `pip install -e .[dev]`.
+Without conda: Python 3.12 with `python -m pip install -e .[dev]`.
+
+If `redsim` is not found afterwards (macOS): `pip` may have been another Python's
+(check `pip -V`), so use `python -m pip …` as above; in zsh run `rehash` once. `python -m
+redsim` always works in the environment.
 
 ## Documentation
 
