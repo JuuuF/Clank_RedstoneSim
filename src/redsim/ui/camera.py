@@ -21,9 +21,10 @@ MAX_PITCH = 89.0
 @dataclass
 class Camera:
     pivot: np.ndarray = field(default_factory=lambda: np.array([0.5, 1.0, 0.5]))
-    distance: float = 12.0
-    yaw: float = 0.0
-    pitch: float = 35.0
+    # A three-quarter view over the floor, with the horizon in sight.
+    distance: float = 26.0
+    yaw: float = 35.0
+    pitch: float = 30.0
     fov: float = 70.0
 
     # ------------------------------------------------------------------ directions
