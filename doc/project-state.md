@@ -156,9 +156,8 @@ Suggested next steps:
    summary (grass vs. stone ground, name fade, Lock/region button dimming).
 2. **Mechanics:** droppers/dispensers and chests (containers for hoppers), note blocks,
    pressure plates (need entities), scheduled-tick-driven piston 0-ticks.
-3. **Diagnostics:** an interactive causal trace ("why did this block change?"), hover
-   readouts on monitor tracks (value and tick under the cursor), a signal-strength
-   heat view in the viewport.
+3. **Diagnostics:** an interactive causal trace ("why did this block change?"), a
+   signal-strength heat view in the viewport.
 4. **Editing comfort:** an undo history list, named bookmarks on the timeline, a
    "compare two ticks" view (blocks that differ highlighted).
 5. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run

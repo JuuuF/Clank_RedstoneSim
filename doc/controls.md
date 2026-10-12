@@ -31,7 +31,8 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     undo step; edits that cannot be applied at their new time are dropped (with a note).
   - **Monitor tracks** (logic-analyzer style): Inspector → Monitor adds the selected
     block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
-    row. Right-click a row's label to remove it. Monitored blocks are saved; their
+    row; hovering a row shows the value at that tick. Right-click a row's label to
+    remove it. Monitored blocks are saved; their
     recorded values are rebuilt as the simulation runs.
 - **Inventory** (Trackmania's hierarchy, Minecraft's hotbar): every folder level is a row
   drawn with the game's own hotbar (9 slots, game-style previews, the number key in a
