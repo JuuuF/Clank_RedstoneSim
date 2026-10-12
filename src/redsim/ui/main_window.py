@@ -1090,9 +1090,16 @@ class MainWindow(QMainWindow):
             self.tick_rate.reset(now)
             self.viewport.frame_rate.reset(now)
             self.play_timer.start(PLAY_INTERVAL_MS)
+            self._glide(self.pacer.rate)
         else:
             self.play_timer.stop()
+            self.simulation.canvas.set_running(None)  # snap to the exact tick
             self._changed()
+
+    def _glide(self, rate: float) -> None:
+        """Let the timeline's playhead glide at ``rate`` ticks per second."""
+        sign = -1.0 if self.simulation.backwards else 1.0
+        self.simulation.canvas.set_running(sign * rate)
 
     def _speed(self, tps: int) -> None:
         self.pacer.set_rate(tps, time.monotonic())
@@ -1121,7 +1128,10 @@ class MainWindow(QMainWindow):
         if not warp:
             self.pacer.ran(ran)
         if ran:  # nothing changed otherwise: no repaint
-            self.tick_rate.record(time.monotonic(), ran)
+            now = time.monotonic()
+            self.tick_rate.record(now, ran)
+            measured = self.tick_rate.rate(now)
+            self._glide(measured if measured > 0 else self.pacer.rate)
             self._changed(running=True)
 
     def _step_tick(self) -> None:

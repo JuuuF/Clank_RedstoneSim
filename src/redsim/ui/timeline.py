@@ -14,9 +14,10 @@ remove it.
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass
 
-from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QKeyEvent,
@@ -46,6 +47,9 @@ from redsim.ui import pixel_icons, theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
 
+#: While playing, the playhead may glide this many seconds of ticks past the last known one
+#: (the panels are refreshed a few times a second).
+GLIDE_LOOKAHEAD = 0.15
 #: Icon-only transport buttons: less side padding than text buttons.
 COMPACT = "QToolButton { padding: 3px 4px; }"
 BACKGROUND = QColor(theme.PANEL)
@@ -109,6 +113,14 @@ class TimelineCanvas(QWidget):
         self.setMouseTracking(True)
         self._hover_tick: int | None = None  # a track's tick under the cursor
         self.markers: dict[int, str] = {}  # tick → name (Blender-style markers)
+        # While playing, the playhead glides between the ticks the panels show (they are
+        # refreshed a few times a second) instead of jumping: ticks per second (negative
+        # when playing backwards) and where the glide started (tick, time).
+        self._glide_rate: float | None = None
+        self._glide_base = (0.0, 0.0)
+        self._glide_timer = QTimer(self)
+        self._glide_timer.setInterval(16)
+        self._glide_timer.timeout.connect(self.update)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._resize_to_tracks()
 
@@ -121,6 +133,11 @@ class TimelineCanvas(QWidget):
         batches: list[EditBatch],
         tracks: list[Track],
     ) -> None:
+        if self._glide_rate is not None:  # carry on from where the playhead is shown
+            now = time.monotonic()
+            shown = self.shown_tick(now)
+            gap = self._glide_gap()
+            self._glide_base = (min(max(shown, current - gap), current + gap), now)
         self.start, self.end, self.current = start, end, current
         self.batches, self.tracks = batches, tracks
         present = {(b.tick, b.row) for b in batches}
@@ -246,11 +263,12 @@ class TimelineCanvas(QWidget):
             painter.drawText(where_x, y + self.ROW_HEIGHT - 5, where)
             painter.setPen(TEXT)
         self._paint_markers(painter)
-        x = self._x(self.current)
+        shown = self.shown_tick()
+        x = self._x(shown)
         if x >= self.LABEL_WIDTH:
             painter.setPen(PLAYHEAD)
-            painter.drawLine(int(x), 0, int(x), height)
-            label = str(self.current)
+            painter.drawLine(QPointF(x, 0), QPointF(x, height))
+            label = str(math.floor(shown))
             width = max(20, painter.fontMetrics().horizontalAdvance(label) + 10)
             left = max(x - width / 2, float(self.LABEL_WIDTH))  # tick 0 sits at the edge
             badge = QRectF(left, 1, width, 17)
@@ -280,6 +298,33 @@ class TimelineCanvas(QWidget):
             painter.drawPolygon(flag)
             painter.setPen(gold)
             painter.drawText(QPointF(x + 6, base), name)
+
+    def set_running(self, rate: float | None) -> None:
+        """Playing at ``rate`` ticks per second (negative: backwards), or None: paused, the
+        playhead snaps to the exact tick."""
+        if rate is None:
+            self._glide_rate = None
+            self._glide_timer.stop()
+        else:
+            if self._glide_rate is None:
+                self._glide_base = (float(self.current), time.monotonic())
+            self._glide_rate = rate
+            self._glide_timer.start()
+        self.update()
+
+    def _glide_gap(self) -> float:
+        """How far the shown playhead may run ahead of (or behind) the known tick."""
+        return max(1.0, abs(self._glide_rate or 0.0) * GLIDE_LOOKAHEAD)
+
+    def shown_tick(self, now: float | None = None) -> float:
+        """Where the playhead is drawn: the tick when paused, else gliding."""
+        rate = self._glide_rate
+        if rate is None:
+            return float(self.current)
+        base, since = self._glide_base
+        moved = base + ((now if now is not None else time.monotonic()) - since) * rate
+        gap = self._glide_gap()
+        return min(max(moved, self.current - gap), self.current + gap)
 
     def set_markers(self, markers: dict[int, str]) -> None:
         """Markers get their own strip under the tick numbers while there are any."""

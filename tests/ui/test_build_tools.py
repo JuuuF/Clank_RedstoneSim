@@ -412,3 +412,22 @@ def test_hint_bar_keeps_its_height_in_every_mode(app: Any) -> None:
     assert len(heights) == 1  # nothing above it resizes
     window.document.dirty = False
     window.close()
+
+
+def test_playhead_glides_while_playing_and_snaps_when_paused(app: Any) -> None:
+    import time
+
+    from redsim.ui.timeline import GLIDE_LOOKAHEAD, TimelineCanvas
+
+    canvas = TimelineCanvas()
+    canvas.set_data(0, 10, 10, [], [])
+    canvas.set_running(20.0)
+    start = time.monotonic()
+    assert canvas.shown_tick(start) == pytest.approx(10.0, abs=0.1)
+    assert 10.5 < canvas.shown_tick(start + 0.05) < 11.5  # gliding towards tick 11
+    assert canvas.shown_tick(start + 5.0) == pytest.approx(10 + max(1.0, 20 * GLIDE_LOOKAHEAD))
+    before = canvas.shown_tick()
+    canvas.set_data(0, 11, 11, [], [])  # the next known tick: no jump backwards
+    assert canvas.shown_tick() >= before
+    canvas.set_running(None)
+    assert canvas.shown_tick() == 11.0  # paused: exactly on the tick
