@@ -102,6 +102,7 @@ class MainWindow(QMainWindow):
         self.tabs.setDocumentMode(True)  # flat tabs, no frame (Blender-like)
         self.tabs.addTab(self.inspector, "Inspector")
         circuit = QTabWidget()
+        circuit.setProperty("subtabs", True)
         circuit.setDocumentMode(True)
         circuit.addTab(self.sections, "Sections")
         circuit.addTab(self.contraptions.group_page, "Groups")

@@ -568,6 +568,7 @@ class DiagnosticsPanel(QTabWidget):
 
     def __init__(self) -> None:
         super().__init__()
+        self.setProperty("subtabs", True)  # second-level tabs (theme)
         self.ticks = QTableWidget(0, 5)
         self.ticks.setHorizontalHeaderLabels(["At tick", "Block", "Pos", "Priority", "Sub-tick"])
         self.ticks.verticalHeader().setVisible(False)

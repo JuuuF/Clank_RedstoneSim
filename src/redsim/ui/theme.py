@@ -117,6 +117,12 @@ QTabBar::tab {{
 }}
 QTabBar::tab:hover {{ color: {TEXT}; }}
 QTabBar::tab:selected {{ color: {TEXT}; border-bottom: 2px solid {ACCENT}; }}
+/* Second-level tabs (inside a tab): small pills, so the levels read apart. */
+QTabWidget[subtabs="true"] > QTabBar::tab {{
+    padding: 3px 10px; margin: 4px 2px 4px 0; border: none; border-radius: 4px;
+}}
+QTabWidget[subtabs="true"] > QTabBar::tab:selected {{ background: {WIDGET_HOVER}; }}
+QTabWidget[subtabs="true"]::pane {{ border-top: none; }}
 QListWidget, QTreeWidget, QTableWidget {{
     background: {SUNKEN}; border: 1px solid {BORDER}; border-radius: 4px;
     alternate-background-color: {PANEL}; gridline-color: {LINE};
