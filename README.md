@@ -5,10 +5,13 @@ Minecraft **Java Edition 26.3**. The simulation core is a faithful Python port o
 game's server-side update logic (neighbor updates, scheduled ticks, block events, block
 entities) and is checked tick by tick against the real game.
 
-Status: simulation core, the core components (lever, buttons, lamp, torch, wire, repeater,
-comparator), pistons (with slime/honey) and a 3D editor with rewind/replay, copy/paste and
-prefabs work; behavior is verified tick by tick against the real game (22 scenarios).
-Details: [`doc/project-state.md`](doc/project-state.md).
+Status: the simulation core and most redstone components work (lever, buttons, lamp,
+torch, wire, repeater, comparator, pistons with slime/honey, observers, rails, target
+blocks, hoppers, barrels, lecterns, note blocks, copper bulbs, droppers, dispensers,
+chests, pressure plates), with a 3D editor (rewind/replay, copy/paste, prefabs, the game's
+own textures) that can also open Minecraft Java saves and stream their chunks around the
+camera. Behavior is verified tick by tick against the real game (46 named scenarios and 40
+random circuits). Details and next steps: [`doc/project-state.md`](doc/project-state.md).
 
 ## Quick start
 
@@ -36,8 +39,9 @@ in [`doc/`](doc/README.md), which is also an Obsidian vault.
 ## Editor controls
 
 Modes: **Esc** NORMAL (left click inspects, right click uses levers etc.), **B** BUILD (left
-breaks, right places), **V** SELECT (click or drag boxes). Camera: middle-drag orbits around
-the pivot, Shift+middle-drag pans, Ctrl+wheel moves the pivot up/down, wheel zooms, WASD
-moves the pivot, F focuses the block under the cursor. Space runs/pauses, → / ← step a tick
-forward/back. All bindings are rebindable (Settings → Edit keymap file). Full list:
+places, right removes), **V** SELECT (click or drag boxes). **E** over a block opens its
+inspector as a popup. Camera: middle-drag orbits around the pivot, Shift+middle-drag pans,
+the wheel zooms, Shift+wheel moves the pivot up/down, WASD moves the pivot, F focuses the
+block under the cursor. Space runs/pauses, → / ← step a tick forward/back. All bindings are
+rebindable (Settings → Keymap…); macOS gets a few extra defaults. Full list:
 [`doc/controls.md`](doc/controls.md); in the app: F1.
