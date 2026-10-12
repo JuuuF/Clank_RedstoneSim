@@ -122,6 +122,14 @@ GROUND_REACH = 900.0  # inside the far plane (1000)
 HIDDEN_OVERLAY_ALPHA = 0.4
 
 
+def _plane(y: float, color: tuple[float, ...], marker: float) -> np.ndarray:
+    """A horizontal square of side 2 × ``GROUND_REACH`` at height ``y`` (two triangles),
+    with ``marker`` as both UV coordinates: it selects the shader branch."""
+    r, m = GROUND_REACH, (marker, marker)
+    corners = [(-r, -r), (r, -r), (r, r), (-r, -r), (r, r), (-r, r)]
+    return np.array([(x, y, z, *color, *m) for x, z in corners], dtype=np.float32)
+
+
 def _forget_texture(texture: QOpenGLTexture) -> None:
     """Free the texture's GPU storage (call with its context current) and detach the
     Python wrapper, so the C++ destructor never runs later: it asks the texture's context
@@ -187,12 +195,8 @@ class Renderer:
         self._upload_sky(-1.0)
         self.volume = _Stream()  # faint translucent selection body
         self.clouds: QOpenGLTexture | None = None
-        self.cloud_plane = _Stream()
-        r, y, c = GROUND_REACH, CLOUD_Y, CLOUD_COLOR
-        mark = (-3.0, -3.0)  # UV marker: the shader samples the cloud texture
-        plane = [(-r, y, -r, *c, *mark), (r, y, -r, *c, *mark), (r, y, r, *c, *mark)]
-        plane += [(-r, y, -r, *c, *mark), (r, y, r, *c, *mark), (-r, y, r, *c, *mark)]
-        self.cloud_plane.upload(self.program, np.array(plane, dtype=np.float32))
+        self.cloud_plane = _Stream()  # UV marker -3: the shader samples the cloud texture
+        self.cloud_plane.upload(self.program, _plane(CLOUD_Y, CLOUD_COLOR, -3.0))
         self.ground = _Stream()
         self.ground_tile = (0.0, 0.0, 0.0, 0.0)
         self.ground_average = (0.0, 0.0, 0.0)
@@ -225,11 +229,8 @@ class Renderer:
         self.sky.upload(self.program, np.array(rows, dtype=np.float32))
 
     def _upload_ground(self, color: tuple[float, float, float]) -> None:
-        r, y, c = GROUND_REACH, GROUND_Y, (*color, 1.0)
-        mark = (-2.0, -2.0)  # UV marker: the shader tiles the ground texture
-        plane = [(-r, y, -r, *c, *mark), (r, y, -r, *c, *mark), (r, y, r, *c, *mark)]
-        plane += [(-r, y, -r, *c, *mark), (r, y, r, *c, *mark), (-r, y, r, *c, *mark)]
-        self.ground.upload(self.program, np.array(plane, dtype=np.float32))
+        # UV marker -2: the shader tiles the ground texture.
+        self.ground.upload(self.program, _plane(GROUND_Y, (*color, 1.0), -2.0))
 
     def set_ground(
         self, tile: tuple[float, float, float, float] | None, average: tuple[float, ...]
