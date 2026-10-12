@@ -267,8 +267,9 @@ class InventoryCanvas(QWidget):
         recent = self.bar.recent
         size = 34
         x = self.width() - 8 - len(recent) * (size + 3)
+        top = bottom - size  # level with the bottom (root) hotbar row
         for index, block_id in enumerate(recent):
-            rect = QRect(x + index * (size + 3), self.NAME + 4, size, size)
+            rect = QRect(x + index * (size + 3), top, size, size)
             spots.append(_Spot(rect, "recent", -1, index, block_id, block_label(block_id)))
         return spots
 
@@ -303,9 +304,9 @@ class InventoryCanvas(QWidget):
             painter.fillRect(QRect(4, r.top(), 3, r.height()), QColor(theme.ACCENT))
         recent = [s for s in self.spots if s.kind == "recent"]
         if recent:
-            label = "Recent"
-            x = self.width() - theme.text_width(label) - 10
-            theme.draw_text(painter, x, 3, label, theme.TEXT_DIM, 2, shadow=False)
+            first = recent[0].rect
+            y = first.top() - 12
+            theme.draw_text(painter, first.left(), y, "RECENT", theme.TEXT_DIM, 1, False)
         name = self.hovered.title if self.hovered is not None else self._current_name()
         if name:
             theme.draw_text(painter, 14, 3, name, theme.GOLD)
