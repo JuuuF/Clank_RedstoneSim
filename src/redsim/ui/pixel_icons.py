@@ -279,13 +279,14 @@ ICON_SIZE = QSize(
 
 
 @cache
-def pixel_pixmap(name: str, color: str = theme.TEXT) -> QPixmap:
+def pixel_pixmap(name: str, color: str = theme.TEXT, scale: int = SCALE) -> QPixmap:
     """``name``'s art in ``color`` with the game's 1-pixel drop shadow, on a canvas wide
-    enough for the widest icon, so all icons line up."""
+    enough for the widest icon, so all icons line up; ``scale`` screen pixels per art
+    pixel."""
     rows = ICONS[name]
     width = max(len(row) for icon in ICONS.values() for row in icon) + 1
     height = max(len(icon) for icon in ICONS.values()) + 1
-    pixmap = QPixmap(width * SCALE, height * SCALE)
+    pixmap = QPixmap(width * scale, height * scale)
     pixmap.fill(QColor(0, 0, 0, 0))
     painter = QPainter(pixmap)
     left = (width - 1 - len(rows[0])) // 2
@@ -296,7 +297,7 @@ def pixel_pixmap(name: str, color: str = theme.TEXT) -> QPixmap:
             for x, cell in enumerate(row):
                 if cell == "#":
                     rect = QRect(
-                        (left + x + offset) * SCALE, (top + y + offset) * SCALE, SCALE, SCALE
+                        (left + x + offset) * scale, (top + y + offset) * scale, scale, scale
                     )
                     painter.fillRect(rect, fill)
     painter.end()
@@ -304,7 +305,10 @@ def pixel_pixmap(name: str, color: str = theme.TEXT) -> QPixmap:
 
 
 def pixel_icon(name: str) -> QIcon:
-    """The icon, with a dimmed variant for disabled buttons."""
-    icon = QIcon(pixel_pixmap(name))
-    icon.addPixmap(pixel_pixmap(name, theme.TEXT_DIM), QIcon.Mode.Disabled)
+    """The icon at 2× (buttons) and 1× (menus: crisp instead of scaled down), with dimmed
+    variants for disabled actions."""
+    icon = QIcon()
+    for scale in (1, SCALE):
+        icon.addPixmap(pixel_pixmap(name, theme.TEXT, scale))
+        icon.addPixmap(pixel_pixmap(name, theme.TEXT_DIM, scale), QIcon.Mode.Disabled)
     return icon

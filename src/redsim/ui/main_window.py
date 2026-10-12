@@ -255,15 +255,24 @@ class MainWindow(QMainWindow):
         mode_menu.addSeparator()
         self._action(mode_menu, "Move pivot to the block", self._focus_pivot, "camera.focus")
         sim_menu = bar.addMenu("&Simulation")
-        self._action(sim_menu, "Run / pause", self.simulation.play.toggle, "sim.run")
-        self._action(
-            sim_menu, "Play backwards / pause", self.simulation.reverse.toggle, "sim.run_back"
-        )
-        self._action(sim_menu, "Set tick 0 here", self._set_tick_zero, "sim.set_zero")
-        self._action(sim_menu, "Step tick", self._step_tick, "sim.tick")
-        self._action(sim_menu, "Step event", self._step_event, "sim.event")
-        self._action(sim_menu, "Tick back", self._tick_back, "sim.tick_back")
-        self._action(sim_menu, "Step back", self._step_back, "sim.step_back")
+        # The transport buttons' pixel icons, where a button does the same.
+        for text, slot, keymap_id, icon in (
+            ("Run / pause", self.simulation.play.toggle, "sim.run", "play"),
+            (
+                "Play backwards / pause",
+                self.simulation.reverse.toggle,
+                "sim.run_back",
+                "reverse",
+            ),
+            ("Set tick 0 here", self._set_tick_zero, "sim.set_zero", None),
+            ("Step tick", self._step_tick, "sim.tick", "step"),
+            ("Step event", self._step_event, "sim.event", None),
+            ("Tick back", self._tick_back, "sim.tick_back", "back"),
+            ("Step back", self._step_back, "sim.step_back", None),
+        ):
+            action = self._action(sim_menu, text, slot, keymap_id)
+            if icon:
+                action.setIcon(pixel_icons.pixel_icon(icon))
         sim_menu.addSeparator()
         for text, where, keymap_id in (
             ("Jump to start", "start", "sim.start"),
@@ -271,7 +280,8 @@ class MainWindow(QMainWindow):
             ("Previous edit", "previous", "sim.prev_edit"),
             ("Next edit", "next", "sim.next_edit"),
         ):
-            self._action(sim_menu, text, lambda _=False, w=where: self._jump(w), keymap_id)
+            action = self._action(sim_menu, text, lambda _=False, w=where: self._jump(w), keymap_id)
+            action.setIcon(pixel_icons.pixel_icon(where))
         region_menu = bar.addMenu("&Region")
         toolbar = self.addToolBar("Tools")
         toolbar.setObjectName("Tools toolbar")
@@ -287,8 +297,6 @@ class MainWindow(QMainWindow):
                     f"border: 1px solid {color.lighter(130).name()}; color: #ffffff; }}"
                 )
         toolbar.addSeparator()
-        # Menu text, then the toolbar's short label: pairs share one label, the second
-        # button of a pair shows only its symbol.
         toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         toolbar.setIconSize(pixel_icons.ICON_SIZE)
         # Menu text, toolbar label (None: the icon alone), pixel icon. Pairs share a label.
