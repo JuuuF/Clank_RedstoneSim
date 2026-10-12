@@ -214,10 +214,12 @@ def test_camera_glides_but_the_build_layer_jumps_at_once(app: Any) -> None:
 def test_layer_grid_fades_and_drop_lines_reach_the_ground(app: Any) -> None:
     from redsim.editor.clipboard import Region
     from redsim.ui.main_window import MainWindow
+    import numpy as np
+
     from redsim.ui.viewport import GRID_ALPHA, _layer_grid
 
     grid = _layer_grid(Region((0, 3, 0), (0, 3, 0)))
-    assert (grid[:, 1] == 3).all()
+    assert np.allclose(grid[:, 1], 3.01)  # just above the layer's floor
     alphas = {(x, z): a for x, _, z, *_, a in grid}
     assert alphas[(0, 0)] == pytest.approx(GRID_ALPHA)  # the target cell's corner: full
     assert alphas[(4, 0)] < alphas[(2, 0)] < GRID_ALPHA  # fading with distance

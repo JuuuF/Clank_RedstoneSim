@@ -358,8 +358,11 @@ class Renderer:
         gl.glDisable(GL_CULL_FACE)
         if self.lines.count:
             program.setUniformValue1f(fog_amount, 0.0)
+            gl.glEnable(GL_BLEND)  # guides fade out (per-vertex alpha)
+            gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
+            gl.glDisable(GL_BLEND)
             program.setUniformValue1f(fog_amount, 1.0)
         if scenery and self.clouds is not None:  # translucent and far: no depth writes
             gl.glEnable(GL_BLEND)

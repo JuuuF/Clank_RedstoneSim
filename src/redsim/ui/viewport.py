@@ -151,14 +151,14 @@ def game_textures() -> tuple[Assets | None, Atlas | None]:
 
 #: The layer grid around a build target or paste: reach (blocks) and strongest alpha.
 GRID_REACH = 5
-GRID_ALPHA = 0.4
+GRID_ALPHA = 0.8
 
 
 def _layer_grid(box: Region) -> np.ndarray:
     """Grid lines on the working plane around ``box``, in one-block segments that fade
     out with the distance to the box, so the grid reads as a height guide and not as
     outlines of the blocks below it."""
-    y = float(box.low[1])
+    y = box.low[1] + 0.01  # just above the layer's floor: no z-fighting with block tops
     lo_x, hi_x = box.low[0], box.high[0] + 1
     lo_z, hi_z = box.low[2], box.high[2] + 1
 
@@ -166,7 +166,7 @@ def _layer_grid(box: Region) -> np.ndarray:
         dx = max(lo_x - x, 0.0, x - hi_x)
         dz = max(lo_z - z, 0.0, z - hi_z)
         fade = max(0.0, 1.0 - math.hypot(dx, dz) / GRID_REACH)
-        return GRID_ALPHA * fade * fade
+        return GRID_ALPHA * fade
 
     xs = range(lo_x - GRID_REACH, hi_x + GRID_REACH + 1)
     zs = range(lo_z - GRID_REACH, hi_z + GRID_REACH + 1)
