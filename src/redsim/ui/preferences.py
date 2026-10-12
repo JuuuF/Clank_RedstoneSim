@@ -52,3 +52,28 @@ class Preferences:
         path = Preferences.path()
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(asdict(self), indent=2) + "\n", encoding="utf-8")
+
+
+def window_layout_path() -> Path:
+    return config_dir() / "window.json"
+
+
+def load_window_layout() -> dict[str, str]:
+    """The main window's saved geometry and dock layout (base64 strings), or ``{}``."""
+    try:
+        data = json.loads(window_layout_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items() if isinstance(k, str) and isinstance(v, str)}
+
+
+def save_window_layout(layout: dict[str, str]) -> None:
+    """Best effort: a read-only config folder only loses the layout."""
+    path = window_layout_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(layout, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass

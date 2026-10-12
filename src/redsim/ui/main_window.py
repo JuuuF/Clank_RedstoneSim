@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import QByteArray, Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
@@ -49,6 +49,7 @@ from redsim.ui.panels import (
     PreferencesDialog,
     SectionsPanel,
 )
+from redsim.ui.preferences import load_window_layout, save_window_layout
 from redsim.ui.timeline import TimelineBar
 from redsim.ui.viewport import BUILD, MODE_COLORS, NORMAL, SELECT, Viewport
 from redsim.world import blocks
@@ -1091,8 +1092,28 @@ class MainWindow(QMainWindow):
             self._edit(self.document.save, Path(path))
             self._message(f"Saved {path}")
 
+    def restore_layout(self) -> bool:
+        """Restore the saved window size and dock layout; False if none was saved."""
+        layout = load_window_layout()
+        geometry, state = layout.get("geometry"), layout.get("state")
+        if not geometry:
+            return False
+        restored = self.restoreGeometry(QByteArray.fromBase64(geometry.encode()))
+        if state:
+            self.restoreState(QByteArray.fromBase64(state.encode()))
+        return restored
+
+    def save_layout(self) -> None:
+        save_window_layout(
+            {
+                "geometry": bytes(self.saveGeometry().toBase64().data()).decode(),
+                "state": bytes(self.saveState().toBase64().data()).decode(),
+            }
+        )
+
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._confirm_discard(closing=True):
+            self.save_layout()
             event.accept()
         else:
             event.ignore()

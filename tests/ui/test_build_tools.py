@@ -227,3 +227,25 @@ def test_layer_grid_fades_and_drop_lines_reach_the_ground(app: Any) -> None:
     assert len(drops) == 4 and all(p[1, 1] == 1 for p in drops)
     window.document.dirty = False
     window.close()
+
+
+def test_window_layout_round_trips(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.preferences import load_window_layout
+
+    window = MainWindow()
+    assert not window.restore_layout()  # nothing saved yet (private config folder)
+    window.resize(1000, 700)
+    window.show()
+    QtWidgets.QApplication.processEvents()
+    window.document.dirty = False
+    window.close()  # saves the layout
+    assert set(load_window_layout()) == {"geometry", "state"}
+    again = MainWindow()
+    assert again.restore_layout()
+    again.show()
+    QtWidgets.QApplication.processEvents()
+    # (the offscreen platform may add its frame margin of a few pixels)
+    assert abs(again.width() - 1000) <= 4 and abs(again.height() - 700) <= 4
+    again.document.dirty = False
+    again.close()

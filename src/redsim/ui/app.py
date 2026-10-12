@@ -38,7 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     window = MainWindow()
     if len(args) > 1:
         window.open_path(Path(args[1]))
-    window.resize(1400, 900)
+    if not window.restore_layout():
+        window.resize(1400, 900)
     window.show()
     return app.exec()
 
