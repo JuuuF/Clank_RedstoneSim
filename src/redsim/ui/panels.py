@@ -6,7 +6,7 @@ import html
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QPixmap
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
@@ -522,6 +522,15 @@ class DiagnosticsPanel(QTabWidget):
         self.trace.setPlainText("\n".join(lines[-2000:]))
 
 
+def _swatch(color: str, size: int = 14) -> QIcon:
+    pixmap = QPixmap(size, size)
+    pixmap.fill(QColor(theme.BORDER))
+    painter = QPainter(pixmap)
+    painter.fillRect(1, 1, size - 2, size - 2, QColor(color))
+    painter.end()
+    return QIcon(pixmap)
+
+
 class SectionsPanel(QWidget):
     changed = Signal()
 
@@ -552,12 +561,16 @@ class SectionsPanel(QWidget):
         self.refresh()
 
     def refresh(self) -> None:
+        """Rebuild the list (a color swatch, the name, the size), keeping the selection."""
+        chosen = self._selected()
         self.list.clear()
         for name, section in self.document.sections.sections.items():
             item = QListWidgetItem(f"{name}  ({len(section.positions)} blocks)")
             item.setData(Qt.ItemDataRole.UserRole, name)
-            item.setForeground(QColor(section.color))
+            item.setIcon(_swatch(section.color))
             self.list.addItem(item)
+            if name == chosen:
+                self.list.setCurrentItem(item)
 
     def _selected(self) -> str | None:
         item = self.list.currentItem()
