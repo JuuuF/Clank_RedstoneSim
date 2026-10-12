@@ -313,7 +313,35 @@ class Viewport(QOpenGLWidget):
         self.selection = None
         self.region = None
         self._mesh_revision = -1  # the diff against the old world drops what is gone
+        self._cover_foreign_textures()
         self.update()
+
+    def _cover_foreign_textures(self) -> None:
+        """Blocks of an opened Minecraft world the simulator does not model have textures
+        the atlas lacks: rebuild it with them (once per new set of blocks)."""
+        if self.assets is None or self.atlas is None:
+            return
+        foreign = {
+            state.block.id
+            for state in set(self.document.level.blocks.values())
+            if state.block.id not in blocks.REGISTRY
+        }
+        missing = {
+            block_id
+            for block_id in foreign
+            if not all(self.atlas.has(t) for t in self.assets.block_textures(block_id))
+        }
+        if not missing:
+            return
+        self.atlas = Atlas.for_blocks(self.assets, foreign)
+        self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
+        self._build_meshes.clear()
+        if self.renderer is not None:
+            self.makeCurrent()
+            for key in list(self.renderer.chunks):
+                self.renderer.remove_chunk(key)
+            self._upload_atlas()
+            self.doneCurrent()
 
     def refresh(self) -> None:
         """Call after the world changed (edits or simulation steps)."""

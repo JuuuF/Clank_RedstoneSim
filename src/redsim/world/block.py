@@ -252,10 +252,13 @@ class BlockState:
 
     # --- presentation helpers -------------------------------------------------------------
     def properties_dict(self) -> dict[str, str]:
-        return {
+        props = {
             prop.name: prop.serialize(value)
             for prop, value in zip(self.block.properties, self.values, strict=True)
         }
+        if self.block.extra_properties:  # a foreign block keeps the game's properties
+            props.update(self.block.extra_properties)
+        return props
 
     def __repr__(self) -> str:
         props = ",".join(f"{k}={v}" for k, v in self.properties_dict().items())
@@ -281,6 +284,8 @@ class Block:
     """Base block with ``BlockBehaviour`` defaults. Subclasses override the hooks."""
 
     properties: tuple[Property, ...] = ()
+    #: Properties carried as text only (``ForeignBlock``: blocks not simulated).
+    extra_properties: dict[str, str] = {}  # noqa: RUF012 - never mutated
 
     def __init__(
         self,

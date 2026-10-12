@@ -76,12 +76,16 @@ class Atlas:
             self._origin[name] = (x + 1, y + 1)
 
     @staticmethod
-    def for_blocks(assets: Assets) -> Atlas:
-        """An atlas with every texture of every registered block's models."""
+    def for_blocks(assets: Assets, extra_blocks: Iterable[str] = ()) -> Atlas:
+        """An atlas with every texture of every registered block's models, and of
+        ``extra_blocks`` (blocks of an opened Minecraft world the simulator does not model)."""
         textures: set[str] = set(EXTRA_TEXTURES)
-        for block_id in blocks.REGISTRY:
+        for block_id in {*blocks.REGISTRY, *extra_blocks}:
             textures |= assets.block_textures(block_id)
         return Atlas(assets, textures)
+
+    def has(self, texture: str) -> bool:
+        return texture in self._origin
 
     def uv(self, texture: str, u: float, v: float) -> tuple[float, float]:
         x, y = self._origin.get(texture, self._origin["#missing"])

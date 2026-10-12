@@ -39,6 +39,7 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
+from redsim.mcworld.importer import open_world
 from redsim.ui import pixel_icons, theme
 from redsim.ui.block_search import BlockSearch
 from redsim.ui.camera import Camera
@@ -74,6 +75,30 @@ FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
 PLAY_INTERVAL_MS = 5
 RUN_BUDGET_SECONDS = 0.035
 PANEL_REFRESH_SECONDS = 0.1
+
+
+#: Where Minecraft keeps its saves (the example world first).
+MINECRAFT_SAVE_FOLDERS = (
+    Path("data/minecraft_saves"),
+    Path.home() / ".minecraft" / "saves",
+)
+
+
+def _plain_cube(block_id: str) -> bool:
+    """A foreign block that behaves like any full cube (quartz, bricks, …): nothing to warn
+    about."""
+    from redsim.world.blocks.foreign import foreign_block
+
+    name = block_id.split(":", 1)[-1]
+    block = foreign_block(block_id, {})
+    plain_names = ("_block", "bricks", "planks", "wool", "concrete", "terracotta", "stone")
+    components = ("note_block", "target", "observer", "dispenser", "dropper", "crafter", "bulb")
+    return (
+        block.full
+        and block.conductor.value == "default"
+        and name.endswith(plain_names)
+        and not any(part in name for part in components)
+    )
 
 
 #: Steps listed under Edit → Undo History.
@@ -264,6 +289,7 @@ class MainWindow(QMainWindow):
         file_menu = bar.addMenu("&File")
         self._action(file_menu, "&New", self._new, "file.new")
         self._action(file_menu, "&Open…", self._open, "file.open")
+        self._action(file_menu, "Open Minecraft world…", self._open_minecraft_world)
         self._action(file_menu, "&Save", self._save, "file.save")
         self._action(file_menu, "Save &as…", self._save_as, "file.save_as")
         file_menu.addSeparator()
@@ -1261,6 +1287,41 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(self, "Open world", "", FILE_FILTER)
         if path:
             self.open_path(Path(path))
+
+    def _open_minecraft_world(self) -> None:
+        """Import the area around the player of a Minecraft Java save (doc/world-import.md)."""
+        if not self._confirm_discard():
+            return
+        start = next((str(p) for p in MINECRAFT_SAVE_FOLDERS if p.exists()), str(Path.home()))
+        folder = QFileDialog.getExistingDirectory(
+            self, "Open Minecraft world (a save folder)", start
+        )
+        if folder:
+            self.open_minecraft_world(Path(folder))
+
+    def open_minecraft_world(self, folder: Path, radius: int = 4) -> None:
+        if not (folder / "level.dat").exists():
+            QMessageBox.critical(self, "Not a Minecraft world", f"{folder} has no level.dat.")
+            return
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            opened = open_world(folder, radius)
+        except (OSError, ValueError, KeyError) as exc:
+            QMessageBox.critical(self, "Cannot open the world", str(exc))
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+        self._set_document(opened.document)
+        area = opened.area
+        approx = [
+            f"{block_name(i)} ×{n}" for i, n in opened.foreign.most_common() if not _plain_cube(i)
+        ]
+        note = f" Approximated (not simulated yet): {', '.join(approx)}." if approx else ""
+        self._message(
+            f"Opened {area.info.name}: {area.chunks} chunks around the player, "
+            f"{len(opened.document.level.blocks)} blocks ({area.skipped_terrain} buried "
+            f"terrain blocks left out).{note}"
+        )
 
     def open_path(self, path: Path) -> None:
         try:

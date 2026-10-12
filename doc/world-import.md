@@ -69,8 +69,12 @@ the moment of writing are stored the way the game stores them (`block_ticks`,
 
 1. **Done first:** NBT reader/writer (byte-exact round trip of `level.dat`), region
    reader, section decoding (all palette forms), whole-world palette scan.
-2. Import a box of chunks around the player into a document (terrain rules above,
-   foreign blocks), File → Open Minecraft world…, the camera at the player's position.
+2. **Done:** File → Open Minecraft world… imports the chunks within 4 of the player into a
+   document (terrain rules above; foreign blocks drawn with their real textures; block
+   entities from their NBT; pending block ticks), the camera at the player's eyes. The
+   example opens in ~3.7 s: 69 chunks, 81 741 blocks kept, 2 032 865 buried terrain blocks
+   left out (whole one-block terrain sections are skipped without decoding). The status
+   line lists what is approximated (note blocks, signs, stairs, leaves, copper bulbs, …).
 3. Index + "go to builds", streaming chunks as the camera moves, the cache.
 4. Write back (copy first), with a round-trip test: import → export → import is
    identical, and untouched chunks are byte-identical.

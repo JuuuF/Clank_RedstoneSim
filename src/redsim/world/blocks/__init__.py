@@ -57,9 +57,18 @@ def parse_state(text: str) -> BlockState:
 
 def parse_state_explicit(text: str) -> tuple[BlockState, list[Property]]:
     """Like ``parse_state``, also returning the properties written out explicitly
-    (``BlockInput.properties``, used by ``overwriteWithDefinedProperties``)."""
+    (``BlockInput.properties``, used by ``overwriteWithDefinedProperties``). An id the
+    simulator does not know gives a ``ForeignBlock`` state (kept as text)."""
     name, _, rest = text.partition("[")
-    block = get(name.strip())
+    block_id = name.strip() if ":" in name else "minecraft:" + name.strip()
+    if block_id not in REGISTRY:
+        from redsim.world.blocks.foreign import foreign_block
+
+        props = dict(part.split("=", 1) for part in rest.rstrip("]").split(",") if "=" in part)
+        return foreign_block(
+            block_id, {k.strip(): v.strip() for k, v in props.items()}
+        ).default_state, []
+    block = get(block_id)
     state = block.default_state
     explicit: list[Property] = []
     if rest:

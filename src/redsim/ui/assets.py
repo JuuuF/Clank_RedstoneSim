@@ -210,7 +210,7 @@ def _matches(condition: dict[str, Any], props: dict[str, str]) -> bool:
 
 
 def _state_props(state: BlockState) -> dict[str, str]:
-    return {p.name: p.serialize(state.get(p)) for p in state.block.properties}
+    return state.properties_dict()
 
 
 class Assets:
