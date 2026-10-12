@@ -195,7 +195,13 @@ class TimelineCanvas(QWidget):
         painter.fillRect(QRectF(0, 0, self.LABEL_WIDTH, height), BACKGROUND)
         painter.fillRect(QRectF(0, 0, self.LABEL_WIDTH, self.RULER_HEIGHT - 2), RULER)
         painter.setPen(TEXT)
-        painter.drawText(8, 16, "tick")
+        # The current tick, like Blender's current frame field: "TICK 34 / 120".
+        x = 8 + theme.draw_text(painter, 8, 6, "TICK", theme.TEXT_DIM, 1, False) + 5
+        x += theme.draw_text(painter, x, 3, str(self.current), theme.GOLD, 2)
+        if self.end > self.current:
+            theme.draw_text(painter, x + 4, 6, f"/ {self.end}", theme.TEXT_DIM, 1, False)
+        elif self.current == 0:
+            theme.draw_text(painter, x + 4, 6, "BUILD", theme.TEXT_DIM, 1, False)
         for row, name in enumerate(EDIT_ROWS):
             top = self._row_top(row)
             painter.setPen(Qt.PenStyle.NoPen)
@@ -557,12 +563,7 @@ class TimelineBar(QWidget):
     def show_status(self, document: Document) -> None:
         engine = document.engine
         tick, end = document.tick, document.end_tick
-        where = "tick <b>0</b> · the build" if tick == 0 else f"tick <b>{tick}</b>"
-        future = f" / {end}" if end > tick else ""
-        self.status.setText(
-            f"{where}{future}&nbsp;&nbsp;<span style='color:{theme.TEXT_DIM}'>"
-            f"{engine.phase.value}</span>"
-        )
+        self.status.setText(f"<span style='color:{theme.TEXT_DIM}'>{engine.phase.value}</span>")
         self.status.setToolTip(
             ("Tick 0 is the build: edits change it.\n" if tick == 0 else "")
             + (f"Recorded up to tick {end}.\n" if end > tick else "")
