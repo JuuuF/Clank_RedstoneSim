@@ -307,6 +307,9 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         toolbar.setIconSize(pixel_icons.ICON_SIZE)
+        #: Region buttons, dimmed while they have nothing to work on (the actions stay
+        #: enabled: their shortcuts explain why nothing happens).
+        self._region_buttons: dict[str, QToolButton] = {}
         # Menu text, toolbar label (None: the icon alone), pixel icon. Pairs share a label.
         for text, short, icon, slot, keymap_id in (
             ("Rotate clockwise", "Rotate", "rotate", lambda: self._rotate(1), "edit.rotate"),
@@ -339,6 +342,8 @@ class MainWindow(QMainWindow):
             action.setToolTip(f"{SPECS[keymap_id].title} ({self.keymap.describe(keymap_id)})")
             toolbar.addAction(action)
             button = toolbar.widgetForAction(action)
+            if isinstance(button, QToolButton):
+                self._region_buttons[keymap_id] = button
             if short is None and isinstance(button, QToolButton):
                 button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             if keymap_id in ("edit.rotate_back", "edit.flip_depth", "edit.paste"):
@@ -562,6 +567,21 @@ class MainWindow(QMainWindow):
         locked = viewport.region_locked and viewport.region is not None
         if self._lock_action.isChecked() != locked:
             self._lock_action.setChecked(locked)
+        has_region = viewport.region is not None
+        transformable = has_region or viewport.paste_preview is not None
+        usable = {
+            "edit.rotate": transformable,
+            "edit.rotate_back": transformable,
+            "edit.flip": transformable,
+            "edit.flip_depth": transformable,
+            "edit.copy": has_region,
+            "edit.paste": self.document.clipboard is not None,
+            "select.lock": has_region,
+        }
+        for keymap_id, on in usable.items():
+            button = self._region_buttons.get(keymap_id)
+            if button is not None and button.isEnabled() != on:
+                button.setEnabled(on)
         spot = viewport.gizmo_hover
         context = Context(
             mode=viewport.mode,
