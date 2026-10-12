@@ -293,6 +293,7 @@ class Renderer:
         eye: tuple[float, float, float] = (0.0, 0.0, 0.0),
         fog: tuple[float, float] = (80.0, 220.0),
         horizon: float = -1.0,
+        scenery: bool = True,
     ) -> None:
         """Draw everything. ``xray`` 1: full building blocks become see-through (no depth
         writes) while circuit parts stay opaque; 2: circuit parts are see-through too."""
@@ -342,8 +343,9 @@ class Renderer:
         gl.glEnable(GL_DEPTH_TEST)
         program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
         program.setUniformValue1f(fog_amount, 1.0)
-        self.ground.vao.bind()
-        gl.glDrawArrays(GL_TRIANGLES, 0, self.ground.count)
+        if scenery:
+            self.ground.vao.bind()
+            gl.glDrawArrays(GL_TRIANGLES, 0, self.ground.count)
         # World faces are wound counter-clockwise seen from outside, like the game's, which
         # draws them with back-face culling: flat parts (dust, rails) show one side only.
         gl.glEnable(GL_CULL_FACE)
@@ -359,7 +361,7 @@ class Renderer:
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
             program.setUniformValue1f(fog_amount, 1.0)
-        if self.clouds is not None:  # translucent, behind everything near: no depth writes
+        if scenery and self.clouds is not None:  # translucent and far: no depth writes
             gl.glEnable(GL_BLEND)
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             gl.glDepthMask(GL_FALSE)

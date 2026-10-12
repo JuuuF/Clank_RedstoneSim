@@ -376,6 +376,13 @@ class MainWindow(QMainWindow):
             "Draw blocks with the game's own models and textures, read from the supplied "
             "client jar (data/minecraft_jars/client.jar). Off: simple colored models."
         )
+        scenery = self._action(view_menu, "Scenery (ground and clouds)", self._toggle_scenery)
+        scenery.setCheckable(True)
+        scenery.setChecked(self.viewport.preferences.scenery)
+        scenery.setToolTip(
+            "A superflat ground around the floor fading into the horizon, and the game's "
+            "clouds. Off: the floor alone in the sky."
+        )
         self._action(view_menu, "Cycle X-ray", self._cycle_xray, "view.xray")
         xray_group = QActionGroup(self)
         self._xray_actions = []
@@ -450,6 +457,12 @@ class MainWindow(QMainWindow):
         self.viewport.preferences.game_textures = on
         with contextlib.suppress(OSError):
             self.viewport.preferences.save()
+
+    def _toggle_scenery(self, on: bool) -> None:
+        self.viewport.preferences.scenery = on
+        with contextlib.suppress(OSError):
+            self.viewport.preferences.save()
+        self.viewport.update()
 
     def _preferences(self) -> None:
         dialog = PreferencesDialog(self.viewport.preferences, self)

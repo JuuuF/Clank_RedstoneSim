@@ -27,6 +27,8 @@ class Preferences:
     xray_circuit_alpha: float = 0.50
     #: Draw blocks with the game's models and textures (when the client jar is there).
     game_textures: bool = True
+    #: The ground around the floor and the clouds (View → Scenery).
+    scenery: bool = True
 
     @staticmethod
     def path() -> Path:
