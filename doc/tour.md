@@ -47,7 +47,7 @@ per second and frames per second. It should hold the target rate (20 by default)
   change that step caused.
 - **Rewind:** ← (tick back), Shift+← (step back), or drag the timeline slider. Replay is
   exact. → steps a tick forward, Shift+→ one event.
-- **Contraptions → Groups** lists each circuit's ports with live values. Double-click an
+- **Circuit → Groups** lists each circuit's ports with live values. Double-click an
   input port to flip its lever.
 - **Copy a circuit:** press V (SELECT mode), drag a box over the circuit, then Ctrl+drag
   from inside the box to drop a copy elsewhere. Or Ctrl+C, then Ctrl+V shows a preview at

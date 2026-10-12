@@ -360,7 +360,7 @@ class MainWindow(QMainWindow):
                 "show_groups",
                 "Show groups",
                 "Groups: white boxes around named contraptions with input/output ports "
-                "(Contraptions → Groups). Annotations only.",
+                "(Circuit → Groups). Annotations only.",
             ),
         ):
             toggle = self._action(

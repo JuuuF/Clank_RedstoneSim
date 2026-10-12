@@ -29,18 +29,20 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     placed while the simulation ran), moves the selection into the build (tick 0), and
     sets tick 0 at the current tick. Each of these re-runs the history and is one
     undo step; edits that cannot be applied at their new time are dropped (with a note).
-  - **Monitor tracks** (logic-analyzer style): Inspector → 📈 Monitor adds the selected
+  - **Monitor tracks** (logic-analyzer style): Inspector → Monitor adds the selected
     block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
     row. Right-click a row's label to remove it. Monitored blocks are saved; their
     recorded values are rebuilt as the simulation runs.
-- **Inventory** (Trackmania's hierarchy, Minecraft's hotbar): the current folder is a row
-  of hotbar slots (game-style previews, the slot number in the corner like an item count,
-  folders marked red, the chosen block framed white, its name in gold above). Every folder
-  level above it stays visible as a row of tabs below the slots, the root lowest, so the
-  stack grows upwards as you open folders (click a tab to jump there). Number keys open a
+- **Inventory** (Trackmania's hierarchy, Minecraft's hotbar): every folder level is a row
+  drawn with the game's own hotbar (9 slots, game-style previews, the number key in a
+  small cap, folders marked with an up chevron, the chosen block in the game's selection
+  frame, its name in gold above, fading after two seconds like the game's). The root row
+  stays lowest; opening a folder slides its row in above, so the stack grows upwards
+  (click a slot of a lower row to jump there; the red bar marks the row the number keys
+  act on). Number keys open a
   folder or pick the block with that number, Backspace goes up. Folders: Redstone,
   Movement, Signal sources, Items, Rails, Building, Special. **Recent** shows the last nine blocks you placed (kept between
-  sessions); **🔍 Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
+  sessions); **Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
   search: type a few letters (fuzzy), Enter builds with the block. Picking a block enters
   BUILD mode. Signal sources show the strength box.
 - **Hint bar** (like Blender's): the essential keys for what you are doing right now (mode,
@@ -98,7 +100,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   clicks; moving, rotating, flipping and stacking still work. Enter or Esc unlocks.
 - **What the other outlines are:** colored single-block outlines are *sections* (Sections
   panel; e.g. blue inputs, green outputs, orange processing), white boxes are *groups*
-  (Contraptions → Groups). Both are annotations; hide them under View.
+  (Circuit → Groups). Both are annotations; hide them under View.
 - **Move:** drag from a block inside the box. A translucent ghost and a white box show the
   target; the wheel lifts or lowers it while dragging. Releasing runs
   `/clone <box> <target> replace move`: one undoable edit, and pending scheduled ticks move
