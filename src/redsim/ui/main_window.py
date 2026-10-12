@@ -108,7 +108,8 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.diagnostics, "Diagnostics")
         self.tabs.addTab(self.hotkeys, "Hotkeys")
         self.side_dock = self._dock("Properties", self.tabs, Qt.DockWidgetArea.RightDockWidgetArea)
-        self.side_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.side_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.side_dock.setTitleBarWidget(QWidget())  # no title: the tabs name the panel
         self.resizeDocks([self.side_dock], [360], Qt.Orientation.Horizontal)
         self.hint_bar = HintBar()
         self.statusBar().addWidget(self.hint_bar, 1)
