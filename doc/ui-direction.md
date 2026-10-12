@@ -167,6 +167,30 @@ Trackmania-style layer grid (round 5) drawn around the target cell at the layer'
 which on flat ground coincides with the edges of the blocks below. It now fades out with
 the distance to the target, so it reads as a height guide.
 
+## UI polish pass (2026-10-12, owner: "keep iterating on the UI until 6 AM")
+
+Not a feedback round; changes made while reviewing screenshots of every view
+([[decisions]] ADR-025):
+
+- Pixel-art icons for the toolbar (modes, rotate, flip, copy, paste, delete, lock), the
+  transport buttons, menus, Monitor, the target projectiles and the search button; mouse
+  gestures in keycaps are pixel mice.
+- Timeline: a darker ruler band with centered tick labels and a rounded playhead badge;
+  the current tick in gold in the ruler's label column; monitor tracks as seamless step
+  waveforms with the block's icon, name and dim position.
+- Inventory: 9-slot hotbar rows (empty slots complete short folders), folders as stacked
+  slots with an up chevron, number keys as small key caps.
+- Viewport: the mode badge shows what the mode works on (block and layer, selection
+  size, inspected block) instead of repeating the hint bar; an empty world shows how to
+  start; the build layer grid fades out.
+- Panels: no dock title bar; Circuit has one tab level (Sections, Groups, Prefabs);
+  inspector header with name and coordinates, capitalized property labels; Diagnostics
+  with game names, fitting columns and empty-state rows; section color swatches;
+  Preferences grouped with a reset button; block search shows the folder dim on the
+  right; game block names in every message.
+- Fixes: document-mode tab widgets left unpainted gaps (now filled); Fusion's bevel
+  colors were light; the window size and dock layout are remembered (`window.json`).
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

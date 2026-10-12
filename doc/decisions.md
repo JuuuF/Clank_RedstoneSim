@@ -387,3 +387,18 @@ Short records. Each one states the context, the decision, and its trade-offs.
   zoom, layer steps and focus.
 - **Trade-offs:** Custom painting (inventory, timeline, overlays) needs its own tests
   (layout order, hit testing) instead of relying on Qt widgets.
+
+## ADR-025
+
+**Pixel-art icons instead of emoji and font glyphs**
+
+- **Context:** After round 7 the owner asked to keep polishing the UI. Buttons mixed color
+  emoji (🔒, 📈, 🔍, 🏹), unicode arrows from different fonts (⏮ rendered smaller than ◀)
+  and plain text, so nothing lined up.
+- **Decision:** `redsim.ui.pixel_icons` draws every button and menu icon from small ASCII
+  art at 2× with the game's 1-pixel drop shadow (1× for menus, so they stay crisp; a dim
+  variant for disabled actions). Derived icons are mirrored or transposed art (rotate back,
+  flip front/back, right mouse). Mouse gestures in keycaps (hint bar, Hotkeys panel) use
+  the same art, like Blender's status bar.
+- **Trade-offs:** New icons are hand-drawn in code; a test keeps all art rectangular and
+  the common canvas size.
