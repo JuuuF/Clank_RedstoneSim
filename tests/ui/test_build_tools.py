@@ -493,3 +493,15 @@ def test_pivot_is_a_block_with_a_shadow_on_the_ground(app: Any) -> None:
     assert len(viewport._pivot_lines()) == 2  # the drop line to it
     window.document.dirty = False
     window.close()
+
+
+def test_selection_fill_breathes(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.viewport import BODY_ALPHA, BODY_PULSE, PULSE_SECONDS
+
+    window = MainWindow()
+    viewport = window.viewport
+    values = [viewport.body_alpha(t * PULSE_SECONDS / 8) for t in range(8)]
+    assert min(values) >= BODY_ALPHA - BODY_PULSE - 1e-9 and max(values) > min(values)
+    window.document.dirty = False
+    window.close()

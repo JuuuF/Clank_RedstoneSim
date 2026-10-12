@@ -225,10 +225,10 @@ Status is kept up to date here; nothing in the message is left out.
 | 10 | P2 | Recent blocks are not discoverable: make them obvious and easy (the program should be easy to understand and use). | done: a labeled RECENT hotbar right next to the inventory, always shown in BUILD (empty slots with a hint until something is placed); Alt+1–9 pick them |
 | 11 | P2 | Slabs on the top half (and similar variants): change the block to place with the selection's transform keys (rotate R / Shift+R, flip H / Shift+H). | done: in BUILD, R / Shift+R turn the block to place, H mirrors it, Shift+H turns it upside down (top slabs, pistons and observers facing down, ceiling levers); the badge names the variant |
 | 12 | P2 | The camera pivot as a small block with a shadow (or another cue) so its position in space is clear. | done: a small orange block with a soft shadow on the surface below and a drop line to it |
-| 13 | P3 | Selection gizmo arrows get outlines (hard to see sometimes). | open |
-| 14 | P3 | The selection box is filled with color, so what is inside reads at a glance. | open |
-| 15 | P3 | A small animation for the selection, so the program feels alive and interactive. | open |
-| 16 | P3 | Lighting a little less plain (a small change, not much effort). | open |
+| 13 | P3 | Selection gizmo arrows get outlines (hard to see sometimes). | done: arrows, rotate ring and arrowheads get dark outlines |
+| 14 | P3 | The selection box is filled with color, so what is inside reads at a glance. | done: filled with the selection color (20 %) |
+| 15 | P3 | A small animation for the selection, so the program feels alive and interactive. | done: the fill breathes slowly (±6 %, 1.8 s) |
+| 16 | P3 | Lighting a little less plain (a small change, not much effort). | done: sunlit tops a little warm, faces in the shade a little cool |
 | 17 | P4 | An in-program keymap editor (no more editing the JSON). | open |
 | 18 | P5 | **Open Minecraft worlds** (example: `data/minecraft_saves/Redstone/`): load chunks around the camera like the game instead of everything; cache in an own fast format keyed by save folder/seed; write changes back to the game's format. Design first ([[world-import]]). | open |
 | — | — | The grass ground is great (keep). | kept |

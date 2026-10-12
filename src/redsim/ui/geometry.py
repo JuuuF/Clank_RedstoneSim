@@ -37,6 +37,16 @@ SHADE = {
     Direction.WEST: 0.68,
     Direction.EAST: 0.68,
 }
+#: A light color per face on top of the shade (round 8: less plain lighting): sunlit tops a
+#: little warm, faces in the shade a little cool, like a sunny day in the game.
+LIGHT = {
+    Direction.UP: (1.03, 1.0, 0.93),
+    Direction.DOWN: (0.94, 0.96, 1.06),
+    Direction.NORTH: (0.97, 0.99, 1.04),
+    Direction.SOUTH: (0.97, 0.99, 1.04),
+    Direction.WEST: (0.95, 0.98, 1.07),
+    Direction.EAST: (0.95, 0.98, 1.07),
+}
 
 
 def _face_quads(lo: np.ndarray, hi: np.ndarray, direction: Direction) -> np.ndarray:
@@ -251,7 +261,8 @@ class Mesher:
         assert self.atlas is not None
         red, green, blue = tint_color(state, quad.tint)
         shade = SHADE[quad.facing] if quad.shade else 1.0
-        color = (red * shade, green * shade, blue * shade, 1.0)
+        lr, lg, lb = LIGHT[quad.facing] if quad.shade else (1.0, 1.0, 1.0)
+        color = (red * shade * lr, green * shade * lg, blue * shade * lb, 1.0)
         key = (quad.corners, quad.uvs, quad.texture, color)
         if key in self._template_ids:
             return self._template_ids[key]
@@ -532,7 +543,10 @@ class ChunkedMesh:
 def _triangles(lo: np.ndarray, hi: np.ndarray, direction: Direction, color: Color) -> np.ndarray:
     quad = _face_quads(lo, hi, direction)
     shade = SHADE[direction]
-    rgba = np.array([color[0] * shade, color[1] * shade, color[2] * shade, color[3]], np.float32)
+    lr, lg, lb = LIGHT[direction]
+    rgba = np.array(
+        [color[0] * shade * lr, color[1] * shade * lg, color[2] * shade * lb, color[3]], np.float32
+    )
     corners = quad[[0, 1, 2, 0, 2, 3]]
     return np.hstack([corners, np.tile(rgba, (6, 1))])
 

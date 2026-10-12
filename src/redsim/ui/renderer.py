@@ -190,6 +190,7 @@ class Renderer:
         #: Selection box edges and handles (triangles): drawn normally, then again on top
         #: of everything at reduced alpha so hidden parts stay visible ("x-ray").
         self.overlay = _Stream()
+        self.outline = _Stream()  # behind the overlay: its outlines
         self.sky = _Stream()
         self._sky_horizon: float | None = None
         self._upload_sky(-1.0)
@@ -287,6 +288,12 @@ class Renderer:
     def upload_volume(self, triangles: np.ndarray) -> None:
         self.program.bind()
         self.volume.upload(self.program, triangles)
+
+    def upload_outline(self, triangles: np.ndarray) -> None:
+        """Dark shapes drawn just before the overlay, without depth writes, so the overlay
+        covers them except at its edges: outlines (gizmo arrows)."""
+        self.program.bind()
+        self.outline.upload(self.program, triangles)
 
     def upload_overlay(self, triangles: np.ndarray) -> None:
         self.program.bind()
@@ -427,6 +434,11 @@ class Renderer:
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
         program.setUniformValue1f(fog_amount, 0.0)  # overlays are never fogged
+        if self.outline.count:
+            gl.glDepthMask(GL_FALSE)
+            self.outline.vao.bind()
+            gl.glDrawArrays(GL_TRIANGLES, 0, self.outline.count)
+            gl.glDepthMask(GL_TRUE)
         if self.overlay.count:
             self.overlay.vao.bind()
             gl.glDrawArrays(GL_TRIANGLES, 0, self.overlay.count)  # visible parts

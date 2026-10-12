@@ -31,3 +31,15 @@ def test_picking_the_top_arrow_and_the_rotate_heads() -> None:
     assert {s.data for s in heads} == {1, -1}
     assert all(s.center[2] < 1.5 for s in heads)
     assert pick_hotspot(np.array([50.0, 50.0, 50.0]), np.array([1.0, 0.0, 0.0]), spots) is None
+
+
+def test_gizmos_have_dark_outlines() -> None:
+    shells: list = []
+    triangles, _ = selection_gizmos(BOX, 0.2, 0.0, stacking=False, hover=None, outlines=shells)
+    assert shells, "arrows, ring and arrowheads get outlines"
+    import numpy as np
+
+    outline = np.vstack(shells)
+    assert (outline[:, 3:6] < 0.1).all()  # dark
+    span = outline[:, :3].max(axis=0) - outline[:, :3].min(axis=0)
+    assert (span >= triangles[:, :3].max(axis=0) - triangles[:, :3].min(axis=0) - 1e-6).all()

@@ -56,7 +56,7 @@ from redsim.ui.geometry import (
     solid_box,
     thick_edges,
 )
-from redsim.ui.gizmos import BODY_ALPHA, Hotspot, box_faces, pick_hotspot, selection_gizmos
+from redsim.ui.gizmos import Hotspot, box_faces, pick_hotspot, selection_gizmos
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter
@@ -89,6 +89,10 @@ DOUBLE_SHIFT_SECONDS = 0.35
 #: Time constant of the smooth camera (seconds to cover ~63 % of the way).
 GLIDE_SECONDS = 0.07
 PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
+#: The selection's fill: opacity, how far it breathes, and one breath in seconds.
+BODY_ALPHA = 0.2
+BODY_PULSE = 0.06
+PULSE_SECONDS = 1.8
 SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
 LOCKED_COLOR = (1.0, 0.62, 0.15, 1.0)
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
@@ -232,6 +236,10 @@ class Viewport(QOpenGLWidget):
         self.build_upside_down = False
         self._shift = False  # Shift held: resize arrows show their stacking look
         self._gizmo_cache: tuple[Any, tuple[np.ndarray, list[Hotspot]]] | None = None
+        self._gizmo_outline = np.zeros((0, 7), dtype=np.float32)
+        self._pulse = QTimer(self)  # repaints while a selection breathes
+        self._pulse.setInterval(33)
+        self._pulse.timeout.connect(self.update)
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
         self._move: _MoveDrag | None = None
         self._stack: _StackDrag | None = None
@@ -563,7 +571,13 @@ class Viewport(QOpenGLWidget):
             self._mesh_revision = self.document.revision
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
+        renderer.upload_outline(self._outline_triangles())
         renderer.upload_volume(np.vstack([self._selection_body(), self._pivot_shadow()]))
+        # The selection breathes: keep repainting while there is one.
+        if self.region is not None and not self._pulse.isActive():
+            self._pulse.start()
+        elif self.region is None and self._pulse.isActive():
+            self._pulse.stop()
         renderer.upload_top_lines(self._pivot_lines())
         self._upload_ghost(renderer)
         ratio = self.devicePixelRatioF()
@@ -912,11 +926,21 @@ class Viewport(QOpenGLWidget):
         unit = self.gizmo_unit()
         key = (self.region, round(unit, 3), round(self.camera.yaw), self._shift, self.gizmo_hover)
         if self._gizmo_cache is None or self._gizmo_cache[0] != key:
+            shells: list[np.ndarray] = []
             built = selection_gizmos(
-                self.region, unit, self.camera.yaw, self._shift, self.gizmo_hover
+                self.region, unit, self.camera.yaw, self._shift, self.gizmo_hover, shells
             )
+            outline = np.vstack(shells) if shells else np.zeros((0, 7), dtype=np.float32)
             self._gizmo_cache = (key, built)
+            self._gizmo_outline = outline
         return self._gizmo_cache[1]
+
+    def _outline_triangles(self) -> np.ndarray:
+        """The gizmos' outlines (drawn behind them)."""
+        if not self._gizmos_shown():
+            return np.zeros((0, 7), dtype=np.float32)
+        self._gizmos()
+        return self._gizmo_outline
 
     def _gizmo_at(self, point: QPoint) -> Hotspot | None:
         if not self._gizmos_shown():
@@ -925,12 +949,18 @@ class Viewport(QOpenGLWidget):
         return pick_hotspot(origin, direction, self._gizmos()[1])
 
     def _selection_body(self) -> np.ndarray:
-        """A very faint body, so it is clear which blocks are inside the selection."""
+        """The selection filled with its color (round 8), so what is inside reads at a
+        glance; the fill breathes slowly, so the selection feels alive."""
         if self.region is None:
             return np.zeros((0, 7), dtype=np.float32)
         lo, hi = _bounds(self.region)
         color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
-        return box_faces(lo, hi, (color[0], color[1], color[2], BODY_ALPHA))
+        return box_faces(lo, hi, (color[0], color[1], color[2], self.body_alpha()))
+
+    def body_alpha(self, now: float | None = None) -> float:
+        """The selection fill's opacity: BODY_ALPHA, breathing by ±BODY_PULSE."""
+        t = time.monotonic() if now is None else now
+        return BODY_ALPHA + BODY_PULSE * math.sin(2 * math.pi * t / PULSE_SECONDS)
 
     def _upload_ghost(self, renderer: Renderer) -> None:
         ghost = self._ghost or self._build_ghost

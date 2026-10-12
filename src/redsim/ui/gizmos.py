@@ -33,7 +33,9 @@ HOVER_COLOR: Color = (1.0, 0.92, 0.35, 1.0)
 STACK_COLOR: Color = (0.98, 0.98, 0.98, 1.0)
 RING_COLOR: Color = (0.95, 0.80, 0.30, 1.0)
 FLIP_COLOR: Color = (0.95, 0.95, 0.95, 1.0)
-BODY_ALPHA = 0.08
+#: Gizmo outlines: dark, a little thicker than the gizmos (drawn behind them).
+OUTLINE_COLOR = (0.05, 0.05, 0.07, 1.0)
+OUTLINE_MARGIN = 0.09
 
 
 @dataclass(frozen=True)
@@ -97,6 +99,27 @@ def arrow(
     )
 
 
+def arrow_outline(
+    start: np.ndarray, direction: np.ndarray, length: float, unit: float
+) -> np.ndarray:
+    """A slightly bigger dark arrow, drawn behind ``arrow`` as its outline (round 8)."""
+    direction = direction / np.linalg.norm(direction)
+    m = OUTLINE_MARGIN * unit
+    head = 1.3 * unit
+    neck = start + direction * max(length - head, 0.0)
+    return np.vstack(
+        [
+            cylinder(start - direction * m, neck, 0.16 * unit + m, OUTLINE_COLOR),
+            cone(
+                neck - direction * m,
+                start + direction * (length + 2 * m),
+                0.5 * unit + 1.6 * m,
+                OUTLINE_COLOR,
+            ),
+        ]
+    )
+
+
 def chevrons(start: np.ndarray, direction: np.ndarray, unit: float, color: Color) -> np.ndarray:
     """Three flat cones in a row: the stacking look of a resize arrow."""
     direction = direction / np.linalg.norm(direction)
@@ -124,9 +147,17 @@ def box_faces(lo: np.ndarray, hi: np.ndarray, color: Color) -> np.ndarray:
 
 
 def selection_gizmos(
-    region: Region, unit: float, camera_yaw: float, stacking: bool, hover: Hotspot | None
+    region: Region,
+    unit: float,
+    camera_yaw: float,
+    stacking: bool,
+    hover: Hotspot | None,
+    outlines: list[np.ndarray] | None = None,
 ) -> tuple[np.ndarray, list[Hotspot]]:
-    """All gizmos of a selection: triangles and their hot spots."""
+    """All gizmos of a selection: triangles and their hot spots. ``outlines``, if given,
+    collects dark outline shapes for the arrows, ring and arrowheads."""
+    shells: list[np.ndarray] = outlines if outlines is not None else []
+    m = OUTLINE_MARGIN * unit
     lo, hi = bounds(region)
     center = (lo + hi) / 2
     parts: list[np.ndarray] = []
@@ -144,6 +175,7 @@ def selection_gizmos(
         else:
             color = HOVER_COLOR if hovered else AXIS_COLORS[handle.axis]
             parts.append(arrow(start, handle.normal, 4.2 * unit, unit, color))
+            shells.append(arrow_outline(start, handle.normal, 4.2 * unit, unit))
         tip = start + handle.normal * 3.4 * unit
         spots.append(Hotspot("resize", handle, tuple(tip), 1.2 * unit))
 
@@ -157,6 +189,7 @@ def selection_gizmos(
         p0 = np.array([center[0] + radius * math.cos(a0), y, center[2] + radius * math.sin(a0)])
         p1 = np.array([center[0] + radius * math.cos(a1), y, center[2] + radius * math.sin(a1)])
         ring.append(cylinder(p0, p1, 0.1 * unit, RING_COLOR, sides=6))
+        shells.append(cylinder(p0, p1, 0.1 * unit + m, OUTLINE_COLOR, sides=6))
     parts.extend(ring)
     # Direction from the box towards the camera (yaw 0 looks south, so the camera is north).
     yaw = math.radians(camera_yaw)
@@ -172,6 +205,14 @@ def selection_gizmos(
         color = HOVER_COLOR if hovered else RING_COLOR
         parts.append(
             cone(point - tangent * 0.7 * unit, point + tangent * 1.1 * unit, 0.6 * unit, color)
+        )
+        shells.append(
+            cone(
+                point - tangent * (0.7 * unit + m),
+                point + tangent * (1.1 * unit + 2 * m),
+                0.6 * unit + 1.6 * m,
+                OUTLINE_COLOR,
+            )
         )
         spots.append(Hotspot("rotate", turns, tuple(point), 1.3 * unit))
 
@@ -195,6 +236,7 @@ def selection_gizmos(
         )
         for sign in (1, -1):
             parts.append(arrow(top, direction * sign, span, 0.8 * unit, color))
+            shells.append(arrow_outline(top, direction * sign, span, 0.8 * unit))
             end = top + direction * sign * span
             spots.append(Hotspot("flip", axis, tuple(end), 1.1 * unit))
     return np.vstack(parts), spots
