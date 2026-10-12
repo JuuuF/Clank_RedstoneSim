@@ -124,6 +124,11 @@ class BlockSearch(QFrame):
             self.results.addItem(item)
         if self.results.count():
             self.results.setCurrentRow(0)
+        else:
+            empty = QListWidgetItem(f"No block matches “{text.strip()}”")
+            empty.setFlags(Qt.ItemFlag.NoItemFlags)
+            empty.setForeground(QColor(theme.TEXT_DIM))
+            self.results.addItem(empty)
 
     def eventFilter(self, watched: object, event: object) -> bool:
         # Up/Down/Enter in the search field move through and pick from the list.
@@ -146,6 +151,8 @@ class BlockSearch(QFrame):
 
     def _choose(self, item: QListWidgetItem) -> None:
         block_id = item.data(Qt.ItemDataRole.UserRole)
+        if block_id is None:  # the "no match" row
+            return
         self.close()
         self.chosen.emit(blocks.get(block_id))
 
