@@ -475,3 +475,21 @@ def test_build_keys_vary_the_block_to_place(app: Any) -> None:
     assert window.viewport.build_variant() == ""
     window.document.dirty = False
     window.close()
+
+
+def test_pivot_is_a_block_with_a_shadow_on_the_ground(app: Any) -> None:
+    import numpy as np
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    viewport = window.viewport
+    viewport.camera.pivot = np.array([0.5, 4.5, 0.5])
+    assert viewport.pivot_ground() == 1.0  # the floor's top
+    window.document.place((0, 2, 0), blocks.STONE, PlaceRequest(Direction.UP, 0.0, 30.0))
+    assert viewport.pivot_ground() == 3.0  # now the stone's top
+    shadow = viewport._pivot_shadow()
+    assert np.allclose(shadow[:, 1], 3.01) and (shadow[:, 6] > 0).all()
+    assert len(viewport._pivot_lines()) == 2  # the drop line to it
+    window.document.dirty = False
+    window.close()

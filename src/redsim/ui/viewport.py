@@ -53,6 +53,7 @@ from redsim.ui.geometry import (
     ghost_mesh,
     pick,
     ray_box,
+    solid_box,
     thick_edges,
 )
 from redsim.ui.gizmos import BODY_ALPHA, Hotspot, box_faces, pick_hotspot, selection_gizmos
@@ -562,7 +563,7 @@ class Viewport(QOpenGLWidget):
             self._mesh_revision = self.document.revision
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
-        renderer.upload_volume(self._selection_body())
+        renderer.upload_volume(np.vstack([self._selection_body(), self._pivot_shadow()]))
         renderer.upload_top_lines(self._pivot_lines())
         self._upload_ghost(renderer)
         ratio = self.devicePixelRatioF()
@@ -858,8 +859,9 @@ class Viewport(QOpenGLWidget):
         return parts
 
     def _overlay_triangles(self) -> np.ndarray:
-        """Selection box, its handles and drop targets: thick, and visible through blocks."""
-        parts = []
+        """Selection box, its handles and drop targets: thick, and visible through blocks;
+        and the pivot block."""
+        parts = [self._pivot_block()]
         width = self._edge_width()
         if self.region is not None:
             lo, hi = _bounds(self.region)
@@ -943,22 +945,49 @@ class Viewport(QOpenGLWidget):
         vertices[:, :3] += np.array(ghost[1], dtype=np.float32)
         renderer.upload_ghost(vertices)
 
-    def _pivot_lines(self) -> np.ndarray:
-        """A small cross and ring at the pivot, drawn on top of everything."""
+    def _pivot_size(self) -> float:
+        """Half the pivot block's edge: about the same size on screen at any zoom."""
+        return 0.08 + self.camera.distance * 0.008
+
+    def pivot_ground(self) -> float:
+        """The height of the first surface below the pivot (a block top, else the floor
+        level), where its shadow falls."""
         x, y, z = (float(v) for v in self.camera.pivot)
-        size = 0.12 + self.camera.distance * 0.015
-        rows = [
-            (x - size, y, z), (x + size, y, z),
-            (x, y - size, z), (x, y + size, z),
-            (x, y, z - size), (x, y, z + size),
-        ]  # fmt: skip
-        ring = [
-            (x + math.cos(a) * size * 1.6, y, z + math.sin(a) * size * 1.6)
-            for a in (i * math.pi / 8 for i in range(17))
-        ]
-        for a, b in zip(ring, ring[1:], strict=False):
-            rows.extend((a, b))
-        return np.array([(*row, *PIVOT_COLOR) for row in rows], dtype=np.float32)
+        bx, bz = math.floor(x), math.floor(z)
+        level = self.document.level
+        for by in range(math.floor(y), max(level.min_y, math.floor(y) - 64) - 1, -1):
+            if by + 1 <= y and (bx, by, bz) in level.blocks:
+                return float(by + 1)
+        return 1.0
+
+    def _pivot_block(self) -> np.ndarray:
+        """The pivot as a small orange block (round 8: its place in space should be clear);
+        drawn with the overlays, so it shows dimly through blocks too."""
+        center = np.asarray(self.camera.pivot, dtype=float)
+        half = self._pivot_size()
+        return solid_box(center - half, center + half, PIVOT_COLOR)
+
+    def _pivot_shadow(self) -> np.ndarray:
+        """A soft square shadow on the surface below the pivot block."""
+        x, _, z = (float(v) for v in self.camera.pivot)
+        y = self.pivot_ground() + 0.01
+        rows = []
+        for scale, alpha in ((1.0, 0.45), (1.8, 0.2)):  # a dark core and a fainter rim
+            r = self._pivot_size() * scale
+            a, b, c, d = (x - r, y, z - r), (x + r, y, z - r), (x + r, y, z + r), (x - r, y, z + r)
+            color = (0.0, 0.0, 0.0, alpha)
+            rows += [(*p, *color) for p in (a, c, b, a, d, c)]
+        return np.array(rows, dtype=np.float32)
+
+    def _pivot_lines(self) -> np.ndarray:
+        """A thin line from the pivot block down to its shadow, drawn on top."""
+        x, y, z = (float(v) for v in self.camera.pivot)
+        ground = self.pivot_ground()
+        if y - self._pivot_size() <= ground + 0.02:
+            return np.zeros((0, 7), dtype=np.float32)
+        faint = (*PIVOT_COLOR[:3], 0.7)
+        rows = [(x, y - self._pivot_size(), z, *faint), (x, ground, z, *faint)]
+        return np.array(rows, dtype=np.float32)
 
     # ------------------------------------------------------------------ keyboard
     def _track_shift(self, held: bool) -> None:

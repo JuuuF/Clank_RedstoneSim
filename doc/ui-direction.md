@@ -224,7 +224,7 @@ Status is kept up to date here; nothing in the message is left out.
 | 9 | P2 | The inventory (item selection) only in BUILD mode, shown like the game's hotbar at the bottom of the viewport (above the timeline). | done: an overlay over the 3D view (nothing resizes); number keys switch to BUILD |
 | 10 | P2 | Recent blocks are not discoverable: make them obvious and easy (the program should be easy to understand and use). | done: a labeled RECENT hotbar right next to the inventory, always shown in BUILD (empty slots with a hint until something is placed); Alt+1–9 pick them |
 | 11 | P2 | Slabs on the top half (and similar variants): change the block to place with the selection's transform keys (rotate R / Shift+R, flip H / Shift+H). | done: in BUILD, R / Shift+R turn the block to place, H mirrors it, Shift+H turns it upside down (top slabs, pistons and observers facing down, ceiling levers); the badge names the variant |
-| 12 | P2 | The camera pivot as a small block with a shadow (or another cue) so its position in space is clear. | open |
+| 12 | P2 | The camera pivot as a small block with a shadow (or another cue) so its position in space is clear. | done: a small orange block with a soft shadow on the surface below and a drop line to it |
 | 13 | P3 | Selection gizmo arrows get outlines (hard to see sometimes). | open |
 | 14 | P3 | The selection box is filled with color, so what is inside reads at a glance. | open |
 | 15 | P3 | A small animation for the selection, so the program feels alive and interactive. | open |
