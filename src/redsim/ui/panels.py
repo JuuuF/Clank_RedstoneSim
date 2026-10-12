@@ -176,7 +176,7 @@ class InspectorPanel(QWidget):
         layout = QVBoxLayout(self)
         title_row = QHBoxLayout()
         self.icon = QLabel()
-        self.icon.setFixedSize(32, 32)
+        self.icon.setFixedSize(36, 36)
         title_row.addWidget(self.icon)
         self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
@@ -189,6 +189,7 @@ class InspectorPanel(QWidget):
         self.monitor.clicked.connect(lambda: self._pos and self.monitor_requested.emit(self._pos))
         title_row.addWidget(self.monitor)
         layout.addLayout(title_row)
+        layout.addSpacing(6)
         self.form_widget = QWidget()
         self.form = QFormLayout(self.form_widget)
         self.form.setContentsMargins(0, 0, 0, 0)
@@ -333,7 +334,11 @@ class InspectorPanel(QWidget):
         if key != self._layout_key:
             self._rebuild(state)
             self._layout_key = key
-        self.title.setText(f"<b>{block_name(state.block.id)}</b> at {pos}")
+        x, y, z = pos
+        self.title.setText(
+            f"<span style='font-size:14px; font-weight:600'>{block_name(state.block.id)}</span>"
+            f"<br><span style='color:{theme.TEXT_DIM}'>x {x} · y {y} · z {z}</span>"
+        )
         self.icon.setPixmap(block_pixmap(state.block.id, 32) if not state.is_air else QPixmap())
         for prop in state.block.properties:
             editor = self._editors[prop.name]
