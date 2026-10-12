@@ -302,3 +302,19 @@ def test_chosen_block_name_fades_like_the_game(app: Any) -> None:
     canvas.repaint()
     assert canvas.name_alpha == 1.0
     bar.close()
+
+
+def test_lock_button_shows_the_lock_state(app: Any) -> None:
+    from redsim.editor.clipboard import Region
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.viewport.region = Region((0, 1, 0), (1, 1, 1))
+    window._toggle_lock()
+    window._update_hints()
+    assert window._lock_action.isChecked()
+    window._toggle_lock()
+    window._update_hints()
+    assert not window._lock_action.isChecked()
+    window.document.dirty = False
+    window.close()

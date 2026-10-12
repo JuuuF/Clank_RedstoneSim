@@ -332,6 +332,9 @@ class MainWindow(QMainWindow):
         ):
             action = self._action(region_menu, text, slot, keymap_id)
             action.setIcon(pixel_icons.pixel_icon(icon))
+            if keymap_id == "select.lock":  # pressed while the selection is locked
+                action.setCheckable(True)
+                self._lock_action = action
             action.setIconText(short or text)
             action.setToolTip(f"{SPECS[keymap_id].title} ({self.keymap.describe(keymap_id)})")
             toolbar.addAction(action)
@@ -556,6 +559,9 @@ class MainWindow(QMainWindow):
 
     def _update_hints(self) -> None:
         viewport = self.viewport
+        locked = viewport.region_locked and viewport.region is not None
+        if self._lock_action.isChecked() != locked:
+            self._lock_action.setChecked(locked)
         spot = viewport.gizmo_hover
         context = Context(
             mode=viewport.mode,
