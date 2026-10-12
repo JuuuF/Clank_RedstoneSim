@@ -886,6 +886,9 @@ class PreferencesDialog(QDialog):
         defaults = Preferences()
         for attribute, slider in self.sliders.items():
             slider.setValue(round(getattr(defaults, attribute) * 100))
+        for attribute, box in self.looks.items():
+            if box.isEnabled():
+                box.setChecked(getattr(defaults, attribute))
 
     def _set(self, attribute: str, value: int, label: QLabel) -> None:
         setattr(self.preferences, attribute, value / 100)
