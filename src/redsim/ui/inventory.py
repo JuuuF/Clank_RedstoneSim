@@ -262,6 +262,12 @@ class InventoryCanvas(QWidget):
         # game (to NAME_FADED, so it stays readable); hovered names show at full strength.
         self._name_shown = ""
         self.name_alpha = 1.0
+        #: Height during a row's slide (opening or closing a folder), else None.
+        self.animated_height: int | None = None
+        self._grow = QVariantAnimation(self)
+        self._grow.setDuration(120)
+        self._grow.valueChanged.connect(self._set_height)
+        self._grow.finished.connect(self._grown)
         self._fade = QVariantAnimation(self)
         self._fade.setStartValue(1.0)
         self._fade.setEndValue(NAME_FADED)
@@ -272,6 +278,10 @@ class InventoryCanvas(QWidget):
         self._fade_delay.setInterval(2000)
         self._fade_delay.timeout.connect(self._fade.start)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def shown_height(self) -> int:
+        """The height being shown: while a row slides in or out, the animated one."""
+        return self.animated_height or self.rows_height()
 
     def rows_height(self) -> int:
         return self.NAME + (len(self.bar.nav.path) + 1) * (self.SLOT + self.GAP) + 4
@@ -293,7 +303,7 @@ class InventoryCanvas(QWidget):
     # ------------------------------------------------------------------ layout
     def _layout(self) -> list[_Spot]:
         spots: list[_Spot] = []
-        bottom = self.rows_height() - 4
+        bottom = self.shown_height() - 4
         for depth, folder in self._levels():  # the root lowest, deeper rows above
             top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
             for index, child in enumerate(folder.children):
@@ -318,7 +328,7 @@ class InventoryCanvas(QWidget):
         painter.fillRect(self.rect(), QColor(theme.PANEL))
         path = self.bar.nav.path
         active = len(path)
-        bottom = self.rows_height() - 4
+        bottom = self.shown_height() - 4
         hotbar = hud_sprite("hotbar")
         for depth in range(len(self.bar.nav.path) + 1):  # each row: a whole 9-slot hotbar
             top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
@@ -373,6 +383,28 @@ class InventoryCanvas(QWidget):
             theme.draw_text(painter, 14, 3, name, theme.GOLD)
             painter.setOpacity(1.0)
         painter.end()
+
+    def resize_rows(self) -> None:
+        """Fit the rows: slide to the new height when visible, else jump."""
+        target = self.rows_height()
+        if not self.isVisible() or self.height() in (0, target):
+            self._grow.stop()
+            self.animated_height = None
+            self.setFixedHeight(target)
+            return
+        self._grow.stop()
+        self._grow.setStartValue(self.height())
+        self._grow.setEndValue(target)
+        self._grow.start()
+
+    def _set_height(self, value: object) -> None:
+        self.animated_height = int(value)  # type: ignore[call-overload]
+        self.setFixedHeight(self.animated_height)
+
+    def _grown(self) -> None:
+        self.animated_height = None
+        self.setFixedHeight(self.rows_height())
+        self.update()
 
     def _set_name_alpha(self, value: object) -> None:
         self.name_alpha = float(value)  # type: ignore[arg-type]
@@ -490,7 +522,7 @@ class InventoryBar(QWidget):
         self.refresh()
 
     def refresh(self) -> None:
-        self.canvas.setFixedHeight(self.canvas.rows_height())
+        self.canvas.resize_rows()
         self.canvas.update()
         is_source = self.current in sources.SOURCE_BLOCKS
         self.strength_label.setVisible(is_source)

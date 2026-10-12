@@ -30,6 +30,7 @@ from PySide6.QtOpenGL import (
     QOpenGLTexture,
     QOpenGLVertexArrayObject,
 )
+from shiboken6 import Shiboken
 
 GL_FLOAT = 0x1406
 GL_TRIANGLES = 0x0004
@@ -119,6 +120,15 @@ GROUND_Y = 0.98
 GROUND_REACH = 900.0  # inside the far plane (1000)
 #: Alpha of the parts of selection overlays hidden behind blocks.
 HIDDEN_OVERLAY_ALPHA = 0.4
+
+
+def _forget_texture(texture: QOpenGLTexture) -> None:
+    """Free the texture's GPU storage (call with its context current) and detach the
+    Python wrapper, so the C++ destructor never runs later: it asks the texture's context
+    about sharing, and a garbage-collected texture whose context was already gone crashed
+    the process (seen in test runs)."""
+    texture.destroy()
+    Shiboken.invalidate(texture)
 
 
 class _Stream:
@@ -232,7 +242,7 @@ class Renderer:
     def set_clouds(self, image: QImage | None) -> None:
         """The game's cloud texture (repeating, sharp), or None for no clouds."""
         if self.clouds is not None:
-            self.clouds.destroy()
+            _forget_texture(self.clouds)
             self.clouds = None
         if image is None:
             return
@@ -245,7 +255,7 @@ class Renderer:
     def set_atlas(self, image: QImage | None) -> None:
         """The block texture atlas (nearest-neighbor sampling, like the game)."""
         if self.atlas is not None:
-            self.atlas.destroy()
+            _forget_texture(self.atlas)
             self.atlas = None
         if image is None:
             return
