@@ -259,7 +259,8 @@ def test_inspector_edits_container_slots(app: object) -> None:
     hopper = document.level.get_block_entity((0, 1, 0))
     assert isinstance(hopper, HopperBlockEntity)
     assert hopper.items[1] == ("minecraft:redstone", 7)
-    assert "redstone ×7" in inspector.contents_label.text()
+    assert inspector.contents_grid.items[1] == ("minecraft:redstone", 7)
+    assert inspector.contents_label.text() == "7 items in 1 of 5 slots"
     window.document.dirty = False
     window.close()
 

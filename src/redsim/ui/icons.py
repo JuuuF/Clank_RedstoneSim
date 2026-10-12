@@ -245,3 +245,27 @@ def block_pixmap(block_id: str, size: int = 32) -> QPixmap:
 
 def block_icon(block: Block, size: int = 32) -> QIcon:
     return QIcon(block_pixmap(block.id, size))
+
+
+@cache
+def item_pixmap(item_id: str, size: int = 32) -> QPixmap:
+    """An item as the game's inventory shows it: its sprite or its block model; a gray
+    square without the game's assets."""
+    assets = Assets.find()
+    model = assets.item_model(item_id) if assets is not None else None
+    if assets is not None and model is not None:
+        if assets.is_generated_item(model):
+            layer = assets.resolve_texture(assets.model(model)["textures"], "#layer0")
+            sprite = render_item_sprite(layer[0], size) if layer else None
+            if sprite is not None:
+                return sprite
+        else:
+            quads = assets.bake(assets.model(model))
+            if quads:
+                return render_quads(quads, size)
+    pixmap = QPixmap(size, size)
+    pixmap.fill(QColor(0, 0, 0, 0))
+    painter = QPainter(pixmap)
+    painter.fillRect(size // 4, size // 4, size // 2, size // 2, QColor("#8e8f96"))
+    painter.end()
+    return pixmap

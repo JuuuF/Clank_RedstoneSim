@@ -226,6 +226,21 @@ class _TabFiller(QObject):
         return False
 
 
+def paint_slot(painter: QPainter, r: QRect, alpha: int = 255) -> None:
+    """A Minecraft slot: sunken, with a dark top/left and a light bottom/right bevel."""
+
+    def color(name: str) -> QColor:
+        c = QColor(name)
+        c.setAlpha(alpha)
+        return c
+
+    painter.fillRect(r, color(SUNKEN))
+    painter.fillRect(QRect(r.left(), r.top(), r.width(), 2), color("#0b0b0c"))
+    painter.fillRect(QRect(r.left(), r.top(), 2, r.height()), color("#0b0b0c"))
+    painter.fillRect(QRect(r.left(), r.bottom() - 1, r.width(), 2), color(LINE))
+    painter.fillRect(QRect(r.right() - 1, r.top(), 2, r.height()), color(LINE))
+
+
 # --------------------------------------------------------------------------- pixel font
 @dataclass(frozen=True)
 class Glyph:

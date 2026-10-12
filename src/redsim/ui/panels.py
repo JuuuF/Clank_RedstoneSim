@@ -5,8 +5,8 @@ from __future__ import annotations
 import html
 from typing import Any
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QObject, QPoint, QRect, Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
+    QSizePolicy,
     QSlider,
     QSpinBox,
     QTableWidget,
@@ -39,9 +40,9 @@ from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui import pixel_icons, theme
 from redsim.ui.hints import keycaps_html
-from redsim.ui.icons import block_pixmap
+from redsim.ui.icons import block_pixmap, item_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
-from redsim.ui.names import block_name
+from redsim.ui.names import block_name, item_name
 from redsim.ui.preferences import Preferences
 from redsim.world import blocks
 from redsim.world.block import BlockState
@@ -155,6 +156,80 @@ CONTAINER_ITEMS = (
 )
 
 
+class ContainerGrid(QWidget):
+    """A container's slots as the game draws them: rows of 9 slots with item icons and
+    counts. Clicking a slot picks it for the slot editor below (``slot_clicked``)."""
+
+    slot_clicked = Signal(int)
+    COLUMNS = 9
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.items: list[tuple[str, int] | None] = []
+        self.selected: int | None = None
+        self.setMouseTracking(True)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def slot_size(self) -> int:
+        return max(24, min(36, (self.width() - 2) // self.COLUMNS))
+
+    def set_items(self, items: list[tuple[str, int] | None]) -> None:
+        self.items = list(items)
+        if self.selected is not None and self.selected >= len(self.items):
+            self.selected = None
+        rows = max(1, -(-len(self.items) // self.COLUMNS))
+        self.setFixedHeight(rows * self.slot_size() + 2)
+        self.update()
+
+    def resizeEvent(self, event: Any) -> None:
+        self.set_items(self.items)  # the slot size follows the width
+        super().resizeEvent(event)
+
+    def _rect(self, slot: int) -> QRect:
+        size = self.slot_size()
+        row, column = divmod(slot, self.COLUMNS)
+        return QRect(1 + column * size, 1 + row * size, size, size)
+
+    def slot_at(self, point: QPoint) -> int | None:
+        return next((i for i in range(len(self.items)) if self._rect(i).contains(point)), None)
+
+    def paintEvent(self, event: Any) -> None:
+        painter = QPainter(self)
+        for slot, stack in enumerate(self.items):
+            rect = self._rect(slot).adjusted(1, 1, -1, -1)
+            theme.paint_slot(painter, rect)
+            if stack is not None:
+                item, count = stack
+                icon = rect.width() - 8
+                painter.drawPixmap(rect.left() + 4, rect.top() + 4, item_pixmap(item, icon))
+                if count > 1:  # the game's stack count: bottom right, white, shadowed
+                    text = str(count)
+                    x = rect.right() - theme.text_width(text, 1) - 2
+                    theme.draw_text(painter, x, rect.bottom() - 9, text, "#ffffff", 1)
+            if slot == self.selected:
+                painter.setPen(QPen(QColor("#ffffff"), 2))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawRect(rect.adjusted(0, 0, -1, -1))
+        painter.end()
+
+    def mouseMoveEvent(self, event: Any) -> None:
+        slot = self.slot_at(event.position().toPoint())
+        stack = self.items[slot] if slot is not None else None
+        tip = (
+            f"Slot {slot}: empty"
+            if stack is None
+            else f"Slot {slot}: {item_name(stack[0])} ×{stack[1]}"
+        )
+        self.setToolTip(tip if slot is not None else "")
+
+    def mousePressEvent(self, event: Any) -> None:
+        slot = self.slot_at(event.position().toPoint())
+        if slot is not None and event.button() == Qt.MouseButton.LeftButton:
+            self.selected = slot
+            self.update()
+            self.slot_clicked.emit(slot)
+
+
 class InspectorPanel(QWidget):
     """The selected block. Every control applies at once, as a /setblock edit (one undo
     step each); widgets are updated in place while the same kind of block stays selected."""
@@ -266,9 +341,12 @@ class InspectorPanel(QWidget):
         self.contents_box = QWidget()
         contents_layout = QFormLayout(self.contents_box)
         contents_layout.setContentsMargins(0, 6, 0, 0)
-        self.contents_label = QLabel("")
-        self.contents_label.setWordWrap(True)
+        self.contents_label = QLabel("")  # a summary: filled slots and items
+        self.contents_label.setStyleSheet(f"color: {theme.TEXT_DIM};")
         contents_layout.addRow("Contents", self.contents_label)
+        self.contents_grid = ContainerGrid()
+        self.contents_grid.slot_clicked.connect(self._pick_slot)
+        contents_layout.addRow(self.contents_grid)
         slot_row = QWidget()
         slot_layout = QHBoxLayout(slot_row)
         slot_layout.setContentsMargins(0, 0, 0, 0)
@@ -354,12 +432,14 @@ class InspectorPanel(QWidget):
             self.contents_box.setVisible(True)
             self.contents_box.setEnabled(editable)
             self.slot_box.setRange(0, be.SIZE - 1)
-            filled = [
-                f"{slot}: {stack[0].removeprefix('minecraft:')} ×{stack[1]}"
-                for slot, stack in enumerate(be.items)
-                if stack is not None
-            ]
-            self.contents_label.setText(", ".join(filled) if filled else f"empty ({be.SIZE} slots)")
+            filled = [stack for stack in be.items if stack is not None]
+            total = sum(count for _, count in filled)
+            self.contents_label.setText(
+                f"{total} items in {len(filled)} of {be.SIZE} slots"
+                if filled
+                else f"empty ({be.SIZE} slots)"
+            )
+            self.contents_grid.set_items(be.items)
         kind = sources.kind_of(state)
         if kind is not None:
             self.source_box.setVisible(True)
@@ -429,6 +509,16 @@ class InspectorPanel(QWidget):
         item = self.item_box.currentData()
         self.count_box.setRange(0, slot_limit(item) if item else 64)
         self.count_box.setValue(min(max(self.count_box.value(), 1), self.count_box.maximum()))
+
+    def _pick_slot(self, slot: int) -> None:
+        """A click on a slot of the grid: edit that slot, starting from its contents."""
+        self.slot_box.setValue(slot)
+        stack = self.contents_grid.items[slot]
+        if stack is not None:
+            index = self.item_box.findData(stack[0])
+            if index >= 0:
+                self.item_box.setCurrentIndex(index)
+            self.count_box.setValue(stack[1])
 
     def _set_slot(self) -> None:
         if self._pos is not None:

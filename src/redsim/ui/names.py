@@ -30,3 +30,12 @@ def block_name(block_id: str) -> str:
     if found:
         return found
     return " ".join(word.capitalize() for word in name.split("_"))
+
+
+@lru_cache(maxsize=256)
+def item_name(item_id: str) -> str:
+    """An item's name as the game shows it ("Redstone Dust", "Ender Pearl")."""
+    namespace, name = item_id.split(":", 1) if ":" in item_id else ("minecraft", item_id)
+    lang = _lang()
+    found = lang.get(f"item.{namespace}.{name}") or lang.get(f"block.{namespace}.{name}")
+    return found or " ".join(word.capitalize() for word in name.split("_"))
