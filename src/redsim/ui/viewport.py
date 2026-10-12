@@ -439,7 +439,7 @@ class Viewport(QOpenGLWidget):
         self._mesh_revision = -1
         context = self.context()
         if context is not None:  # free GPU textures while the context still exists
-            context.aboutToBeDestroyed.connect(self._release_gl, Qt.ConnectionType.UniqueConnection)
+            context.aboutToBeDestroyed.connect(self.release_gl, Qt.ConnectionType.UniqueConnection)
 
     @property
     def textures_available(self) -> bool:
@@ -482,8 +482,10 @@ class Viewport(QOpenGLWidget):
         average = atlas.tile(GROUND_TEXTURE)[..., :3].reshape(-1, 3).mean(axis=0) / 255.0
         self.renderer.set_ground(atlas.rect(GROUND_TEXTURE), tuple(float(c) for c in average))
 
-    def _release_gl(self) -> None:
-        if self.renderer is not None:
+    def release_gl(self) -> None:
+        """Free the GPU textures with the context current (on close, and before Qt
+        destroys the context); later, nothing is left for a destructor to complain about."""
+        if self.renderer is not None and self.isValid():
             self.makeCurrent()
             self.renderer.set_atlas(None)
             self.renderer.set_clouds(None)

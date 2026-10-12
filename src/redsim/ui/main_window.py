@@ -1275,6 +1275,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._confirm_discard(closing=True):
             self.save_layout()
+            self.viewport.release_gl()  # while the GL context still exists
             event.accept()
         else:
             event.ignore()
