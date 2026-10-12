@@ -353,3 +353,13 @@ def test_player_row_shows_only_for_lecterns(app: Any) -> None:
     assert form.isRowVisible(window.inspector.page_row)
     window.document.dirty = False
     window.close()
+
+
+def test_signal_steppers_get_a_meter(app: Any) -> None:
+    from redsim.ui.panels import _Stepper
+
+    power = _Stepper(tuple(range(16)), lambda v: None, "power")
+    power.show_value(9)
+    assert power.meter is not None and power.meter.level == 9
+    delay = _Stepper((1, 2, 3, 4), lambda v: None, "delay")  # not a signal strength
+    assert delay.meter is None

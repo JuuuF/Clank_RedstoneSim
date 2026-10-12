@@ -46,6 +46,7 @@ from redsim.ui.icons import block_pixmap, item_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.names import block_name, item_name
 from redsim.ui.preferences import Preferences
+from redsim.ui.style import wire_color
 from redsim.world import blocks
 from redsim.world.block import BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
@@ -114,8 +115,35 @@ class _Toggle(QPushButton):
         self.setText("true" if value else "false")
 
 
+class SignalMeter(QWidget):
+    """A signal strength as 15 segments lit in the dust's color for that strength."""
+
+    SEGMENT = 5
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.level = 0
+        self.setFixedSize(15 * (self.SEGMENT + 1) + 1, 14)
+
+    def set_level(self, level: int) -> None:
+        self.level = max(0, min(15, level))
+        self.setToolTip(f"Signal strength {self.level}")
+        self.update()
+
+    def paintEvent(self, event: Any) -> None:
+        painter = QPainter(self)
+        red, green, blue, _ = wire_color(self.level)
+        lit = QColor.fromRgbF(red, green, blue)
+        for index in range(15):
+            x = 1 + index * (self.SEGMENT + 1)
+            color = lit if index < self.level else QColor(theme.SUNKEN)
+            painter.fillRect(x, 2, self.SEGMENT, self.height() - 4, color)
+        painter.end()
+
+
 class _Stepper(QWidget):
-    """An integer property: a value between back and next buttons."""
+    """An integer property: a value between back and next buttons; signal strengths
+    (values up to 15) also get a ``SignalMeter``."""
 
     def __init__(self, values: tuple[Any, ...], on_pick: Any, tooltip: str) -> None:
         super().__init__()
@@ -139,6 +167,11 @@ class _Stepper(QWidget):
         layout.addWidget(self.back)
         layout.addWidget(self.label)
         layout.addWidget(self.next)
+        is_signal = all(isinstance(v, int) for v in values) and max(values) == 15
+        self.meter = SignalMeter() if is_signal else None
+        if self.meter is not None:
+            layout.addSpacing(8)
+            layout.addWidget(self.meter)
         layout.addStretch(1)
 
     def _step(self, delta: int, on_pick: Any) -> None:
@@ -152,6 +185,8 @@ class _Stepper(QWidget):
         index = self.values.index(value) if value in self.values else 0
         self.back.setEnabled(index > 0)
         self.next.setEnabled(index < len(self.values) - 1)
+        if self.meter is not None and isinstance(value, int):
+            self.meter.set_level(value)
 
 
 #: Items the inspector offers for barrels and hoppers (max stack size in brackets).
