@@ -380,3 +380,18 @@ def test_undo_history_menu_undoes_several_steps(app: Any) -> None:
     assert window.document.state_at((1, 1, 0)).is_air
     window.document.dirty = False
     window.close()
+
+
+def test_markers_get_a_strip_in_the_ruler(app: Any) -> None:
+    from redsim.ui.timeline import TimelineCanvas
+
+    canvas = TimelineCanvas()
+    canvas.resize(600, 200)
+    canvas.view_start, canvas.view_span = 0.0, 20.0
+    plain = canvas.RULER_HEIGHT
+    canvas.set_markers({5: "clock on"})
+    assert plain + canvas.MARKER_STRIP == canvas.RULER_HEIGHT
+    assert canvas.marker_at(canvas._x(5) + 2, canvas.RULER_HEIGHT - 4) == 5
+    assert canvas.marker_at(canvas._x(9), canvas.RULER_HEIGHT - 4) is None
+    canvas.set_markers({})
+    assert plain == canvas.RULER_HEIGHT

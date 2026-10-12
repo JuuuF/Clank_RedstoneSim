@@ -76,13 +76,16 @@ class Track:
 class TimelineCanvas(QWidget):
     scrub = Signal(int)  # tick (since tick 0)
     remove_monitor = Signal(object)  # Pos
+    rename_marker = Signal(int)  # tick
+    delete_marker = Signal(int)  # tick
     move_edits = Signal(object, int)  # step indices, delta ticks
     merge_edits = Signal(object, object)  # step indices, target tick (None: earliest)
     delete_edits = Signal(object)  # step indices
     set_tick_zero = Signal()
 
     LABEL_WIDTH = 180
-    RULER_HEIGHT = 26
+    RULER_HEIGHT = 26  # grows by MARKER_STRIP while there are markers (their names)
+    MARKER_STRIP = 14
     EDIT_ROW_HEIGHT = 15
     ROW_HEIGHT = 18
 
@@ -105,6 +108,7 @@ class TimelineCanvas(QWidget):
         self._band: QRectF | None = None
         self.setMouseTracking(True)
         self._hover_tick: int | None = None  # a track's tick under the cursor
+        self.markers: dict[int, str] = {}  # tick → name (Blender-style markers)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._resize_to_tracks()
 
@@ -241,6 +245,7 @@ class TimelineCanvas(QWidget):
             painter.setPen(TEXT_DIM)
             painter.drawText(where_x, y + self.ROW_HEIGHT - 5, where)
             painter.setPen(TEXT)
+        self._paint_markers(painter)
         x = self._x(self.current)
         if x >= self.LABEL_WIDTH:
             painter.setPen(PLAYHEAD)
@@ -255,6 +260,31 @@ class TimelineCanvas(QWidget):
             painter.setPen(QColor(255, 255, 255))
             painter.drawText(badge, Qt.AlignmentFlag.AlignCenter, label)
         painter.end()
+
+    def _paint_markers(self, painter: QPainter) -> None:
+        """Markers: a gold flag at the bottom of the ruler with the name beside it, and a
+        faint dotted line down through the rows."""
+        gold = QColor(theme.GOLD)
+        line = QColor(theme.GOLD)
+        line.setAlpha(70)
+        for tick, name in self.markers.items():
+            x = self._x(tick)
+            if x < self.LABEL_WIDTH or x > self.width():
+                continue
+            painter.setPen(QPen(line, 1, Qt.PenStyle.DotLine))
+            painter.drawLine(QPointF(x, self.RULER_HEIGHT), QPointF(x, self.height()))
+            base = self.RULER_HEIGHT - 3  # the marker strip, below the tick numbers
+            flag = QPolygonF([QPointF(x - 4, base - 6), QPointF(x + 4, base - 6), QPointF(x, base)])
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(gold)
+            painter.drawPolygon(flag)
+            painter.setPen(gold)
+            painter.drawText(QPointF(x + 6, base), name)
+
+    def set_markers(self, markers: dict[int, str]) -> None:
+        """Markers get their own strip under the tick numbers while there are any."""
+        self.markers = markers
+        self.RULER_HEIGHT = type(self).RULER_HEIGHT + (self.MARKER_STRIP if markers else 0)
 
     def _paint_edit_rows(self, painter: QPainter) -> None:
         painter.setPen(GRID)
@@ -327,6 +357,10 @@ class TimelineCanvas(QWidget):
             self._pan_from = (int(x), self.view_start)
             return
         if button == Qt.MouseButton.RightButton:
+            marker = self.marker_at(x, y)
+            if marker is not None:
+                self._marker_menu(event.globalPosition().toPoint(), marker)
+                return
             if x < self.LABEL_WIDTH and y >= self._tracks_top():
                 row = int((y - self._tracks_top()) // self.ROW_HEIGHT)
                 if 0 <= row < len(self.tracks):
@@ -467,6 +501,24 @@ class TimelineCanvas(QWidget):
             self.merge_edits.emit(self.selected_indices(), None)
         else:
             super().keyPressEvent(event)
+
+    def marker_at(self, x: float, y: float) -> int | None:
+        """The marker whose flag (in the ruler) is under the cursor."""
+        if y > self.RULER_HEIGHT or x < self.LABEL_WIDTH:
+            return None
+        near = [(abs(self._x(tick) - x), tick) for tick in self.markers]
+        best = min(near, default=None)
+        return best[1] if best is not None and best[0] <= 6 else None
+
+    def _marker_menu(self, where: QPoint, tick: int) -> None:
+        menu = QMenu(self)
+        menu.addAction(f"Rename marker “{self.markers[tick]}”…").triggered.connect(
+            lambda: self.rename_marker.emit(tick)
+        )
+        remove = menu.addAction("Delete marker")
+        remove.setIcon(pixel_icons.pixel_icon("delete"))
+        remove.triggered.connect(lambda: self.delete_marker.emit(tick))
+        menu.exec(where)
 
     def _context_menu(self, where: QPoint, row: int | None) -> None:
         menu = QMenu(self)
@@ -643,4 +695,5 @@ class TimelineBar(QWidget):
             )
             for pos in document.monitors
         ]
+        self.canvas.set_markers(document.visible_markers())
         self.canvas.set_data(0, end, tick, document.edit_batches(), tracks)

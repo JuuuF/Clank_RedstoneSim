@@ -188,3 +188,24 @@ def test_undo_history_labels_and_multi_step_undo() -> None:
     assert doc.redo()
     assert doc.state_at((1, 1, 0)).get(LIT) is True
     assert not doc.undo_to(0)
+
+
+def test_markers_follow_tick_zero_and_its_undo(tmp_path: Path) -> None:
+    doc = Document.new_flat()
+    request = PlaceRequest(Direction.UP, yaw=0, pitch=60)
+    doc.place((0, 1, 0), blocks.REDSTONE_LAMP, request)
+    for _ in range(10):
+        doc.run_tick()
+    doc.set_marker(3, "lamp on")
+    doc.set_marker(8, "check")
+    doc.seek_tick(5)
+    doc.set_tick_zero()  # tick 5 becomes tick 0: markers move along
+    assert doc.visible_markers() == {3: "check"}
+    assert doc.undo()  # and come back, including the one before the new tick 0
+    assert doc.visible_markers() == {3: "lamp on", 8: "check"}
+    assert doc.redo()
+    assert doc.visible_markers() == {3: "check"}
+    doc.save(tmp_path / "markers.redsim.json")
+    assert Document.open(tmp_path / "markers.redsim.json").markers == {3: "check"}
+    doc.set_marker(3, "")
+    assert doc.visible_markers() == {}

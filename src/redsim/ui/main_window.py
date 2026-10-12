@@ -182,6 +182,8 @@ class MainWindow(QMainWindow):
             lambda indices: self._history_edit(self.document.delete_edits, indices)
         )
         canvas.set_tick_zero.connect(self._set_tick_zero)
+        canvas.rename_marker.connect(self._rename_marker)
+        canvas.delete_marker.connect(lambda tick: self._name_marker(tick, ""))
         self.simulation.set_tick_zero.connect(self._set_tick_zero)
         self.inspector.monitor_requested.connect(self._toggle_monitor)
         self.inspector.hit_requested.connect(self._projectile_hit)
@@ -297,6 +299,9 @@ class MainWindow(QMainWindow):
             action = self._action(sim_menu, text, slot, keymap_id)
             if icon:
                 action.setIcon(pixel_icons.pixel_icon(icon))
+        self._action(sim_menu, "Add marker…", self._add_marker, "sim.marker").setIcon(
+            pixel_icons.pixel_icon("tick_zero")
+        )
         sim_menu.addSeparator()
         for text, where, keymap_id in (
             ("Jump to start", "start", "sim.start"),
@@ -822,6 +827,25 @@ class MainWindow(QMainWindow):
             action.triggered.connect(lambda _=False, n=count: self._undo_to(n))
         if len(labels) > HISTORY_MENU_SIZE:
             menu.addAction(f"… {len(labels) - HISTORY_MENU_SIZE} older steps").setEnabled(False)
+
+    def _add_marker(self) -> None:
+        tick = self.document.tick
+        name, ok = QInputDialog.getText(
+            self, "Add marker", f"Name of the marker at tick {tick}:", text=f"tick {tick}"
+        )
+        if ok:
+            self._name_marker(tick, name.strip() or f"tick {tick}")
+
+    def _rename_marker(self, tick: int) -> None:
+        current = self.document.markers.get(tick, "")
+        name, ok = QInputDialog.getText(self, "Rename marker", f"Tick {tick}:", text=current)
+        if ok:
+            self._name_marker(tick, name.strip())
+
+    def _name_marker(self, tick: int, name: str) -> None:
+        """Set, rename (or with an empty name delete) the marker at ``tick``."""
+        self.document.set_marker(tick, name)
+        self._changed()
 
     def _undo_to(self, count: int) -> None:
         self.simulation.stop()

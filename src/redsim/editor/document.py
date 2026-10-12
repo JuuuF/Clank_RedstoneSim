@@ -74,6 +74,8 @@ class HistoryState:
     #: On the undo stack: the edit made after this state (what undoing reverts); on the
     #: redo stack: the edit redoing re-applies.
     label: str = ""
+    #: Ticks that edit moved tick 0 by ("Set tick 0 here"): markers move back on undo.
+    shift: int = 0
 
 
 @dataclass(frozen=True)
@@ -106,6 +108,9 @@ class Document:
     edit_ticks: dict[int, int] = field(default_factory=dict)
     #: Monitored blocks (saved) and their recorded values per tick (not saved).
     monitors: list[Pos] = field(default_factory=list)
+    #: Named timeline markers (tick → name). Ticks before 0 can exist after "Set tick 0
+    #: here" (kept so an undo brings them back); they are not shown or saved.
+    markers: dict[int, str] = field(default_factory=dict)
     samples: dict[Pos, dict[int, int]] = field(default_factory=dict)
     _undo: list[HistoryState] = field(default_factory=list)
     _redo: list[HistoryState] = field(default_factory=list)
@@ -403,7 +408,8 @@ class Document:
         current = state = self._history_state()
         for _ in range(min(count, len(self._undo))):
             previous = self._undo.pop()
-            self._redo.append(replace(state, label=previous.label))
+            self._redo.append(replace(state, label=previous.label, shift=previous.shift))
+            self._shift_markers(previous.shift)
             state = previous
         # Keep the simulated length: the history is re-run without the edits.
         self._rebuild(replace(state, end_tick=max(state.end_tick, current.end_tick)))
@@ -413,9 +419,26 @@ class Document:
         if not self._redo or not self.can_edit:
             return False
         state = self._redo.pop()
-        self._undo.append(replace(self._history_state(), label=state.label))
+        self._undo.append(replace(self._history_state(), label=state.label, shift=state.shift))
+        self._shift_markers(-state.shift)
         self._rebuild(state)
         return True
+
+    # ------------------------------------------------------------------ markers
+    def set_marker(self, tick: int, name: str) -> None:
+        """Name a tick on the timeline (Blender's markers); an empty name removes it."""
+        if name:
+            self.markers[tick] = name
+        else:
+            self.markers.pop(tick, None)
+        self._changed(dirty=True)
+
+    def visible_markers(self) -> dict[int, str]:
+        return {tick: name for tick, name in sorted(self.markers.items()) if tick >= 0}
+
+    def _shift_markers(self, delta: int) -> None:
+        if delta:
+            self.markers = {tick + delta: name for tick, name in self.markers.items()}
 
     @property
     def undo_labels(self) -> list[str]:
@@ -519,8 +542,9 @@ class Document:
         end = max(0, before.end_tick - here)
         history.rebase()
         self._rebuild(HistoryState(history.base, later, end, 0))
-        self._undo.append(replace(before, label=f"set tick {here} as tick 0"))
+        self._undo.append(replace(before, label=f"set tick {here} as tick 0", shift=here))
         self._redo.clear()
+        self._shift_markers(-here)
         self.notice = f"Tick {here} is now tick 0 (the build)."
 
     # ------------------------------------------------------------------ simulation
@@ -593,6 +617,7 @@ class Document:
         extra["groups"] = self.groups.to_json()
         extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
         extra["monitors"] = [list(pos) for pos in self.monitors]
+        extra["markers"] = {str(tick): name for tick, name in self.visible_markers().items()}
         save_io.save(target, self.engine, extra)
         self.path = target
         self.dirty = False
@@ -605,6 +630,7 @@ class Document:
         groups = Groups.from_json(extra.pop("groups", []))
         prefabs = {name: Prefab.from_json(data) for name, data in extra.pop("prefabs", {}).items()}
         monitors = [(int(x), int(y), int(z)) for x, y, z in extra.pop("monitors", [])]
+        markers = {int(tick): str(name) for tick, name in extra.pop("markers", {}).items()}
         return Document(
             engine=engine,
             sections=sections,
@@ -613,6 +639,7 @@ class Document:
             groups=groups,
             prefabs=prefabs,
             monitors=monitors,
+            markers=markers,
         )
 
     # ------------------------------------------------------------------ timeline view
