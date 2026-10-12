@@ -323,3 +323,17 @@ def test_region_buttons_show_lock_and_availability(app: Any) -> None:
     assert not window._lock_action.isChecked()
     window.document.dirty = False
     window.close()
+
+
+def test_monitor_track_reads_the_value_under_the_cursor(app: Any) -> None:
+    from redsim.ui.timeline import TimelineCanvas, Track
+
+    canvas = TimelineCanvas()
+    canvas.resize(600, 200)
+    canvas.set_data(0, 20, 20, [], [Track((1, 1, 0), "Redstone Dust", {5: 15, 6: 14})])
+    canvas.view_start, canvas.view_span = 0.0, 20.0
+    width = canvas.width() - canvas.LABEL_WIDTH
+    x = canvas.LABEL_WIDTH + 5.5 / 20 * width  # inside tick 5's column
+    y = canvas._tracks_top() + canvas.ROW_HEIGHT / 2
+    assert canvas.track_reading(x, y) == "Redstone Dust 1 1 0 · tick 5: 15"
+    assert canvas.track_reading(x, 2) is None  # on the ruler: no track

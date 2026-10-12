@@ -104,6 +104,7 @@ class TimelineCanvas(QWidget):
         self._drag_delta = 0
         self._band: QRectF | None = None
         self.setMouseTracking(True)
+        self._hover_tick: int | None = None  # a track's tick under the cursor
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._resize_to_tracks()
 
@@ -142,6 +143,11 @@ class TimelineCanvas(QWidget):
     def tick_at(self, x: float) -> int:
         width = max(1, self.width() - self.LABEL_WIDTH)
         return round(self.view_start + (x - self.LABEL_WIDTH) / width * self.view_span)
+
+    def column_at(self, x: float) -> int:
+        """The tick whose column (a track sample spans [tick, tick + 1)) is under ``x``."""
+        width = max(1, self.width() - self.LABEL_WIDTH)
+        return math.floor(self.view_start + (x - self.LABEL_WIDTH) / width * self.view_span)
 
     def _row_top(self, row: int) -> int:
         return self.RULER_HEIGHT + row * self.EDIT_ROW_HEIGHT
@@ -195,6 +201,11 @@ class TimelineCanvas(QWidget):
                 painter.drawText(QPointF(max(x - half, self.LABEL_WIDTH + 2.0), 14), label)
             tick += step
         self._paint_edit_rows(painter)
+        if self._hover_tick is not None and self.tracks:  # the hovered tick column
+            left, right = self._x(self._hover_tick), self._x(self._hover_tick + 1)
+            top = self._tracks_top()
+            column = QRectF(left, top, max(1.0, right - left), self.height() - top)
+            painter.fillRect(column, QColor(255, 255, 255, 22))
         self._paint_tracks(painter)
         painter.fillRect(QRectF(0, 0, self.LABEL_WIDTH, height), BACKGROUND)
         painter.fillRect(QRectF(0, 0, self.LABEL_WIDTH, self.RULER_HEIGHT - 2), RULER)
@@ -376,14 +387,42 @@ class TimelineCanvas(QWidget):
                 self.update()
         else:
             batch = self._batch_at(x, y)
+            reading = self.track_reading(x, y)
+            hover = self.column_at(x) if reading is not None else None
+            if hover != self._hover_tick:  # the hovered tick column of a track
+                self._hover_tick = hover
+                self.update()
             if batch is not None:
                 lines = list(batch.labels[:12])
                 if len(batch.labels) > 12:
                     lines.append(f"… {len(batch.labels) - 12} more")
                 title = f"{ROW_TITLES[batch.row]} at tick {batch.tick}: {len(batch.labels)} edits"
                 QToolTip.showText(event.globalPosition().toPoint(), "\n".join([title, *lines]))
+            elif reading is not None:
+                QToolTip.showText(event.globalPosition().toPoint(), reading)
             else:
                 QToolTip.hideText()
+
+    def track_reading(self, x: float, y: float) -> str | None:
+        """The monitored value under the cursor: "Redstone Lamp 4 1 -2 · tick 23: 15"."""
+        if x < self.LABEL_WIDTH or y < self._tracks_top():
+            return None
+        row = int((y - self._tracks_top()) // self.ROW_HEIGHT)
+        if not 0 <= row < len(self.tracks):
+            return None
+        tick = self.column_at(x)
+        if not self.start <= tick <= self.end:
+            return None
+        track = self.tracks[row]
+        where = " ".join(str(c) for c in track.pos)
+        value = track.samples.get(tick)
+        shown = "not recorded" if value is None else str(value)
+        return f"{track.label} {where} · tick {tick}: {shown}"
+
+    def leaveEvent(self, event: object) -> None:
+        if self._hover_tick is not None:
+            self._hover_tick = None
+            self.update()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if self._band is not None:
