@@ -8,10 +8,22 @@ come first.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QKeyEvent
-from PySide6.QtWidgets import QFrame, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout, QWidget
+from typing import Any
 
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QColor, QKeyEvent, QPainter
+from PySide6.QtWidgets import (
+    QFrame,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from redsim.ui import theme
 from redsim.ui.icons import block_icon
 from redsim.ui.inventory import all_blocks, block_label
 from redsim.world import blocks
@@ -57,6 +69,26 @@ def rank_blocks(query: str, recent: list[str]) -> list[tuple[str, str]]:
     return [(block_id, path) for _, block_id, path in scored]
 
 
+#: Item data: the block's inventory folder, drawn dim and right-aligned.
+CATEGORY_ROLE = Qt.ItemDataRole.UserRole + 1
+
+
+class _CategoryDelegate(QStyledItemDelegate):
+    """The default row (icon, name), plus the folder on the right in dim text."""
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: Any) -> None:
+        super().paint(painter, option, index)
+        category = index.data(CATEGORY_ROLE)
+        if not category:
+            return
+        painter.save()
+        painter.setPen(QColor(theme.TEXT_DIM))
+        rect = option.rect.adjusted(0, 0, -10, 0)  # type: ignore[attr-defined]
+        align = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        painter.drawText(rect, align, category)
+        painter.restore()
+
+
 class BlockSearch(QFrame):
     """A popup over the viewport: a search field and the matching blocks."""
 
@@ -75,6 +107,7 @@ class BlockSearch(QFrame):
         layout.addWidget(self.field)
         self.results = QListWidget()
         self.results.setIconSize(QSize(28, 28))
+        self.results.setItemDelegate(_CategoryDelegate(self.results))
         self.results.itemActivated.connect(self._choose)
         layout.addWidget(self.results)
         self.resize(380, 360)
@@ -85,10 +118,9 @@ class BlockSearch(QFrame):
         for block_id, path in rank_blocks(text, self.recent):
             label = block_label(block_id)
             recent = " · recent" if block_id in self.recent and not text else ""
-            item = QListWidgetItem(
-                block_icon(blocks.get(block_id), 28), f"{label}   ({path}{recent})"
-            )
+            item = QListWidgetItem(block_icon(blocks.get(block_id), 28), label)
             item.setData(Qt.ItemDataRole.UserRole, block_id)
+            item.setData(CATEGORY_ROLE, f"{path}{recent}")
             self.results.addItem(item)
         if self.results.count():
             self.results.setCurrentRow(0)
