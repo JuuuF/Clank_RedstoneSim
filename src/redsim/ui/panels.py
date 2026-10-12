@@ -45,7 +45,7 @@ from redsim.ui.hints import keycaps_html
 from redsim.ui.icons import block_pixmap, item_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.names import block_name, item_name
-from redsim.ui.preferences import Preferences
+from redsim.ui.preferences import MAX_VIEW_DISTANCE, Preferences
 from redsim.ui.style import wire_color
 from redsim.world import blocks
 from redsim.world.block import BlockState
@@ -959,6 +959,20 @@ class PreferencesDialog(QDialog):
         trackpad_layout.addWidget(box)
         self.looks["trackpad_navigation"] = box
         layout.addWidget(trackpad)
+        worlds = QGroupBox("Minecraft worlds")
+        worlds_form = QFormLayout(worlds)
+        worlds_form.setContentsMargins(10, 14, 10, 10)
+        self.view_distance = QSpinBox()
+        self.view_distance.setRange(2, MAX_VIEW_DISTANCE)
+        self.view_distance.setSuffix(" chunks")
+        self.view_distance.setValue(preferences.world_view_distance)
+        self.view_distance.setToolTip(
+            "Chunks of an opened world load around the camera up to this far, like the "
+            "game's render distance. Farther means more blocks to simulate and draw."
+        )
+        self.view_distance.valueChanged.connect(self._set_view_distance)
+        worlds_form.addRow("View distance", self.view_distance)
+        layout.addWidget(worlds)
         buttons = QHBoxLayout()
         reset = QPushButton("Reset to defaults")
         reset.clicked.connect(self._reset)
@@ -977,6 +991,11 @@ class PreferencesDialog(QDialog):
         for attribute, box in self.looks.items():
             if box.isEnabled():
                 box.setChecked(getattr(defaults, attribute))
+        self.view_distance.setValue(defaults.world_view_distance)
+
+    def _set_view_distance(self, value: int) -> None:
+        self.preferences.world_view_distance = value
+        self.changed.emit()
 
     def _set(self, attribute: str, value: int, label: QLabel) -> None:
         setattr(self.preferences, attribute, value / 100)

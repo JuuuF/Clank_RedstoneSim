@@ -88,12 +88,21 @@ def test_chunks_rebuild_only_where_blocks_changed() -> None:
     chunks = ChunkedMesh()
     assert chunk_of((40, 0, 0)) in chunks.update(level)
     assert chunks.update(level) == set()  # nothing changed
-    level.blocks[(1, 0, 0)] = blocks.STONE.default_state
+    level.add_blocks({(1, 0, 0): blocks.STONE.default_state})
     dirty = chunks.update(level)
     assert chunk_of((0, 0, 0)) in dirty and chunk_of((40, 0, 0)) not in dirty
-    del level.blocks[(40, 0, 0)]
+    level.set_block((40, 0, 0), level.air, 2)
     chunks.update(level)
     assert chunk_of((40, 0, 0)) not in chunks.chunks
+
+
+def test_chunks_notice_blocks_written_without_set_block() -> None:
+    level = Level()
+    level.blocks[(0, 0, 0)] = blocks.STONE.default_state
+    chunks = ChunkedMesh()
+    chunks.update(level)
+    level.blocks[(40, 0, 0)] = blocks.STONE.default_state  # not reported as touched
+    assert chunk_of((40, 0, 0)) in chunks.update(level)
 
 
 def test_faces_are_culled_across_chunk_borders() -> None:

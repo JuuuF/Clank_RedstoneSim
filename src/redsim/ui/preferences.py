@@ -21,6 +21,9 @@ def config_dir() -> Path:
     return Path(base) / "redsim"
 
 
+MAX_VIEW_DISTANCE = 24
+
+
 @dataclass
 class Preferences:
     #: X-ray: alpha of building blocks (both X-ray levels) and of circuit blocks (level 2).
@@ -34,6 +37,8 @@ class Preferences:
     #: Shift pans, Ctrl/⌘ zooms, Alt/⌥ moves up and down); off: it acts as a mouse
     #: wheel. On by default on macOS only, so nothing changes elsewhere.
     trackpad_navigation: bool = sys.platform == "darwin"
+    #: How far chunks of an opened Minecraft world load around the camera (in chunks).
+    world_view_distance: int = 8
 
     @staticmethod
     def path() -> Path:
@@ -51,6 +56,9 @@ class Preferences:
             if isinstance(getattr(prefs, field.name), bool):
                 if isinstance(value, bool):
                     setattr(prefs, field.name, value)
+            elif isinstance(getattr(prefs, field.name), int):
+                if isinstance(value, int) and not isinstance(value, bool):
+                    setattr(prefs, field.name, min(MAX_VIEW_DISTANCE, max(2, value)))
             elif isinstance(value, int | float) and not isinstance(value, bool):
                 setattr(prefs, field.name, min(1.0, max(0.0, float(value))))
         return prefs

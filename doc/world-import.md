@@ -75,6 +75,22 @@ the moment of writing are stored the way the game stores them (`block_ticks`,
    example opens in ~3.7 s: 69 chunks, 81 741 blocks kept, 2 032 865 buried terrain blocks
    left out (whole one-block terrain sections are skipped without decoding). The status
    line lists what is approximated (note blocks, signs, stairs, leaves, copper bulbs, …).
-3. Index + "go to builds", streaming chunks as the camera moves, the cache.
+3. **Streaming done (2026-10-12):** `mcworld.stream.WorldStream` keeps every loaded
+   section compactly (a one-block section as its text, others as palette + uint16
+   indices, decoded with numpy) and decides per section, on the section and a one-block
+   rim of its 26 neighbors, which blocks enter the document (rules above; terrain touching
+   a build by a face, edge or corner; the bottom of the world never shows). A block at the
+   edge of the loaded area waits until its neighbor chunk is known, and loading a chunk
+   re-checks the 8 chunks around it, so the result does not depend on the load order
+   (tested). The example's first area (radius 4) now opens in ~1 s (was 3.7 s) with the
+   same blocks minus the bedrock floor's underside; further chunks take ~9 ms each.
+   The editor loads the nearest missing chunks around the camera every 60 ms for at most
+   25 ms (`MainWindow._stream_world`), up to the view distance (Preferences → Minecraft
+   worlds, default 8 chunks). New blocks join the current level, every keyframe and every
+   undo base (`Document.add_world_blocks`), without updates; positions a level already
+   has are kept. The chunked mesh follows the level's touched positions
+   (`Level.take_touched`) instead of diffing all blocks per frame, and the timeline keeps
+   fewer periodic keyframes for large levels (6 M block entries in all).
+   Left for this phase: the index and "go to the builds", the on-disk cache.
 4. Write back (copy first), with a round-trip test: import → export → import is
    identical, and untouched chunks are byte-identical.

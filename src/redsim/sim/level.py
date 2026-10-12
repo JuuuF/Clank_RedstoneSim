@@ -101,6 +101,8 @@ class Level:
         self.min_y = min_y
         self.max_y = max_y
         self.blocks: dict[Pos, BlockState] = {}
+        #: Positions whose block changed since a viewer last looked (``take_touched``).
+        self.touched: set[Pos] = set()
         self.block_entities: dict[Pos, BlockEntity] = {}
         self.game_time = 0
         self.sub_tick_count = 0
@@ -142,6 +144,16 @@ class Level:
     def iter_blocks(self) -> Iterator[tuple[Pos, BlockState]]:
         return iter(self.blocks.items())
 
+    def add_blocks(self, states: dict[Pos, BlockState]) -> None:
+        """Put blocks in without updates, like the game loading a chunk."""
+        self.blocks.update(states)
+        self.touched.update(states)
+
+    def take_touched(self) -> set[Pos]:
+        """The positions changed since the last call (for a viewer's mesh)."""
+        touched, self.touched = self.touched, set()
+        return touched
+
     # =================================================================== setBlock
     def set_block(self, pos: Pos, state: BlockState, flags: int, limit: int = 512) -> bool:
         """``Level.setBlock`` (Level.java L216)."""
@@ -172,6 +184,7 @@ class Level:
             del self.blocks[pos]
         else:
             self.blocks[pos] = state
+        self.touched.add(pos)
         self.trace.emit(tr.SET_BLOCK, pos, old=repr(old_state), new=repr(state), flags=flags)
 
         block_changed = old_state.block is not state.block
@@ -548,6 +561,7 @@ class Level:
         other.min_y = self.min_y
         other.max_y = self.max_y
         other.blocks = dict(self.blocks)
+        other.touched = set()
         be_map: dict[int, BlockEntity] = {}
         other.block_entities = {}
         for pos, be in self.block_entities.items():

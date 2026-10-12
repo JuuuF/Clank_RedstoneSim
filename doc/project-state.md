@@ -104,7 +104,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **397 tests pass** (2026-10-12), including the JDK oracle, the 80
+- `python -m pytest`: **404 tests pass** (2026-10-12), including the JDK oracle, the 80
   game-recording replays (40 named, 40 random), save round trips, history rewriting,
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
@@ -131,6 +131,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - The trace keeps the last 200 000 records; the UI shows the last step's records as an
   indented causal list (no interactive tree yet).
 - Saves contain the current state only, not the timeline history.
+- Chunks of an opened Minecraft world that stream in later join every stored level as if
+  they had always been loaded; their pending scheduled ticks are not imported (only those
+  of the first area are). A `.redsim.json` saved from an opened world keeps the blocks
+  loaded so far but no longer streams.
 - Section edits are not part of undo/rewind.
 - The GUI is verified offscreen (smoke tests) and on the owner's desktop (XWayland,
   OpenGL 3.3) with scripted input: orbit, pan, Ctrl+wheel, zoom, mode keys, BUILD place and
@@ -157,11 +161,14 @@ Suggested next steps:
 2. **Mechanics:** done 2026-10-12: note blocks, copper bulbs, droppers/dispensers,
    chests, pressure plates (entities as editor visitors). Left: scheduled-tick-driven
    piston 0-ticks, dispense effects (entities, fluids), detector rails, daylight sensors.
-3. **Diagnostics:** an interactive causal trace ("why did this block change?"), a
+3. **World loading:** done 2026-10-12: opened Minecraft worlds stream in around the
+   camera ([[world-import]], phase 3). Left: the "go to the builds" index, the on-disk
+   cache, write-back (phase 4).
+4. **Diagnostics:** an interactive causal trace ("why did this block change?"), a
    signal-strength heat view in the viewport.
-4. **Editing comfort:** named bookmarks on the timeline, a
+5. **Editing comfort:** named bookmarks on the timeline, a
    "compare two ticks" view (blocks that differ highlighted).
-5. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
+6. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
    from tick 0, which is fine for hundreds of ticks but should keep keyframes for long
    histories.
 

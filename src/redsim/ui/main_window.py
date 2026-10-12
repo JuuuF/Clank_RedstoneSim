@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,7 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
-from redsim.mcworld.importer import open_world
+from redsim.mcworld.importer import open_world, stream_chunks
 from redsim.ui import pixel_icons, theme
 from redsim.ui.block_search import BlockSearch
 from redsim.ui.camera import Camera
@@ -75,6 +76,9 @@ FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
 PLAY_INTERVAL_MS = 5
 RUN_BUDGET_SECONDS = 0.035
 PANEL_REFRESH_SECONDS = 0.1
+#: Streaming an opened Minecraft world: how often, and the longest one call may read.
+STREAM_INTERVAL_MS = 60
+STREAM_BUDGET_S = 0.025
 
 
 #: Where Minecraft keeps its saves (the example world first).
@@ -176,6 +180,9 @@ class MainWindow(QMainWindow):
         self._hint_timer = QTimer(self)
         self._hint_timer.timeout.connect(self._update_hints)
         self._hint_timer.start(120)
+        self._world_timer = QTimer(self)  # chunks of an opened world load around the camera
+        self._world_timer.timeout.connect(self._stream_world)
+        self._world_timer.start(STREAM_INTERVAL_MS)
         self._rotation_pivot: tuple[Region, tuple[int, int]] | None = None
         self.tick_rate = RateMeter()
         self._panels_refreshed = 0.0
@@ -1321,16 +1328,28 @@ class MainWindow(QMainWindow):
         finally:
             QApplication.restoreOverrideCursor()
         self._set_document(opened.document)
-        area = opened.area
         approx = [
             f"{block_name(i)} ×{n}" for i, n in opened.foreign.most_common() if not _plain_cube(i)
         ]
         note = f" Approximated (not simulated yet): {', '.join(approx)}." if approx else ""
+        stream = opened.stream
         self._message(
-            f"Opened {area.info.name}: {area.chunks} chunks around the player, "
-            f"{len(opened.document.level.blocks)} blocks ({area.skipped_terrain} buried "
-            f"terrain blocks left out).{note}"
+            f"Opened {opened.info.name}: {len(stream.loaded)} chunks around the player, "
+            f"{len(opened.document.level.blocks)} blocks ({stream.skipped()} buried terrain "
+            f"blocks left out); more load around the camera.{note}"
         )
+
+    def _stream_world(self) -> None:
+        """Load the next chunks of an opened world around the camera (a little per call,
+        nearest first), while the simulation is not mid-tick."""
+        document = self.document
+        if document.world is None or not document.can_edit:
+            return
+        x, _, z = (float(v) for v in self.viewport.camera.pivot)
+        center = (math.floor(x) >> 4, math.floor(z) >> 4)
+        radius = self.viewport.preferences.world_view_distance
+        if stream_chunks(document, center, radius, STREAM_BUDGET_S):
+            self.viewport.update()
 
     def open_path(self, path: Path) -> None:
         try:

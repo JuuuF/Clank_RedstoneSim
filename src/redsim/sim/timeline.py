@@ -31,6 +31,10 @@ from redsim.sim.engine import Action, ActionError, Engine, EngineSnapshot, StepI
 
 DEFAULT_KEYFRAME_INTERVAL = 64
 MAX_KEYFRAMES = 400
+MIN_KEYFRAMES = 24
+#: Block entries all periodic keyframes may hold together (each is a full copy of the
+#: level): a large world (an opened Minecraft save) keeps fewer of them.
+KEYFRAME_BLOCK_BUDGET = 6_000_000
 
 #: Edits per game tick (relative to the base), in the order they were applied.
 Plan = dict[int, list[Action]]
@@ -224,9 +228,14 @@ class Timeline:
         self.tick_starts = [i for i in self.tick_starts if i < index]
         self.end = index
 
+    def max_keyframes(self) -> int:
+        """How many keyframes to keep: ``MAX_KEYFRAMES``, fewer for a large level."""
+        size = max(1, len(self.engine.level.blocks))
+        return max(MIN_KEYFRAMES, min(MAX_KEYFRAMES, KEYFRAME_BLOCK_BUDGET // size))
+
     def _thin_keyframes(self) -> None:
         """Drop every other periodic keyframe when there are too many (keep action ones)."""
-        if len(self.keyframes) <= MAX_KEYFRAMES:
+        if len(self.keyframes) <= self.max_keyframes():
             return
         protected = set(self.inputs) | {self.start}
         periodic = sorted(k for k in self.keyframes if k not in protected)

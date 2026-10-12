@@ -116,6 +116,9 @@ class Document:
     #: here" (kept so an undo brings them back); they are not shown or saved.
     markers: dict[int, str] = field(default_factory=dict)
     samples: dict[Pos, dict[int, int]] = field(default_factory=dict)
+    #: The Minecraft save this document streams chunks from (``mcworld.stream.WorldStream``;
+    #: not saved).
+    world: Any = None
     _undo: list[HistoryState] = field(default_factory=list)
     _redo: list[HistoryState] = field(default_factory=list)
     _batch_depth: int = 0
@@ -419,6 +422,33 @@ class Document:
     def is_usable(block: Block) -> bool:
         """Whether right-clicking the block does something (``useWithoutItem`` override)."""
         return type(block).use_without_item is not Block.use_without_item
+
+    # ------------------------------------------------------------------ world chunks
+    def add_world_blocks(
+        self, states: dict[Pos, BlockState], entities: dict[Pos, dict[str, Any]]
+    ) -> None:
+        """Blocks of newly loaded chunks (and their block entities' saved data): they join
+        the current level and every stored one (keyframes, undo bases) as if they had
+        always been there, without updates. Positions a level already has stay as they
+        are. Not an edit: nothing to undo, the document is not changed by it."""
+        history = self.history
+        levels = {id(self.level): self.level}
+        for snapshot in history.keyframes.values():
+            levels[id(snapshot.level)] = snapshot.level
+        for stored in (*self._undo, *self._redo):
+            levels[id(stored.base.level)] = stored.base.level
+        for level in levels.values():
+            fresh = {pos: state for pos, state in states.items() if pos not in level.blocks}
+            level.add_blocks(fresh)
+            for pos, data in entities.items():
+                state = fresh.get(pos)
+                if state is None or not state.has_block_entity:
+                    continue
+                entity = state.block.new_block_entity(pos, state)
+                if entity is not None:
+                    entity.load_json(data)
+                    level.set_block_entity(entity)
+        self.revision += 1
 
     # ------------------------------------------------------------------ undo
     def _history_state(self) -> HistoryState:

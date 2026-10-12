@@ -486,8 +486,9 @@ def ghost_mesh(
 class ChunkedMesh:
     """Per-chunk meshes of one world, rebuilt only where something changed.
 
-    Changes are found by diffing the block map against the last one seen, which also covers
-    timeline seeks (they swap in a restored level). A changed block dirties its own chunk and
+    Changes come from the level's touched positions (``Level.take_touched``) while it is
+    the same level; a different level (a timeline seek swaps in a restored copy, or a new
+    document) is diffed against the block map seen last. A changed block dirties its own chunk and
     the chunks of its 6 neighbors (face culling looks across chunk borders). Chunks holding
     moving pistons are rebuilt on every update because their look follows the block
     entity's progress.
@@ -497,19 +498,37 @@ class ChunkedMesh:
         self.mesher = mesher if mesher is not None else Mesher()
         self.chunks: dict[ChunkKey, Mesh] = {}
         self._known: dict[Pos, BlockState] = {}
+        self._level: Level | None = None  # the level ``_known`` follows
         self._members: dict[ChunkKey, set[Pos]] = {}
         self._animated: set[ChunkKey] = set()
 
     def reset(self) -> None:
         self.chunks.clear()
         self._known = {}
+        self._level = None
         self._members.clear()
         self._animated.clear()
 
     def update(self, level: Level) -> set[ChunkKey]:
         """Bring the chunks up to date; returns the keys whose mesh changed or was removed."""
         current = level.blocks
-        changed = {pos for pos, _ in self._known.items() ^ current.items()}
+        known = self._known
+        touched = level.take_touched()
+        changed: set[Pos] = set()
+        if level is self._level:  # the same level: what it reports as touched
+            for pos in touched:
+                state = current.get(pos)
+                if known.get(pos) is not state:
+                    changed.add(pos)
+                    if state is None:
+                        del known[pos]
+                    else:
+                        known[pos] = state
+        if level is not self._level or len(known) != len(current):
+            # A restored or new level (or blocks written past ``set_block``): compare all.
+            changed |= {pos for pos, _ in known.items() ^ current.items()}
+            self._known = dict(current)
+            self._level = level
         dirty = set(self._animated)
         if changed:
             members = self._members
@@ -525,7 +544,6 @@ class ChunkedMesh:
                 dirty.add(key)
                 for dx, dy, dz in _STEPS:
                     dirty.add(chunk_of((x + dx, y + dy, z + dz)))
-            self._known = dict(current)
         self._animated = set()
         for key in dirty:
             positions = self._members.get(key)
