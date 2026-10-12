@@ -11,10 +11,12 @@ from redsim.world.blocks.attached import ButtonBlock, LeverBlock
 from redsim.world.blocks.cake import CakeBlock
 from redsim.world.blocks.comparator import ComparatorBlock
 from redsim.world.blocks.container import BarrelBlock
+from redsim.world.blocks.copper_bulb import COPPER_BULB_IDS, CopperBulbBlock
 from redsim.world.blocks.diode import RepeaterBlock
 from redsim.world.blocks.hopper import HopperBlock
 from redsim.world.blocks.lamp import RedstoneLampBlock
 from redsim.world.blocks.lectern import LecternBlock
+from redsim.world.blocks.note_block import NoteBlock
 from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import MovingPistonBlock, PistonBaseBlock, PistonHeadBlock
 from redsim.world.blocks.rail import PoweredRailBlock, RailBlock
@@ -124,6 +126,9 @@ RAIL = register(RailBlock())
 POWERED_RAIL = register(PoweredRailBlock("minecraft:powered_rail"))
 ACTIVATOR_RAIL = register(PoweredRailBlock("minecraft:activator_rail"))
 TARGET = register(TargetBlock())
+NOTE_BLOCK = register(NoteBlock())
+COPPER_BULBS = tuple(register(CopperBulbBlock(i)) for i in COPPER_BULB_IDS)
+COPPER_BULB = COPPER_BULBS[0]
 HOPPER = register(HopperBlock())
 PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
@@ -143,6 +148,9 @@ __all__ = [
     "HONEY_BLOCK",
     "LECTERN",
     "LEVER",
+    "COPPER_BULB",
+    "COPPER_BULBS",
+    "NOTE_BLOCK",
     "OAK_BUTTON",
     "REDSTONE_LAMP",
     "REDSTONE_TORCH",

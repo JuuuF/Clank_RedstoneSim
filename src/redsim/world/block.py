@@ -314,6 +314,13 @@ class Block:
     def name(self) -> str:
         return self.id.split(":", 1)[-1]
 
+    @property
+    def instrument(self) -> str:
+        """``BlockBehaviour.Properties.instrument`` (what a note block below plays)."""
+        from redsim.world.instruments import INSTRUMENTS
+
+        return INSTRUMENTS.get(self.id, "harp")
+
     # --- block entities -------------------------------------------------------------------
     has_block_entity: bool = False
     has_ticker: bool = False

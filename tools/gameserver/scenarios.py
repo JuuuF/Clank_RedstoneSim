@@ -887,6 +887,67 @@ HOPPER_ITEM_REPLACE = Scenario(
     watch_items=True,
 )
 
+NOTE_BLOCKS = Scenario(
+    name="note_blocks",
+    description=(
+        "Note blocks: instrument from the block below (stone, glass, planks, wool), "
+        "powered from a redstone block and through a repeater; an observer watches one "
+        "(each powered change is a state change) and lights a lamp."
+    ),
+    size=(8, 4),
+    setup=[
+        ((1, 1, 0), "minecraft:note_block"),
+        ((2, 0, 1), "minecraft:glass"),
+        ((2, 1, 1), "minecraft:note_block"),
+        ((3, 0, 2), "minecraft:oak_planks"),
+        ((3, 1, 2), "minecraft:note_block"),
+        ((4, 0, 3), "minecraft:white_wool"),
+        ((4, 1, 3), "minecraft:note_block[note=7]"),
+        ((2, 1, 0), "minecraft:observer[facing=west]"),
+        ((3, 1, 0), "minecraft:redstone_lamp"),
+        ((5, 1, 3), "minecraft:repeater[facing=west,delay=2]"),
+    ],
+    watch=[(1, 1, 0), (2, 1, 1), (3, 1, 2), (4, 1, 3), (2, 1, 0), (3, 1, 0), (5, 1, 3)],
+    ticks=24,
+    inputs={
+        2: [((0, 1, 0), RB), ((1, 1, 1), RB)],
+        6: [((6, 1, 3), RB)],
+        9: [((0, 1, 0), AIR)],
+        12: [((3, 2, 2), RB)],  # power from above, with a block on top: no note
+        15: [((1, 1, 1), AIR), ((6, 1, 3), AIR)],
+        18: [((3, 2, 2), AIR)],
+    },
+)
+
+COPPER_BULBS = Scenario(
+    name="copper_bulbs",
+    description=(
+        "Copper bulbs as T flip-flops: each rising edge toggles lit; a comparator reads "
+        "15 from a lit bulb into a lamp; bulbs never conduct (a bulb between a redstone "
+        "block and a lamp leaves it off); placing a bulb next to power lights it."
+    ),
+    size=(8, 4),
+    setup=[
+        ((1, 1, 0), "minecraft:copper_bulb"),
+        ((2, 1, 0), "minecraft:comparator[facing=west]"),
+        ((3, 1, 0), "minecraft:redstone_lamp"),
+        ((1, 1, 2), "minecraft:oxidized_copper_bulb"),
+        ((2, 1, 2), "minecraft:redstone_lamp"),
+        ((5, 1, 0), "minecraft:waxed_exposed_copper_bulb"),
+    ],
+    watch=[(1, 1, 0), (2, 1, 0), (3, 1, 0), (1, 1, 2), (2, 1, 2), (5, 1, 0), (6, 1, 2)],
+    ticks=30,
+    inputs={
+        2: [((0, 1, 0), RB)],
+        5: [((0, 1, 0), AIR)],
+        8: [((0, 1, 0), RB), ((0, 1, 2), RB)],
+        11: [((0, 1, 0), AIR)],
+        14: [((0, 1, 0), RB), ((5, 1, 1), RB)],
+        17: [((0, 1, 0), AIR), ((5, 1, 1), AIR)],
+        20: [((6, 1, 3), RB), ((6, 1, 2), "minecraft:weathered_copper_bulb")],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -928,6 +989,8 @@ ALL = [
     HOPPER_LOCK,
     HOPPER_CLOCK,
     HOPPER_ITEM_REPLACE,
+    NOTE_BLOCKS,
+    COPPER_BULBS,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}
