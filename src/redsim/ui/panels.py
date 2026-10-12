@@ -45,7 +45,10 @@ from redsim.world.block import BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
 from redsim.world.properties import Property
 
-NO_SELECTION = "Left-click a block in NORMAL mode (Esc) to inspect it."
+NO_SELECTION = (
+    f"<span style='color:{theme.TEXT_DIM}'>No block selected. Left-click a block in "
+    "NORMAL mode (Esc) to inspect it.</span>"
+)
 
 DIRECTION_LABELS = {
     "north": "↑ N",
@@ -285,12 +288,14 @@ class InspectorPanel(QWidget):
         )
         contents_layout.addRow("", self.empty_all)
         layout.addWidget(self.contents_box)
-        section_row = QHBoxLayout()
+        self.section_row = QWidget()  # hidden while nothing is selected
+        section_row = QHBoxLayout(self.section_row)
+        section_row.setContentsMargins(0, 0, 0, 0)
         section_row.addWidget(QLabel("Section:"))
         self.section_box = QComboBox()
         self.section_box.activated.connect(self._section_changed)
-        section_row.addWidget(self.section_box)
-        layout.addLayout(section_row)
+        section_row.addWidget(self.section_box, 1)
+        layout.addWidget(self.section_row)
         layout.addStretch(1)
         self.show_block(None, None)
 
@@ -309,8 +314,9 @@ class InspectorPanel(QWidget):
             self.entity.setText("")
             self.note.setVisible(False)
             self.section_box.clear()
-            self.section_box.setEnabled(False)
+            self.section_row.setVisible(False)
             return
+        self.section_row.setVisible(True)
         state = document.state_at(pos)
         self._state = state
         editable = document.can_edit

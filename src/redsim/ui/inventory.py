@@ -317,6 +317,10 @@ class InventoryCanvas(QWidget):
         folder: bool = False,
     ) -> None:
         r = spot.rect
+        if folder:  # a folder: a second plate behind it, like a stack of slots
+            back = r.translated(3, -3)
+            painter.fillRect(back, QColor(theme.LINE))
+            painter.fillRect(back.adjusted(1, 1, -1, -1), QColor(theme.WIDGET))
         painter.fillRect(r, QColor(theme.SUNKEN))
         # Minecraft slot bevel: dark top/left, light bottom/right.
         painter.fillRect(QRect(r.left(), r.top(), r.width(), 2), QColor("#0b0b0c"))
@@ -326,13 +330,19 @@ class InventoryCanvas(QWidget):
         if hovered:
             painter.fillRect(r.adjusted(2, 2, -2, -2), QColor(255, 255, 255, 28))
         if spot.block is not None:
-            size = r.width() - 12
-            painter.drawPixmap(r.left() + 6, r.top() + 6, block_pixmap(spot.block, size))
-        if folder:  # a folder: a small marker in the corner
-            painter.fillRect(QRect(r.right() - 10, r.top() + 3, 8, 8), QColor(theme.ACCENT))
-        if number is not None:
+            size = r.width() - 10
+            painter.drawPixmap(r.left() + 5, r.top() + 5, block_pixmap(spot.block, size))
+        if folder:  # opening it adds a row above: a small up chevron
+            color = QColor(theme.ACCENT if selected else theme.GOLD)
+            x, y = r.right() - 9, r.top() + 4
+            for row in range(3):
+                painter.fillRect(QRect(x + 3 - row, y + row, 1 + 2 * row, 1), color)
+        if number is not None:  # the number key, as a small key cap
             text = str(number)
-            theme.draw_text(painter, r.right() - theme.text_width(text) - 1, r.bottom() - 17, text)
+            width = theme.text_width(text, 1)
+            cap = QRect(r.left() + 2, r.bottom() - 10, width + 5, 10)
+            painter.fillRect(cap, QColor(0, 0, 0, 170))
+            theme.draw_text(painter, cap.left() + 3, cap.top() + 2, text, theme.TEXT, 1, False)
         if selected:
             painter.setPen(QPen(QColor("#ffffff"), 2))
             painter.setBrush(Qt.BrushStyle.NoBrush)

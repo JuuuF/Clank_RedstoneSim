@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
     QColor,
     QKeyEvent,
@@ -42,13 +42,17 @@ from PySide6.QtWidgets import (
 
 from redsim.core.pos import Pos
 from redsim.editor.document import EDIT_ROWS, Document, EditBatch
-from redsim.ui import theme
+from redsim.ui import pixel_icons, theme
 from redsim.ui.names import block_name
 
+#: Transport icon size: the pixel icons' canvas (13×10 art pixels at 2×).
+ICON_SIZE = QSize(26, 20)
 BACKGROUND = QColor(theme.PANEL)
 RECORDED = QColor(theme.WIDGET)
 GRID = QColor(theme.LINE)
 TEXT = QColor(theme.TEXT)
+TEXT_DIM = QColor(theme.TEXT_DIM)
+RULER = QColor(theme.SUNKEN)
 ROW_COLORS = {
     "build": QColor(110, 200, 95),
     "remove": QColor(235, 85, 70),
@@ -175,6 +179,7 @@ class TimelineCanvas(QWidget):
         height = self.height()
         x0, x1 = self._x(self.start), self._x(self.end)
         painter.fillRect(QRectF(x0, 0, max(1.0, x1 - x0), height), RECORDED)
+        painter.fillRect(QRectF(0, 0, self.width(), self.RULER_HEIGHT - 2), RULER)
         step = self._ruler_step()
         tick = math.floor(self.view_start / step) * step
         while tick <= self.view_start + self.view_span:
@@ -182,12 +187,15 @@ class TimelineCanvas(QWidget):
             if x >= self.LABEL_WIDTH:
                 painter.setPen(GRID)
                 painter.drawLine(int(x), self.RULER_HEIGHT - 6, int(x), height)
-                painter.setPen(TEXT)
-                painter.drawText(int(x) + 3, 14, "0 build" if tick == 0 else str(tick))
+                painter.setPen(TEXT_DIM)
+                label = str(tick)
+                half = painter.fontMetrics().horizontalAdvance(label) / 2
+                painter.drawText(QPointF(max(x - half, self.LABEL_WIDTH + 2.0), 14), label)
             tick += step
         self._paint_edit_rows(painter)
         self._paint_tracks(painter)
         painter.fillRect(QRectF(0, 0, self.LABEL_WIDTH, height), BACKGROUND)
+        painter.fillRect(QRectF(0, 0, self.LABEL_WIDTH, self.RULER_HEIGHT - 2), RULER)
         painter.setPen(TEXT)
         painter.drawText(8, 16, "tick")
         for row, name in enumerate(EDIT_ROWS):
@@ -205,12 +213,14 @@ class TimelineCanvas(QWidget):
             painter.setPen(PLAYHEAD)
             painter.drawLine(int(x), 0, int(x), height)
             label = str(self.current)
-            width = painter.fontMetrics().horizontalAdvance(label) + 8
-            painter.fillRect(QRectF(x - width / 2, 1, width, 16), PLAYHEAD)
+            width = max(20, painter.fontMetrics().horizontalAdvance(label) + 10)
+            left = max(x - width / 2, float(self.LABEL_WIDTH))  # tick 0 sits at the edge
+            badge = QRectF(left, 1, width, 17)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(PLAYHEAD)
+            painter.drawRoundedRect(badge, 4, 4)
             painter.setPen(QColor(255, 255, 255))
-            painter.drawText(
-                QRectF(x - width / 2, 1, width, 16), Qt.AlignmentFlag.AlignCenter, label
-            )
+            painter.drawText(badge, Qt.AlignmentFlag.AlignCenter, label)
         painter.end()
 
     def _paint_edit_rows(self, painter: QPainter) -> None:
@@ -453,30 +463,38 @@ class TimelineBar(QWidget):
 
         def button(text: str, tip: str, slot: object) -> QToolButton:
             widget = QToolButton()
-            widget.setText(text)
+            if text in pixel_icons.ICONS:
+                widget.setIcon(pixel_icons.pixel_icon(text))
+                widget.setIconSize(ICON_SIZE)
+            else:
+                widget.setText(text)
             widget.setToolTip(tip)
             widget.clicked.connect(slot)
             row.addWidget(widget)
             return widget
 
-        button("⏮", "Jump to start (Shift+Left)", lambda: self.jump.emit("start"))
-        button("◆◀", "Previous edit (Down)", lambda: self.jump.emit("previous"))
-        button("◀", "Tick back (Left); Ctrl+Left: one engine step", self.tick_back.emit)
+        button("start", "Jump to start (Shift+Left)", lambda: self.jump.emit("start"))
+        button("previous", "Previous edit (Down)", lambda: self.jump.emit("previous"))
+        button("back", "Tick back (Left); Ctrl+Left: one engine step", self.tick_back.emit)
         self.reverse = QToolButton()
-        self.reverse.setText("◁")
+        self.reverse.setIconSize(ICON_SIZE)
+        self.reverse.setIcon(pixel_icons.pixel_icon("reverse"))
         self.reverse.setCheckable(True)
         self.reverse.setToolTip("Play backwards / pause (Ctrl+Shift+Space)")
         self.reverse.toggled.connect(self._reverse_toggled)
         row.addWidget(self.reverse)
         self.play = QToolButton()
-        self.play.setText("▶")
+        self.play.setIconSize(ICON_SIZE)
+        self.play.setIcon(pixel_icons.pixel_icon("play"))
         self.play.setCheckable(True)
         self.play.setToolTip("Run / pause (Space)")
         self.play.toggled.connect(self._toggled)
         row.addWidget(self.play)
-        button("▶|", "Step one tick (Right); Ctrl+Right or E: one engine step", self.step_tick.emit)
-        button("▶◆", "Next edit (Up)", lambda: self.jump.emit("next"))
-        button("⏭", "Jump to end (Shift+Right)", lambda: self.jump.emit("end"))
+        button(
+            "step", "Step one tick (Right); Ctrl+Right or E: one engine step", self.step_tick.emit
+        )
+        button("next", "Next edit (Up)", lambda: self.jump.emit("next"))
+        button("end", "Jump to end (Shift+Right)", lambda: self.jump.emit("end"))
         row.addSpacing(8)
         zero = button(
             "Set tick 0 here",
@@ -503,21 +521,21 @@ class TimelineBar(QWidget):
         layout.addWidget(self.canvas)
 
     def _toggled(self, on: bool) -> None:
-        self.play.setText("⏸" if on else "▶")
+        self.play.setIcon(pixel_icons.pixel_icon("pause" if on else "play"))
         if on and self.reverse.isChecked():
             self.reverse.blockSignals(True)
             self.reverse.setChecked(False)
-            self.reverse.setText("◁")
+            self.reverse.setIcon(pixel_icons.pixel_icon("reverse"))
             self.reverse.blockSignals(False)
         self.play_toggled.emit(on)
 
     def _reverse_toggled(self, on: bool) -> None:
         """Backwards playback uses the same run loop, ticking back instead of forward."""
-        self.reverse.setText("⏸" if on else "◁")
+        self.reverse.setIcon(pixel_icons.pixel_icon("pause" if on else "reverse"))
         if on and self.play.isChecked():
             self.play.blockSignals(True)
             self.play.setChecked(False)
-            self.play.setText("▶")
+            self.play.setIcon(pixel_icons.pixel_icon("play"))
             self.play.blockSignals(False)
         self.play_toggled.emit(on)
 
@@ -532,10 +550,16 @@ class TimelineBar(QWidget):
     def show_status(self, document: Document) -> None:
         engine = document.engine
         tick, end = document.tick, document.end_tick
-        where = "the build (tick 0: edits change the build)" if tick == 0 else f"tick <b>{tick}</b>"
-        future = f" · recorded to tick {end}" if end > tick else ""
+        where = "tick <b>0</b> · the build" if tick == 0 else f"tick <b>{tick}</b>"
+        future = f" / {end}" if end > tick else ""
         self.status.setText(
-            f"{where}{future} · {engine.phase.value} · next: {engine.peek_next_step()}"
+            f"{where}{future}&nbsp;&nbsp;<span style='color:{theme.TEXT_DIM}'>"
+            f"{engine.phase.value}</span>"
+        )
+        self.status.setToolTip(
+            ("Tick 0 is the build: edits change it.\n" if tick == 0 else "")
+            + (f"Recorded up to tick {end}.\n" if end > tick else "")
+            + f"Phase: {engine.phase.value}\nNext: {engine.peek_next_step()}"
         )
         tracks = [
             Track(

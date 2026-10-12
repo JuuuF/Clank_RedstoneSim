@@ -282,17 +282,22 @@ class MainWindow(QMainWindow):
                     f"border: 1px solid {color.lighter(130).name()}; color: #ffffff; }}"
                 )
         toolbar.addSeparator()
-        for text, slot, keymap_id in (
-            ("⟳ Rotate", lambda: self._rotate(1), "edit.rotate"),
-            ("⟲ Rotate", lambda: self._rotate(3), "edit.rotate_back"),
-            ("⇋ Flip", lambda: self._flip(depth=False), "edit.flip"),
-            ("⇅ Flip", lambda: self._flip(depth=True), "edit.flip_depth"),
-            ("Copy", self._copy, "edit.copy"),
-            ("Paste", self._paste, "edit.paste"),
+        # Menu text, then the toolbar's short label: pairs share one label, the second
+        # button of a pair shows only its symbol.
+        for text, short, slot, keymap_id in (
+            ("⟳ Rotate clockwise", "⟳ Rotate", lambda: self._rotate(1), "edit.rotate"),
+            ("⟲ Rotate counter-clockwise", "⟲", lambda: self._rotate(3), "edit.rotate_back"),
+            ("⇋ Flip left/right", "⇋ Flip", lambda: self._flip(depth=False), "edit.flip"),
+            ("⇅ Flip front/back", "⇅", lambda: self._flip(depth=True), "edit.flip_depth"),
+            ("Copy", "Copy", self._copy, "edit.copy"),
+            ("Paste", "Paste", self._paste, "edit.paste"),
         ):
             action = self._action(region_menu, text, slot, keymap_id)
+            action.setIconText(short)
             action.setToolTip(f"{SPECS[keymap_id].title} ({self.keymap.describe(keymap_id)})")
             toolbar.addAction(action)
+            if keymap_id in ("edit.rotate_back", "edit.flip_depth"):
+                toolbar.addSeparator()
         delete = self._action(region_menu, "Delete", self._delete_region, "edit.delete")
         delete.setToolTip("Clear the selection: fill it with air (Del)")
         toolbar.addAction(delete)
