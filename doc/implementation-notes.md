@@ -108,6 +108,29 @@ python -m tools.gameserver.run and_gate   # selected scenarios
 - A wire's input ignores its connections; only its output checks them (via a live
   `getConnectionState`).
 
+- Change blocks through `Level.set_block` (the game's pipeline) or `Level.add_blocks`
+  (no updates, like chunk loading). Both record the position in `Level.touched`, which the
+  viewport's chunked mesh reads; a direct `level.blocks[pos] = …` is only safe before a
+  level is shown (building a fresh level, loading a file). The mesh then falls back to a
+  full diff only if the block count changed.
+- Blocks of a Minecraft world that stream in later must reach every stored level, not only
+  the current one: `Document.add_world_blocks` adds them to the keyframes and the undo
+  bases too, or a seek or undo would make them vanish.
+- Only one game-server run at a time (they share the sandbox); its stdout is buffered to
+  the end when redirected to a file.
+
+## Checking the UI visually
+
+Screenshots of the real window (xcb, the GPU) are the reliable way to see a change: start
+a `MainWindow` in a small script with `QT_QPA_PLATFORM=xcb`, `REDSIM_KEYMAP` and
+`REDSIM_CONFIG_DIR` pointing at missing files (defaults, nothing saved), drive it with
+`QTimer.singleShot` steps (set `viewport.camera`, call window methods or trigger
+`window._actions[...]`), then save `window.grab()` with `viewport.grabFramebuffer()`
+painted over the viewport's rectangle (the GL widget is black in a plain grab; screen
+grabs are black under XWayland). Popups are separate windows: paint their `grab()` at
+their position. Keyboard shortcuts do not fire while the test window is not the active
+window; trigger the `QAction` instead.
+
 ## History and the trace
 
 - Every edit goes through `Document` → `Timeline.apply`; never call `engine.apply` directly

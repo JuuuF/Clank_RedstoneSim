@@ -3,7 +3,9 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-11, after the fourth feedback round (all merged into `main`).*
+*Last updated: 2026-10-12, after the missing blocks, world streaming and the E block popup
+(all merged into `main` and pushed). The session log of the work is in git history; this
+page is the summary to start from.*
 
 ## Summary
 
@@ -17,14 +19,17 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   repeater, comparator (block entity, compare/subtract, side inputs, analog input), analog
   sources (barrel, lectern, cake; [[analog-sources]]), the redstone block, and simple and
   non-conducting blocks. Added after the third round, in the owner's order: observers,
-  rails (plain, powered, activator), target blocks and hoppers.
+  rails (plain, powered, activator), target blocks and hoppers; on 2026-10-12: note
+  blocks, copper bulbs (all 8), dispensers, droppers, chests (double, trapped) and
+  pressure plates (stone, 12 woods, weighted).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
-  All 40 named scenarios and 40 random circuits (every supported block, 0-tick inputs,
+  All 46 named scenarios and 40 random circuits (every supported block, 0-tick inputs,
   live edits) match ([[experiments/index]]).
 - **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
-  and a rebindable keymap ([[controls]]); BUILD mode places with left click (drag: a
-  straight line), turns with right click, removes with Del, with a translucent preview;
+  and a rebindable keymap ([[controls]], with a keymap editor and Mac defaults); BUILD
+  mode places with left click (drag: a straight line), removes with right click, turns
+  with Q, with a translucent preview; E opens any block's inspector as a popup;
   a Trackmania-style inventory with block previews, recent blocks and quick search; an
   immediate-apply inspector (`/setblock` edits, container contents, target hits),
   sections, groups and prefabs; a Blender-like timeline with keyframe rows and monitor
@@ -33,7 +38,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 - **Pistons (M5):** done for the core scope. Normal and sticky pistons, heads, moving blocks
   with their block entity, structure resolution (12-block limit, slime/honey branching),
   quasi-connectivity, BUD behavior and short-pulse block dropping, all confirmed in game.
-  Open: retraction triggered from scheduled ticks (repeater-driven 0-tick setups), observers.
+  Pulses that start and end in scheduled ticks are confirmed too (EXP-047).
 - **Playback and history (M6):** done. An event-sourced timeline (keyframes + action log +
   deterministic replay) supports step back, tick back, scrubbing, forward and backward
   playback and warp. Tick 0 is the build state (not replayed); edits at later ticks form
@@ -50,6 +55,10 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
   a prefab library (save, import/export JSON), and groups with exposed input/output ports and
   live readings. Abstract (black-box) group models are deferred (ADR-016).
+- **Minecraft worlds:** File → Open Minecraft world… opens a Java 26.x save around the
+  player and streams further chunks in around the camera up to a view distance; blocks the
+  simulator does not model come in as inert "foreign" blocks drawn with their real model
+  ([[world-import]]). Not yet: the "go to builds" index, an on-disk cache, writing back.
 
 ## What exists, module by module
 
@@ -71,6 +80,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | `redsim.sim.engine` | Tick phases as steps; player and command actions; snapshots | done | `tests/sim/test_scheduling.py` |
 | `redsim.sim.timeline` | History: keyframes, action log, seek/rewind/replay | done | `tests/sim/test_timeline.py` |
 | `redsim.io.save` | Save/load of the complete engine state | done (mid-tick safe) | `tests/io/test_save.py` |
+| `redsim.mcworld` | Minecraft saves: NBT, region files, sections, streaming, opening as a document | phases 1–3 of [[world-import]] (no cache, no write-back) | `tests/mcworld/*` (the example-save test skips without `data/`) |
 | `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
 | `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
 | `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes with the game's textured models (`assets`, `atlas`), run pacing, smooth orbit camera, keymap and modes, theme and pixel font, hotbar inventory, block search, timeline with keyframe rows, F3 screen, gizmos | done | `tests/ui/*` (offscreen; asset tests skip without the jar) |
@@ -101,11 +111,17 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 | target block | `target.py` | hit duration, entity-phase timing, dust connection | EXP-031, 037 |
 | barrel (+ block entity, 27 slots) | `container.py` | thresholds, `/item replace` updates, immovable, save | EXP-024 |
 | lectern (+ block entity) | `lectern.py` | page formula, page-turn pulse, save | EXP-025 (signals; pulse: source only) |
+| note block | `note_block.py` | instrument from the block below/above, rising edge, block event | EXP-042 |
+| copper bulb (all 8 oxidation/wax ids) | `copper_bulb.py` | T flip-flop, light, comparator output | EXP-043 |
+| dispenser, dropper (+ block entity, 9 slots) | `dispenser.py` | QC trigger, 4-tick delay, random slot, dropper into containers | EXP-044 (dispense effects not simulated) |
+| chest, trapped chest (+ block entity, single/double) | `chest.py` | double-chest slots, blocked chest reads 0, hoppers ignore blocking | EXP-045 |
+| pressure plates (stone, polished blackstone, 12 woods, light/heavy weighted) | `pressure_plate.py` | press/release timing, weights, "visitors" instead of entities | EXP-046 |
+| foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status
 
-- `python -m pytest`: **404 tests pass** (2026-10-12), including the JDK oracle, the 80
-  game-recording replays (40 named, 40 random), save round trips, history rewriting,
+- `python -m pytest`: **405 tests pass** (2026-10-12), including the JDK oracle, the 86
+  game-recording replays (46 named, 40 random), save round trips, history rewriting,
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
   directory (`tests/conftest.py`).
@@ -124,7 +140,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   unit tests, not in game.
 - No entities: no minecarts (so no detector rails), no item entities (the test server runs
   with `block_drops false`), no projectiles except the target-block hit action.
-- Containers are barrels and hoppers only (no chests, droppers, composters).
+- Containers: barrels, hoppers, chests, dispensers and droppers (no composters, furnaces,
+  shulker boxes). What a dispenser shoots or places, and items a dropper drops, are not
+  simulated (the item just leaves the container).
 - Overdue scheduled ticks (more than 65 536 due in one tick) are reported but not merged
   per chunk (cannot occur in scope).
 - Experimental redstone (`redstone_experiments`) is out of scope (ADR-006).
@@ -143,36 +161,28 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-All seven owner feedback rounds ([[ui-direction]]) are done. Round 7 (2026-10-12): the
-wheel moves the camera up and down, uniform inventory rows, the game's block names, 1-pixel
-dust and rails, 30 %/50 % X-ray defaults, a fading layer grid. Then an overnight UI polish
-pass ([[ui-direction]], ADR-025): pixel-art icons everywhere, the game's hotbar sprites,
-a grass superflat horizon with the game's clouds (View → Scenery), a restyled timeline,
-container slot grids, Minecraft-style tooltips, remembered window layout, and fixes found
-on the way (guide-line blending, unpainted tab gaps, an unbounded text cache, late GL
-texture destruction). Round 6: "Set tick 0 here" restarts the clock, the game's models
-and textures (ADR-023), the dark Minecraft-meets-Blender theme (ADR-024).
+Eight owner feedback rounds are done ([[ui-direction]]). The owner's latest priority order
+(2026-10-12) was: missing blocks → improve world (game) loading → diagnostics; the owner
+tests the Mac support themselves. Status and what is left:
 
-Suggested next steps:
-
-0. **Done 2026-10-12 (owner request):** E over a block opens its inspector as a popup in
-   the viewport ([[controls]], "Block popup"); "Step one event" keeps Ctrl+→ only.
-1. **Owner review** of round 7 and the polish pass on the desktop
-   (`redsim examples/showcase.redsim.json`); open questions are listed in the round-7
-   summary (grass vs. stone ground, name fade, Lock/region button dimming).
-2. **Mechanics:** done 2026-10-12: note blocks, copper bulbs, droppers/dispensers,
-   chests, pressure plates (entities as editor visitors), scheduled-tick piston pulses
-   (EXP-047). Left: dispense effects (entities, fluids), detector rails, daylight sensors.
-3. **World loading:** done 2026-10-12: opened Minecraft worlds stream in around the
-   camera ([[world-import]], phase 3). Left: the "go to the builds" index, the on-disk
-   cache, write-back (phase 4).
-4. **Diagnostics:** an interactive causal trace ("why did this block change?"), a
-   signal-strength heat view in the viewport.
-5. **Editing comfort:** named bookmarks on the timeline, a
-   "compare two ticks" view (blocks that differ highlighted).
-6. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
-   from tick 0, which is fine for hundreds of ticks but should keep keyframes for long
-   histories.
+1. **Missing blocks: done** (note blocks, copper bulbs, dispensers/droppers, chests,
+   pressure plates, scheduled-tick piston pulses, all game-verified). Left, lower priority:
+   dispense effects (entities, fluids, placing), detector rails (need minecarts), daylight
+   sensors (need time of day and sky light), composters and furnaces.
+2. **World loading: mostly done.** Streaming around the camera works (phase 3 of
+   [[world-import]]). Left: an index of the save's builds with "go to the builds" (the
+   palette scan already exists in `mcworld/chunk.py`), an on-disk cache keyed by chunk
+   timestamps, dropping far chunks again, re-attaching the stream when a `.redsim.json`
+   saved from a world is reopened, then write-back to a copy (phase 4).
+3. **Diagnostics: next.** An interactive causal trace ("why did this block change?": click
+   a block, see the chain of updates and ticks that changed it, from `sim/trace.py`
+   records, which already carry causes), and a signal-strength heat view in the viewport.
+4. **Owner review** of rounds 7–8, the polish pass, the popup and Mac support on real
+   hardware.
+5. **Editing comfort:** a "compare two ticks" view (blocks that differ highlighted).
+6. **Scale:** the engine is pure Python; profile large streamed worlds while running.
+   Keyframes are full level copies (fewer are kept for large levels); a copy-on-write
+   block map would make them cheap.
 
 ## How to resume
 
@@ -186,3 +196,28 @@ python -m tools.gameserver.run         # re-run named game comparisons (~5 min, 
 
 Read [[implementation-notes]] for conventions, the "adding a block" checklist and harness
 details.
+
+## Handing over (for the next developer)
+
+- **Branches:** `main` is always the latest verified state and is pushed to
+  `origin` (github.com:JuuuF/RedstoneSim). Work on a feature branch, run the checks, then
+  fast-forward `main` and push both. Nothing is left uncommitted or half-merged.
+- **Checks before every commit:** `ruff format src tests tools`, `ruff check src tests
+  tools`, `mypy src tools`, `python -m pytest` (all must pass; the UI tests run offscreen).
+  Behavior changes to blocks also need a game scenario ([[implementation-notes]],
+  "Checklist: adding a game scenario"); run `python -m tools.gameserver.run <name>` and
+  commit its recording under `experiments/results/`.
+- **Supplied, not committed (`data/`, git-ignored):** the decompiled 26.3 source
+  (`data/minecraft_src/client-src/`, cited with line numbers throughout the docs), the
+  client and server jars (`data/minecraft_jars/`; textures, models and the font are read
+  from the client jar at runtime, the server jar runs the game comparisons) and the
+  example save (`data/minecraft_saves/Redstone/`). Tests that need them skip without them.
+- **Where things are explained:** mechanics with source references in [[mechanics/index]],
+  every experiment in [[experiments/index]], design decisions as ADRs in [[decisions]],
+  owner requests and how each was answered in [[ui-direction]], controls in [[controls]],
+  conventions and gotchas in [[implementation-notes]], structure in [[architecture]].
+- **Owner preferences that shape the work:** game sprites over pixel art over anything
+  else (never emoji); Minecraft vibe with a Blender-like UI; wiki pages are hints, the
+  source and the game are proof (ADR-011); docs are the project's memory (ADR-012), so
+  update this page at the end of every slice.
+

@@ -10,10 +10,11 @@ state is in [[project-state]].
 | 2 | Minimal 3D editor and world model | ☑ | `python -m redsim`: viewport, place/break/use, inspector, sections, save/open, sim controls |
 | 3 | Deterministic simulation foundation | ☑ | engine, neighbor updater, scheduled ticks, block events, block-entity tickers, trace, snapshots |
 | 4 | Core redstone logic | ☑ | lever, buttons, lamp, torch (+ burnout), wire, repeater, comparator, cake, barrel, lectern, rails, target block, hopper |
-| 5 | Pistons and timing-sensitive behavior | ◐ | core and observers game-verified (EXP-015…020, 027…034); open: scheduled-tick-driven 0-tick cases |
+| 5 | Pistons and timing-sensitive behavior | ☑ | core, observers and scheduled-tick pulses game-verified (EXP-015…020, 027…034, 047) |
 | 6 | Playback, history, diagnostics | ☑ | tick 0 build state, edit batches, keyframe rows (move/merge), forward/backward play, warp, F3, diagnostics; polish open (trace tree) |
 | 7 | Contraptions and abstraction | ☑ | selection, /clone paste, rotation, /fill delete, prefab library, groups with ports; abstract models deferred (ADR-016) |
-| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (40/40 named + 40 random circuits match) |
+| — | In-game verification harness | ☑ | `tools/gameserver`, [[experiments/index]] (46/46 named + 40 random circuits match) |
+| — | Opening Minecraft worlds | ◐ | [[world-import]]: reading saves, opening, streaming done; index, cache, write-back open |
 
 Order note: the world model was built before the editor because both the editor and the
 engine depend on it ([[decisions]] ADR-007).
@@ -35,8 +36,8 @@ engine depend on it ([[decisions]] ADR-007).
    F3, X-ray levels, stress tests (fuzzing); observers, rails, target blocks, hoppers.
 0. ☑ **Fourth feedback round:** tick 0 build state, edit batches and keyframe rows
    (ADR-022), line placement, new click scheme, block previews, block search.
-0. **Next:** owner review; more containers (droppers, chests); diagnostics polish.
+0. ☑ **Rounds 5–8** (2026-10-12): game textures, theme, polish, Mac support, keymap
+   editor, timeline markers, undo history, world import and streaming, note blocks, copper
+   bulbs, droppers/dispensers, chests, pressure plates, E block popup.
 
-1. Owner review of the editor on the real desktop.
-2. Diagnostics polish (causal trace tree, "why did this change?").
-3. More mechanics: piston 0-tick from scheduled ticks, droppers/dispensers, chests, note blocks.
+The live, ordered list of next steps is in [[project-state]] ("Next steps").

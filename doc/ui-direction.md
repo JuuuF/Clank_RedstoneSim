@@ -243,6 +243,15 @@ unchanged on every platform (a test checks it); macOS adds ⌘F (search), ⌫ (d
 middle-button-free and fn-free keys in the hint bar, and supports trackpad pinch, rotate,
 smart zoom and Blender-style two-finger navigation (a preference, on by default on macOS).
 
+## Block popup (2026-10-12)
+
+Request: "It would be great if there was an option to hit E while hovering over a block
+to see its contents and change its settings. Also the inspector view as a pop-up or
+something like that in the viewport." Status: done ([[controls]] "Block popup"). E opens
+the full inspector of the hovered block next to the cursor in every mode; "Step one
+event" lost its secondary E binding (an explicit owner request overrides the earlier
+"do not change existing keybinds"; old keymap files migrate automatically).
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

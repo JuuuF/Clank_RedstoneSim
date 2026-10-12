@@ -14,19 +14,21 @@ To click through the simulator: [[tour]].
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]
 
-## Current status (2026-10-11)
+## Current status (2026-10-12)
 
 - Milestones 0–7 have a working core. Blocks: lever, buttons, lamp, torch (with burnout),
   wire, repeater, comparator, barrel, lectern, cake, pistons, slime and honey, observers,
   rails (plain, powered, activator), target blocks, hoppers, note blocks, copper bulbs,
   droppers, dispensers, chests (double, trapped) and pressure plates ([[mechanics/index]]).
-- 404 tests pass. A sandboxed 26.3 server confirms 46 of 46 named scenarios and 40 random
+- 405 tests pass. A sandboxed 26.3 server confirms 46 of 46 named scenarios and 40 random
   circuits tick for tick, including container contents and hopper cooldowns.
-- The 3D editor (`redsim`): six rounds of owner feedback are in ([[ui-direction]]): tick 0
-  as the build state with keyframe rows (ADR-022), the game's own block models and
-  textures read from the supplied jar (ADR-023), and a dark Minecraft-meets-Blender look
-  with the game's pixel font (ADR-024).
+- The 3D editor (`redsim`): eight rounds of owner feedback are in ([[ui-direction]]): tick
+  0 as the build state with keyframe rows (ADR-022), the game's own block models and
+  textures read from the supplied jar (ADR-023), a dark Minecraft-meets-Blender look with
+  the game's pixel font (ADR-024), Mac support, and an E popup inspector.
+- Minecraft Java saves open and stream in around the camera ([[world-import]]).
 - Work happens on feature branches; verified work is fast-forwarded to `main` and pushed.
+  `main` always holds the latest verified state.
 
 ## Owner decisions on record
 
