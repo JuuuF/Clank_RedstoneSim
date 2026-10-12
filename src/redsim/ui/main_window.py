@@ -380,7 +380,7 @@ class MainWindow(QMainWindow):
         scenery.setCheckable(True)
         scenery.setChecked(self.viewport.preferences.scenery)
         scenery.setToolTip(
-            "A superflat ground around the floor fading into the horizon, and the game's "
+            "A grass superflat around the floor fading into the horizon, and the game's "
             "clouds. Off: the floor alone in the sky."
         )
         self._action(view_menu, "Cycle X-ray", self._cycle_xray, "view.xray")
