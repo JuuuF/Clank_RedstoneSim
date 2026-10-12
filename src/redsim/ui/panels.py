@@ -38,6 +38,7 @@ from redsim.sim import trace as tr
 from redsim.ui import theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
+from redsim.ui.names import block_name
 from redsim.ui.preferences import Preferences
 from redsim.world import blocks
 from redsim.world.block import BlockState
@@ -319,7 +320,7 @@ class InspectorPanel(QWidget):
         if key != self._layout_key:
             self._rebuild(state)
             self._layout_key = key
-        self.title.setText(f"<b>{state.block.name}</b> at {pos}")
+        self.title.setText(f"<b>{block_name(state.block.id)}</b> at {pos}")
         self.icon.setPixmap(block_pixmap(state.block.id, 32) if not state.is_air else QPixmap())
         for prop in state.block.properties:
             editor = self._editors[prop.name]
@@ -638,6 +639,9 @@ class HotkeysPanel(QWidget):
         self.view.setHtml("".join(parts))
 
 
+PREFERENCES_WIDTH = 480
+
+
 class PreferencesDialog(QDialog):
     """Preferences; changes apply live (``changed``) and are saved on close."""
 
@@ -646,8 +650,10 @@ class PreferencesDialog(QDialog):
     def __init__(self, preferences: Preferences, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Preferences")
+        self.setFixedWidth(PREFERENCES_WIDTH)  # sliders stay usable without resizing
         self.preferences = preferences
         form = QFormLayout(self)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         for attribute, text, tip in (
             (
                 "xray_building_alpha",
@@ -664,7 +670,9 @@ class PreferencesDialog(QDialog):
             slider.setRange(0, 100)
             slider.setValue(round(getattr(preferences, attribute) * 100))
             slider.setToolTip(tip)
+            slider.setMinimumWidth(220)
             value = QLabel(f"{slider.value()} %")
+            value.setFixedWidth(44)
             slider.valueChanged.connect(lambda v, a=attribute, label=value: self._set(a, v, label))
             row = QHBoxLayout()
             row.addWidget(slider)

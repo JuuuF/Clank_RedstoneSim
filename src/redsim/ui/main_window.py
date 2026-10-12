@@ -37,6 +37,7 @@ from redsim.ui.geometry import Hit
 from redsim.ui.hints import Context, HintBar, context_hints
 from redsim.ui.inventory import InventoryBar
 from redsim.ui.keymap import SPECS, Keymap, default_path
+from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panels import (
     ContraptionsPanel,
@@ -557,7 +558,7 @@ class MainWindow(QMainWindow):
         self.current_block = block
         self.viewport.set_build_block(block, self.inventory.strength.value())
         self.viewport.set_mode(BUILD)
-        self._message(f"Placing: {block.name}")
+        self._message(f"Placing: {block_name(block.id)}")
 
     def _hover(self, hit: Hit | None) -> None:
         if hit is None:

@@ -19,7 +19,7 @@ To click through the simulator: [[tour]].
 - Milestones 0–7 have a working core. Blocks: lever, buttons, lamp, torch (with burnout),
   wire, repeater, comparator, barrel, lectern, cake, pistons, slime and honey, observers,
   rails (plain, powered, activator), target blocks and hoppers ([[mechanics/index]]).
-- 335 tests pass. A sandboxed 26.3 server confirms 40 of 40 named scenarios and 40 random
+- 336 tests pass. A sandboxed 26.3 server confirms 40 of 40 named scenarios and 40 random
   circuits tick for tick, including hopper contents and cooldowns.
 - The 3D editor (`redsim`): six rounds of owner feedback are in ([[ui-direction]]): tick 0
   as the build state with keyframe rows (ADR-022), the game's own block models and

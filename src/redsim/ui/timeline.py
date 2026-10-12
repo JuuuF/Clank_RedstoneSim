@@ -43,6 +43,7 @@ from PySide6.QtWidgets import (
 from redsim.core.pos import Pos
 from redsim.editor.document import EDIT_ROWS, Document, EditBatch
 from redsim.ui import theme
+from redsim.ui.names import block_name
 
 BACKGROUND = QColor(theme.PANEL)
 RECORDED = QColor(theme.WIDGET)
@@ -537,7 +538,11 @@ class TimelineBar(QWidget):
             f"{where}{future} · {engine.phase.value} · next: {engine.peek_next_step()}"
         )
         tracks = [
-            Track(pos, f"{document.state_at(pos).block.name} {pos}", document.samples.get(pos, {}))
+            Track(
+                pos,
+                f"{block_name(document.state_at(pos).block.id)} {pos}",
+                document.samples.get(pos, {}),
+            )
             for pos in document.monitors
         ]
         self.canvas.set_data(0, end, tick, document.edit_batches(), tracks)

@@ -36,8 +36,9 @@ def test_owner_camera_and_mode_defaults() -> None:
     ctrl = frozenset({"Ctrl"})
     assert keymap.mouse_action("normal", none, "Middle", "Drag") == "camera.orbit"
     assert keymap.mouse_action("build", shift, "Middle", "Drag") == "camera.pan"
-    assert keymap.mouse_action("select", ctrl, None, "Wheel") == "camera.vertical"
-    assert keymap.mouse_action("normal", none, None, "Wheel") == "camera.zoom"
+    # The wheel moves the camera up and down in every mode; Ctrl+wheel zooms.
+    assert keymap.mouse_action("select", none, None, "Wheel") == "camera.vertical"
+    assert keymap.mouse_action("normal", ctrl, None, "Wheel") == "camera.zoom"
     assert keymap.mouse_action("build", none, "Left", "Click") == "build.place"
     assert keymap.mouse_action("build", none, "Left", "Drag") == "build.line"
     assert keymap.mouse_action("build", none, "Right", "Click") == "build.rotate"

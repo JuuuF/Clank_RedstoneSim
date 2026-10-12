@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFontMetrics, QMouseEvent, QPainter, QPen
+from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPen
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 from redsim.editor import sources
 from redsim.ui import theme
 from redsim.ui.icons import block_pixmap
+from redsim.ui.names import block_name
 from redsim.ui.preferences import config_dir
 from redsim.world import blocks
 from redsim.world.block import Block
@@ -92,20 +93,6 @@ INVENTORY = Folder(
         Folder("Special", ("minecraft:glass", "minecraft:glowstone", "minecraft:bedrock")),
     ),
 )
-
-
-#: Compact tile labels.
-SHORT_NAMES = {
-    "minecraft:redstone_wire": "dust",
-    "minecraft:redstone_torch": "torch",
-    "minecraft:redstone_lamp": "lamp",
-    "minecraft:redstone_block": "block of redstone",
-    "minecraft:stone_button": "stone button",
-    "minecraft:oak_button": "oak button",
-    "minecraft:sticky_piston": "sticky piston",
-    "minecraft:smooth_stone_slab": "slab",
-    "minecraft:smooth_stone": "smooth stone",
-}
 
 
 class InventoryNav:
@@ -186,7 +173,8 @@ def load_recent() -> list[str]:
 
 
 def block_label(block_id: str) -> str:
-    return SHORT_NAMES.get(block_id, blocks.get(block_id).name.replace("_", " "))
+    """The name the game shows ("Redstone Dust")."""
+    return block_name(block_id)
 
 
 def all_blocks(folder: Folder = INVENTORY, path: tuple[str, ...] = ()) -> list[tuple[str, str]]:
@@ -216,7 +204,7 @@ class _Spot:
     """A clickable area of the inventory canvas."""
 
     rect: QRect
-    kind: str  # "slot" (current level), "tab" (an upper level), "recent"
+    kind: str  # "slot" (a folder level's row) or "recent"
     depth: int
     index: int
     block: str | None
@@ -224,13 +212,15 @@ class _Spot:
 
 
 class InventoryCanvas(QWidget):
-    """The painted part of the inventory, Minecraft-style: the current folder as hotbar
-    slots on top, each folder level above it as a row of tabs below, root at the bottom,
-    so the stack grows upwards as you go deeper. The name of the chosen or hovered block
-    floats above the slots like in the game. Recent blocks sit on the right."""
+    """The painted part of the inventory, Minecraft-style hotbar rows: one row of slots per
+    folder level, all alike. The root row stays at the bottom; opening a folder adds its
+    row above, so the stack grows upwards and nothing changes its look. The open folder
+    of each lower row is framed; number keys act on the top row (marked by a red bar). The
+    name of the chosen or hovered block floats above, like in the game; recent blocks sit
+    on the right."""
 
-    SLOT = 46
-    TAB = 26
+    SLOT = 42
+    GAP = 6
     NAME = 22
 
     def __init__(self, bar: InventoryBar) -> None:
@@ -242,50 +232,39 @@ class InventoryCanvas(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def rows_height(self) -> int:
-        return self.NAME + self.SLOT + 8 + len(self.bar.nav.path) * (self.TAB + 4)
+        return self.NAME + (len(self.bar.nav.path) + 1) * (self.SLOT + self.GAP) + 4
 
     def sizeHint(self) -> QSize:
         return QSize(800, self.rows_height())
 
+    def _levels(self) -> list[tuple[int, Folder]]:
+        """(depth, folder) from the root to the open folder."""
+        levels = [(0, self.bar.nav.root)]
+        folder = self.bar.nav.root
+        for depth, chosen in enumerate(self.bar.nav.path, start=1):
+            child = folder.children[chosen]
+            assert isinstance(child, Folder)
+            levels.append((depth, child))
+            folder = child
+        return levels
+
     # ------------------------------------------------------------------ layout
     def _layout(self) -> list[_Spot]:
-        nav = self.bar.nav
         spots: list[_Spot] = []
-        x0 = 8
-        top = self.NAME
-        folder = nav.folder()
-        for index, child in enumerate(folder.children):
-            rect = QRect(x0 + index * (self.SLOT + 4), top, self.SLOT, self.SLOT)
-            if isinstance(child, Folder):
-                spots.append(
-                    _Spot(rect, "slot", len(nav.path), index, first_block(child), child.title)
-                )
-            else:
-                spots.append(_Spot(rect, "slot", len(nav.path), index, child, block_label(child)))
-        # Upper levels as tab rows below the slots: the deepest parent first, root last.
-        levels: list[tuple[int, Folder, int]] = []
-        parent = nav.root
-        for depth, chosen in enumerate(nav.path):
-            levels.append((depth, parent, chosen))
-            child = parent.children[chosen]
-            assert isinstance(child, Folder)
-            parent = child
-        y = top + self.SLOT + 8
-        for depth, level, _ in reversed(levels):
-            x = x0
-            for index, child in enumerate(level.children):
-                title = child.title if isinstance(child, Folder) else block_label(child)
-                block = first_block(child) if isinstance(child, Folder) else child
-                width = QFontMetrics(self.font()).horizontalAdvance(title) + 40
-                spots.append(_Spot(QRect(x, y, width, self.TAB), "tab", depth, index, block, title))
-                x += width + 3
-            y += self.TAB + 4
-        # Recent blocks, right-aligned.
+        bottom = self.rows_height() - 4
+        for depth, folder in self._levels():  # the root lowest, deeper rows above
+            top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
+            for index, child in enumerate(folder.children):
+                rect = QRect(14 + index * (self.SLOT + 4), top, self.SLOT, self.SLOT)
+                if isinstance(child, Folder):
+                    spots.append(_Spot(rect, "slot", depth, index, first_block(child), child.title))
+                else:
+                    spots.append(_Spot(rect, "slot", depth, index, child, block_label(child)))
         recent = self.bar.recent
         size = 34
         x = self.width() - 8 - len(recent) * (size + 3)
         for index, block_id in enumerate(recent):
-            rect = QRect(x + index * (size + 3), top + (self.SLOT - size) // 2, size, size)
+            rect = QRect(x + index * (size + 3), self.NAME + 4, size, size)
             spots.append(_Spot(rect, "recent", -1, index, block_id, block_label(block_id)))
         return spots
 
@@ -294,23 +273,24 @@ class InventoryCanvas(QWidget):
         self.spots = self._layout()
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(theme.PANEL))
-        nav = self.bar.nav
-        chosen_at = {depth: index for depth, index in enumerate(nav.path)}
+        path = self.bar.nav.path
+        active = len(path)
         for spot in self.spots:
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
-            if spot.kind == "tab":
-                self._paint_tab(painter, spot, chosen_at.get(spot.depth) == spot.index, hovered)
+            if spot.kind == "recent":
+                self._paint_slot(painter, spot, spot.block == self.bar.current, hovered, None)
+                continue
+            child = self._levels()[spot.depth][1].children[spot.index]
+            if isinstance(child, Folder):
+                selected = spot.depth < active and path[spot.depth] == spot.index
             else:
-                selected = (
-                    spot.block == self.bar.current
-                    and spot.kind == "recent"
-                    or (
-                        spot.kind == "slot"
-                        and isinstance(nav.folder().children[spot.index], str)
-                        and spot.block == self.bar.current
-                    )
-                )
-                self._paint_slot(painter, spot, selected, hovered)
+                selected = child == self.bar.current
+            number = spot.index + 1 if spot.depth == active else None
+            self._paint_slot(painter, spot, selected, hovered, number, isinstance(child, Folder))
+        top_row = [s for s in self.spots if s.kind == "slot" and s.depth == active]
+        if top_row:  # the row the number keys act on
+            r = top_row[0].rect
+            painter.fillRect(QRect(4, r.top(), 3, r.height()), QColor(theme.ACCENT))
         recent = [s for s in self.spots if s.kind == "recent"]
         if recent:
             label = "Recent"
@@ -318,7 +298,7 @@ class InventoryCanvas(QWidget):
             theme.draw_text(painter, x, 3, label, theme.TEXT_DIM, 2, shadow=False)
         name = self.hovered.title if self.hovered is not None else self._current_name()
         if name:
-            theme.draw_text(painter, 10, 3, name, theme.GOLD)
+            theme.draw_text(painter, 14, 3, name, theme.GOLD)
         painter.end()
 
     def _current_name(self) -> str:
@@ -327,7 +307,15 @@ class InventoryCanvas(QWidget):
             return " › ".join(["Inventory", *self.bar.nav.breadcrumb()])
         return block_label(current)
 
-    def _paint_slot(self, painter: QPainter, spot: _Spot, selected: bool, hovered: bool) -> None:
+    def _paint_slot(
+        self,
+        painter: QPainter,
+        spot: _Spot,
+        selected: bool,
+        hovered: bool,
+        number: int | None,
+        folder: bool = False,
+    ) -> None:
         r = spot.rect
         painter.fillRect(r, QColor(theme.SUNKEN))
         # Minecraft slot bevel: dark top/left, light bottom/right.
@@ -340,32 +328,15 @@ class InventoryCanvas(QWidget):
         if spot.block is not None:
             size = r.width() - 12
             painter.drawPixmap(r.left() + 6, r.top() + 6, block_pixmap(spot.block, size))
-        if spot.kind == "slot":
-            child = self.bar.nav.folder().children[spot.index]
-            if isinstance(child, Folder):  # a folder: a small marker in the corner
-                painter.fillRect(QRect(r.right() - 11, r.top() + 3, 9, 9), QColor(theme.ACCENT))
-            number = str(spot.index + 1)
-            theme.draw_text(
-                painter, r.right() - theme.text_width(number) - 1, r.bottom() - 17, number
-            )
+        if folder:  # a folder: a small marker in the corner
+            painter.fillRect(QRect(r.right() - 10, r.top() + 3, 8, 8), QColor(theme.ACCENT))
+        if number is not None:
+            text = str(number)
+            theme.draw_text(painter, r.right() - theme.text_width(text) - 1, r.bottom() - 17, text)
         if selected:
-            pen = QPen(QColor("#ffffff"), 2)
-            painter.setPen(pen)
+            painter.setPen(QPen(QColor("#ffffff"), 2))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(r.adjusted(-1, -1, 0, 0))
-
-    def _paint_tab(self, painter: QPainter, spot: _Spot, chosen: bool, hovered: bool) -> None:
-        r = spot.rect
-        background = (
-            theme.ACCENT_SOFT if chosen else theme.WIDGET_HOVER if hovered else theme.WIDGET
-        )
-        painter.fillRect(r, QColor(background))
-        if chosen:
-            painter.fillRect(QRect(r.left(), r.bottom() - 1, r.width(), 2), QColor(theme.ACCENT))
-        if spot.block is not None:
-            painter.drawPixmap(r.left() + 5, r.top() + 4, block_pixmap(spot.block, 18))
-        painter.setPen(QColor("#ffffff" if chosen else theme.TEXT))
-        painter.drawText(r.adjusted(28, 0, 0, 0), int(Qt.AlignmentFlag.AlignVCenter), spot.title)
 
     # ------------------------------------------------------------------ input
     def _spot_at(self, point: QPoint) -> _Spot | None:
@@ -386,8 +357,6 @@ class InventoryCanvas(QWidget):
         if spot is None or event.button() != Qt.MouseButton.LeftButton:
             return
         if spot.kind == "slot":
-            self.bar.press(spot.index + 1)
-        elif spot.kind == "tab":
             self.bar.pick_at_level(spot.depth, spot.index)
         elif spot.block is not None:
             self.bar.select_block(blocks.get(spot.block))

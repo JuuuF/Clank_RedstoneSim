@@ -104,7 +104,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **335 tests pass** (2026-10-11), including the JDK oracle, the 80
+- `python -m pytest`: **336 tests pass** (2026-10-12), including the JDK oracle, the 80
   game-recording replays (40 named, 40 random), save round trips, history rewriting,
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
@@ -139,8 +139,9 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Next steps (in order)
 
-All six owner feedback rounds of 2026-10-11 ([[ui-direction]]) are done. Round 6 (this
-state): "Set tick 0 here" restarts the clock (every stored game time shifts), blocks are
+All seven owner feedback rounds ([[ui-direction]]) are done. Round 7 (2026-10-12): the
+wheel moves the camera up and down, uniform inventory rows, the game's block names, 1-pixel
+dust and rails, 30 %/50 % X-ray defaults, a fading layer grid. Round 6: "Set tick 0 here" restarts the clock (every stored game time shifts), blocks are
 drawn with the game's own models and textures from the supplied jar (ADR-023), a dark
 Minecraft-meets-Blender theme with the game's pixel font, a hotbar-style inventory whose
 folder stack grows upwards, and a smooth camera (ADR-024).

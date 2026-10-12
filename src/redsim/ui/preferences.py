@@ -23,8 +23,8 @@ def config_dir() -> Path:
 @dataclass
 class Preferences:
     #: X-ray: alpha of building blocks (both X-ray levels) and of circuit blocks (level 2).
-    xray_building_alpha: float = 0.18
-    xray_circuit_alpha: float = 0.45
+    xray_building_alpha: float = 0.30
+    xray_circuit_alpha: float = 0.50
     #: Draw blocks with the game's models and textures (when the client jar is there).
     game_textures: bool = True
 

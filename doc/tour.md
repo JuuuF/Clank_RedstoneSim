@@ -10,7 +10,7 @@ redsim examples/showcase.redsim.json     # or: python -m redsim examples/showcas
 The camera opens looking south over eight circuits, one per row. Inputs are on the left,
 outputs on the right. Blue outlines mark inputs, green outlines outputs, orange the
 processing parts, purple the clock, and white boxes are groups. Middle-drag orbits around
-the orange pivot, Shift+middle-drag pans, the wheel zooms and Ctrl+wheel moves the pivot up
+the orange pivot, Shift+middle-drag pans, Ctrl+wheel zooms and the wheel moves the pivot up
 and down. You start in NORMAL mode: right click uses levers, left click inspects. All
 controls: [[controls]].
 

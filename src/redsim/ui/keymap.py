@@ -31,10 +31,15 @@ BUTTONS = ("Left", "Right", "Middle")
 GESTURES = ("Click", "Drag")
 KEYMAP_VERSION = 2
 
+#: Actions older versions had (keymap files written then may still list them).
+RETIRED_ACTIONS = frozenset(f"hotbar.{slot}" for slot in range(1, 10))
+
 #: Earlier default bindings. A keymap file entry equal to one of them was not changed by
 #: the user (older versions wrote every default into the file), so the current default
 #: applies instead.
 LEGACY_DEFAULTS: dict[str, tuple[tuple[str, ...], ...]] = {
+    "camera.zoom": (("Wheel",),),
+    "camera.vertical": (("Ctrl+Wheel",),),
     "sim.event": (("Shift+Right", "E"),),
     "sim.step_back": (("Shift+Left",),),
     "build.break": (("Left Click",),),
@@ -66,8 +71,8 @@ ACTIONS: tuple[ActionSpec, ...] = (
         ("Shift+Middle Drag", "Shift+Alt+Left Drag"),
         MOUSE,
     ),
-    ActionSpec("camera.zoom", "Zoom (distance to the pivot)", ("Wheel",), MOUSE),
-    ActionSpec("camera.vertical", "Move the pivot up or down", ("Ctrl+Wheel",), MOUSE),
+    ActionSpec("camera.zoom", "Zoom (distance to the pivot)", ("Ctrl+Wheel",), MOUSE),
+    ActionSpec("camera.vertical", "Move the camera (pivot) up or down", ("Wheel",), MOUSE),
     ActionSpec("camera.forward", "Move the pivot forward", ("W",), HOLD),
     ActionSpec("camera.back", "Move the pivot back", ("S",), HOLD),
     ActionSpec("camera.left", "Move the pivot left", ("A",), HOLD),
@@ -211,7 +216,8 @@ class Keymap:
         for action, bindings in (overrides or {}).items():
             spec = SPECS.get(action)
             if spec is None:
-                self.warnings.append(f"unknown action {action!r} (ignored)")
+                if action not in RETIRED_ACTIONS:  # actions of older versions: silently
+                    self.warnings.append(f"unknown action {action!r} (ignored)")
                 continue
             if not isinstance(bindings, list) or not all(isinstance(b, str) for b in bindings):
                 self.warnings.append(f"{action}: bindings must be a list of strings (ignored)")

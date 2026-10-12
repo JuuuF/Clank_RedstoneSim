@@ -63,7 +63,8 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   box instead). Right click turns blocks around the vertical axis; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.
 - **Build layer (Trackmania-style):** blocks go on the horizontal layer at the camera
-  pivot's height, in the cell under the cursor (a grid marks the layer, yellow lines drop
+  pivot's height, in the cell under the cursor (a grid around the target cell marks the
+  layer and fades out with the distance, yellow lines drop
   to the ground, the badge shows `layer y=…`). The **wheel** moves the layer (and the
   pivot) up or down one block per notch; **Ctrl+wheel** zooms in BUILD mode. Blocks are
   oriented as if placed on top of the block below, facing along the cursor ray.
@@ -135,8 +136,8 @@ and paste layer follow the new height at once.
 |---|---|
 | Middle drag (or Alt+left drag) | orbit around the pivot |
 | Shift+middle drag (or Shift+Alt+left drag) | move the pivot horizontally (the world follows the mouse) |
-| Ctrl+wheel | move the pivot up or down, one block per notch |
-| Wheel | zoom (distance to the pivot) |
+| Wheel | move the camera (pivot) up or down, one block per notch, in every mode |
+| Ctrl+wheel | zoom (distance to the pivot) |
 | W A S D | move the pivot forward, left, back, right (faster when zoomed out) |
 | PgUp / PgDown | move the pivot up or down |
 | F | move the pivot to the block under the cursor |
@@ -171,7 +172,7 @@ reason the old Shift+T rewind was disliked).
 |---|---|
 | F3 | **Debug screen** (like Minecraft's): left, the engine and world (rates, game time, phase, engine step and next step, pending scheduled ticks and block events, counts, camera, mode, selection); right, the block under the cursor (id, every property, block entity, comparator reading, the strong and weak power it receives from each side, best neighbor signal, its scheduled ticks, conductor/solid/push reaction). Signal values are labeled on the blocks too: dust power (red), signal-source strength (purple), comparator output (dark); zeros grey. |
 | View → Game textures | Blocks drawn with the game's own models and textures (read from the supplied client jar; saved preference). Off, or without the jar: simple colored models. |
-| Alt+Z | **X-ray**, cycling like Minecraft's F5: off → building blocks see-through (circuit parts such as dust, torches, diodes, lamps, pistons, redstone blocks and barrels stay opaque) → everything see-through. Both transparency levels are in **Settings → Preferences** (saved in `~/.config/redsim/preferences.json`). |
+| Alt+Z | **X-ray**, cycling like Minecraft's F5: off → building blocks see-through (circuit parts such as dust, torches, diodes, lamps, pistons, redstone blocks and barrels stay opaque) → everything see-through (defaults: building blocks 30 %, circuit blocks 50 % opaque). Both transparency levels are in **Settings → Preferences** (saved in `~/.config/redsim/preferences.json`). |
 
 Active toggles show as a tag above the mode badge. View → Show sections / Show groups
 hides the annotation outlines.

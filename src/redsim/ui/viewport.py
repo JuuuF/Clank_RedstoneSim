@@ -147,6 +147,37 @@ def game_textures() -> tuple[Assets | None, Atlas | None]:
     return assets, Atlas.for_blocks(assets)
 
 
+#: The layer grid around a build target or paste: reach (blocks) and strongest alpha.
+GRID_REACH = 5
+GRID_ALPHA = 0.4
+
+
+def _layer_grid(box: Region) -> np.ndarray:
+    """Grid lines on the working plane around ``box``, in one-block segments that fade
+    out with the distance to the box, so the grid reads as a height guide and not as
+    outlines of the blocks below it."""
+    y = float(box.low[1])
+    lo_x, hi_x = box.low[0], box.high[0] + 1
+    lo_z, hi_z = box.low[2], box.high[2] + 1
+
+    def alpha(x: float, z: float) -> float:
+        dx = max(lo_x - x, 0.0, x - hi_x)
+        dz = max(lo_z - z, 0.0, z - hi_z)
+        fade = max(0.0, 1.0 - math.hypot(dx, dz) / GRID_REACH)
+        return GRID_ALPHA * fade * fade
+
+    xs = range(lo_x - GRID_REACH, hi_x + GRID_REACH + 1)
+    zs = range(lo_z - GRID_REACH, hi_z + GRID_REACH + 1)
+    segments = [((x, z), (x, z + 1)) for x in xs for z in zs[:-1]]  # lines along z
+    segments += [((x, z), (x + 1, z)) for z in zs for x in xs[:-1]]  # lines along x
+    rows = []
+    for p, q in segments:
+        ap, aq = alpha(*p), alpha(*q)
+        if ap > 0.0 or aq > 0.0:
+            rows += [(p[0], y, p[1], 1.0, 1.0, 1.0, ap), (q[0], y, q[1], 1.0, 1.0, 1.0, aq)]
+    return np.array(rows, dtype=np.float32).reshape(-1, 7)
+
+
 class Viewport(QOpenGLWidget):
     hover_changed = Signal(object)  # Hit | None
     place_requested = Signal(object)  # Pos: a cell on the working layer
@@ -645,16 +676,7 @@ class Viewport(QOpenGLWidget):
     def _paste_guides(self, box: Region) -> list[np.ndarray]:
         """A grid on the working plane around the paste, and drop lines from its corners to
         the first block below, so its height reads at a glance (Trackmania-style)."""
-        y = float(box.low[1])
-        grid = (1.0, 1.0, 1.0, 0.35)
-        x0, x1 = box.low[0] - 4, box.high[0] + 5
-        z0, z1 = box.low[2] - 4, box.high[2] + 5
-        rows = []
-        for x in range(x0, x1 + 1):
-            rows += [(x, y, z0, *grid), (x, y, z1, *grid)]
-        for z in range(z0, z1 + 1):
-            rows += [(x0, y, z, *grid), (x1, y, z, *grid)]
-        parts = [np.array(rows, dtype=np.float32)]
+        parts = [_layer_grid(box)]
         drop = (1.0, 0.9, 0.3, 1.0)
         level = self.document.level
         for cx in (box.low[0], box.high[0] + 1):
@@ -666,7 +688,7 @@ class Viewport(QOpenGLWidget):
                         break
                     ground -= 1
                 if ground < box.low[1]:
-                    line = [(cx, y, cz, *drop), (cx, ground, cz, *drop)]
+                    line = [(cx, box.low[1], cz, *drop), (cx, ground, cz, *drop)]
                     parts.append(np.array(line, dtype=np.float32))
         return parts
 

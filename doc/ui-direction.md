@@ -143,6 +143,30 @@ use the game's models and textures read from the supplied jar; dark theme, the g
 pixel font for overlays and the F3 screen, a hotbar-style inventory with the folder stack
 growing upwards, a smooth camera.
 
+## Seventh round of feedback (2026-10-12)
+
+| Topic | Request |
+|---|---|
+| Wheel | Scrolling should move the camera up and down, not zoom. |
+| Inventory | Folder rows should not change their look when diving into a lower level. |
+| Names | Block names were lowercase. |
+| Keymap | "Keymap: unknown action 'hotbar.1' (ignored)" for each hotbar slot at start. |
+| Preferences | Fixed width: the sliders were squeezed until the window was widened. |
+| X-ray | Defaults 30 % for building blocks, 50 % for circuit blocks. |
+| Flat models | Dust (and other flat models) one game pixel high by default. |
+| 7×7 outlines | In BUILD, the blocks around the target were outlined at the layer's floor: feature or bug? |
+
+Status: implemented. The wheel moves the camera (pivot) up or down in every mode and
+Ctrl+wheel zooms (old keymap files keep working: unchanged old defaults follow the new
+ones); every inventory level is the same row of hotbar slots, the root lowest; block names
+are the game's own English names from the jar's `en_us.json` ("Redstone Dust", "Block of
+Redstone"); the retired `hotbar.N` actions of older keymap files are ignored silently; the
+Preferences dialog is 480 px wide; flat model elements (dust, rails) are extruded to one
+pixel with side faces cut from the top texture's edge. The outlines were a **feature**: the
+Trackmania-style layer grid (round 5) drawn around the target cell at the layer's height,
+which on flat ground coincides with the edges of the blocks below. It now fades out with
+the distance to the target, so it reads as a height guide.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

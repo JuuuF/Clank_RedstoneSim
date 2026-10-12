@@ -209,8 +209,8 @@ class Renderer:
         height: int,
         background: tuple[float, ...],
         xray: int = 0,
-        building_alpha: float = 0.18,
-        circuit_alpha: float = 0.45,
+        building_alpha: float = 0.30,
+        circuit_alpha: float = 0.50,
         eye: tuple[float, float, float] = (0.0, 0.0, 0.0),
         fog: tuple[float, float] = (80.0, 220.0),
     ) -> None:

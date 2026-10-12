@@ -132,6 +132,40 @@ def _facing(corners: tuple[Vec, ...]) -> Direction:
     return max(Direction, key=lambda d: sum(n[i] * d.step[i] for i in range(3)))
 
 
+def _extrude(lo: Vec, hi: Vec, faces: dict[str, Any]) -> tuple[Vec, Vec, dict[str, Any]]:
+    """Give a flat element (zero size on an axis) one pixel of thickness, towards the
+    block center. A floor-flat element (dust, rails) also gets thin side faces cut from
+    the edge of its top texture, so it reads as a 1-pixel slab (presentation only)."""
+    low, high = list(lo), list(hi)
+    flat = [a for a in range(3) if abs(high[a] - low[a]) < 1e-6]
+    if not flat:
+        return lo, hi, faces
+    axis = flat[0]
+    if low[axis] <= 8:
+        high[axis] = low[axis] + 1
+    else:
+        low[axis] = high[axis] - 1
+    new_lo: Vec = (low[0], low[1], low[2])
+    new_hi: Vec = (high[0], high[1], high[2])
+    top = faces.get("up")
+    if axis != 1 or top is None:
+        return new_lo, new_hi, faces
+    u0, v0, u1, v1 = top.get("uv") or _default_uv(new_lo, new_hi, Direction.UP)
+    du = 1 if u1 >= u0 else -1
+    dv = 1 if v1 >= v0 else -1
+    base = {"texture": top.get("texture", ""), "tintindex": top.get("tintindex", -1)}
+    sides = {
+        "north": {**base, "uv": [u0, v0, u1, v0 + dv]},
+        "south": {**base, "uv": [u0, v1 - dv, u1, v1]},
+        "west": {**base, "uv": [u0, v0, u0 + du, v1], "rotation": 90},
+        "east": {**base, "uv": [u1 - du, v0, u1, v1], "rotation": 90},
+    }
+    merged = dict(faces)
+    for name, face in sides.items():
+        merged.setdefault(name, face)
+    return new_lo, new_hi, merged
+
+
 def _matches(condition: dict[str, Any], props: dict[str, str]) -> bool:
     """A multipart ``when``: ``OR``/``AND`` lists or ``property: "a|b"``. A property the
     simulator does not model (e.g. ``waterlogged``) counts as its default
@@ -164,6 +198,8 @@ class Assets:
         self._names = set(self._zip.namelist())
         self._models: dict[str, dict[str, Any]] = {}
         self._quads: dict[BlockState, tuple[Quad, ...]] = {}
+        #: Flat elements (dust, rails) get one pixel of thickness (owner preference).
+        self.extrude_flat = True
 
     @staticmethod
     @lru_cache(maxsize=1)
@@ -293,7 +329,10 @@ class Assets:
             rotation = element.get("rotation")
             shade = bool(element.get("shade", True))
             override = _BY_NAME.get(str(element.get("shade_direction_override", "")))
-            for face_name, face in element.get("faces", {}).items():
+            faces = element.get("faces", {})
+            if self.extrude_flat:
+                lo, hi, faces = _extrude(lo, hi, faces)  # type: ignore[arg-type]
+            for face_name, face in faces.items():
                 direction = _BY_NAME[face_name]
                 resolved = self.resolve_texture(textures, face.get("texture", ""))
                 if resolved is None:

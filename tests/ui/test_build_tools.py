@@ -154,22 +154,29 @@ def test_build_mode_places_on_the_camera_layer(app: Any) -> None:
 
 
 def test_inventory_stack_grows_upwards(app: Any) -> None:
-    """Trackmania-style: the current folder's slots on top, each upper level as a tab row
-    below them, the root lowest; going deeper adds a row and keeps the root at the bottom."""
+    """Every folder level is a row of the same hotbar slots: the root row stays at the
+    bottom, opening a folder adds its row above (nothing changes its look)."""
     from redsim.ui.inventory import InventoryBar
 
     bar = InventoryBar()
-    bar.resize(1200, 200)
-    root_height = bar.canvas.rows_height()
+    bar.resize(1200, 300)
+    root_spots = bar.canvas._layout()
+    root_top = min(s.rect.top() for s in root_spots if s.kind == "slot")
     bar.press(1)  # Redstone
     bar.press(9)  # Switches
-    assert bar.canvas.rows_height() > root_height
     spots = bar.canvas._layout()
-    slots = [s for s in spots if s.kind == "slot"]
-    tabs = {s.depth: s.rect.top() for s in spots if s.kind == "tab"}
-    assert [s.title for s in slots] == ["lever", "stone button", "oak button"]
-    assert max(s.rect.bottom() for s in slots) < tabs[1] < tabs[0]  # root at the bottom
-    bar.pick_at_level(0, 1)  # the Movement tab of the root row
+    rows = {}
+    for spot in spots:
+        if spot.kind == "slot":
+            rows.setdefault(spot.depth, set()).add((spot.rect.top(), spot.rect.height()))
+    assert all(len(r) == 1 for r in rows.values())  # one row per level, same slot size
+    tops = {depth: next(iter(r))[0] for depth, r in rows.items()}
+    assert tops[2] < tops[1] < tops[0]  # root lowest, deeper above
+    assert len({next(iter(r))[1] for r in rows.values()}) == 1
+    names = [s.title for s in spots if s.kind == "slot" and s.depth == 2]
+    assert names[0] in ("Lever", "lever")
+    assert root_top == min(s.rect.top() for s in root_spots if s.kind == "slot")
+    bar.pick_at_level(0, 1)  # the Movement slot of the root row
     assert bar.nav.breadcrumb() == ["Movement"]
 
 
@@ -200,5 +207,23 @@ def test_camera_glides_but_the_build_layer_jumps_at_once(app: Any) -> None:
     for _ in range(100):
         viewport._advance_glide(0.02)
     assert viewport._glide is None and viewport.camera.distance == start * 2
+    window.document.dirty = False
+    window.close()
+
+
+def test_layer_grid_fades_and_drop_lines_reach_the_ground(app: Any) -> None:
+    from redsim.editor.clipboard import Region
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.viewport import GRID_ALPHA, _layer_grid
+
+    grid = _layer_grid(Region((0, 3, 0), (0, 3, 0)))
+    assert (grid[:, 1] == 3).all()
+    alphas = {(x, z): a for x, _, z, *_, a in grid}
+    assert alphas[(0, 0)] == pytest.approx(GRID_ALPHA)  # the target cell's corner: full
+    assert alphas[(4, 0)] < alphas[(2, 0)] < GRID_ALPHA  # fading with distance
+    window = MainWindow()  # floor at y=0: the box at y=3 floats, so it gets drop lines
+    parts = window.viewport._paste_guides(Region((0, 3, 0), (1, 3, 1)))
+    drops = [p for p in parts[1:] if p[0, 1] != p[1, 1]]
+    assert len(drops) == 4 and all(p[1, 1] == 1 for p in drops)
     window.document.dirty = False
     window.close()
