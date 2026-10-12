@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.editor import sources
-from redsim.ui import theme
+from redsim.ui import pixel_icons, theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
 from redsim.ui.preferences import config_dir
@@ -393,7 +393,10 @@ class InventoryBar(QWidget):
         side.setSpacing(4)
         side.setContentsMargins(0, 6, 0, 6)
         search = QToolButton()
-        search.setText("🔍  Search blocks")
+        search.setText("Search blocks")
+        search.setIcon(pixel_icons.pixel_icon("search"))
+        search.setIconSize(pixel_icons.ICON_SIZE)
+        search.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         search.setToolTip("Search blocks by name (Ctrl+Space, /, or press Shift twice)")
         search.clicked.connect(self.search_requested.emit)
         side.addWidget(search)

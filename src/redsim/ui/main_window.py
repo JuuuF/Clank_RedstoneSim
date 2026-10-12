@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QTabWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -29,7 +30,7 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
-from redsim.ui import theme
+from redsim.ui import pixel_icons, theme
 from redsim.ui.block_search import BlockSearch
 from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import world_lines
@@ -273,6 +274,7 @@ class MainWindow(QMainWindow):
         toolbar.setObjectName("Tools toolbar")
         toolbar.setMovable(False)
         for mode in (NORMAL, BUILD, SELECT):
+            self._mode_actions[mode].setIcon(pixel_icons.pixel_icon(mode))
             toolbar.addAction(self._mode_actions[mode])
             button = toolbar.widgetForAction(self._mode_actions[mode])
             if button is not None:  # checked: the mode's badge color (viewport corner)
@@ -284,26 +286,41 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
         # Menu text, then the toolbar's short label: pairs share one label, the second
         # button of a pair shows only its symbol.
-        for text, short, slot, keymap_id in (
-            ("⟳ Rotate clockwise", "⟳ Rotate", lambda: self._rotate(1), "edit.rotate"),
-            ("⟲ Rotate counter-clockwise", "⟲", lambda: self._rotate(3), "edit.rotate_back"),
-            ("⇋ Flip left/right", "⇋ Flip", lambda: self._flip(depth=False), "edit.flip"),
-            ("⇅ Flip front/back", "⇅", lambda: self._flip(depth=True), "edit.flip_depth"),
-            ("Copy", "Copy", self._copy, "edit.copy"),
-            ("Paste", "Paste", self._paste, "edit.paste"),
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        toolbar.setIconSize(pixel_icons.ICON_SIZE)
+        # Menu text, toolbar label (None: the icon alone), pixel icon. Pairs share a label.
+        for text, short, icon, slot, keymap_id in (
+            ("Rotate clockwise", "Rotate", "rotate", lambda: self._rotate(1), "edit.rotate"),
+            (
+                "Rotate counter-clockwise",
+                None,
+                "rotate_back",
+                lambda: self._rotate(3),
+                "edit.rotate_back",
+            ),
+            ("Flip left/right", "Flip", "flip", lambda: self._flip(depth=False), "edit.flip"),
+            (
+                "Flip front/back",
+                None,
+                "flip_depth",
+                lambda: self._flip(depth=True),
+                "edit.flip_depth",
+            ),
+            ("Copy", "Copy", "copy", self._copy, "edit.copy"),
+            ("Paste", "Paste", "paste", self._paste, "edit.paste"),
+            ("Delete", "Delete", "delete", self._delete_region, "edit.delete"),
+            ("Lock", "Lock", "lock", self._toggle_lock, "select.lock"),
         ):
             action = self._action(region_menu, text, slot, keymap_id)
-            action.setIconText(short)
+            action.setIcon(pixel_icons.pixel_icon(icon))
+            action.setIconText(short or text)
             action.setToolTip(f"{SPECS[keymap_id].title} ({self.keymap.describe(keymap_id)})")
             toolbar.addAction(action)
-            if keymap_id in ("edit.rotate_back", "edit.flip_depth"):
+            button = toolbar.widgetForAction(action)
+            if short is None and isinstance(button, QToolButton):
+                button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+            if keymap_id in ("edit.rotate_back", "edit.flip_depth", "edit.paste"):
                 toolbar.addSeparator()
-        delete = self._action(region_menu, "Delete", self._delete_region, "edit.delete")
-        delete.setToolTip("Clear the selection: fill it with air (Del)")
-        toolbar.addAction(delete)
-        lock = self._action(region_menu, "🔒 Lock", self._toggle_lock, "select.lock")
-        lock.setToolTip(f"{SPECS['select.lock'].title} ({self.keymap.describe('select.lock')})")
-        toolbar.addAction(lock)
         view_menu = bar.addMenu("&View")
         for attribute, text, tip in (
             (

@@ -35,7 +35,7 @@ from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
-from redsim.ui import theme
+from redsim.ui import pixel_icons, theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.names import block_name
@@ -96,6 +96,7 @@ class _Toggle(QPushButton):
     def __init__(self, prop: Property, on_pick: Any) -> None:
         super().__init__()
         self.setCheckable(True)
+        self.setMaximumWidth(110)
         self.clicked.connect(lambda checked: on_pick(bool(checked)))
         self.setToolTip(f"Click to flip {prop.name}")
 
@@ -178,7 +179,9 @@ class InspectorPanel(QWidget):
         self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
         title_row.addWidget(self.title, 1)
-        self.monitor = QPushButton("📈 Monitor")
+        self.monitor = QPushButton("Monitor")
+        self.monitor.setIcon(pixel_icons.pixel_icon("monitor"))
+        self.monitor.setIconSize(pixel_icons.ICON_SIZE)
         self.monitor.setCheckable(True)
         self.monitor.setToolTip("Show this block's value per tick on the timeline")
         self.monitor.clicked.connect(lambda: self._pos and self.monitor_requested.emit(self._pos))
@@ -192,12 +195,11 @@ class InspectorPanel(QWidget):
         self.entity.setWordWrap(True)
         layout.addWidget(self.entity)
         self.note = QLabel(
-            "<small>Edits apply at once with /setblock semantics (state adjusted by "
-            "neighbor shapes, then neighbor updates). Right click in NORMAL mode uses a "
-            "block like a player instead.</small>"
+            f"<small style='color:{theme.TEXT_DIM}'>Edits apply at once with /setblock "
+            "semantics (state adjusted by neighbor shapes, then neighbor updates). Right "
+            "click in NORMAL mode uses a block like a player instead.</small>"
         )
         self.note.setWordWrap(True)
-        layout.addWidget(self.note)
         self.source_box = QWidget()
         source_layout = QFormLayout(self.source_box)
         source_layout.setContentsMargins(0, 6, 0, 0)
@@ -245,10 +247,12 @@ class InspectorPanel(QWidget):
         hit_layout.setContentsMargins(0, 0, 0, 0)
         self.hit_buttons: dict[bool, QPushButton] = {}  # arrow? → button
         for text, arrow, tip in (
-            ("🏹 Arrow", True, "An arrow hits the target: power for 20 ticks"),
-            ("❄ Snowball", False, "Another projectile hits the target: power for 8 ticks"),
+            ("Arrow", True, "An arrow hits the target: power for 20 ticks"),
+            ("Snowball", False, "Another projectile hits the target: power for 8 ticks"),
         ):
             button = QPushButton(text)
+            button.setIcon(pixel_icons.pixel_icon(text.lower()))
+            button.setIconSize(pixel_icons.ICON_SIZE)
             button.setToolTip(tip + " (it lands in the next tick's entity phase)")
             button.clicked.connect(lambda _=False, a=arrow: self._hit(a))
             hit_layout.addWidget(button)
@@ -297,6 +301,7 @@ class InspectorPanel(QWidget):
         section_row.addWidget(self.section_box, 1)
         layout.addWidget(self.section_row)
         layout.addStretch(1)
+        layout.addWidget(self.note)
         self.show_block(None, None)
 
     # ------------------------------------------------------------------ display
@@ -387,7 +392,9 @@ class InspectorPanel(QWidget):
                 editor = _Stepper(values, lambda v, p=prop: self._pick(p, v), prop.name)
             else:
                 editor = _Choice(prop, lambda v, p=prop: self._pick(p, v))
-            self.form.addRow(prop.name, editor)
+            label = QLabel(prop.name.replace("_", " ").capitalize())
+            label.setToolTip(f"Block state property {prop.name!r}")
+            self.form.addRow(label, editor)
             self._editors[prop.name] = editor
 
     # ------------------------------------------------------------------ edits

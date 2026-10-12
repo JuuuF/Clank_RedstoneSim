@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import (
     QColor,
     QKeyEvent,
@@ -45,8 +45,6 @@ from redsim.editor.document import EDIT_ROWS, Document, EditBatch
 from redsim.ui import pixel_icons, theme
 from redsim.ui.names import block_name
 
-#: Transport icon size: the pixel icons' canvas (13×10 art pixels at 2×).
-ICON_SIZE = QSize(26, 20)
 BACKGROUND = QColor(theme.PANEL)
 RECORDED = QColor(theme.WIDGET)
 GRID = QColor(theme.LINE)
@@ -465,7 +463,7 @@ class TimelineBar(QWidget):
             widget = QToolButton()
             if text in pixel_icons.ICONS:
                 widget.setIcon(pixel_icons.pixel_icon(text))
-                widget.setIconSize(ICON_SIZE)
+                widget.setIconSize(pixel_icons.ICON_SIZE)
             else:
                 widget.setText(text)
             widget.setToolTip(tip)
@@ -477,14 +475,14 @@ class TimelineBar(QWidget):
         button("previous", "Previous edit (Down)", lambda: self.jump.emit("previous"))
         button("back", "Tick back (Left); Ctrl+Left: one engine step", self.tick_back.emit)
         self.reverse = QToolButton()
-        self.reverse.setIconSize(ICON_SIZE)
+        self.reverse.setIconSize(pixel_icons.ICON_SIZE)
         self.reverse.setIcon(pixel_icons.pixel_icon("reverse"))
         self.reverse.setCheckable(True)
         self.reverse.setToolTip("Play backwards / pause (Ctrl+Shift+Space)")
         self.reverse.toggled.connect(self._reverse_toggled)
         row.addWidget(self.reverse)
         self.play = QToolButton()
-        self.play.setIconSize(ICON_SIZE)
+        self.play.setIconSize(pixel_icons.ICON_SIZE)
         self.play.setIcon(pixel_icons.pixel_icon("play"))
         self.play.setCheckable(True)
         self.play.setToolTip("Run / pause (Space)")

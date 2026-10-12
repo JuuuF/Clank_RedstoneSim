@@ -17,9 +17,9 @@ import json
 from dataclasses import dataclass
 from functools import lru_cache
 
-from PySide6.QtCore import QPoint, QRect, Qt
+from PySide6.QtCore import QEvent, QObject, QPoint, QRect, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPixmap
-from PySide6.QtWidgets import QApplication, QStyleFactory
+from PySide6.QtWidgets import QApplication, QStyleFactory, QTabWidget
 
 from redsim.ui.assets import Assets
 
@@ -160,12 +160,31 @@ def apply(app: QApplication) -> None:
         (QPalette.ColorRole.ToolTipText, TEXT),
         (QPalette.ColorRole.PlaceholderText, TEXT_DIM),
         (QPalette.ColorRole.Link, GOLD),
+        # Fusion's bevels and frames: dark too, or stray light lines show up (tab bases).
+        (QPalette.ColorRole.Light, LINE),
+        (QPalette.ColorRole.Midlight, WIDGET_HOVER),
+        (QPalette.ColorRole.Mid, WIDGET),
+        (QPalette.ColorRole.Dark, BORDER),
+        (QPalette.ColorRole.Shadow, "#000000"),
     ):
         palette.setColor(role, QColor(color))
     palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(TEXT_DIM))
     palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(TEXT_DIM))
     app.setPalette(palette)
     app.setStyleSheet(STYLESHEET)
+    filler = _TabFiller(app)
+    app.installEventFilter(filler)
+
+
+class _TabFiller(QObject):
+    """Tab widgets in document mode leave the gaps around their tab bar unpainted (the
+    pane is not drawn): every tab widget fills its background with the panel color. On
+    show, since the style sheet's polish resets the flag."""
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.Show and isinstance(watched, QTabWidget):
+            watched.setAutoFillBackground(True)
+        return False
 
 
 # --------------------------------------------------------------------------- pixel font

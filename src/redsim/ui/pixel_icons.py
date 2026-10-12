@@ -5,12 +5,12 @@ from __future__ import annotations
 
 from functools import cache
 
-from PySide6.QtCore import QRect
+from PySide6.QtCore import QRect, QSize
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 
 from redsim.ui import theme
 
-#: Each icon: rows of ``#`` (filled) and ``.`` (empty), 9 rows high.
+#: Each icon: rows of ``#`` (filled) and ``.`` (empty), at most 9 rows high.
 ICONS: dict[str, tuple[str, ...]] = {
     "start": (
         "##.....#...#",
@@ -113,7 +113,169 @@ ICONS: dict[str, tuple[str, ...]] = {
     ),
 }
 
+ICONS.update(
+    {
+        "rotate": (
+            "...####.#",
+            "..#....##",
+            ".#....###",
+            "#........",
+            "#........",
+            "#........",
+            ".#.....#.",
+            "..#...#..",
+            "...###...",
+        ),
+        "flip": (
+            "....#.#....",
+            "...##.##...",
+            "..###.###..",
+            ".####.####.",
+            "#####.#####",
+            ".####.####.",
+            "..###.###..",
+            "...##.##...",
+            "....#.#....",
+        ),
+        "copy": (
+            "...######",
+            "...#....#",
+            "######..#",
+            "#....#..#",
+            "#....#..#",
+            "#....####",
+            "#....#...",
+            "#....#...",
+            "######...",
+        ),
+        "paste": (
+            "...##...",
+            ".######.",
+            "#.#..#.#",
+            "#......#",
+            "#.####.#",
+            "#......#",
+            "#.###..#",
+            "#......#",
+            "########",
+        ),
+        "delete": (
+            "##.....##",
+            ".##...##.",
+            "..##.##..",
+            "...###...",
+            "..##.##..",
+            ".##...##.",
+            "##.....##",
+        ),
+        "lock": (
+            "..###..",
+            ".#...#.",
+            ".#...#.",
+            "#######",
+            "###.###",
+            "###.###",
+            "#######",
+            "#######",
+        ),
+        "search": (
+            ".###.....",
+            "#...#....",
+            "#...#....",
+            "#...#....",
+            ".###.....",
+            "....##...",
+            ".....##..",
+            "......##.",
+            ".......##",
+        ),
+        "monitor": (
+            "#........",
+            "#......#.",
+            "#.....#.#",
+            "#....#...",
+            "#.#.#....",
+            "##.#.....",
+            "#........",
+            "#########",
+        ),
+        "arrow": (
+            ".....###",
+            "......##",
+            ".....#.#",
+            "....#...",
+            "...#....",
+            "#.#.....",
+            ".#......",
+            "#.#.....",
+        ),
+        "snowball": (
+            "..###..",
+            ".#####.",
+            "#######",
+            "#######",
+            "#######",
+            ".#####.",
+            "..###..",
+        ),
+    }
+)
+
+
+def _mirrored(rows: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(row[::-1] for row in rows)
+
+
+def _transposed(rows: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple("".join(row[i] for row in rows) for i in range(len(rows[0])))
+
+
+ICONS.update(
+    {
+        "normal": (
+            "#......",
+            "##.....",
+            "###....",
+            "####...",
+            "#####..",
+            "######.",
+            "###....",
+            "#.##...",
+            "...##..",
+        ),
+        "build": (
+            "....#....",
+            "..##.##..",
+            "##.....##",
+            "#.##.##.#",
+            "#...#...#",
+            "#...#...#",
+            "#...#...#",
+            ".##.#.##.",
+            "...###...",
+        ),
+        "select": (
+            "###.#.###",
+            "#.......#",
+            "#.......#",
+            ".........",
+            "#.......#",
+            ".........",
+            "#.......#",
+            "#.......#",
+            "###.#.###",
+        ),
+    }
+)
+ICONS["rotate_back"] = _mirrored(ICONS["rotate"])
+ICONS["flip_depth"] = _transposed(ICONS["flip"])
+
 SCALE = 2
+#: Every icon's size: the canvas fits the widest and tallest art, plus the shadow pixel.
+ICON_SIZE = QSize(
+    (max(len(row) for icon in ICONS.values() for row in icon) + 1) * SCALE,
+    (max(len(icon) for icon in ICONS.values()) + 1) * SCALE,
+)
 
 
 @cache
@@ -122,17 +284,20 @@ def pixel_pixmap(name: str, color: str = theme.TEXT) -> QPixmap:
     enough for the widest icon, so all icons line up."""
     rows = ICONS[name]
     width = max(len(row) for icon in ICONS.values() for row in icon) + 1
-    height = len(rows) + 1
+    height = max(len(icon) for icon in ICONS.values()) + 1
     pixmap = QPixmap(width * SCALE, height * SCALE)
     pixmap.fill(QColor(0, 0, 0, 0))
     painter = QPainter(pixmap)
     left = (width - 1 - len(rows[0])) // 2
+    top = (height - 1 - len(rows)) // 2
     shade = QColor(color).darker(400)
     for offset, fill in ((1, shade), (0, QColor(color))):
         for y, row in enumerate(rows):
             for x, cell in enumerate(row):
                 if cell == "#":
-                    rect = QRect((left + x + offset) * SCALE, (y + offset) * SCALE, SCALE, SCALE)
+                    rect = QRect(
+                        (left + x + offset) * SCALE, (top + y + offset) * SCALE, SCALE, SCALE
+                    )
                     painter.fillRect(rect, fill)
     painter.end()
     return pixmap
