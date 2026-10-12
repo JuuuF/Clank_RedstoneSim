@@ -23,6 +23,7 @@ from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QFocusEvent,
+    QImage,
     QKeyEvent,
     QKeySequence,
     QMouseEvent,
@@ -59,7 +60,7 @@ from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter
 from redsim.ui.preferences import Preferences
-from redsim.ui.renderer import GROUND_TEXTURE, Renderer
+from redsim.ui.renderer import CLOUD_TEXTURE, GROUND_TEXTURE, Renderer
 from redsim.ui.selection_tools import (
     Handle,
     face_center,
@@ -473,6 +474,8 @@ class Viewport(QOpenGLWidget):
         assert self.renderer is not None
         atlas = self.atlas
         self.renderer.set_atlas(atlas.image() if atlas is not None else None)
+        clouds = self.assets.texture_bytes(CLOUD_TEXTURE) if self.assets is not None else None
+        self.renderer.set_clouds(QImage.fromData(clouds) if clouds else None)
         if atlas is None:
             self.renderer.set_ground(None, (0.0, 0.0, 0.0))
             return
@@ -483,6 +486,7 @@ class Viewport(QOpenGLWidget):
         if self.renderer is not None:
             self.makeCurrent()
             self.renderer.set_atlas(None)
+            self.renderer.set_clouds(None)
             self.doneCurrent()
 
     def resizeGL(self, width: int, height: int) -> None:

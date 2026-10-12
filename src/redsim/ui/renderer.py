@@ -11,6 +11,8 @@ re-uploads only the chunks it touched. Vertices are ``x, y, z, r, g, b, a, u, v`
 
 from __future__ import annotations
 
+import time
+
 import numpy as np
 from PySide6.QtGui import (
     QImage,
@@ -32,6 +34,7 @@ from PySide6.QtOpenGL import (
 GL_FLOAT = 0x1406
 GL_TRIANGLES = 0x0004
 GL_LINES = 0x0001
+GL_TEXTURE0 = 0x84C0
 GL_DEPTH_TEST = 0x0B71
 GL_BLEND = 0x0BE2
 GL_SRC_ALPHA = 0x0302
@@ -73,12 +76,18 @@ uniform vec3 fogColor;
 uniform vec2 fogRange;   // start, end (blocks)
 uniform float fogAmount; // 0 for overlays, 1 for the world
 uniform sampler2D atlas;
+uniform sampler2D clouds;
+uniform vec2 cloudOffset;  // blocks: the clouds drift
 uniform vec4 groundTile;   // atlas rect of the ground texture; zero width: untextured
 uniform vec3 groundAverage; // its average color, for the distance (no mipmaps)
 out vec4 fragColor;
 void main() {
     vec4 base = vColor;
-    if (vUv.x < -1.5 && groundTile.z > 0.0) {  // the ground: the texture repeats per block
+    if (vUv.x < -2.5) {  // clouds: one texel per 12 blocks, like the game
+        vec4 texel = texture(clouds, (vWorld.xz + cloudOffset) / 3072.0);
+        if (texel.a < 0.1) discard;
+        base = vec4(texel.rgb, texel.a) * vColor;
+    } else if (vUv.x < -1.5 && groundTile.z > 0.0) {  // the ground: the texture repeats per block
         vec2 uv = groundTile.xy + fract(vWorld.xz) * groundTile.zw;
         vec3 near = texture(atlas, uv).rgb;
         float far = smoothstep(16.0, 64.0, distance(vWorld, eye));
@@ -101,6 +110,11 @@ SKY_HORIZON = (0.72, 0.83, 0.96)
 GROUND_COLOR = (0.56, 0.58, 0.57)  # without the game's textures; else the texture's tint
 GROUND_SHADE = (0.82, 0.84, 0.83)
 GROUND_TEXTURE = "minecraft:block/stone"
+#: Clouds: the game's texture on a plane high above the floor, drifting along x.
+CLOUD_TEXTURE = "minecraft:environment/clouds"
+CLOUD_Y = 112.0
+CLOUD_COLOR = (1.0, 1.0, 1.0, 0.8)
+CLOUD_SPEED = 0.6  # blocks per second
 GROUND_Y = 0.98
 GROUND_REACH = 900.0  # inside the far plane (1000)
 #: Alpha of the parts of selection overlays hidden behind blocks.
@@ -162,6 +176,13 @@ class Renderer:
         self._sky_horizon: float | None = None
         self._upload_sky(-1.0)
         self.volume = _Stream()  # faint translucent selection body
+        self.clouds: QOpenGLTexture | None = None
+        self.cloud_plane = _Stream()
+        r, y, c = GROUND_REACH, CLOUD_Y, CLOUD_COLOR
+        mark = (-3.0, -3.0)  # UV marker: the shader samples the cloud texture
+        plane = [(-r, y, -r, *c, *mark), (r, y, -r, *c, *mark), (r, y, r, *c, *mark)]
+        plane += [(-r, y, -r, *c, *mark), (r, y, r, *c, *mark), (-r, y, r, *c, *mark)]
+        self.cloud_plane.upload(self.program, np.array(plane, dtype=np.float32))
         self.ground = _Stream()
         self.ground_tile = (0.0, 0.0, 0.0, 0.0)
         self.ground_average = (0.0, 0.0, 0.0)
@@ -207,6 +228,19 @@ class Renderer:
         self.ground_tile = tile or (0.0, 0.0, 0.0, 0.0)
         self.ground_average = (average[0], average[1], average[2])
         self._upload_ground(GROUND_SHADE if tile else GROUND_COLOR)
+
+    def set_clouds(self, image: QImage | None) -> None:
+        """The game's cloud texture (repeating, sharp), or None for no clouds."""
+        if self.clouds is not None:
+            self.clouds.destroy()
+            self.clouds = None
+        if image is None:
+            return
+        texture = QOpenGLTexture(image, QOpenGLTexture.MipMapGeneration.DontGenerateMipMaps)
+        texture.setMinificationFilter(QOpenGLTexture.Filter.Nearest)
+        texture.setMagnificationFilter(QOpenGLTexture.Filter.Nearest)
+        texture.setWrapMode(QOpenGLTexture.WrapMode.Repeat)
+        self.clouds = texture
 
     def set_atlas(self, image: QImage | None) -> None:
         """The block texture atlas (nearest-neighbor sampling, like the game)."""
@@ -279,6 +313,12 @@ class Renderer:
         if self.atlas is not None:
             self.atlas.bind(0)
             program.setUniformValue1i(program.uniformLocation("atlas"), 0)
+        if self.clouds is not None:
+            self.clouds.bind(1)
+            program.setUniformValue1i(program.uniformLocation("clouds"), 1)
+            gl.glActiveTexture(GL_TEXTURE0)  # QPainter overlays expect unit 0 active
+        drift = (time.monotonic() * CLOUD_SPEED) % 3072.0
+        program.setUniformValue(program.uniformLocation("cloudOffset"), QVector2D(drift, 0.0))
         location = program.uniformLocation("mvp")
         alpha = program.uniformLocation("alphaScale")
         fog_amount = program.uniformLocation("fogAmount")
@@ -319,6 +359,14 @@ class Renderer:
             self.lines.vao.bind()
             gl.glDrawArrays(GL_LINES, 0, self.lines.count)
             program.setUniformValue1f(fog_amount, 1.0)
+        if self.clouds is not None:  # translucent, behind everything near: no depth writes
+            gl.glEnable(GL_BLEND)
+            gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            gl.glDepthMask(GL_FALSE)
+            self.cloud_plane.vao.bind()
+            gl.glDrawArrays(GL_TRIANGLES, 0, self.cloud_plane.count)
+            gl.glDepthMask(GL_TRUE)
+            gl.glDisable(GL_BLEND)
         if xray:
             gl.glEnable(GL_CULL_FACE)
             gl.glEnable(GL_BLEND)
