@@ -158,7 +158,7 @@ Suggested next steps:
    pressure plates (need entities), scheduled-tick-driven piston 0-ticks.
 3. **Diagnostics:** an interactive causal trace ("why did this block change?"), a
    signal-strength heat view in the viewport.
-4. **Editing comfort:** an undo history list, named bookmarks on the timeline, a
+4. **Editing comfort:** named bookmarks on the timeline, a
    "compare two ticks" view (blocks that differ highlighted).
 5. **Scale:** profile larger builds (the engine is pure Python); history rewrites re-run
    from tick 0, which is fine for hundreds of ticks but should keep keyframes for long

@@ -160,6 +160,7 @@ reason the old Shift+T rewind was disliked).
 | Shift+← / Shift+→ | jump to tick 0 / the end of the recorded history (Blender) |
 | ↑ / ↓ | jump to the next / previous edit (like Blender's keyframe jumps) |
 | Ctrl+Z / Ctrl+Y | undo / redo: the last edit (or line, or keyframe operation) is removed from the history and the simulation re-run; the view returns to where it was made |
+| Edit → Undo History | the latest 25 steps, newest first; choosing one undoes it and everything after it in one re-run (redo brings them back one by one) |
 | Ctrl+Space, /, Shift Shift | quick block search |
 | Ctrl+C / Ctrl+V | copy the selection box / paste preview at the cursor (click places) |
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
