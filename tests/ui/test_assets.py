@@ -88,3 +88,22 @@ def test_inventory_previews_use_the_game_items(app: Any) -> None:
     for block_id in ("minecraft:redstone_wire", "minecraft:repeater", "minecraft:stone"):
         pixmap = game_pixmap(block_id, 32)
         assert pixmap is not None and not pixmap.isNull()
+
+
+def test_flat_dust_is_extruded_pixel_by_pixel() -> None:
+    from redsim.ui.assets import Assets
+    from redsim.world import blocks
+
+    assets = Assets.find()
+    if assets is None:
+        pytest.skip("no client jar")
+    quads = list(assets.block_quads(blocks.REDSTONE_WIRE.default_state))
+    # Side faces are the vertical quads (the dust model shades every face as "up").
+    sides = [q for q in quads if len({round(c[1], 5) for c in q.corners}) > 1]
+    assert sides, "the 1-pixel dust has side faces"
+    for quad in sides:  # each side face is one pixel wide and shows one texel
+        xs = {round(c[0] * 16, 4) for c in quad.corners}
+        zs = {round(c[2] * 16, 4) for c in quad.corners}
+        assert max(xs) - min(xs) <= 1 and max(zs) - min(zs) <= 1
+        us = {round(u * 16, 4) for u, _ in quad.uvs}
+        assert max(us) - min(us) == 1

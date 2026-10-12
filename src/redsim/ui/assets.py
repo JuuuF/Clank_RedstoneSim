@@ -166,6 +166,30 @@ def _extrude(lo: Vec, hi: Vec, faces: dict[str, Any]) -> tuple[Vec, Vec, dict[st
     return new_lo, new_hi, merged
 
 
+def _up_face_uv(lo: Vec, hi: Vec, face: dict[str, Any]) -> Any:
+    """(x, z) in element pixels → (u, v) on an up face's texture, as the bake maps its
+    corners (UV rectangle and face rotation)."""
+    u0, v0, u1, v1 = face.get("uv") or _default_uv(lo, hi, Direction.UP)
+    shift = (int(face.get("rotation", 0)) // 90) % 4
+
+    def corner(index: int) -> tuple[float, float]:
+        k = (index + shift) % 4
+        return (u0 if k in (0, 1) else u1, v0 if k in (0, 3) else v1)
+
+    # FACE_VERTICES[UP]: 0 = (lo x, lo z), 1 = (lo x, hi z), 3 = (hi x, lo z).
+    origin, along_z, along_x = corner(0), corner(1), corner(3)
+    width, depth = max(hi[0] - lo[0], 1e-6), max(hi[2] - lo[2], 1e-6)
+
+    def uv(x: float, z: float) -> tuple[float, float]:
+        fx, fz = (x - lo[0]) / width, (z - lo[2]) / depth
+        return (
+            origin[0] + fx * (along_x[0] - origin[0]) + fz * (along_z[0] - origin[0]),
+            origin[1] + fx * (along_x[1] - origin[1]) + fz * (along_z[1] - origin[1]),
+        )
+
+    return uv
+
+
 def _matches(condition: dict[str, Any], props: dict[str, str]) -> bool:
     """A multipart ``when``: ``OR``/``AND`` lists or ``property: "a|b"``. A property the
     simulator does not model (e.g. ``waterlogged``) counts as its default
@@ -200,6 +224,7 @@ class Assets:
         self._quads: dict[BlockState, tuple[Quad, ...]] = {}
         #: Flat elements (dust, rails) get one pixel of thickness (owner preference).
         self.extrude_flat = True
+        self._masks: dict[str, list[list[bool]] | None] = {}
 
     @staticmethod
     @lru_cache(maxsize=1)
@@ -330,60 +355,124 @@ class Assets:
             shade = bool(element.get("shade", True))
             override = _BY_NAME.get(str(element.get("shade_direction_override", "")))
             faces = element.get("faces", {})
+            parts: list[tuple[Vec, Vec, dict[str, Any]]] = [(lo, hi, faces)]  # type: ignore[list-item]
             if self.extrude_flat:
-                lo, hi, faces = _extrude(lo, hi, faces)  # type: ignore[arg-type]
-            for face_name, face in faces.items():
-                direction = _BY_NAME[face_name]
-                resolved = self.resolve_texture(textures, face.get("texture", ""))
-                if resolved is None:
-                    continue
-                texture, translucent = resolved
-                u0, v0, u1, v1 = face.get("uv") or _default_uv(lo, hi, direction)  # type: ignore[arg-type]
-                shift = (int(face.get("rotation", 0)) // 90) % 4
-                corners: list[Vec] = []
-                uvs: list[tuple[float, float]] = []
-                for index, pick in enumerate(FACE_VERTICES[direction]):
-                    v: Vec = (
-                        (hi if pick[0] else lo)[0] / 16,
-                        (hi if pick[1] else lo)[1] / 16,
-                        (hi if pick[2] else lo)[2] / 16,
+                parts = self._extruded(lo, hi, faces, textures)  # type: ignore[arg-type]
+            for lo, hi, faces in parts:  # noqa: B020 - each part is baked like an element
+                for face_name, face in faces.items():
+                    direction = _BY_NAME[face_name]
+                    resolved = self.resolve_texture(textures, face.get("texture", ""))
+                    if resolved is None:
+                        continue
+                    texture, translucent = resolved
+                    u0, v0, u1, v1 = face.get("uv") or _default_uv(lo, hi, direction)
+                    shift = (int(face.get("rotation", 0)) // 90) % 4
+                    corners: list[Vec] = []
+                    uvs: list[tuple[float, float]] = []
+                    for index, pick in enumerate(FACE_VERTICES[direction]):
+                        v: Vec = (
+                            (hi if pick[0] else lo)[0] / 16,
+                            (hi if pick[1] else lo)[1] / 16,
+                            (hi if pick[2] else lo)[2] / 16,
+                        )
+                        if rotation:
+                            origin = tuple(float(c) / 16 for c in rotation.get("origin", (8, 8, 8)))
+                            if "axis" in rotation:
+                                v = _rotate_axis(
+                                    v,
+                                    rotation["axis"],
+                                    float(rotation.get("angle", 0)),
+                                    origin,  # type: ignore[arg-type]
+                                    bool(rotation.get("rescale", False)),
+                                )
+                        if x_rot or y_rot:
+                            v = _rotate_block(v, x_rot, y_rot)
+                        corners.append(v)
+                        k = (index + shift) % 4
+                        uvs.append(
+                            ((u0 if k in (0, 1) else u1) / 16, (v0 if k in (0, 3) else v1) / 16)
+                        )
+                    cull = face.get("cullface")
+                    cull_dir = (
+                        _rotate_direction(_BY_NAME[cull], x_rot, y_rot)
+                        if cull in _BY_NAME
+                        else None
                     )
-                    if rotation:
-                        origin = tuple(float(c) / 16 for c in rotation.get("origin", (8, 8, 8)))
-                        if "axis" in rotation:
-                            v = _rotate_axis(
-                                v,
-                                rotation["axis"],
-                                float(rotation.get("angle", 0)),
-                                origin,  # type: ignore[arg-type]
-                                bool(rotation.get("rescale", False)),
-                            )
-                    if x_rot or y_rot:
-                        v = _rotate_block(v, x_rot, y_rot)
-                    corners.append(v)
-                    k = (index + shift) % 4
-                    uvs.append(((u0 if k in (0, 1) else u1) / 16, (v0 if k in (0, 3) else v1) / 16))
-                cull = face.get("cullface")
-                cull_dir = (
-                    _rotate_direction(_BY_NAME[cull], x_rot, y_rot) if cull in _BY_NAME else None
-                )
-                corner_tuple = (corners[0], corners[1], corners[2], corners[3])
-                facing = _facing(corner_tuple)
-                if override is not None:
-                    facing = _rotate_direction(override, x_rot, y_rot)
-                quads.append(
-                    Quad(
-                        corner_tuple,
-                        tuple(uvs),
-                        texture,
-                        cull_dir,
-                        facing,
-                        shade,
-                        int(face.get("tintindex", -1)),
-                        translucent,
+                    corner_tuple = (corners[0], corners[1], corners[2], corners[3])
+                    facing = _facing(corner_tuple)
+                    if override is not None:
+                        facing = _rotate_direction(override, x_rot, y_rot)
+                    quads.append(
+                        Quad(
+                            corner_tuple,
+                            tuple(uvs),
+                            texture,
+                            cull_dir,
+                            facing,
+                            shade,
+                            int(face.get("tintindex", -1)),
+                            translucent,
+                        )
                     )
-                )
         return quads
+
+    def _extruded(
+        self, lo: Vec, hi: Vec, faces: dict[str, Any], textures: dict[str, str]
+    ) -> list[tuple[Vec, Vec, dict[str, Any]]]:
+        """A flat element as a solid one pixel high model (owner preference): a slab with
+        the top texture on top and below, and for a floor-flat element (dust, rails) a
+        side face for every edge between an opaque pixel and a transparent one or the
+        element's border, like the game extrudes item sprites. Each side face shows the
+        pixel it belongs to."""
+        new_lo, new_hi, merged = _extrude(lo, hi, faces)
+        top = faces.get("up")
+        flat_y = abs(hi[1] - lo[1]) < 1e-6
+        resolved = self.resolve_texture(textures, top.get("texture", "")) if top else None
+        mask = self._opaque_mask(resolved[0]) if resolved else None
+        if not flat_y or top is None or mask is None:
+            return [(new_lo, new_hi, merged)]
+        parts: list[tuple[Vec, Vec, dict[str, Any]]] = [
+            (new_lo, new_hi, {"up": top, "down": dict(top)})
+        ]
+        uv_at = _up_face_uv(new_lo, new_hi, top)
+        x_cells = range(math.floor(new_lo[0]), math.ceil(new_hi[0]))
+        z_cells = range(math.floor(new_lo[2]), math.ceil(new_hi[2]))
+        texel: dict[tuple[int, int], tuple[int, int]] = {}
+        for cx in x_cells:
+            for cz in z_cells:
+                u, v = uv_at(cx + 0.5, cz + 0.5)
+                tu, tv = min(15, max(0, math.floor(u))), min(15, max(0, math.floor(v)))
+                if mask[tv][tu]:
+                    texel[(cx, cz)] = (tu, tv)
+        base = {"texture": top.get("texture", ""), "tintindex": top.get("tintindex", -1)}
+        y0, y1 = new_lo[1], new_hi[1]
+        for (cx, cz), (tu, tv) in texel.items():
+            for name, dx, dz in (
+                ("north", 0, -1),
+                ("south", 0, 1),
+                ("west", -1, 0),
+                ("east", 1, 0),
+            ):
+                if (cx + dx, cz + dz) in texel:
+                    continue  # inside the solid: no face
+                face = {**base, "uv": [tu, tv, tu + 1, tv + 1]}
+                parts.append(((cx, y0, cz), (cx + 1, y1, cz + 1), {name: face}))
+        return parts
+
+    def _opaque_mask(self, texture: str) -> list[list[bool]] | None:
+        """Which pixels of a 16×16 texture (its first animation frame) are opaque."""
+        if texture not in self._masks:
+            from PySide6.QtGui import QImage
+
+            data = self.texture_bytes(texture)
+            image = QImage.fromData(data) if data else QImage()
+            if image.isNull() or image.width() != 16:
+                self._masks[texture] = None
+            else:
+                self._masks[texture] = [
+                    [image.pixelColor(x, y).alpha() >= 26 for x in range(16)] for y in range(16)
+                ]
+        return self._masks[texture]
 
     def block_textures(self, block_id: str) -> set[str]:
         """Every texture any model of the block's blockstate file uses."""

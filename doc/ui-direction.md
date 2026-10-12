@@ -219,8 +219,8 @@ Status is kept up to date here; nothing in the message is left out.
 | 4 | P1 | The hint bar changes height between modes (the mouse icons are taller), resizing the views: keep it one fixed height. | done |
 | 5 | P1 | Closing prints "QOpenGLTexturePrivate::destroy() called without a current context. Texture has not been destroyed" (twice): fix. | done: textures are freed while the window closes, with the GL context still current |
 | 6 | P1 | "Is the keymap file actually used?" The controls listed there do not match what the program does: investigate and explain/fix. | done: the file was an old dump of every default; entries equal to an old default are ignored, so the file showed bindings the program did not use. It is now rewritten to hold only real changes (old one kept as `.bak`). |
-| 7 | P1 | Timeline playhead: smooth while playing (glides between ticks), snaps to ticks only when paused or dragged. | open |
-| 8 | P1 | Dust (and other flat models): a solid 16×1 model with side faces for every opaque pixel; now only the texture's edge pixels get sides and the inside is see-through. | open |
+| 7 | P1 | Timeline playhead: smooth while playing (glides between ticks), snaps to ticks only when paused or dragged. | done: animated at 60 fps from the measured tick rate |
+| 8 | P1 | Dust (and other flat models): a solid 16×1 model with side faces for every opaque pixel; now only the texture's edge pixels get sides and the inside is see-through. | done: every opaque pixel is a 1×1×1 voxel; sides only where it borders a transparent pixel |
 | 9 | P2 | The inventory (item selection) only in BUILD mode, shown like the game's hotbar at the bottom of the viewport (above the timeline). | open |
 | 10 | P2 | Recent blocks are not discoverable: make them obvious and easy (the program should be easy to understand and use). | open |
 | 11 | P2 | Slabs on the top half (and similar variants): change the block to place with the selection's transform keys (rotate R / Shift+R, flip H / Shift+H). | open |
