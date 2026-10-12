@@ -8,13 +8,22 @@ import time
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QByteArray, Qt, QTimer, QUrl
-from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QKeySequence
+from PySide6.QtCore import QByteArray, QEvent, QObject, Qt, QTimer, QUrl
+from PySide6.QtGui import (
+    QAction,
+    QActionGroup,
+    QCloseEvent,
+    QDesktopServices,
+    QKeyEvent,
+    QKeySequence,
+)
 from PySide6.QtWidgets import (
+    QAbstractSpinBox,
     QApplication,
     QDockWidget,
     QFileDialog,
     QInputDialog,
+    QLineEdit,
     QMainWindow,
     QMessageBox,
     QTabWidget,
@@ -89,6 +98,7 @@ class MainWindow(QMainWindow):
             app.setProperty("redsim_theme", True)
         self.setWindowIcon(block_icon(blocks.REDSTONE_TORCH, 64))
         self.document = document or Document.new_flat()
+        migrated = keymap is None and Keymap.migrate()  # old files listed every default
         self.keymap = keymap if keymap is not None else Keymap.load()
         self.current_block = blocks.STONE
         self.last_steps: list[Any] = []
@@ -148,6 +158,14 @@ class MainWindow(QMainWindow):
         self._build_menus()
         self._apply_saved_camera()
         self._changed()
+        if migrated:
+            self._message(
+                "Keymap file cleaned up: it now lists only your own changes "
+                "(the old one is kept next to it as .bak)."
+            )
+        app = QApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)  # the dead-key ^ (German layout)
         if self.keymap.warnings:
             self._message("Keymap: " + "; ".join(self.keymap.warnings), error=True)
 
@@ -597,6 +615,7 @@ class MainWindow(QMainWindow):
             "edit.flip_depth": transformable,
             "edit.copy": has_region,
             "edit.paste": self.document.clipboard is not None,
+            "edit.delete": has_region,
             "select.lock": has_region,
         }
         for keymap_id, on in usable.items():
@@ -982,14 +1001,7 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _delete_region(self) -> None:
-        """Del: in BUILD mode the block under the cursor, otherwise the selection."""
-        if self.viewport.mode == "build" and self.viewport.region is None:
-            hit = self.viewport.hover
-            if hit is None:
-                self._message("Point at a block to remove it.")
-            else:
-                self._break(hit.pos)
-            return
+        """Del: clear the selection (in BUILD mode, right click removes single blocks)."""
         region = self._region()
         if region is not None:
             self._edit(self.document.fill, region, blocks.AIR.default_state)
@@ -1245,6 +1257,20 @@ class MainWindow(QMainWindow):
                 "state": bytes(self.saveState().toBase64().data()).decode(),
             }
         )
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        """The ^ key of German layouts is a dead key, which Qt shortcuts cannot bind: it
+        does what "^" is bound to (by default: back to the parent inventory folder)."""
+        if (
+            event.type() == QEvent.Type.KeyPress
+            and isinstance(event, QKeyEvent)
+            and event.key() == Qt.Key.Key_Dead_Circumflex
+            and not isinstance(QApplication.focusWidget(), QLineEdit | QAbstractSpinBox)
+            and "^" in self.keymap.bindings("inventory.up")
+        ):
+            self.inventory.go_up()
+            return True
+        return super().eventFilter(watched, event)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._confirm_discard(closing=True):

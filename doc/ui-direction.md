@@ -213,12 +213,12 @@ Status is kept up to date here; nothing in the message is left out.
 
 | # | Priority | Request | Status |
 |---|---|---|---|
-| 1 | P1 | Wheel zooms again (scrolling up/down felt unnatural); **Shift+wheel** moves the camera up and down. | open |
-| 2 | P1 | BUILD: **right click removes the block** under the cursor (instead of Del); **Del** only clears the selection (no more ambiguity with an active selection). | open |
-| 3 | P1 | Inventory: **^** (the key left of 1) goes to the parent folder (the row below) instead of Backspace/Del. | open |
+| 1 | P1 | Wheel zooms again (scrolling up/down felt unnatural); **Shift+wheel** moves the camera up and down. | done |
+| 2 | P1 | BUILD: **right click removes the block** under the cursor (instead of Del); **Del** only clears the selection (no more ambiguity with an active selection). | done (Q / Shift+Q turn the block under the cursor) |
+| 3 | P1 | Inventory: **^** (the key left of 1) goes to the parent folder (the row below) instead of Backspace/Del. | done (also `` ` `` on US layouts; the dead-key ^ is translated) |
 | 4 | P1 | The hint bar changes height between modes (the mouse icons are taller), resizing the views: keep it one fixed height. | open |
 | 5 | P1 | Closing prints "QOpenGLTexturePrivate::destroy() called without a current context. Texture has not been destroyed" (twice): fix. | open |
-| 6 | P1 | "Is the keymap file actually used?" The controls listed there do not match what the program does: investigate and explain/fix. | open |
+| 6 | P1 | "Is the keymap file actually used?" The controls listed there do not match what the program does: investigate and explain/fix. | done: the file was an old dump of every default; entries equal to an old default are ignored, so the file showed bindings the program did not use. It is now rewritten to hold only real changes (old one kept as `.bak`). |
 | 7 | P1 | Timeline playhead: smooth while playing (glides between ticks), snaps to ticks only when paused or dragged. | open |
 | 8 | P1 | Dust (and other flat models): a solid 16×1 model with side faces for every opaque pixel; now only the texture's edge pixels get sides and the inside is see-through. | open |
 | 9 | P2 | The inventory (item selection) only in BUILD mode, shown like the game's hotbar at the bottom of the viewport (above the timeline). | open |

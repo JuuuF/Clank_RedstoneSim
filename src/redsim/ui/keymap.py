@@ -29,7 +29,7 @@ MODES = ("normal", "build", "select", "paste")  # "paste": while a paste preview
 MODIFIERS = ("Ctrl", "Shift", "Alt", "Meta")
 BUTTONS = ("Left", "Right", "Middle")
 GESTURES = ("Click", "Drag")
-KEYMAP_VERSION = 2
+KEYMAP_VERSION = 3
 
 #: Actions older versions had (keymap files written then may still list them).
 RETIRED_ACTIONS = frozenset(f"hotbar.{slot}" for slot in range(1, 10))
@@ -38,12 +38,19 @@ RETIRED_ACTIONS = frozenset(f"hotbar.{slot}" for slot in range(1, 10))
 #: the user (older versions wrote every default into the file), so the current default
 #: applies instead.
 LEGACY_DEFAULTS: dict[str, tuple[tuple[str, ...], ...]] = {
-    "camera.zoom": (("Wheel",),),
-    "camera.vertical": (("Ctrl+Wheel",),),
+    "camera.zoom": (("Ctrl+Wheel",),),
+    "camera.vertical": (("Ctrl+Wheel",), ("Wheel",)),
+    "paste.layer": (("Wheel",),),
+    "paste.zoom": (("Ctrl+Wheel",),),
+    "build.layer": (("Wheel",),),
+    "build.zoom": (("Ctrl+Wheel",),),
     "sim.event": (("Shift+Right", "E"),),
     "sim.step_back": (("Shift+Left",),),
-    "build.break": (("Left Click",),),
+    "build.break": (("Left Click",), ()),
     "build.place": (("Right Click",),),
+    "build.rotate": (("Right Click",),),
+    "build.rotate_back": (("Shift+Right Click",),),
+    "inventory.up": (("Backspace",),),
 }
 
 
@@ -71,8 +78,8 @@ ACTIONS: tuple[ActionSpec, ...] = (
         ("Shift+Middle Drag", "Shift+Alt+Left Drag"),
         MOUSE,
     ),
-    ActionSpec("camera.zoom", "Zoom (distance to the pivot)", ("Ctrl+Wheel",), MOUSE),
-    ActionSpec("camera.vertical", "Move the camera (pivot) up or down", ("Wheel",), MOUSE),
+    ActionSpec("camera.zoom", "Zoom (distance to the pivot)", ("Wheel",), MOUSE),
+    ActionSpec("camera.vertical", "Move the camera (pivot) up or down", ("Shift+Wheel",), MOUSE),
     ActionSpec("camera.forward", "Move the pivot forward", ("W",), HOLD),
     ActionSpec("camera.back", "Move the pivot back", ("S",), HOLD),
     ActionSpec("camera.left", "Move the pivot left", ("A",), HOLD),
@@ -81,19 +88,19 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("camera.down", "Move the pivot down", ("PgDown",), HOLD),
     ActionSpec("camera.focus", "Move the pivot to the block under the cursor", ("F",)),
     ActionSpec("pick", "Pick the block type under the cursor", ("Middle Click",), MOUSE),
-    ActionSpec("paste.layer", "While pasting: move the paste layer up/down", ("Wheel",), MOUSE),
-    ActionSpec("paste.zoom", "While pasting: zoom", ("Ctrl+Wheel",), MOUSE),
-    ActionSpec("build.layer", "BUILD: move the build layer up/down", ("Wheel",), MOUSE),
-    ActionSpec("build.zoom", "BUILD: zoom", ("Ctrl+Wheel",), MOUSE),
+    ActionSpec(
+        "paste.layer", "While pasting: move the paste layer up/down", ("Shift+Wheel",), MOUSE
+    ),
+    ActionSpec("paste.zoom", "While pasting: zoom", ("Wheel",), MOUSE),
+    ActionSpec("build.layer", "BUILD: move the build layer up/down", ("Shift+Wheel",), MOUSE),
+    ActionSpec("build.zoom", "BUILD: zoom", ("Wheel",), MOUSE),
     ActionSpec("normal.inspect", "Select a block for the inspector", ("Left Click",), MOUSE),
     ActionSpec("normal.use", "Use a lever, button, repeater, …", ("Right Click",), MOUSE),
     ActionSpec("build.place", "Place the chosen block", ("Left Click",), MOUSE),
     ActionSpec("build.line", "Drag a straight line of the chosen block", ("Left Drag",), MOUSE),
-    ActionSpec("build.rotate", "Turn the block under the cursor", ("Right Click",), MOUSE),
-    ActionSpec(
-        "build.rotate_back", "Turn the block under the cursor back", ("Shift+Right Click",), MOUSE
-    ),
-    ActionSpec("build.break", "Break the block under the cursor (Del does too)", (), MOUSE),
+    ActionSpec("build.rotate", "Turn the block under the cursor (Q does too)", (), MOUSE),
+    ActionSpec("build.rotate_back", "Turn the block under the cursor back", (), MOUSE),
+    ActionSpec("build.break", "Remove the block under the cursor", ("Right Click",), MOUSE),
     ActionSpec("build.use", "Use the block (lever, button, …)", ("Ctrl+Right Click",), MOUSE),
     ActionSpec("select.block", "Select one block", ("Left Click",), MOUSE),
     ActionSpec(
@@ -141,7 +148,7 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ),
     ActionSpec(
         "edit.delete",
-        "Delete: the selection (SELECT mode) or the block under the cursor (BUILD mode)",
+        "Delete the selection (fill it with air); right click removes single blocks",
         ("Del",),
     ),
     ActionSpec("file.new", "New world", ("Ctrl+N",)),
@@ -155,7 +162,9 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ),
     ActionSpec("help.controls", "Show the controls", ("F1",)),
     *(_inventory(slot) for slot in range(1, 10)),
-    ActionSpec("inventory.up", "Inventory: up one folder", ("Backspace",)),
+    # ^ is the key left of 1 on German layouts (` on US ones); its dead-key form is
+    # translated by the main window.
+    ActionSpec("inventory.up", "Inventory: back to the parent folder (the row below)", ("^", "`")),
 )
 SPECS: dict[str, ActionSpec] = {spec.id: spec for spec in ACTIONS}
 
@@ -288,7 +297,34 @@ class Keymap:
         return Keymap(overrides)
 
     @staticmethod
-    def write_defaults(path: Path) -> None:
+    def migrate(path: Path | None = None) -> bool:
+        """Rewrite an older keymap file to hold only the user's own changes. Older versions
+        wrote every default into the file, so it listed bindings the program no longer
+        uses (old defaults are ignored on load). The original is kept as ``.bak``.
+        Returns whether the file was rewritten."""
+        path = path if path is not None else default_path()
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        if not isinstance(data, dict) or data.get("version", 1) >= KEYMAP_VERSION:
+            return False
+        overrides = data.get("bindings", {})
+        if not isinstance(overrides, dict):
+            return False
+        keymap = Keymap(overrides)
+        kept = {
+            action: list(keymap.bindings(action))
+            for action in keymap._overridden
+            if keymap.bindings(action) != SPECS[action].defaults
+        }
+        backup = path.with_name(path.name + f".v{data.get('version', 1)}.bak")
+        backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+        Keymap.write_defaults(path, kept)
+        return True
+
+    @staticmethod
+    def write_defaults(path: Path, bindings: dict[str, list[str]] | None = None) -> None:
         """Write a template: empty ``bindings`` plus every default for reference, so later
         versions can change defaults the user never touched."""
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -299,7 +335,7 @@ class Keymap:
             "sequence text (Ctrl+Z, Shift+Right, Space); mouse bindings are "
             "'[Mods+]<Left|Right|Middle> <Click|Drag>' or '[Mods+]Wheel'. "
             "Only 'bindings' is read.",
-            "bindings": {},
+            "bindings": bindings or {},
             "defaults": {spec.id: list(spec.defaults) for spec in ACTIONS},
         }
         path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from redsim.ui.keymap import SPECS, Keymap, normalize_key, parse_mouse
+from redsim.ui.keymap import KEYMAP_VERSION, SPECS, Keymap, normalize_key, parse_mouse
 
 
 def test_defaults_have_no_conflicts() -> None:
@@ -33,24 +33,27 @@ def test_owner_camera_and_mode_defaults() -> None:
     keymap = Keymap()
     none: frozenset[str] = frozenset()
     shift = frozenset({"Shift"})
-    ctrl = frozenset({"Ctrl"})
     assert keymap.mouse_action("normal", none, "Middle", "Drag") == "camera.orbit"
     assert keymap.mouse_action("build", shift, "Middle", "Drag") == "camera.pan"
-    # The wheel moves the camera up and down in every mode; Ctrl+wheel zooms.
-    assert keymap.mouse_action("select", none, None, "Wheel") == "camera.vertical"
-    assert keymap.mouse_action("normal", ctrl, None, "Wheel") == "camera.zoom"
+    # Round 8: the wheel zooms in every mode; Shift+wheel moves the camera up and down.
+    assert keymap.mouse_action("select", shift, None, "Wheel") == "camera.vertical"
+    assert keymap.mouse_action("normal", none, None, "Wheel") == "camera.zoom"
+    assert keymap.mouse_action("build", none, None, "Wheel") == "build.zoom"
+    assert keymap.mouse_action("build", shift, None, "Wheel") == "build.layer"
     assert keymap.mouse_action("build", none, "Left", "Click") == "build.place"
     assert keymap.mouse_action("build", none, "Left", "Drag") == "build.line"
-    assert keymap.mouse_action("build", none, "Right", "Click") == "build.rotate"
+    # Round 8: right click removes the block in BUILD (Del only clears the selection).
+    assert keymap.mouse_action("build", none, "Right", "Click") == "build.break"
     assert keymap.mouse_action("normal", none, "Right", "Click") == "normal.use"
     assert keymap.mouse_action("select", none, "Left", "Drag") == "select.box"
     assert keymap.mouse_action("normal", none, "Middle", "Click") == "pick"
     assert keymap.mouse_action("normal", none, "Left", "Drag") is None
     # Shift is not a camera key: rewinding has its own bindings.
     assert "Shift+T" not in keymap.bindings("sim.tick_back")
-    # While pasting, the plain wheel moves the paste layer (owner, round three).
-    assert keymap.mouse_action("paste", none, None, "Wheel") == "paste.layer"
-    assert keymap.mouse_action("paste", ctrl, None, "Wheel") == "paste.zoom"
+    # While pasting, Shift+wheel moves the paste layer, the wheel zooms (round 8).
+    assert keymap.mouse_action("paste", shift, None, "Wheel") == "paste.layer"
+    assert keymap.mouse_action("paste", none, None, "Wheel") == "paste.zoom"
+    assert keymap.bindings("inventory.up") == ("^", "`")
     assert keymap.mouse_action("paste", none, "Middle", "Drag") == "camera.orbit"
     # Blender timeline keys.
     assert keymap.bindings("sim.start") == ("Shift+Left",)
@@ -139,3 +142,24 @@ def test_hotkey_sections_cover_every_action() -> None:
     assert all(title != "Other" for title, _, _ in sections)  # everything has a home
     modes = {mode for _, mode, _ in sections if mode}
     assert modes == {"normal", "build", "select", "paste"}
+
+
+def test_old_keymap_files_are_cleaned_up(tmp_path: Path) -> None:
+    path = tmp_path / "keymap.json"
+    old = {
+        "version": 1,
+        "bindings": {
+            "camera.zoom": ["Wheel"],  # an old dump of every default …
+            "camera.vertical": ["Ctrl+Wheel"],
+            "build.rotate": ["Right Click"],
+            "hotbar.1": ["1"],
+            "sim.run": ["P"],  # … and one real change
+        },
+    }
+    path.write_text(json.dumps(old), encoding="utf-8")
+    assert Keymap.migrate(path)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["version"] == KEYMAP_VERSION and data["bindings"] == {"sim.run": ["P"]}
+    assert json.loads((tmp_path / "keymap.json.v1.bak").read_text())["version"] == 1
+    assert not Keymap.migrate(path)  # already current
+    assert Keymap.load(path).bindings("camera.vertical") == ("Shift+Wheel",)

@@ -41,7 +41,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   stays lowest; opening a folder slides its row in above, so the stack grows upwards
   (click a slot of a lower row to jump there; the red bar marks the row the number keys
   act on). Number keys open a
-  folder or pick the block with that number, Backspace goes up. Folders: Redstone,
+  folder or pick the block with that number, **^** (the key left of 1; `` ` `` on US layouts) goes back to the parent folder. Folders: Redstone,
   Movement, Signal sources, Items, Rails, Building, Special. **Recent** shows the last nine blocks you placed (kept between
   sessions); **Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
   search: type a few letters (fuzzy), Enter builds with the block. Picking a block enters
@@ -55,21 +55,21 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 | Mode | Key | Left click | Right click | Left drag |
 |---|---|---|---|---|
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
-| **BUILD** | B | place the block on the build layer | turn the block under the cursor (Shift: back; Ctrl: use it) | a straight line on the build layer |
+| **BUILD** | B | place the block on the build layer | remove the block under the cursor (Ctrl: use it) | a straight line on the build layer |
 | **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
 - Middle click picks the block type under the cursor in every mode.
-- The badge in the bottom-left corner shows the mode and what the mouse buttons do.
+- The badge in the bottom-left corner shows the mode and what it works on; the hint bar below lists the keys.
 - Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and the selection box.
-- In BUILD, **Del** removes the block under the cursor (with a selection box, Del clears the
-  box instead). Right click turns blocks around the vertical axis; blocks facing up or down
+- In BUILD, **right click** removes the block under the cursor; **Del** only ever clears the
+  selection box. **Q** / Shift+Q turn the block under the cursor; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.
 - **Build layer (Trackmania-style):** blocks go on the horizontal layer at the camera
   pivot's height, in the cell under the cursor (a grid around the target cell marks the
   layer and fades out with the distance, yellow lines drop
-  to the ground, the badge shows `layer y=…`). The **wheel** moves the layer (and the
-  pivot) up or down one block per notch; **Ctrl+wheel** zooms in BUILD mode. Blocks are
+  to the ground, the badge shows `layer y=…`). **Shift+wheel** moves the layer (and
+  the pivot) up or down one block per notch; the **wheel** zooms. Blocks are
   oriented as if placed on top of the block below, facing along the cursor ray.
 - **Line placement:** drag with the left button: the line runs on the build layer from the
   first cell along the axis (x or z) you moved most along, up to 64 blocks, with a preview
@@ -110,7 +110,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   the original). The selection follows the moved or copied blocks.
 - **Paste (Trackmania-style):** Ctrl+C copies the box; Ctrl+V shows the clipboard as a
   ghost centered under the cursor on the camera's working layer (the pivot's height, shown
-  in the badge). The wheel moves the layer up or down (Ctrl+wheel zooms while pasting), so
+  in the badge). Shift+wheel moves the layer up or down (the wheel zooms while pasting), so
   a paste can go into the air or inside blocks; a grid marks the layer and yellow lines drop to the ground. Left click
   places it, R rotates it, right click or Esc cancels.
 - **No block updates:** pasting, moving, copying and stacking are editor operations and
@@ -139,8 +139,8 @@ and paste layer follow the new height at once.
 |---|---|
 | Middle drag (or Alt+left drag) | orbit around the pivot |
 | Shift+middle drag (or Shift+Alt+left drag) | move the pivot horizontally (the world follows the mouse) |
-| Wheel | move the camera (pivot) up or down, one block per notch, in every mode |
-| Ctrl+wheel | zoom (distance to the pivot) |
+| Wheel | zoom (distance to the pivot), in every mode |
+| Shift+wheel | move the camera (pivot) up or down, one block per notch (in BUILD and while pasting: the layer) |
 | W A S D | move the pivot forward, left, back, right (faster when zoomed out) |
 | PgUp / PgDown | move the pivot up or down |
 | F | move the pivot to the block under the cursor |
@@ -166,8 +166,8 @@ reason the old Shift+T rewind was disliked).
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
 | R / Shift+R | rotate the selection (or the paste preview) 90° clockwise / counter-clockwise |
 | H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |
-| Del | clear the selection box (fill with air); in BUILD without a box: remove the block under the cursor |
-| 1–9 / Backspace | inventory: open folder or pick block / up one folder |
+| Del | clear the selection box (fill with air); single blocks: right click in BUILD |
+| 1–9 / ^ | inventory: open folder or pick block / back to the parent folder |
 | F1 | controls panel |
 
 ## View toggles

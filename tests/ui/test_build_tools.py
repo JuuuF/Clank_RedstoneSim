@@ -147,8 +147,8 @@ def test_build_mode_places_on_the_camera_layer(app: Any) -> None:
     target = viewport.build_target(QPoint(viewport.width() // 2, viewport.height() // 2))
     assert target is not None and target[1] == 3
     keymap = viewport.keymap
-    assert keymap.mouse_action("build", frozenset(), None, "Wheel") == "build.layer"
-    assert keymap.mouse_action("build", frozenset({"Ctrl"}), None, "Wheel") == "build.zoom"
+    assert keymap.mouse_action("build", frozenset({"Shift"}), None, "Wheel") == "build.layer"
+    assert keymap.mouse_action("build", frozenset(), None, "Wheel") == "build.zoom"
     window.document.dirty = False
     window.close()
 
@@ -311,7 +311,7 @@ def test_region_buttons_show_lock_and_availability(app: Any) -> None:
     window = MainWindow()
     window._update_hints()
     assert not window._region_buttons["edit.copy"].isEnabled()  # nothing selected: dim
-    assert window._region_buttons["edit.delete"].isEnabled()  # Del also works in BUILD
+    assert not window._region_buttons["edit.delete"].isEnabled()  # Del: selections only
     window.viewport.region = Region((0, 1, 0), (1, 1, 1))
     window._update_hints()
     assert window._region_buttons["edit.copy"].isEnabled()
