@@ -150,6 +150,7 @@ QSlider::handle:horizontal {{
 }}
 QSlider::sub-page:horizontal {{ background: {ACCENT}; border-radius: 2px; }}
 QSplitter::handle, QMainWindow::separator {{ background: {WINDOW}; width: 4px; height: 4px; }}
+QSplitter::handle:hover, QMainWindow::separator:hover {{ background: {ACCENT_SOFT}; }}
 QStatusBar {{ background: {WINDOW}; }}
 QLabel {{ background: transparent; }}
 QGroupBox {{ border: 1px solid {LINE}; border-radius: 6px; margin-top: 12px; padding-top: 6px; }}
