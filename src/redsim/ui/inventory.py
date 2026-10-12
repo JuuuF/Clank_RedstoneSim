@@ -211,6 +211,25 @@ class _Spot:
     title: str
 
 
+#: Slots per row, like the game's hotbar; rows with fewer entries end in empty slots.
+HOTBAR_SLOTS = 9
+
+
+def _paint_frame(painter: QPainter, r: QRect, alpha: int = 255) -> None:
+    """A Minecraft slot: sunken, with a dark top/left and a light bottom/right bevel."""
+
+    def color(name: str) -> QColor:
+        c = QColor(name)
+        c.setAlpha(alpha)
+        return c
+
+    painter.fillRect(r, color(theme.SUNKEN))
+    painter.fillRect(QRect(r.left(), r.top(), r.width(), 2), color("#0b0b0c"))
+    painter.fillRect(QRect(r.left(), r.top(), 2, r.height()), color("#0b0b0c"))
+    painter.fillRect(QRect(r.left(), r.bottom() - 1, r.width(), 2), color(theme.LINE))
+    painter.fillRect(QRect(r.right() - 1, r.top(), 2, r.height()), color(theme.LINE))
+
+
 class InventoryCanvas(QWidget):
     """The painted part of the inventory, Minecraft-style hotbar rows: one row of slots per
     folder level, all alike. The root row stays at the bottom; opening a folder adds its
@@ -275,6 +294,12 @@ class InventoryCanvas(QWidget):
         painter.fillRect(self.rect(), QColor(theme.PANEL))
         path = self.bar.nav.path
         active = len(path)
+        bottom = self.rows_height() - 4
+        for depth, folder in self._levels():  # empty slots complete each hotbar row
+            top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
+            for index in range(len(folder.children), HOTBAR_SLOTS):
+                rect = QRect(14 + index * (self.SLOT + 4), top, self.SLOT, self.SLOT)
+                _paint_frame(painter, rect, 110)
         for spot in self.spots:
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
             if spot.kind == "recent":
@@ -321,12 +346,7 @@ class InventoryCanvas(QWidget):
             back = r.translated(3, -3)
             painter.fillRect(back, QColor(theme.LINE))
             painter.fillRect(back.adjusted(1, 1, -1, -1), QColor(theme.WIDGET))
-        painter.fillRect(r, QColor(theme.SUNKEN))
-        # Minecraft slot bevel: dark top/left, light bottom/right.
-        painter.fillRect(QRect(r.left(), r.top(), r.width(), 2), QColor("#0b0b0c"))
-        painter.fillRect(QRect(r.left(), r.top(), 2, r.height()), QColor("#0b0b0c"))
-        painter.fillRect(QRect(r.left(), r.bottom() - 1, r.width(), 2), QColor(theme.LINE))
-        painter.fillRect(QRect(r.right() - 1, r.top(), 2, r.height()), QColor(theme.LINE))
+        _paint_frame(painter, r)
         if hovered:
             painter.fillRect(r.adjusted(2, 2, -2, -2), QColor(255, 255, 255, 28))
         if spot.block is not None:
