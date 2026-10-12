@@ -288,11 +288,11 @@ class InventoryCanvas(QWidget):
                 else:
                     spots.append(_Spot(rect, "slot", depth, index, child, block_label(child)))
         recent = self.bar.recent
-        size = 34
-        x = self.width() - 8 - len(recent) * (size + 3)
+        size = self.SLOT
+        x = self.width() - 10 - len(recent) * size
         top = bottom - size  # level with the bottom (root) hotbar row
         for index, block_id in enumerate(recent):
-            rect = QRect(x + index * (size + 3), top, size, size)
+            rect = QRect(x + index * size, top, size, size)
             spots.append(_Spot(rect, "recent", -1, index, block_id, block_label(block_id)))
         return spots
 
@@ -313,10 +313,22 @@ class InventoryCanvas(QWidget):
             for index in range(HOTBAR_SLOTS):
                 rect = QRect(self.X0 + index * self.SLOT, top, self.SLOT, self.SLOT)
                 theme.paint_slot(painter, rect.adjusted(1, 1, -1, -1))
+        recent = [s for s in self.spots if s.kind == "recent"]
+        if recent and hotbar is not None:  # a short piece of the hotbar, with its end
+            first = recent[0].rect
+            width = 2 + self.SLOT * len(recent)
+            painter.drawPixmap(
+                first.left() - 2, first.top() - 2, hotbar, 0, 0, width, hotbar.height()
+            )
+            end = first.left() - 2 + width
+            painter.drawPixmap(
+                end, first.top() - 2, hotbar, hotbar.width() - 2, 0, 2, hotbar.height()
+            )
         for spot in self.spots:
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
             if spot.kind == "recent":
-                self._paint_slot(painter, spot, spot.block == self.bar.current, hovered, None)
+                selected = spot.block == self.bar.current
+                self._paint_slot(painter, spot, selected, hovered, None, False, hotbar)
                 continue
             child = self._levels()[spot.depth][1].children[spot.index]
             if isinstance(child, Folder):
@@ -331,7 +343,6 @@ class InventoryCanvas(QWidget):
         if top_row:  # the row the number keys act on
             r = top_row[0].rect
             painter.fillRect(QRect(4, r.top(), 3, r.height()), QColor(theme.ACCENT))
-        recent = [s for s in self.spots if s.kind == "recent"]
         if recent:
             first = recent[0].rect
             y = first.top() - 12
