@@ -30,3 +30,15 @@ def test_derived_icons_mirror_their_originals() -> None:
     assert all(a == b[::-1] for a, b in zip(rotate, back, strict=True))
     flip, depth = pixel_icons.ICONS["flip"], pixel_icons.ICONS["flip_depth"]
     assert len(depth) == len(flip[0]) and len(depth[0]) == len(flip)
+
+
+def test_pixel_text_cache_is_bounded(app: Any) -> None:
+    from redsim.ui import theme
+
+    font = theme.PixelFont.load()
+    if font is None:
+        pytest.skip("no client jar: no pixel font")
+    for n in range(theme.PIXEL_TEXT_CACHE + 50):  # e.g. a status line while running
+        font.pixmap(f"tick {n}")
+    assert len(font._cache) <= theme.PIXEL_TEXT_CACHE
+    assert ("tick 0", "#ffffff", 2, True) not in font._cache  # the oldest went first

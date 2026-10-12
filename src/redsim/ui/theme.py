@@ -266,6 +266,10 @@ class Glyph:
     ascent: int
 
 
+#: Pixel-font texts kept as pixmaps (each a few kB to a few 100 kB).
+PIXEL_TEXT_CACHE = 512
+
+
 class PixelFont:
     """The game's bitmap font: glyphs from the ``bitmap`` providers of
     ``font/include/default.json`` (advance = width + 1, space 4, as in the game)."""
@@ -302,6 +306,8 @@ class PixelFont:
                     self.glyphs[char] = Glyph(
                         cell, max(1, round(width * scale)), height, int(provider.get("ascent", 7))
                     )
+        #: Recently drawn texts, least recently used first (status lines change every
+        #: frame while running, so the cache is bounded).
         self._cache: dict[tuple[str, str, int, bool], QPixmap] = {}
 
     @staticmethod
@@ -328,8 +334,9 @@ class PixelFont:
         """``text`` in the pixel font: white glyphs tinted with ``color``, plus the game's
         shadow (the color at 25 % brightness, one font pixel down-right)."""
         key = (text, color, scale, shadow)
-        cached = self._cache.get(key)
+        cached = self._cache.pop(key, None)
         if cached is not None:
+            self._cache[key] = cached  # most recently used again
             return cached
         width = self.width(text, 1) + 1
         height = self.TOP + self.LINE + 1
@@ -367,6 +374,8 @@ class PixelFont:
         painter.end()
         pixmap = QPixmap.fromImage(out)
         self._cache[key] = pixmap
+        while len(self._cache) > PIXEL_TEXT_CACHE:
+            del self._cache[next(iter(self._cache))]
         return pixmap
 
 
