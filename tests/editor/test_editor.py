@@ -170,3 +170,21 @@ def test_container_slots_are_set_as_setblock_data_and_update_comparators() -> No
     assert hopper.is_empty()
     with pytest.raises(EditError):
         doc.set_container_slot((0, 1, 1), 0, "minecraft:stone", 1)
+
+
+def test_undo_history_labels_and_multi_step_undo() -> None:
+    doc = Document.new_flat()
+    request = PlaceRequest(Direction.UP, yaw=0, pitch=60)
+    doc.place((0, 1, 0), blocks.LEVER, request)
+    doc.place((1, 1, 0), blocks.REDSTONE_LAMP, request)
+    doc.use((0, 1, 0))
+    assert doc.undo_labels == ["use lever", "place redstone_lamp", "place lever"]
+    assert doc.undo_to(2)  # back to just the lever, in one re-run
+    assert doc.state_at((1, 1, 0)).is_air and doc.state_at((0, 1, 0)).is_(blocks.LEVER)
+    assert doc.undo_labels == ["place lever"]
+    assert doc.redo()  # redo brings back the lamp first, with its label
+    assert doc.state_at((1, 1, 0)).is_(blocks.REDSTONE_LAMP)
+    assert doc.undo_labels == ["place redstone_lamp", "place lever"]
+    assert doc.redo()
+    assert doc.state_at((1, 1, 0)).get(LIT) is True
+    assert not doc.undo_to(0)

@@ -363,3 +363,20 @@ def test_signal_steppers_get_a_meter(app: Any) -> None:
     assert power.meter is not None and power.meter.level == 9
     delay = _Stepper((1, 2, 3, 4), lambda v: None, "delay")  # not a signal strength
     assert delay.meter is None
+
+
+def test_undo_history_menu_undoes_several_steps(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    request = PlaceRequest(Direction.UP, 0.0, 30.0)
+    for x in range(3):
+        window.document.place((x, 1, 0), blocks.REDSTONE_LAMP, request)
+    window._fill_history_menu()
+    entries = window._history_menu.actions()
+    assert [a.text() for a in entries] == ["Place redstone lamp"] * 3
+    entries[1].trigger()  # back to before the second lamp
+    assert window.document.state_at((0, 1, 0)).is_(blocks.REDSTONE_LAMP)
+    assert window.document.state_at((1, 1, 0)).is_air
+    window.document.dirty = False
+    window.close()

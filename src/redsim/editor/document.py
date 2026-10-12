@@ -71,6 +71,9 @@ class HistoryState:
     plan: Plan
     end_tick: int
     tick: int  # where the user was
+    #: On the undo stack: the edit made after this state (what undoing reverts); on the
+    #: redo stack: the edit redoing re-applies.
+    label: str = ""
 
 
 @dataclass(frozen=True)
@@ -169,7 +172,7 @@ class Document:
         except ActionError as exc:
             raise EditError(str(exc)) from exc
         if before is not None:
-            self._undo.append(before)
+            self._undo.append(replace(before, label=label))
             self._redo.clear()
             self._batch_saved = self._batch_depth > 0
         if future or history.at_base:
@@ -391,21 +394,33 @@ class Document:
     def undo(self) -> bool:
         """Undo the last edit (or edit batch, history change): the history is rebuilt
         without it, the simulation re-run, and the view returns to where it was made."""
-        if not self._undo or not self.can_edit:
+        return self.undo_to(1)
+
+    def undo_to(self, count: int) -> bool:
+        """Undo the last ``count`` steps at once (one re-run of the simulation)."""
+        if not self._undo or not self.can_edit or count < 1:
             return False
-        current = self._history_state()
-        self._redo.append(current)
-        state = self._undo.pop()
-        # Keep the simulated length: the history is re-run without the edit.
+        current = state = self._history_state()
+        for _ in range(min(count, len(self._undo))):
+            previous = self._undo.pop()
+            self._redo.append(replace(state, label=previous.label))
+            state = previous
+        # Keep the simulated length: the history is re-run without the edits.
         self._rebuild(replace(state, end_tick=max(state.end_tick, current.end_tick)))
         return True
 
     def redo(self) -> bool:
         if not self._redo or not self.can_edit:
             return False
-        self._undo.append(self._history_state())
-        self._rebuild(self._redo.pop())
+        state = self._redo.pop()
+        self._undo.append(replace(self._history_state(), label=state.label))
+        self._rebuild(state)
         return True
+
+    @property
+    def undo_labels(self) -> list[str]:
+        """What each undo step reverts, the most recent first."""
+        return [state.label for state in reversed(self._undo)]
 
     def _rebuild(self, state: HistoryState) -> list[tuple[int, Action, str]]:
         """Re-create the history from a base and an edit plan, re-running the simulation."""
@@ -454,7 +469,7 @@ class Document:
         for tick, _, action in sorted(moved, key=lambda m: (m[0], m[1])):
             plan.setdefault(tick, []).append(action)
         failures = self._rebuild(HistoryState(before.base, plan, before.end_tick, before.tick))
-        self._undo.append(before)
+        self._undo.append(replace(before, label=label))
         self._redo.clear()
         self.notice = f"{label}." + (
             f" {len(failures)} edits could not be applied there and were dropped."
@@ -504,7 +519,7 @@ class Document:
         end = max(0, before.end_tick - here)
         history.rebase()
         self._rebuild(HistoryState(history.base, later, end, 0))
-        self._undo.append(before)
+        self._undo.append(replace(before, label=f"set tick {here} as tick 0"))
         self._redo.clear()
         self.notice = f"Tick {here} is now tick 0 (the build)."
 

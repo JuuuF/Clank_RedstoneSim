@@ -66,6 +66,10 @@ RUN_BUDGET_SECONDS = 0.035
 PANEL_REFRESH_SECONDS = 0.1
 
 
+#: Steps listed under Edit → Undo History.
+HISTORY_MENU_SIZE = 25
+
+
 class MainWindow(QMainWindow):
     def __init__(self, document: Document | None = None, keymap: Keymap | None = None) -> None:
         super().__init__()
@@ -239,6 +243,8 @@ class MainWindow(QMainWindow):
         self._action(edit_menu, "&Redo", self._redo, "edit.redo").setIcon(
             pixel_icons.pixel_icon("redo")
         )
+        self._history_menu = edit_menu.addMenu("Undo History")
+        self._history_menu.aboutToShow.connect(self._fill_history_menu)
         edit_menu.addSeparator()
         self._action(
             edit_menu, "Rotate block clockwise", lambda: self._rotate_block(1), "edit.rotate_block"
@@ -789,6 +795,29 @@ class MainWindow(QMainWindow):
         self.simulation.stop()
         if not self.document.undo():
             self._message("Nothing to undo.")
+        self._changed()
+
+    def _fill_history_menu(self) -> None:
+        """Edit → Undo History: the latest steps, newest first; choosing one undoes it and
+        everything after it (like Blender's undo history)."""
+        menu = self._history_menu
+        menu.clear()
+        labels = self.document.undo_labels
+        if not labels:
+            menu.addAction("Nothing to undo").setEnabled(False)
+            return
+        for count, label in enumerate(labels[:HISTORY_MENU_SIZE], start=1):
+            text = (label or "edit").replace("_", " ")
+            action = menu.addAction(f"{text[:1].upper()}{text[1:]}")
+            action.setToolTip(f"Undo {count} step{'s' if count > 1 else ''}")
+            action.triggered.connect(lambda _=False, n=count: self._undo_to(n))
+        if len(labels) > HISTORY_MENU_SIZE:
+            menu.addAction(f"… {len(labels) - HISTORY_MENU_SIZE} older steps").setEnabled(False)
+
+    def _undo_to(self, count: int) -> None:
+        self.simulation.stop()
+        if self.document.undo_to(count):
+            self._message(f"Undid {count} step{'s' if count > 1 else ''}.")
         self._changed()
 
     def _redo(self) -> None:
