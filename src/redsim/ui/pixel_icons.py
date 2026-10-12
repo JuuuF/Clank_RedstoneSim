@@ -293,6 +293,18 @@ ICONS.update(
         ),
     }
 )
+ICONS["undo"] = (
+    "..#......",
+    ".##......",
+    "#######..",
+    ".##....#.",
+    "..#.....#",
+    "........#",
+    "........#",
+    ".......#.",
+    "..#####..",
+)
+ICONS["redo"] = _mirrored(ICONS["undo"])
 ICONS["mouse_right"] = _mirrored(ICONS["mouse_left"])
 ICONS["rotate_back"] = _mirrored(ICONS["rotate"])
 ICONS["flip_depth"] = _transposed(ICONS["flip"])

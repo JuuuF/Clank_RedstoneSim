@@ -230,18 +230,22 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
         self._action(file_menu, "&Quit", self.close, "file.quit")
         edit_menu = bar.addMenu("&Edit")
-        self._action(edit_menu, "&Undo", self._undo, "edit.undo")
-        self._action(edit_menu, "&Redo", self._redo, "edit.redo")
+        self._action(edit_menu, "&Undo", self._undo, "edit.undo").setIcon(
+            pixel_icons.pixel_icon("undo")
+        )
+        self._action(edit_menu, "&Redo", self._redo, "edit.redo").setIcon(
+            pixel_icons.pixel_icon("redo")
+        )
         edit_menu.addSeparator()
         self._action(
             edit_menu, "Rotate block clockwise", lambda: self._rotate_block(1), "edit.rotate_block"
-        )
+        ).setIcon(pixel_icons.pixel_icon("rotate"))
         self._action(
             edit_menu,
             "Rotate block counter-clockwise",
             lambda: self._rotate_block(3),
             "edit.rotate_block_back",
-        )
+        ).setIcon(pixel_icons.pixel_icon("rotate_back"))
         mode_menu = bar.addMenu("&Mode")
         group = QActionGroup(self)
         for mode, text in ((NORMAL, "&Normal"), (BUILD, "&Build"), (SELECT, "&Select")):
@@ -393,7 +397,9 @@ class MainWindow(QMainWindow):
                 f"inventory.{number}",
             )
         self._action(inventory_menu, "Up one folder", self.inventory.go_up, "inventory.up")
-        self._action(inventory_menu, "Search blocks…", self._search_blocks, "search.blocks")
+        self._action(
+            inventory_menu, "Search blocks…", self._search_blocks, "search.blocks"
+        ).setIcon(pixel_icons.pixel_icon("search"))
         settings_menu = bar.addMenu("Se&ttings")
         self._action(settings_menu, "Preferences…", self._preferences)
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
