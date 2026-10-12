@@ -249,3 +249,15 @@ def test_window_layout_round_trips(app: Any) -> None:
     assert abs(again.width() - 1000) <= 4 and abs(again.height() - 700) <= 4
     again.document.dirty = False
     again.close()
+
+
+def test_welcome_shows_until_the_first_block(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    lines = window.viewport.welcome_lines()
+    assert lines and "B" in lines[0]  # keys from the keymap
+    window.document.place((0, 1, 0), blocks.REDSTONE_LAMP, PlaceRequest(Direction.UP, 0, 0))
+    assert window.viewport.welcome_lines() == []
+    window.document.dirty = False
+    window.close()

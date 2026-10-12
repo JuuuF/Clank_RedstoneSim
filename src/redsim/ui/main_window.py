@@ -431,7 +431,7 @@ class MainWindow(QMainWindow):
         self._message(f"{mode.upper()} mode: {self.viewport.mode_hint()}")
 
     def _show_controls(self) -> None:
-        """Bring the Controls dock to the front (it shares a tab group with the palette)."""
+        """Show every binding: the side panel's Hotkeys tab."""
         self.side_dock.show()
         self.tabs.setCurrentWidget(self.hotkeys)
 
