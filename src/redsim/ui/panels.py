@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import importlib.metadata
 from typing import Any
 
 from PySide6.QtCore import QObject, QPoint, QRect, Qt, QTimer, Signal
@@ -1029,3 +1030,44 @@ class ContraptionsPanel(QObject):
             value = reading(self._document.level, port, block_name)
             x, y, z = port.pos
             self.ports.addItem(f"{arrow} {port.name} ({x} {y} {z}): {value}")
+
+
+class AboutDialog(QDialog):
+    """Help → About: the title in the game's font, what the simulator follows, and where
+    its looks come from."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("About Redstone Simulator")
+        self.setFixedWidth(PREFERENCES_WIDTH)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 14)
+        layout.setSpacing(10)
+        title = QLabel()
+        font = theme.PixelFont.load()
+        if font is not None:
+            title.setPixmap(font.pixmap("Redstone Simulator", theme.GOLD, 3))
+        else:
+            title.setText("<b>Redstone Simulator</b>")
+        layout.addWidget(title)
+        try:
+            version = importlib.metadata.version("redsim")
+        except importlib.metadata.PackageNotFoundError:
+            version = "development"
+        text = QLabel(
+            f"<p>Version {html.escape(version)} · Minecraft Java Edition 26.3 rules, "
+            "ported from the game's server code and checked tick by tick against a "
+            "real 26.3 server.</p>"
+            f"<p style='color:{theme.TEXT_DIM}'>Block models, textures, names, the font "
+            "and the clouds are read at runtime from your own client jar and are never "
+            "shipped. Without the jar, simple colored models are drawn.</p>"
+        )
+        text.setWordWrap(True)
+        layout.addWidget(text)
+        close = QPushButton("Close")
+        close.setDefault(True)
+        close.clicked.connect(self.accept)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        row.addWidget(close)
+        layout.addLayout(row)

@@ -42,6 +42,7 @@ from redsim.ui.keymap import SPECS, Keymap, default_path
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panels import (
+    AboutDialog,
     ContraptionsPanel,
     DiagnosticsPanel,
     HotkeysPanel,
@@ -416,6 +417,8 @@ class MainWindow(QMainWindow):
         self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
         self._action(help_menu, "Controls", self._show_controls, "help.controls")
+        help_menu.addSeparator()
+        self._action(help_menu, "About Redstone Simulator", lambda: AboutDialog(self).exec())
 
     # ------------------------------------------------------------------ modes and keymap
     def _mode_key(self, mode: str) -> None:
