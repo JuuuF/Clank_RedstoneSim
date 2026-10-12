@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
+from PySide6.QtCore import QPoint, QRect, QSize, Qt, QTimer, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -213,6 +213,8 @@ class _Spot:
     title: str
 
 
+#: Opacity the chosen block's name fades to above the hotbar.
+NAME_FADED = 0.35
 #: Slots per row, like the game's hotbar; rows with fewer entries end in empty slots.
 HOTBAR_SLOTS = 9
 
@@ -256,6 +258,19 @@ class InventoryCanvas(QWidget):
         self.spots: list[_Spot] = []
         self.hovered: _Spot | None = None
         self.setMouseTracking(True)
+        # The chosen block's name fades after a while, like the held item's name in the
+        # game (to NAME_FADED, so it stays readable); hovered names show at full strength.
+        self._name_shown = ""
+        self.name_alpha = 1.0
+        self._fade = QVariantAnimation(self)
+        self._fade.setStartValue(1.0)
+        self._fade.setEndValue(NAME_FADED)
+        self._fade.setDuration(500)
+        self._fade.valueChanged.connect(self._set_name_alpha)
+        self._fade_delay = QTimer(self)
+        self._fade_delay.setSingleShot(True)
+        self._fade_delay.setInterval(2000)
+        self._fade_delay.timeout.connect(self._fade.start)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def rows_height(self) -> int:
@@ -348,9 +363,20 @@ class InventoryCanvas(QWidget):
             y = first.top() - 12
             theme.draw_text(painter, first.left(), y, "RECENT", theme.TEXT_DIM, 1, False)
         name = self.hovered.title if self.hovered is not None else self._current_name()
+        if self.hovered is None and name != self._name_shown:  # a new choice: show it
+            self._name_shown = name
+            self._fade.stop()
+            self.name_alpha = 1.0
+            self._fade_delay.start()
         if name:
+            painter.setOpacity(1.0 if self.hovered is not None else self.name_alpha)
             theme.draw_text(painter, 14, 3, name, theme.GOLD)
+            painter.setOpacity(1.0)
         painter.end()
+
+    def _set_name_alpha(self, value: object) -> None:
+        self.name_alpha = float(value)  # type: ignore[arg-type]
+        self.update()
 
     def _current_name(self) -> str:
         current = self.bar.current

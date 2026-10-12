@@ -282,3 +282,23 @@ def test_preferences_looks_follow_the_view_menu(app: Any) -> None:
     assert window._scenery_action.isChecked()
     window.document.dirty = False
     window.close()
+
+
+def test_chosen_block_name_fades_like_the_game(app: Any) -> None:
+    from redsim.ui.inventory import NAME_FADED, InventoryBar
+
+    bar = InventoryBar()
+    bar.resize(800, 120)
+    bar.show()
+    QtWidgets.QApplication.processEvents()  # exposed: repaint() paints at once
+    bar.select_block(blocks.REPEATER)
+    canvas = bar.canvas
+    canvas.repaint()
+    assert canvas.name_alpha == 1.0 and canvas._fade_delay.isActive()
+    canvas._fade_delay.timeout.emit()  # the delay is over: fade out
+    canvas._fade.setCurrentTime(canvas._fade.duration())
+    assert canvas.name_alpha == pytest.approx(NAME_FADED)
+    bar.select_block(blocks.COMPARATOR)  # a new choice shows at full strength again
+    canvas.repaint()
+    assert canvas.name_alpha == 1.0
+    bar.close()
