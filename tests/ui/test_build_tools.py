@@ -263,3 +263,19 @@ def test_welcome_shows_until_the_first_block(app: Any) -> None:
     assert window.viewport.welcome_lines() == []
     window.document.dirty = False
     window.close()
+
+
+def test_preferences_looks_follow_the_view_menu(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.panels import PreferencesDialog
+
+    window = MainWindow()
+    dialog = PreferencesDialog(window.viewport.preferences, window)
+    dialog.look_changed.connect(window._apply_look)
+    dialog.looks["scenery"].setChecked(False)
+    assert not window.viewport.preferences.scenery
+    assert not window._scenery_action.isChecked()
+    dialog.looks["scenery"].setChecked(True)
+    assert window._scenery_action.isChecked()
+    window.document.dirty = False
+    window.close()

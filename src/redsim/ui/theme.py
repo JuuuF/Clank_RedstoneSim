@@ -188,6 +188,7 @@ def apply(app: QApplication) -> None:
 
 #: Pixel arrows for spin boxes and combo boxes (style sheets need image files).
 _ARROW = ("...#...", "..###..", ".#####.", "#######")
+_CHECK = ("......#", ".....##", "#...##.", "##.##..", ".###...", "..#....")
 
 
 def _arrow_rules() -> str:
@@ -196,14 +197,18 @@ def _arrow_rules() -> str:
     folder = Path(tempfile.mkdtemp(prefix="redsim-ui-"))  # private, removed at exit
     atexit.register(shutil.rmtree, folder, True)
     paths = {}
-    for name, rows in (("up", _ARROW), ("down", _ARROW[::-1])):
+    for name, rows, color in (
+        ("up", _ARROW, TEXT_DIM),
+        ("down", _ARROW[::-1], TEXT_DIM),
+        ("check", _CHECK, "#ffffff"),
+    ):
         image = QImage(2 * len(rows[0]), 2 * len(rows), QImage.Format.Format_ARGB32)
         image.fill(QColor(0, 0, 0, 0))
         painter = QPainter(image)
         for y, row in enumerate(rows):
             for x, cell in enumerate(row):
                 if cell == "#":
-                    painter.fillRect(2 * x, 2 * y, 2, 2, QColor(TEXT_DIM))
+                    painter.fillRect(2 * x, 2 * y, 2, 2, QColor(color))
         painter.end()
         path = folder / f"arrow_{name}.png"
         image.save(str(path))
@@ -212,6 +217,7 @@ def _arrow_rules() -> str:
 QSpinBox::up-arrow {{ image: url({paths["up"]}); width: 14px; height: 8px; }}
 QSpinBox::down-arrow {{ image: url({paths["down"]}); width: 14px; height: 8px; }}
 QComboBox::down-arrow {{ image: url({paths["down"]}); width: 14px; height: 8px; }}
+QCheckBox::indicator:checked {{ image: url({paths["check"]}); }}
 """
 
 

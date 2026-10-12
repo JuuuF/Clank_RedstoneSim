@@ -8,6 +8,7 @@ from typing import Any
 from PySide6.QtCore import QObject, QPoint, QRect, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
+    QCheckBox,
     QColorDialog,
     QComboBox,
     QDialog,
@@ -791,11 +792,18 @@ PREFERENCES_WIDTH = 480
 
 
 class PreferencesDialog(QDialog):
-    """Preferences; changes apply live (``changed``) and are saved on close."""
+    """Preferences; changes apply live (``changed``, ``look_changed``) and are saved on
+    close."""
 
     changed = Signal()
+    look_changed = Signal(str, bool)  # preference name, on
 
-    def __init__(self, preferences: Preferences, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        preferences: Preferences,
+        parent: QWidget | None = None,
+        textures_available: bool = True,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Preferences")
         self.setFixedWidth(PREFERENCES_WIDTH)  # sliders stay usable without resizing
@@ -841,6 +849,26 @@ class PreferencesDialog(QDialog):
             form.addRow(text, row)
             self.sliders[attribute] = slider
         layout.addWidget(group)
+        looks = QGroupBox("Looks")
+        looks_layout = QVBoxLayout(looks)
+        looks_layout.setContentsMargins(10, 14, 10, 10)
+        self.looks: dict[str, QCheckBox] = {}
+        for attribute, text, tip in (
+            (
+                "game_textures",
+                "Game textures",
+                "The game's own models and textures from the supplied client jar",
+            ),
+            ("scenery", "Scenery", "A grass superflat around the floor and the game's clouds"),
+        ):
+            box = QCheckBox(text)
+            box.setToolTip(tip)
+            box.setChecked(getattr(preferences, attribute))
+            box.toggled.connect(lambda on, a=attribute: self.look_changed.emit(a, on))
+            looks_layout.addWidget(box)
+            self.looks[attribute] = box
+        self.looks["game_textures"].setEnabled(textures_available)
+        layout.addWidget(looks)
         buttons = QHBoxLayout()
         reset = QPushButton("Reset to defaults")
         reset.clicked.connect(self._reset)

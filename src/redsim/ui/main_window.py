@@ -369,6 +369,7 @@ class MainWindow(QMainWindow):
         info.setCheckable(True)
         info.setToolTip(SPECS["view.info"].title)
         textures = self._action(view_menu, "Game textures", self._toggle_textures)
+        self._textures_action = textures
         textures.setCheckable(True)
         textures.setChecked(self.viewport.atlas is not None)
         textures.setEnabled(self.viewport.textures_available)
@@ -377,6 +378,7 @@ class MainWindow(QMainWindow):
             "client jar (data/minecraft_jars/client.jar). Off: simple colored models."
         )
         scenery = self._action(view_menu, "Scenery (ground and clouds)", self._toggle_scenery)
+        self._scenery_action = scenery
         scenery.setCheckable(True)
         scenery.setChecked(self.viewport.preferences.scenery)
         scenery.setToolTip(
@@ -465,10 +467,22 @@ class MainWindow(QMainWindow):
         self.viewport.update()
 
     def _preferences(self) -> None:
-        dialog = PreferencesDialog(self.viewport.preferences, self)
+        dialog = PreferencesDialog(
+            self.viewport.preferences, self, self.viewport.textures_available
+        )
         dialog.changed.connect(self.viewport.update)
+        dialog.look_changed.connect(self._apply_look)
         dialog.exec()
         self.viewport.preferences.save()
+
+    def _apply_look(self, attribute: str, on: bool) -> None:
+        """A look switched in the Preferences dialog: apply it and update the View menu."""
+        if attribute == "game_textures":
+            self._toggle_textures(on)
+            self._textures_action.setChecked(on)
+        elif attribute == "scenery":
+            self._toggle_scenery(on)
+            self._scenery_action.setChecked(on)
 
     def _set_view_flag(self, attribute: str, on: bool) -> None:
         setattr(self.viewport, attribute, on)
