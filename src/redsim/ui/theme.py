@@ -13,9 +13,13 @@
 
 from __future__ import annotations
 
+import atexit
 import json
+import shutil
+import tempfile
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPixmap
@@ -86,7 +90,13 @@ QComboBox::drop-down {{ border: none; width: 18px; }}
 QComboBox QAbstractItemView {{
     background: {PANEL}; border: 1px solid {BORDER}; selection-background-color: {ACCENT_SOFT};
 }}
-QSpinBox::up-button, QSpinBox::down-button {{ background: {WIDGET}; border: none; width: 14px; }}
+QSpinBox::up-button, QSpinBox::down-button {{
+    background: {WIDGET}; border: none; width: 16px; subcontrol-origin: border;
+}}
+QSpinBox::up-button {{ subcontrol-position: top right; border-top-right-radius: 4px; }}
+QSpinBox::down-button {{ subcontrol-position: bottom right; border-bottom-right-radius: 4px; }}
+QSpinBox::up-button:hover, QSpinBox::down-button:hover {{ background: {WIDGET_HOVER}; }}
+
 QCheckBox::indicator, QRadioButton::indicator {{
     width: 13px; height: 13px; background: {SUNKEN}; border: 1px solid {LINE};
     border-radius: 3px;
@@ -171,9 +181,38 @@ def apply(app: QApplication) -> None:
     palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(TEXT_DIM))
     palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(TEXT_DIM))
     app.setPalette(palette)
-    app.setStyleSheet(STYLESHEET)
+    app.setStyleSheet(STYLESHEET + _arrow_rules())
     filler = _TabFiller(app)
     app.installEventFilter(filler)
+
+
+#: Pixel arrows for spin boxes and combo boxes (style sheets need image files).
+_ARROW = ("...#...", "..###..", ".#####.", "#######")
+
+
+def _arrow_rules() -> str:
+    """Style sheet rules that draw the pixel arrows, written once per run to a temporary
+    folder (Qt style sheets take image paths, not in-memory images)."""
+    folder = Path(tempfile.mkdtemp(prefix="redsim-ui-"))  # private, removed at exit
+    atexit.register(shutil.rmtree, folder, True)
+    paths = {}
+    for name, rows in (("up", _ARROW), ("down", _ARROW[::-1])):
+        image = QImage(2 * len(rows[0]), 2 * len(rows), QImage.Format.Format_ARGB32)
+        image.fill(QColor(0, 0, 0, 0))
+        painter = QPainter(image)
+        for y, row in enumerate(rows):
+            for x, cell in enumerate(row):
+                if cell == "#":
+                    painter.fillRect(2 * x, 2 * y, 2, 2, QColor(TEXT_DIM))
+        painter.end()
+        path = folder / f"arrow_{name}.png"
+        image.save(str(path))
+        paths[name] = path.as_posix()
+    return f"""
+QSpinBox::up-arrow {{ image: url({paths["up"]}); width: 14px; height: 8px; }}
+QSpinBox::down-arrow {{ image: url({paths["down"]}); width: 14px; height: 8px; }}
+QComboBox::down-arrow {{ image: url({paths["down"]}); width: 14px; height: 8px; }}
+"""
 
 
 class _TabFiller(QObject):
