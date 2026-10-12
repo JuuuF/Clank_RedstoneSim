@@ -53,8 +53,8 @@ QWidget {{ background: transparent; }}
 QMainWindow > QWidget, QDockWidget > QWidget, QTabWidget::pane, QScrollArea > QWidget > QWidget {{
     background: {PANEL};
 }}
-QToolTip {{
-    background: {SUNKEN}; color: {TEXT}; border: 1px solid {LINE}; padding: 4px 6px;
+QToolTip {{  /* the game's item tooltips: near black with a purple frame */
+    background: #100010; color: #ffffff; border: 2px solid #2d0a6e; padding: 4px 6px;
 }}
 QMenuBar {{ background: {WINDOW}; padding: 2px; }}
 QMenuBar::item {{ padding: 4px 9px; border-radius: 4px; background: transparent; }}
@@ -166,8 +166,8 @@ def apply(app: QApplication) -> None:
         (QPalette.ColorRole.ButtonText, TEXT),
         (QPalette.ColorRole.Highlight, ACCENT),
         (QPalette.ColorRole.HighlightedText, "#ffffff"),
-        (QPalette.ColorRole.ToolTipBase, SUNKEN),
-        (QPalette.ColorRole.ToolTipText, TEXT),
+        (QPalette.ColorRole.ToolTipBase, "#100010"),
+        (QPalette.ColorRole.ToolTipText, "#ffffff"),
         (QPalette.ColorRole.PlaceholderText, TEXT_DIM),
         (QPalette.ColorRole.Link, GOLD),
         # Fusion's bevels and frames: dark too, or stray light lines show up (tab bases).
