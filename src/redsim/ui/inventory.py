@@ -330,6 +330,7 @@ class InventoryCanvas(QWidget):
         active = len(path)
         bottom = self.shown_height() - 4
         hotbar = hud_sprite("hotbar")
+        sprite = hotbar is not None
         for depth in range(len(self.bar.nav.path) + 1):  # each row: a whole 9-slot hotbar
             top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
             if hotbar is not None:  # the game's own hotbar
@@ -353,7 +354,7 @@ class InventoryCanvas(QWidget):
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
             if spot.kind == "recent":
                 selected = spot.block == self.bar.current
-                self._paint_slot(painter, spot, selected, hovered, None, False, hotbar)
+                self._paint_slot(painter, spot, selected, hovered, None, False, sprite)
                 continue
             child = self._levels()[spot.depth][1].children[spot.index]
             if isinstance(child, Folder):
@@ -362,7 +363,7 @@ class InventoryCanvas(QWidget):
                 selected = child == self.bar.current
             number = spot.index + 1 if spot.depth == active else None
             self._paint_slot(
-                painter, spot, selected, hovered, number, isinstance(child, Folder), hotbar
+                painter, spot, selected, hovered, number, isinstance(child, Folder), sprite
             )
         top_row = [s for s in self.spots if s.kind == "slot" and s.depth == active]
         if top_row:  # the row the number keys act on
@@ -424,11 +425,11 @@ class InventoryCanvas(QWidget):
         hovered: bool,
         number: int | None,
         folder: bool = False,
-        in_hotbar: object = None,
+        sprite: bool = False,
     ) -> None:
-        """One slot; ``in_hotbar``: the row is the game's hotbar sprite (frames drawn)."""
+        """One slot; ``sprite``: drawn on the game's hotbar sprite (it has the frames)."""
         r = spot.rect
-        if in_hotbar is None:
+        if not sprite:
             theme.paint_slot(painter, r.adjusted(1, 1, -1, -1))
         if hovered:  # the game's slot highlight: white over the item area
             painter.fillRect(r.adjusted(4, 4, -4, -4), QColor(255, 255, 255, 60))
@@ -446,7 +447,7 @@ class InventoryCanvas(QWidget):
             cap = QRect(r.left() + 2, r.bottom() - 10, width + 5, 10)
             painter.fillRect(cap, QColor(0, 0, 0, 170))
             theme.draw_text(painter, cap.left() + 3, cap.top() + 2, text, theme.TEXT, 1, False)
-        selection = hud_sprite("hotbar_selection") if in_hotbar is not None else None
+        selection = hud_sprite("hotbar_selection") if sprite else None
         if selected and selection is not None:
             painter.drawPixmap(r.left() - 4, r.top() - 4, selection)
         elif selected:
