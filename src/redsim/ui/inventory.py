@@ -13,10 +13,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from functools import cache
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPen
+from PySide6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -29,6 +30,7 @@ from PySide6.QtWidgets import (
 
 from redsim.editor import sources
 from redsim.ui import pixel_icons, theme
+from redsim.ui.assets import Assets
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
 from redsim.ui.preferences import config_dir
@@ -215,6 +217,26 @@ class _Spot:
 HOTBAR_SLOTS = 9
 
 
+@cache
+def hud_sprite(name: str) -> QPixmap | None:
+    """One of the game's HUD sprites (``hotbar``, ``hotbar_selection``) at 2×, from the
+    client jar; None without it."""
+    assets = Assets.find()
+    path = f"assets/minecraft/textures/gui/sprites/hud/{name}.png"
+    data = assets.file_bytes(path) if assets is not None else None
+    image = QImage.fromData(data) if data else QImage()
+    if image.isNull():
+        return None
+    return QPixmap.fromImage(
+        image.scaled(
+            image.width() * 2,
+            image.height() * 2,
+            Qt.AspectRatioMode.IgnoreAspectRatio,
+            Qt.TransformationMode.FastTransformation,
+        )
+    )
+
+
 class InventoryCanvas(QWidget):
     """The painted part of the inventory, Minecraft-style hotbar rows: one row of slots per
     folder level, all alike. The root row stays at the bottom; opening a folder adds its
@@ -223,9 +245,10 @@ class InventoryCanvas(QWidget):
     name of the chosen or hovered block floats above, like in the game; recent blocks sit
     on the right."""
 
-    SLOT = 42
+    SLOT = 40  # the game's hotbar at 2×: 20-pixel slots
     GAP = 6
     NAME = 22
+    X0 = 16  # left edge of the first slot (the hotbar sprite starts 2 pixels earlier)
 
     def __init__(self, bar: InventoryBar) -> None:
         super().__init__()
@@ -259,7 +282,7 @@ class InventoryCanvas(QWidget):
         for depth, folder in self._levels():  # the root lowest, deeper rows above
             top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
             for index, child in enumerate(folder.children):
-                rect = QRect(14 + index * (self.SLOT + 4), top, self.SLOT, self.SLOT)
+                rect = QRect(self.X0 + index * self.SLOT, top, self.SLOT, self.SLOT)
                 if isinstance(child, Folder):
                     spots.append(_Spot(rect, "slot", depth, index, first_block(child), child.title))
                 else:
@@ -281,11 +304,15 @@ class InventoryCanvas(QWidget):
         path = self.bar.nav.path
         active = len(path)
         bottom = self.rows_height() - 4
-        for depth, folder in self._levels():  # empty slots complete each hotbar row
+        hotbar = hud_sprite("hotbar")
+        for depth in range(len(self.bar.nav.path) + 1):  # each row: a whole 9-slot hotbar
             top = bottom - (depth + 1) * (self.SLOT + self.GAP) + self.GAP
-            for index in range(len(folder.children), HOTBAR_SLOTS):
-                rect = QRect(14 + index * (self.SLOT + 4), top, self.SLOT, self.SLOT)
-                theme.paint_slot(painter, rect, 110)
+            if hotbar is not None:  # the game's own hotbar
+                painter.drawPixmap(self.X0 - 2, top - 2, hotbar)
+                continue
+            for index in range(HOTBAR_SLOTS):
+                rect = QRect(self.X0 + index * self.SLOT, top, self.SLOT, self.SLOT)
+                theme.paint_slot(painter, rect.adjusted(1, 1, -1, -1))
         for spot in self.spots:
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
             if spot.kind == "recent":
@@ -297,7 +324,9 @@ class InventoryCanvas(QWidget):
             else:
                 selected = child == self.bar.current
             number = spot.index + 1 if spot.depth == active else None
-            self._paint_slot(painter, spot, selected, hovered, number, isinstance(child, Folder))
+            self._paint_slot(
+                painter, spot, selected, hovered, number, isinstance(child, Folder), hotbar
+            )
         top_row = [s for s in self.spots if s.kind == "slot" and s.depth == active]
         if top_row:  # the row the number keys act on
             r = top_row[0].rect
@@ -326,18 +355,17 @@ class InventoryCanvas(QWidget):
         hovered: bool,
         number: int | None,
         folder: bool = False,
+        in_hotbar: object = None,
     ) -> None:
+        """One slot; ``in_hotbar``: the row is the game's hotbar sprite (frames drawn)."""
         r = spot.rect
-        if folder:  # a folder: a second plate behind it, like a stack of slots
-            back = r.translated(3, -3)
-            painter.fillRect(back, QColor(theme.LINE))
-            painter.fillRect(back.adjusted(1, 1, -1, -1), QColor(theme.WIDGET))
-        theme.paint_slot(painter, r)
-        if hovered:
-            painter.fillRect(r.adjusted(2, 2, -2, -2), QColor(255, 255, 255, 28))
+        if in_hotbar is None:
+            theme.paint_slot(painter, r.adjusted(1, 1, -1, -1))
+        if hovered:  # the game's slot highlight: white over the item area
+            painter.fillRect(r.adjusted(4, 4, -4, -4), QColor(255, 255, 255, 60))
         if spot.block is not None:
-            size = r.width() - 10
-            painter.drawPixmap(r.left() + 5, r.top() + 5, block_pixmap(spot.block, size))
+            size = r.width() - 8
+            painter.drawPixmap(r.left() + 4, r.top() + 4, block_pixmap(spot.block, size))
         if folder:  # opening it adds a row above: a small up chevron
             color = QColor(theme.ACCENT if selected else theme.GOLD)
             x, y = r.right() - 9, r.top() + 4
@@ -349,10 +377,13 @@ class InventoryCanvas(QWidget):
             cap = QRect(r.left() + 2, r.bottom() - 10, width + 5, 10)
             painter.fillRect(cap, QColor(0, 0, 0, 170))
             theme.draw_text(painter, cap.left() + 3, cap.top() + 2, text, theme.TEXT, 1, False)
-        if selected:
+        selection = hud_sprite("hotbar_selection") if in_hotbar is not None else None
+        if selected and selection is not None:
+            painter.drawPixmap(r.left() - 4, r.top() - 4, selection)
+        elif selected:
             painter.setPen(QPen(QColor("#ffffff"), 2))
             painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.drawRect(r.adjusted(-1, -1, 0, 0))
+            painter.drawRect(r.adjusted(0, 0, -1, -1))
 
     # ------------------------------------------------------------------ input
     def _spot_at(self, point: QPoint) -> _Spot | None:
