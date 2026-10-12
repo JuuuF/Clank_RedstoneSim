@@ -906,6 +906,19 @@ class PreferencesDialog(QDialog):
             self.looks[attribute] = box
         self.looks["game_textures"].setEnabled(textures_available)
         layout.addWidget(looks)
+        trackpad = QGroupBox("Trackpad")
+        trackpad_layout = QVBoxLayout(trackpad)
+        trackpad_layout.setContentsMargins(10, 14, 10, 10)
+        box = QCheckBox("Two-finger scrolling navigates (like Blender on a Mac)")
+        box.setToolTip(
+            "Scroll: orbit · Shift: pan · Ctrl/⌘: zoom · Alt/⌥: up and down. "
+            "Off: scrolling acts as a mouse wheel. Pinching always zooms."
+        )
+        box.setChecked(preferences.trackpad_navigation)
+        box.toggled.connect(lambda on: self.look_changed.emit("trackpad_navigation", on))
+        trackpad_layout.addWidget(box)
+        self.looks["trackpad_navigation"] = box
+        layout.addWidget(trackpad)
         buttons = QHBoxLayout()
         reset = QPushButton("Reset to defaults")
         reset.clicked.connect(self._reset)

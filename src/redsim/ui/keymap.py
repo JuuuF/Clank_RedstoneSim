@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,29 @@ MODIFIERS = ("Ctrl", "Shift", "Alt", "Meta")
 BUTTONS = ("Left", "Right", "Middle")
 GESTURES = ("Click", "Drag")
 KEYMAP_VERSION = 3
+
+#: macOS: Qt reads "Ctrl" as ⌘ Command and "Meta" as ⌃ Control, "Alt" is ⌥ Option, so
+#: every binding works there as written. These extra defaults (added, nothing replaced)
+#: cover what Mac keyboards and trackpads lack or the system already uses: ⌘Space opens
+#: Spotlight, MacBooks have no middle button, delete is Backspace, F-keys need fn.
+MAC_EXTRA_DEFAULTS: dict[str, tuple[str, ...]] = {
+    "search.blocks": ("Ctrl+F",),  # ⌘F
+    "edit.delete": ("Backspace",),  # the "delete" key
+    "pick": ("Alt+Right Click",),  # ⌥ + two-finger click
+    "view.info": ("Ctrl+I",),  # ⌘I
+    "help.controls": ("Ctrl+/",),  # ⌘/
+}
+IS_MAC = sys.platform == "darwin"
+
+
+def platform_defaults(action: str, mac: bool = IS_MAC) -> tuple[str, ...]:
+    """The default bindings of ``action`` on this platform (macOS adds a few)."""
+    defaults = SPECS[action].defaults
+    if mac:
+        extra = tuple(b for b in MAC_EXTRA_DEFAULTS.get(action, ()) if b not in defaults)
+        return defaults + extra
+    return defaults
+
 
 #: Actions older versions had (keymap files written then may still list them).
 RETIRED_ACTIONS = frozenset(f"hotbar.{slot}" for slot in range(1, 10))
@@ -225,10 +249,13 @@ def default_path() -> Path:
 
 
 class Keymap:
-    def __init__(self, overrides: dict[str, list[str]] | None = None) -> None:
+    def __init__(self, overrides: dict[str, list[str]] | None = None, mac: bool = IS_MAC) -> None:
         self.warnings: list[str] = []
         self._overridden: set[str] = set()
-        self._bindings: dict[str, tuple[str, ...]] = {s.id: s.defaults for s in ACTIONS}
+        self.mac = mac
+        self._bindings: dict[str, tuple[str, ...]] = {
+            s.id: platform_defaults(s.id, mac) for s in ACTIONS
+        }
         for action, bindings in (overrides or {}).items():
             spec = SPECS.get(action)
             if spec is None:
@@ -322,7 +349,7 @@ class Keymap:
         kept = {
             action: list(keymap.bindings(action))
             for action in keymap._overridden
-            if keymap.bindings(action) != SPECS[action].defaults
+            if keymap.bindings(action) != platform_defaults(action, keymap.mac)
         }
         backup = path.with_name(path.name + f".v{data.get('version', 1)}.bak")
         backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
@@ -342,7 +369,7 @@ class Keymap:
             "'[Mods+]<Left|Right|Middle> <Click|Drag>' or '[Mods+]Wheel'. "
             "Only 'bindings' is read.",
             "bindings": bindings or {},
-            "defaults": {spec.id: list(spec.defaults) for spec in ACTIONS},
+            "defaults": {spec.id: list(platform_defaults(spec.id)) for spec in ACTIONS},
         }
         path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -351,7 +378,7 @@ class Keymap:
         return {
             spec.id: list(self._bindings[spec.id])
             for spec in ACTIONS
-            if self._bindings[spec.id] != spec.defaults
+            if self._bindings[spec.id] != platform_defaults(spec.id, self.mac)
         }
 
     @staticmethod
@@ -390,7 +417,7 @@ class Keymap:
 
     def describe(self, action: str) -> str:
         bindings = self._bindings[action]
-        return " / ".join(bindings) if bindings else "(unbound)"
+        return " / ".join(display(b, self.mac) for b in bindings) if bindings else "(unbound)"
 
     def conflicts(self) -> list[str]:
         """Bindings used twice in the same context (both would fire, or neither)."""
@@ -552,3 +579,38 @@ def binding_text(key: int, modifiers: Iterable[str], text: str = "") -> str | No
     order = ("Ctrl", "Alt", "Shift", "Meta")
     held = [m for m in order if m in set(modifiers)]
     return "+".join([*held, name])
+
+
+#: How macOS shows modifiers and some keys (Apple's menu symbols).
+MAC_SYMBOLS = {
+    "Ctrl": "⌘",
+    "Alt": "⌥",
+    "Shift": "⇧",
+    "Meta": "⌃",
+    "Backspace": "⌫",
+    "Del": "⌦",
+    "Return": "↩",
+    "Esc": "esc",
+    "PgUp": "fn↑",
+    "PgDown": "fn↓",
+}
+MODIFIERS = ("Ctrl", "Alt", "Shift", "Meta")
+
+
+def display_token(token: str, mac: bool = IS_MAC) -> str:
+    """One part of a binding as the user's platform names it (macOS: ⌘ for "Ctrl")."""
+    return MAC_SYMBOLS.get(token, token) if mac else token
+
+
+def display(binding: str, mac: bool = IS_MAC) -> str:
+    """A binding for people: unchanged off macOS; on macOS "Ctrl+Shift+Z" reads "⇧⌘Z"
+    (Apple's order: ⌃ ⌥ ⇧ ⌘, glued to the key)."""
+    if not mac:
+        return binding
+    *mods, key = (
+        binding.split("+") if not binding.endswith("++") else [*binding[:-2].split("+"), "+"]
+    )
+    order = ("Meta", "Alt", "Shift", "Ctrl")
+    glyphs = "".join(MAC_SYMBOLS[m] for m in order if m in mods)
+    rest = [m for m in mods if m not in order]
+    return glyphs + "+".join([*rest, display_token(key, mac)])

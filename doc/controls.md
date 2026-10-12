@@ -253,6 +253,33 @@ versions. Example:
   same context) are reported in the status bar; the file never breaks the editor (an
   unreadable file falls back to the defaults).
 
+## macOS and trackpads
+
+Every binding works on a Mac as written: Qt reads **Ctrl as ⌘ Command**, Alt as ⌥ Option
+and Meta as ⌃ Control, and the hint bar, the Hotkeys panel and tooltips show Apple's
+symbols (⇧⌘Z). Nothing was changed for other systems; macOS only gets extra bindings for
+what Mac keyboards and trackpads lack or the system already uses:
+
+| Action | Everywhere | Added on macOS | Why |
+|---|---|---|---|
+| Search blocks | Ctrl+Space, / | ⌘F | ⌘Space opens Spotlight |
+| Delete the selection | Del | ⌫ (delete) | the Mac "delete" key is Backspace; fn+delete is Del |
+| Pick the block type | middle click | ⌥ + right click (two-finger click) | trackpads have no middle button |
+| Info overlay | F3 | ⌘I | F-keys need fn |
+| All hotkeys | F1 | ⌘/ | F-keys need fn |
+
+Orbit and pan already have middle-button-free bindings: **⌥ + drag** orbits, **⇧⌥ + drag**
+pans. PgUp/PgDown (camera up/down) are fn+↑/fn↓ on a MacBook. Right click is a two-finger
+click (or ⌃-click).
+
+**Trackpad gestures:** pinching zooms, rotating two fingers turns the view, a smart-zoom
+double tap (two fingers) moves the pivot to the block under the cursor. With **Settings →
+Preferences → Trackpad: two-finger scrolling navigates** (on by default on macOS only),
+two-finger scrolling works like Blender on a Mac: scroll orbits, **⇧** pans, **⌘** zooms,
+**⌥** moves the camera (and the build layer) up and down a block at a time; while dragging
+a selection it lifts it. Off, it acts as a mouse wheel. A real mouse wheel is never
+affected.
+
 ## Related
 
 [[ui-direction]] · [[architecture]] · [[tour]] · [[decisions]] ADR-018

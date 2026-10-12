@@ -27,6 +27,7 @@ from PySide6.QtGui import (
     QKeyEvent,
     QKeySequence,
     QMouseEvent,
+    QNativeGestureEvent,
     QPainter,
     QWheelEvent,
 )
@@ -79,6 +80,9 @@ from redsim.world.rotation import mirror_state, rotate_state, upside_down
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 ORBIT_DEGREES_PER_PIXEL = 0.3
+#: Trackpad scrolling: pixels of finger travel per zoom notch and per block up/down.
+TRACKPAD_PIXELS_PER_NOTCH = 40.0
+TRACKPAD_PIXELS_PER_BLOCK = 30.0
 ZOOM_PER_NOTCH = 1.15
 DRAG_THRESHOLD = 4
 #: The build preview is this much smaller than a block (no z-fighting with neighbors).
@@ -131,6 +135,11 @@ _BUTTON_NAMES = {
     Qt.MouseButton.RightButton: "Right",
     Qt.MouseButton.MiddleButton: "Middle",
 }
+
+
+def _from_trackpad(event: QWheelEvent) -> bool:
+    """Scrolling with fingers (it has scroll phases or pixel deltas), not a wheel."""
+    return event.phase() != Qt.ScrollPhase.NoScrollPhase or not event.pixelDelta().isNull()
 
 
 def _modifier_names(modifiers: Qt.KeyboardModifier) -> frozenset[str]:
@@ -273,6 +282,7 @@ class Viewport(QOpenGLWidget):
         self._held_actions: dict[int, str] = {}
         self.set_keymap(keymap if keymap is not None else Keymap())
         self._held: set[str] = set()
+        self._trackpad_rise = 0.0  # trackpad up/down travel not yet a whole block
         # Mouse gesture in progress: press point, button, modifiers; drag action once moving.
         self._press: tuple[QPoint, Qt.MouseButton, frozenset[str]] | None = None
         self._drag_action: str | None = None
@@ -1202,6 +1212,9 @@ class Viewport(QOpenGLWidget):
         self.update()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
+        if self.preferences.trackpad_navigation and _from_trackpad(event):
+            self._trackpad_scroll(event)
+            return
         delta = event.angleDelta()
         steps = (delta.y() or delta.x()) / 120.0  # some systems turn Shift+wheel sideways
         if not steps:
@@ -1494,6 +1507,73 @@ class Viewport(QOpenGLWidget):
     # ------------------------------------------------------------------ helpers
     def look_at(self, target: Pos) -> None:
         self.glide_to(pivot=np.array(target, dtype=float) + 0.5)
+
+    # ------------------------------------------------------------------ trackpad
+    def _trackpad_scroll(self, event: QWheelEvent) -> None:
+        """Two-finger scrolling (``trackpad_navigation``): the fingers drag the view like
+        a middle-button drag; with Shift it pans, Ctrl (⌘) zooms, Alt (⌥) moves the camera
+        (and the build layer) up or down."""
+        if event.phase() == Qt.ScrollPhase.ScrollMomentum:
+            return  # no coasting after the fingers lift: the view stays where it was put
+        pixels = event.pixelDelta()
+        dx, dy = (
+            (pixels.x(), pixels.y())
+            if not pixels.isNull()
+            else (
+                event.angleDelta().x() / 8,
+                event.angleDelta().y() / 8,
+            )
+        )
+        modifiers = _modifier_names(event.modifiers())
+        if self._move is not None:  # dragging a selection: lift it, block by block
+            self._trackpad_rise += dy / TRACKPAD_PIXELS_PER_BLOCK
+            whole = int(self._trackpad_rise)
+            if whole:
+                self._trackpad_rise -= whole
+                self._move.lift += whole
+                self._ghost = (self._move.ghost, self._move.offset_pos)
+                self.update()
+            return
+        if "Ctrl" in modifiers:
+            self.zoom_by(dy / TRACKPAD_PIXELS_PER_NOTCH)
+        elif "Alt" in modifiers:
+            self._trackpad_rise += dy / TRACKPAD_PIXELS_PER_BLOCK
+            whole = int(self._trackpad_rise)
+            if whole:
+                self._trackpad_rise -= whole
+                target = (
+                    self._glide[0] if self._glide else np.asarray(self.camera.pivot, dtype=float)
+                )
+                self.glide_to(pivot=target + np.array([0.0, float(whole), 0.0]))
+        elif "Shift" in modifiers:
+            self._drag("camera.pan", int(dx), int(dy))
+        else:
+            self._drag("camera.orbit", int(dx), int(dy))
+        self.update()
+
+    def zoom_by(self, notches: float) -> None:
+        """Zoom in (positive) or out like that many wheel notches."""
+        distance = self._glide[1] if self._glide else self.camera.distance
+        self.glide_to(distance=distance * ZOOM_PER_NOTCH**-notches)
+
+    def event(self, event: QEvent) -> bool:
+        """Trackpad gestures (macOS): pinch zooms, two-finger rotation turns the view,
+        a smart-zoom double tap focuses the block under the cursor."""
+        if event.type() == QEvent.Type.NativeGesture and isinstance(event, QNativeGestureEvent):
+            kind = event.gestureType()
+            if kind == Qt.NativeGestureType.ZoomNativeGesture:
+                distance = self._glide[1] if self._glide else self.camera.distance
+                self.glide_to(distance=distance / max(0.2, 1.0 + event.value()))
+                return True
+            if kind == Qt.NativeGestureType.RotateNativeGesture:
+                self.camera.orbit(-event.value(), 0.0)
+                self._camera_moved()
+                self.update()
+                return True
+            if kind == Qt.NativeGestureType.SmartZoomNativeGesture:
+                self.focus_hover()
+                return True
+        return super().event(event)
 
     def focus_hover(self) -> bool:
         """Move the pivot to the center of the block under the cursor."""

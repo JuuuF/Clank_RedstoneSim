@@ -8,13 +8,14 @@ messages on the right.
 from __future__ import annotations
 
 import html
+import re
 from dataclasses import dataclass
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QWidget
 
 from redsim.ui import pixel_icons, theme
-from redsim.ui.keymap import Keymap
+from redsim.ui.keymap import Keymap, display_token
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,12 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
 
     def key(action: str) -> str:
         bindings = keymap.bindings(action)
+        if keymap.mac:  # Mac trackpads have no middle button: show the alternative
+            bindings = tuple(b for b in bindings if "Middle" not in b) or bindings
+            if action == "search.blocks":  # ⌘Space is Spotlight: show ⌘F
+                bindings = tuple(b for b in bindings if b != "Ctrl+Space") or bindings
+            # F-keys need fn on a MacBook: prefer another binding if there is one.
+            bindings = tuple(b for b in bindings if not re.fullmatch(r"F\d+", b)) or bindings
         return bindings[0] if bindings else "—"
 
     if context.pasting:
@@ -61,7 +68,7 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
             (key("build.layer"), "layer up/down"),
             (key("edit.rotate"), "turn new block"),
             (key("edit.flip_depth"), "upside down"),
-            ("Middle Click", "pick"),
+            (key("pick"), "pick"),
             ("1-9", "inventory"),
             (key("search.blocks").split(" / ")[0], "search"),
             run,
@@ -97,8 +104,8 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
         step,
         (key("mode.build"), "build"),
         (key("mode.select"), "select"),
-        ("Middle Drag", "orbit"),
-        ("F1", "all hotkeys"),
+        (key("camera.orbit"), "orbit"),
+        (key("help.controls"), "all hotkeys"),
     ]
 
 
@@ -122,7 +129,7 @@ def _keycap(token: str) -> str:
     )
     gesture = MOUSE_GESTURES.get(token)
     if gesture is None:
-        return cap.format(html.escape(token))
+        return cap.format(html.escape(display_token(token)))
     icon, word = gesture
     image = f'<img src="{pixel_icons.pixel_data_uri(icon)}" align="middle">'
     return cap.format(f"{image}{'&nbsp;' + word if word else ''}")

@@ -577,6 +577,10 @@ class MainWindow(QMainWindow):
         elif attribute == "scenery":
             self._toggle_scenery(on)
             self._scenery_action.setChecked(on)
+        elif attribute == "trackpad_navigation":
+            self.viewport.preferences.trackpad_navigation = on
+            with contextlib.suppress(OSError):
+                self.viewport.preferences.save()
 
     def _set_view_flag(self, attribute: str, on: bool) -> None:
         setattr(self.viewport, attribute, on)

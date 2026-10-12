@@ -35,6 +35,7 @@ from redsim.ui.keymap import (
     Keymap,
     binding_text,
     default_path,
+    platform_defaults,
 )
 
 #: Columns of the table.
@@ -146,7 +147,7 @@ class KeymapEditor(QDialog):
         result = {}
         for row in range(self.table.rowCount()):
             action, bindings = self.action_at(row), self.bindings_at(row)
-            if tuple(bindings) != SPECS[action].defaults:
+            if tuple(bindings) != platform_defaults(action):
                 result[action] = bindings
         return result
 
@@ -168,7 +169,7 @@ class KeymapEditor(QDialog):
         self.table.blockSignals(True)
         for row in range(self.table.rowCount()):
             action = self.action_at(row)
-            changed = tuple(self.bindings_at(row)) != SPECS[action].defaults
+            changed = tuple(self.bindings_at(row)) != platform_defaults(action)
             bad = any(action in w or SPECS[action].title in w for w in problems)
             item = self._cell(row, BINDINGS)
             item.setForeground(
@@ -238,7 +239,7 @@ class KeymapEditor(QDialog):
         row = self._selected_row()
         if row is not None:
             action = self.action_at(row)
-            self.set_bindings(action, list(SPECS[action].defaults))
+            self.set_bindings(action, list(platform_defaults(action)))
 
     def _reset_all(self) -> None:
         self._fill(Keymap())

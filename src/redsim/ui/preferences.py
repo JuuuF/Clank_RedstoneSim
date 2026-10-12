@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
@@ -29,6 +30,10 @@ class Preferences:
     game_textures: bool = True
     #: The ground around the floor and the clouds (View → Scenery).
     scenery: bool = True
+    #: Two-finger scrolling on a trackpad navigates like Blender on a Mac (scroll orbits,
+    #: Shift pans, Ctrl/⌘ zooms, Alt/⌥ moves up and down); off: it acts as a mouse
+    #: wheel. On by default on macOS only, so nothing changes elsewhere.
+    trackpad_navigation: bool = sys.platform == "darwin"
 
     @staticmethod
     def path() -> Path:

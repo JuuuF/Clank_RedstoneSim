@@ -233,6 +233,16 @@ Status is kept up to date here; nothing in the message is left out.
 | 18 | P5 | **Open Minecraft worlds** (example: `data/minecraft_saves/Redstone/`): load chunks around the camera like the game instead of everything; cache in an own fast format keyed by save folder/seed; write changes back to the game's format. Design first ([[world-import]]). | in progress: design in [[world-import]]; phases 1–2 done (reading saves; File → Open Minecraft world… imports the area around the player); next: streaming chunks, cache, write-back |
 | — | — | The grass ground is great (keep). | kept |
 
+## Mac support (2026-10-12)
+
+Request: "Make the keyboard layout in a way that Mac usage is also supported. With
+corresponding updates to keybinds, work with trackpad etc. But do not change the existing
+keybinds." Status: done ([[controls]] "macOS and trackpads"). Existing bindings are
+unchanged on every platform (a test checks it); macOS adds ⌘F (search), ⌫ (delete),
+⌥+right click (pick), ⌘I (info), ⌘/ (hotkeys), shows ⌘ ⌥ ⇧ ⌃ symbols, prefers
+middle-button-free and fn-free keys in the hint bar, and supports trackpad pinch, rotate,
+smart zoom and Blender-style two-finger navigation (a preference, on by default on macOS).
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,
