@@ -36,6 +36,7 @@ from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import world_lines
 from redsim.ui.geometry import Hit
 from redsim.ui.hints import Context, HintBar, context_hints
+from redsim.ui.icons import block_icon
 from redsim.ui.inventory import InventoryBar
 from redsim.ui.keymap import SPECS, Keymap, default_path
 from redsim.ui.names import block_name
@@ -70,6 +71,7 @@ class MainWindow(QMainWindow):
         if isinstance(app, QApplication) and not app.property("redsim_theme"):
             theme.apply(app)  # the dark Minecraft-meets-Blender look, once per app
             app.setProperty("redsim_theme", True)
+        self.setWindowIcon(block_icon(blocks.REDSTONE_TORCH, 64))
         self.document = document or Document.new_flat()
         self.keymap = keymap if keymap is not None else Keymap.load()
         self.current_block = blocks.STONE

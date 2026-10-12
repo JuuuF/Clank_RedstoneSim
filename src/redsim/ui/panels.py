@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QInputDialog,
     QLabel,
     QLineEdit,
@@ -447,18 +448,33 @@ class InspectorPanel(QWidget):
             self.section_requested.emit(self._pos, self.section_box.itemData(index))
 
 
+def _placeholder[T: (QTableWidgetItem, QListWidgetItem)](item: T) -> T:
+    """``item`` as a dim, unselectable row that says a list is empty."""
+    item.setFlags(Qt.ItemFlag.NoItemFlags)
+    item.setForeground(QColor(theme.TEXT_DIM))
+    return item
+
+
 class DiagnosticsPanel(QTabWidget):
     """Pending scheduled ticks, queued block events, and the last step's trace."""
 
     def __init__(self) -> None:
         super().__init__()
         self.ticks = QTableWidget(0, 5)
-        self.ticks.setHorizontalHeaderLabels(["at tick", "priority", "sub-tick", "block", "pos"])
+        self.ticks.setHorizontalHeaderLabels(["At tick", "Block", "Pos", "Priority", "Sub-tick"])
+        self.ticks.verticalHeader().setVisible(False)
+        header = self.ticks.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setStretchLastSection(True)
+        self.ticks.setShowGrid(False)
+        self.ticks.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.addTab(self.ticks, "Scheduled ticks")
         self.events = QListWidget()
         self.addTab(self.events, "Block events")
         self.trace = QPlainTextEdit()
         self.trace.setReadOnly(True)
+        self.trace.setPlaceholderText("Step a tick (Right) to see what it did, update by update.")
+        self.trace.setStyleSheet(f"font-family: {theme.MONO_FAMILY}; font-size: 11px;")
         self.addTab(self.trace, "Last step trace")
 
     def show_state(self, document: Document, last_steps: list[Any]) -> None:
@@ -466,20 +482,28 @@ class DiagnosticsPanel(QTabWidget):
         collected = list(level.block_ticks.to_run)
         pending = level.block_ticks.pending()
         rows = [("this tick", t) for t in collected] + [(str(t.trigger_tick), t) for t in pending]
+        self.ticks.clearSpans()
         self.ticks.setRowCount(len(rows))
         for row, (when, tick) in enumerate(rows):
             values = [
                 when,
-                tick.priority.name,
+                block_name(tick.block_id),
+                " ".join(str(c) for c in tick.pos),
+                tick.priority.name.replace("_", " ").lower(),
                 str(tick.sub_tick),
-                tick.block_id[10:],
-                str(tick.pos),
             ]
             for column, value in enumerate(values):
                 self.ticks.setItem(row, column, QTableWidgetItem(value))
+        if not rows:
+            self.ticks.setRowCount(1)
+            self.ticks.setSpan(0, 0, 1, self.ticks.columnCount())
+            self.ticks.setItem(0, 0, _placeholder(QTableWidgetItem("No scheduled ticks pending.")))
         self.events.clear()
         for pos, block_id, b0, b1 in level.block_events:
-            self.events.addItem(f"{block_id[10:]} at {pos}: ({b0}, {b1})")
+            self.events.addItem(f"{block_name(block_id)} at {pos}: ({b0}, {b1})")
+        if not level.block_events:
+            empty = QListWidgetItem("No block events queued (pistons queue them).")
+            self.events.addItem(_placeholder(empty))
         lines: list[str] = []
         trace = level.trace
         for step in last_steps[-40:]:
