@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QFormLayout,
+    QGroupBox,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -665,17 +666,29 @@ class PreferencesDialog(QDialog):
         self.setWindowTitle("Preferences")
         self.setFixedWidth(PREFERENCES_WIDTH)  # sliders stay usable without resizing
         self.preferences = preferences
-        form = QFormLayout(self)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 14, 14, 12)
+        layout.setSpacing(10)
+        group = QGroupBox("X-ray transparency")
+        form = QFormLayout(group)
+        form.setContentsMargins(10, 14, 10, 10)
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        explanation = QLabel(
+            f"<small style='color:{theme.TEXT_DIM}'>How opaque blocks stay when X-ray is on "
+            "(Alt+Z): building blocks in both levels, circuit blocks in the second.</small>"
+        )
+        explanation.setWordWrap(True)
+        form.addRow(explanation)
+        self.sliders: dict[str, QSlider] = {}
         for attribute, text, tip in (
             (
                 "xray_building_alpha",
-                "X-ray: building blocks",
+                "Building blocks",
                 "How visible building blocks (stone, planks, …) stay in both X-ray levels.",
             ),
             (
                 "xray_circuit_alpha",
-                "X-ray: circuit blocks",
+                "Circuit blocks",
                 "How visible circuit parts stay in the 'everything' X-ray level.",
             ),
         ):
@@ -686,14 +699,29 @@ class PreferencesDialog(QDialog):
             slider.setMinimumWidth(220)
             value = QLabel(f"{slider.value()} %")
             value.setFixedWidth(44)
+            value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             slider.valueChanged.connect(lambda v, a=attribute, label=value: self._set(a, v, label))
             row = QHBoxLayout()
             row.addWidget(slider)
             row.addWidget(value)
             form.addRow(text, row)
+            self.sliders[attribute] = slider
+        layout.addWidget(group)
+        buttons = QHBoxLayout()
+        reset = QPushButton("Reset to defaults")
+        reset.clicked.connect(self._reset)
+        buttons.addWidget(reset)
+        buttons.addStretch(1)
         close = QPushButton("Close")
+        close.setDefault(True)
         close.clicked.connect(self.accept)
-        form.addRow(close)
+        buttons.addWidget(close)
+        layout.addLayout(buttons)
+
+    def _reset(self) -> None:
+        defaults = Preferences()
+        for attribute, slider in self.sliders.items():
+            slider.setValue(round(getattr(defaults, attribute) * 100))
 
     def _set(self, attribute: str, value: int, label: QLabel) -> None:
         setattr(self.preferences, attribute, value / 100)
