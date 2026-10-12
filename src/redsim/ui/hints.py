@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QWidget
 
-from redsim.ui import theme
+from redsim.ui import pixel_icons, theme
 from redsim.ui.keymap import Keymap
 
 
@@ -101,12 +101,40 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
     ]
 
 
-def keycaps_html(keys: str) -> str:
+#: Mouse gestures drawn with a pixel mouse (Blender's status bar does the same): the
+#: icon, and the word shown next to it (none for a plain click).
+MOUSE_GESTURES = {
+    "Left Click": ("mouse_left", ""),
+    "Left Drag": ("mouse_left", "drag"),
+    "Right Click": ("mouse_right", ""),
+    "Right Drag": ("mouse_right", "drag"),
+    "Middle Click": ("mouse_middle", ""),
+    "Middle Drag": ("mouse_middle", "drag"),
+    "Wheel": ("mouse_middle", "wheel"),
+}
+
+
+def _keycap(token: str) -> str:
     cap = (
         f'<span style="background-color:{theme.WIDGET_HOVER}; color:{theme.TEXT};">'
         "&nbsp;{}&nbsp;</span>"
     )
-    return "".join(cap.format(html.escape(part)) if part else "+" for part in keys.split("+"))
+    gesture = MOUSE_GESTURES.get(token)
+    if gesture is None:
+        return cap.format(html.escape(token))
+    icon, word = gesture
+    image = f'<img src="{pixel_icons.pixel_data_uri(icon)}" align="middle">'
+    return cap.format(f"{image}{'&nbsp;' + word if word else ''}")
+
+
+def keycaps_html(keys: str) -> str:
+    """``keys`` ("Shift+Middle Drag", "Right Click / Esc") as keycaps; mouse gestures as a
+    small pixel mouse."""
+    alternatives = []
+    for alternative in keys.split(" / "):
+        parts = alternative.split("+")
+        alternatives.append("+".join(_keycap(part) if part else "" for part in parts))
+    return " / ".join(alternatives)
 
 
 class HintBar(QWidget):

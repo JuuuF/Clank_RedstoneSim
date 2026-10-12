@@ -38,6 +38,7 @@ from redsim.editor import sources
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
 from redsim.ui import pixel_icons, theme
+from redsim.ui.hints import keycaps_html
 from redsim.ui.icons import block_pixmap
 from redsim.ui.keymap import Keymap, hotkey_sections
 from redsim.ui.names import block_name
@@ -616,16 +617,7 @@ def keycaps(bindings: tuple[str, ...]) -> str:
     """Rich text with each key drawn as a keycap; alternatives separated by "or"."""
     if not bindings:
         return "<i>unbound</i>"
-    cap = (
-        f'<span style="background-color:{theme.WIDGET_HOVER}; color:{theme.TEXT};">'
-        "&nbsp;{}&nbsp;</span>"
-    )
-    shown = []
-    for binding in bindings:
-        *mods, last = binding.split("+")
-        parts = [cap.format(html.escape(part)) for part in (*mods, last)]
-        shown.append("+".join(parts))
-    return " or ".join(shown)
+    return " or ".join(keycaps_html(binding) for binding in bindings)
 
 
 class HotkeysPanel(QWidget):

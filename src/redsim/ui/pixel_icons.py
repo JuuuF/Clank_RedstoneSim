@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from functools import cache
 
-from PySide6.QtCore import QRect, QSize
+from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRect, QSize
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 
 from redsim.ui import theme
@@ -267,6 +267,33 @@ ICONS.update(
         ),
     }
 )
+ICONS.update(
+    {
+        "mouse_left": (
+            ".#####.",
+            "####..#",
+            "####..#",
+            "####..#",
+            "#######",
+            "#.....#",
+            "#.....#",
+            "#.....#",
+            ".#####.",
+        ),
+        "mouse_middle": (
+            ".#####.",
+            "#..#..#",
+            "#.###.#",
+            "#..#..#",
+            "#######",
+            "#.....#",
+            "#.....#",
+            "#.....#",
+            ".#####.",
+        ),
+    }
+)
+ICONS["mouse_right"] = _mirrored(ICONS["mouse_left"])
 ICONS["rotate_back"] = _mirrored(ICONS["rotate"])
 ICONS["flip_depth"] = _transposed(ICONS["flip"])
 
@@ -279,13 +306,18 @@ ICON_SIZE = QSize(
 
 
 @cache
-def pixel_pixmap(name: str, color: str = theme.TEXT, scale: int = SCALE) -> QPixmap:
+def pixel_pixmap(
+    name: str, color: str = theme.TEXT, scale: int = SCALE, tight: bool = False
+) -> QPixmap:
     """``name``'s art in ``color`` with the game's 1-pixel drop shadow, on a canvas wide
-    enough for the widest icon, so all icons line up; ``scale`` screen pixels per art
-    pixel."""
+    enough for the widest icon, so all icons line up (``tight``: just the art); ``scale``
+    screen pixels per art pixel."""
     rows = ICONS[name]
-    width = max(len(row) for icon in ICONS.values() for row in icon) + 1
-    height = max(len(icon) for icon in ICONS.values()) + 1
+    if tight:
+        width, height = len(rows[0]) + 1, len(rows) + 1
+    else:
+        width = max(len(row) for icon in ICONS.values() for row in icon) + 1
+        height = max(len(icon) for icon in ICONS.values()) + 1
     pixmap = QPixmap(width * scale, height * scale)
     pixmap.fill(QColor(0, 0, 0, 0))
     painter = QPainter(pixmap)
@@ -302,6 +334,16 @@ def pixel_pixmap(name: str, color: str = theme.TEXT, scale: int = SCALE) -> QPix
                     painter.fillRect(rect, fill)
     painter.end()
     return pixmap
+
+
+@cache
+def pixel_data_uri(name: str, color: str = theme.TEXT, scale: int = SCALE) -> str:
+    """The art, tightly cropped, as a ``data:`` URI for ``<img>`` in rich text labels."""
+    data = QByteArray()
+    buffer = QBuffer(data)
+    buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+    pixel_pixmap(name, color, scale, tight=True).save(buffer, "PNG")
+    return "data:image/png;base64," + bytes(data.toBase64().data()).decode()
 
 
 def pixel_icon(name: str) -> QIcon:
