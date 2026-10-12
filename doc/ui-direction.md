@@ -221,8 +221,8 @@ Status is kept up to date here; nothing in the message is left out.
 | 6 | P1 | "Is the keymap file actually used?" The controls listed there do not match what the program does: investigate and explain/fix. | done: the file was an old dump of every default; entries equal to an old default are ignored, so the file showed bindings the program did not use. It is now rewritten to hold only real changes (old one kept as `.bak`). |
 | 7 | P1 | Timeline playhead: smooth while playing (glides between ticks), snaps to ticks only when paused or dragged. | done: animated at 60 fps from the measured tick rate |
 | 8 | P1 | Dust (and other flat models): a solid 16×1 model with side faces for every opaque pixel; now only the texture's edge pixels get sides and the inside is see-through. | done: every opaque pixel is a 1×1×1 voxel; sides only where it borders a transparent pixel |
-| 9 | P2 | The inventory (item selection) only in BUILD mode, shown like the game's hotbar at the bottom of the viewport (above the timeline). | open |
-| 10 | P2 | Recent blocks are not discoverable: make them obvious and easy (the program should be easy to understand and use). | open |
+| 9 | P2 | The inventory (item selection) only in BUILD mode, shown like the game's hotbar at the bottom of the viewport (above the timeline). | done: an overlay over the 3D view (nothing resizes); number keys switch to BUILD |
+| 10 | P2 | Recent blocks are not discoverable: make them obvious and easy (the program should be easy to understand and use). | done: a labeled RECENT hotbar right next to the inventory, always shown in BUILD (empty slots with a hint until something is placed); Alt+1–9 pick them |
 | 11 | P2 | Slabs on the top half (and similar variants): change the block to place with the selection's transform keys (rotate R / Shift+R, flip H / Shift+H). | open |
 | 12 | P2 | The camera pivot as a small block with a shadow (or another cue) so its position in space is clear. | open |
 | 13 | P3 | Selection gizmo arrows get outlines (hard to see sometimes). | open |

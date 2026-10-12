@@ -431,3 +431,26 @@ def test_playhead_glides_while_playing_and_snaps_when_paused(app: Any) -> None:
     assert canvas.shown_tick() >= before
     canvas.set_running(None)
     assert canvas.shown_tick() == 11.0  # paused: exactly on the tick
+
+
+def test_hotbar_is_a_build_mode_overlay_with_recent_blocks(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1200, 800)
+    window.show()
+    QtWidgets.QApplication.processEvents()
+    assert window.inventory.parent() is window.viewport  # drawn over the 3D view
+    assert not window.inventory.isVisible()  # NORMAL mode: no hotbar
+    height = window.viewport.height()
+    window._inventory_key(1)  # a number key goes to BUILD and opens the first folder
+    QtWidgets.QApplication.processEvents()
+    assert window.viewport.mode == "build" and window.inventory.isVisible()
+    assert window.viewport.height() == height  # nothing resized
+    window.inventory.remember("minecraft:observer")
+    window.inventory.remember("minecraft:repeater")
+    window.inventory.pick_recent(1)  # Alt+2
+    assert window.inventory.current == "minecraft:observer"
+    assert window.keymap.bindings("recent.2") == ("Alt+2",)
+    window.document.dirty = False
+    window.close()

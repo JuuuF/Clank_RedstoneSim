@@ -62,6 +62,10 @@ class ActionSpec:
     kind: str = KEY
 
 
+def _recent(slot: int) -> ActionSpec:
+    return ActionSpec(f"recent.{slot}", f"Pick recent block {slot}", (f"Alt+{slot}",))
+
+
 def _inventory(slot: int) -> ActionSpec:
     title = f"Inventory: open folder / pick block {slot}"
     return ActionSpec(f"inventory.{slot}", title, (str(slot),))
@@ -162,6 +166,7 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ),
     ActionSpec("help.controls", "Show the controls", ("F1",)),
     *(_inventory(slot) for slot in range(1, 10)),
+    *(_recent(slot) for slot in range(1, 10)),
     # ^ is the key left of 1 on German layouts (` on US ones); its dead-key form is
     # translated by the main window.
     ActionSpec("inventory.up", "Inventory: back to the parent folder (the row below)", ("^", "`")),
@@ -486,7 +491,15 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
             "help.controls",
         ),
     ),
-    ("Inventory", None, (*(f"inventory.{slot}" for slot in range(1, 10)), "inventory.up")),
+    (
+        "Inventory",
+        None,
+        (
+            *(f"inventory.{slot}" for slot in range(1, 10)),
+            "inventory.up",
+            *(f"recent.{slot}" for slot in range(1, 10)),
+        ),
+    ),
 )
 
 

@@ -19,7 +19,7 @@ from functools import lru_cache
 from typing import Any
 
 import numpy as np
-from PySide6.QtCore import QPoint, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QFocusEvent,
@@ -222,6 +222,7 @@ class Viewport(QOpenGLWidget):
         #: SELECT mode: the face handle under the cursor, and drags in progress.
         self.gizmo_hover: Hotspot | None = None
         self.region_locked = False  # Enter: clicks can no longer replace the selection
+        self._overlays: list[QWidget] = []  # widgets drawn over the bottom (add_overlay)
         self._shift = False  # Shift held: resize arrows show their stacking look
         self._gizmo_cache: tuple[Any, tuple[np.ndarray, list[Hotspot]]] | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
@@ -491,6 +492,43 @@ class Viewport(QOpenGLWidget):
             self.renderer.set_clouds(None)
             self.doneCurrent()
 
+    # ------------------------------------------------------------------ overlays
+    def add_overlay(self, widget: QWidget) -> None:
+        """A widget drawn over the bottom of the view, centered (the BUILD hotbar); it
+        moves when the view or the widget changes size, without resizing anything."""
+        widget.setParent(self)
+        self._overlays.append(widget)
+        widget.installEventFilter(self)
+        self.place_overlays()
+
+    def place_overlays(self) -> None:
+        for widget in self._overlays:
+            size = widget.sizeHint().expandedTo(widget.minimumSizeHint())
+            widget.resize(size)
+            widget.move((self.width() - size.width()) // 2, self.height() - size.height() - 6)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched in self._overlays and event.type() in (
+            QEvent.Type.LayoutRequest,
+            QEvent.Type.Show,
+        ):
+            self.place_overlays()
+            self.update()
+        return super().eventFilter(watched, event)
+
+    def resizeEvent(self, event: Any) -> None:
+        super().resizeEvent(event)
+        self.place_overlays()
+
+    def _overlay_top(self, left: int, right: int) -> int | None:
+        """The top of a visible overlay overlapping the columns ``left``..``right``."""
+        tops = [
+            w.y()
+            for w in self._overlays
+            if w.isVisible() and w.x() < right and w.x() + w.width() > left
+        ]
+        return min(tops) if tops else None
+
     def resizeGL(self, width: int, height: int) -> None:
         # The same mouse position now casts a different ray: retarget the previews.
         self._update_build_ghost()
@@ -563,6 +601,9 @@ class Viewport(QOpenGLWidget):
         badge_width = theme.text_width(badge) + 16
         room = max(0, self.width() - badge_width - 40)
         hint = _elide(self.mode_status(), room)
+        covered = self._overlay_top(8, 8 + badge_width + theme.text_width(hint) + 22)
+        if covered is not None:  # the hotbar is in the way: sit just above it
+            top = min(top, covered - line - 14)
         color = PASTE_COLOR if pasting else MODE_COLORS[self.mode]
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(Qt.PenStyle.NoPen)

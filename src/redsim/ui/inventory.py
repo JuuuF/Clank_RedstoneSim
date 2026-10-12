@@ -159,6 +159,8 @@ class InventoryNav:
 
 
 RECENT_LIMIT = 9
+#: Recent slots shown even before anything was placed (so the strip can be found).
+RECENT_SHOWN = 5
 
 
 def recent_path() -> Path:
@@ -206,7 +208,7 @@ class _Spot:
     """A clickable area of the inventory canvas."""
 
     rect: QRect
-    kind: str  # "slot" (a folder level's row) or "recent"
+    kind: str  # "slot": a folder level's row
     depth: int
     index: int
     block: str | None
@@ -277,7 +279,7 @@ class InventoryCanvas(QWidget):
         self._fade_delay.setSingleShot(True)
         self._fade_delay.setInterval(2000)
         self._fade_delay.timeout.connect(self._fade.start)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
     def shown_height(self) -> int:
         """The height being shown: while a row slides in or out, the animated one."""
@@ -287,7 +289,7 @@ class InventoryCanvas(QWidget):
         return self.NAME + (len(self.bar.nav.path) + 1) * (self.SLOT + self.GAP) + 4
 
     def sizeHint(self) -> QSize:
-        return QSize(800, self.rows_height())
+        return QSize(self.X0 + HOTBAR_SLOTS * self.SLOT + 6, self.rows_height())
 
     def _levels(self) -> list[tuple[int, Folder]]:
         """(depth, folder) from the root to the open folder."""
@@ -312,20 +314,13 @@ class InventoryCanvas(QWidget):
                     spots.append(_Spot(rect, "slot", depth, index, first_block(child), child.title))
                 else:
                     spots.append(_Spot(rect, "slot", depth, index, child, block_label(child)))
-        recent = self.bar.recent
-        size = self.SLOT
-        x = self.width() - 10 - len(recent) * size
-        top = bottom - size  # level with the bottom (root) hotbar row
-        for index, block_id in enumerate(recent):
-            rect = QRect(x + index * size, top, size, size)
-            spots.append(_Spot(rect, "recent", -1, index, block_id, block_label(block_id)))
         return spots
 
     # ------------------------------------------------------------------ painting
     def paintEvent(self, event: object) -> None:
         self.spots = self._layout()
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(theme.PANEL))
+        # Drawn over the 3D view like the game's hotbar: no background of its own.
         path = self.bar.nav.path
         active = len(path)
         bottom = self.shown_height() - 4
@@ -339,23 +334,8 @@ class InventoryCanvas(QWidget):
             for index in range(HOTBAR_SLOTS):
                 rect = QRect(self.X0 + index * self.SLOT, top, self.SLOT, self.SLOT)
                 theme.paint_slot(painter, rect.adjusted(1, 1, -1, -1))
-        recent = [s for s in self.spots if s.kind == "recent"]
-        if recent and hotbar is not None:  # a short piece of the hotbar, with its end
-            first = recent[0].rect
-            width = 2 + self.SLOT * len(recent)
-            painter.drawPixmap(
-                first.left() - 2, first.top() - 2, hotbar, 0, 0, width, hotbar.height()
-            )
-            end = first.left() - 2 + width
-            painter.drawPixmap(
-                end, first.top() - 2, hotbar, hotbar.width() - 2, 0, 2, hotbar.height()
-            )
         for spot in self.spots:
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
-            if spot.kind == "recent":
-                selected = spot.block == self.bar.current
-                self._paint_slot(painter, spot, selected, hovered, None, False, sprite)
-                continue
             child = self._levels()[spot.depth][1].children[spot.index]
             if isinstance(child, Folder):
                 selected = spot.depth < active and path[spot.depth] == spot.index
@@ -369,10 +349,6 @@ class InventoryCanvas(QWidget):
         if top_row:  # the row the number keys act on
             r = top_row[0].rect
             painter.fillRect(QRect(4, r.top(), 3, r.height()), QColor(theme.ACCENT))
-        if recent:
-            first = recent[0].rect
-            y = first.top() - 12
-            theme.draw_text(painter, first.left(), y, "RECENT", theme.TEXT_DIM, 1, False)
         name = self.hovered.title if self.hovered is not None else self._current_name()
         if self.hovered is None and name != self._name_shown:  # a new choice: show it
             self._name_shown = name
@@ -473,15 +449,84 @@ class InventoryCanvas(QWidget):
         spot = self._spot_at(event.position().toPoint())
         if spot is None or event.button() != Qt.MouseButton.LeftButton:
             return
-        if spot.kind == "slot":
-            self.bar.pick_at_level(spot.depth, spot.index)
-        elif spot.block is not None:
-            self.bar.select_block(blocks.get(spot.block))
+        self.bar.pick_at_level(spot.depth, spot.index)
+
+
+class RecentStrip(QWidget):
+    """The blocks placed last, as a short hotbar next to the inventory (Alt+1–9 pick
+    them). Always shown in BUILD mode, with empty slots and a hint until something is
+    placed, so it is easy to find."""
+
+    SLOT = InventoryCanvas.SLOT
+    LABEL = 14  # the "RECENT" label above the slots
+
+    def __init__(self, bar: InventoryBar) -> None:
+        super().__init__()
+        self.bar = bar
+        self.hovered: int | None = None
+        self.setMouseTracking(True)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+    def slots(self) -> int:
+        return max(RECENT_SHOWN, len(self.bar.recent))
+
+    def sizeHint(self) -> QSize:
+        return QSize(self.slots() * self.SLOT + 6, self.LABEL + self.SLOT + 4)
+
+    def _rect(self, index: int) -> QRect:
+        return QRect(2 + index * self.SLOT, self.LABEL + 2, self.SLOT, self.SLOT)
+
+    def slot_at(self, point: QPoint) -> int | None:
+        return next((i for i in range(self.slots()) if self._rect(i).contains(point)), None)
+
+    def paintEvent(self, event: object) -> None:
+        painter = QPainter(self)
+        theme.draw_text(painter, 2, 1, "RECENT", theme.GOLD, 1)
+        hotbar = hud_sprite("hotbar")
+        count = self.slots()
+        if hotbar is not None:  # a piece of the game's hotbar, with its right end
+            width = 2 + self.SLOT * count
+            painter.drawPixmap(0, self.LABEL, hotbar, 0, 0, width, hotbar.height())
+            painter.drawPixmap(width, self.LABEL, hotbar, hotbar.width() - 2, 0, 2, hotbar.height())
+        selection = hud_sprite("hotbar_selection")
+        for index in range(count):
+            r = self._rect(index)
+            if hotbar is None:
+                theme.paint_slot(painter, r.adjusted(1, 1, -1, -1))
+            if index == self.hovered:
+                painter.fillRect(r.adjusted(4, 4, -4, -4), QColor(255, 255, 255, 60))
+            if index >= len(self.bar.recent):
+                continue
+            block_id = self.bar.recent[index]
+            painter.drawPixmap(r.left() + 4, r.top() + 4, block_pixmap(block_id, r.width() - 8))
+            if block_id == self.bar.current and selection is not None:
+                painter.drawPixmap(r.left() - 4, r.top() - 4, selection)
+        painter.end()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        index = self.slot_at(event.position().toPoint())
+        if index != self.hovered:
+            self.hovered = index
+            self.update()
+        if index is not None and index < len(self.bar.recent):
+            self.setToolTip(f"{block_label(self.bar.recent[index])} (Alt+{index + 1})")
+        else:
+            self.setToolTip("The blocks you place appear here; Alt+1–9 picks them.")
+
+    def leaveEvent(self, event: object) -> None:
+        self.hovered = None
+        self.update()
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        index = self.slot_at(event.position().toPoint())
+        if event.button() == Qt.MouseButton.LeftButton and index is not None:
+            self.bar.pick_recent(index)
 
 
 class InventoryBar(QWidget):
-    """The inventory: the painted hotbar and folder rows (``InventoryCanvas``), and on the
-    right the search button and the source strength."""
+    """The inventory, drawn over the bottom of the 3D view in BUILD mode like the game's
+    hotbar: the folder rows (``InventoryCanvas``), and on the right the recent blocks
+    (``RecentStrip``), the search button and the source strength."""
 
     block_chosen = Signal(object)  # Block
     search_requested = Signal()
@@ -492,13 +537,18 @@ class InventoryBar(QWidget):
         self.current: str | None = None
         self.recent: list[str] = load_recent()
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 8, 0)
-        layout.setSpacing(6)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(14)
         self.canvas = InventoryCanvas(self)
-        layout.addWidget(self.canvas, 1)
+        layout.addWidget(self.canvas, 0, Qt.AlignmentFlag.AlignBottom)
         side = QVBoxLayout()
         side.setSpacing(4)
-        side.setContentsMargins(0, 6, 0, 6)
+        side.setContentsMargins(0, 0, 0, 4)
+        side.addStretch(1)
+        self.recent_strip = RecentStrip(self)
+        side.addWidget(self.recent_strip)
+        tools = QHBoxLayout()
+        tools.setSpacing(6)
         search = QToolButton()
         search.setText("Search blocks")
         search.setIcon(pixel_icons.pixel_icon("search"))
@@ -506,9 +556,9 @@ class InventoryBar(QWidget):
         search.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         search.setToolTip("Search blocks by name (Ctrl+Space, /, or press Shift twice)")
         search.clicked.connect(self.search_requested.emit)
-        side.addWidget(search)
-        self.strength_label = QLabel("Source strength")
-        side.addWidget(self.strength_label)
+        tools.addWidget(search)
+        self.strength_label = QLabel("Strength")
+        tools.addWidget(self.strength_label)
         self.strength = QSpinBox()
         self.strength.setRange(0, 15)
         self.strength.setValue(15)
@@ -517,14 +567,17 @@ class InventoryBar(QWidget):
             "barrels get the fewest items, lecterns a 15-page book open at the right page, "
             "cakes the matching bites (even values only)."
         )
-        side.addWidget(self.strength)
-        side.addStretch(1)
+        tools.addWidget(self.strength)
+        tools.addStretch(1)
+        side.addLayout(tools)
         layout.addLayout(side)
         self.refresh()
 
     def refresh(self) -> None:
         self.canvas.resize_rows()
         self.canvas.update()
+        self.recent_strip.updateGeometry()
+        self.recent_strip.update()
         is_source = self.current in sources.SOURCE_BLOCKS
         self.strength_label.setVisible(is_source)
         self.strength.setVisible(is_source)
@@ -572,6 +625,11 @@ class InventoryBar(QWidget):
         self._fit_strength(block.id)
         self.refresh()
         self.block_chosen.emit(block)
+
+    def pick_recent(self, index: int) -> None:
+        """Choose the ``index``-th recently placed block (Alt+1–9, or a click)."""
+        if 0 <= index < len(self.recent):
+            self.select_block(blocks.get(self.recent[index]))
 
     def remember(self, block_id: str) -> None:
         """A block was placed: it goes to the front of the recent list (saved)."""

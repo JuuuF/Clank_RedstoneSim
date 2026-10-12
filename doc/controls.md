@@ -34,18 +34,20 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     row; hovering a row shows the value at that tick. Right-click a row's label to
     remove it. Monitored blocks are saved; their
     recorded values are rebuilt as the simulation runs.
-- **Inventory** (Trackmania's hierarchy, Minecraft's hotbar): every folder level is a row
-  drawn with the game's own hotbar (9 slots, game-style previews, the number key in a
-  small cap, folders marked with an up chevron, the chosen block in the game's selection
-  frame, its name in gold above, fading after two seconds like the game's). The root row
-  stays lowest; opening a folder slides its row in above, so the stack grows upwards
-  (click a slot of a lower row to jump there; the red bar marks the row the number keys
-  act on). Number keys open a
-  folder or pick the block with that number, **^** (the key left of 1; `` ` `` on US layouts) goes back to the parent folder. Folders: Redstone,
-  Movement, Signal sources, Items, Rails, Building, Special. **Recent** shows the last nine blocks you placed (kept between
-  sessions); **Search** (Ctrl+Space, /, or pressing Shift twice like Rider) opens a quick
-  search: type a few letters (fuzzy), Enter builds with the block. Picking a block enters
-  BUILD mode. Signal sources show the strength box.
+- **Inventory** (Trackmania's hierarchy, Minecraft's hotbar), shown in BUILD mode only,
+  over the bottom of the 3D view like the game's hotbar (nothing resizes). Every folder
+  level is a row drawn with the game's own hotbar (9 slots, game-style previews, the number
+  key in a small cap, folders marked with an up chevron, the chosen block in the game's
+  selection frame, its name in gold above, fading after two seconds like the game's). The
+  root row stays lowest; opening a folder slides its row in above, so the stack grows
+  upwards (click a slot of a lower row to jump there; the red bar marks the row the number
+  keys act on). Number keys (from any mode: they switch to BUILD) open a folder or pick the
+  block with that number; **^** (the key left of 1; `` ` `` on US layouts) goes back to
+  the parent folder. Folders: Redstone, Movement, Signal sources, Items, Rails, Building,
+  Special. **RECENT**, right next to the hotbar, shows the last nine blocks you placed
+  (kept between sessions; **Alt+1–9** or a click picks one). **Search** (Ctrl+Space, /, or
+  pressing Shift twice like Rider) opens a quick search: type a few letters (fuzzy), Enter
+  builds with the block. Signal sources show the strength box.
 - **Hint bar** (like Blender's): the essential keys for what you are doing right now (mode,
   selection, gizmo under the cursor, Shift held, pasting), the block under the cursor and
   status messages.
@@ -168,6 +170,7 @@ reason the old Shift+T rewind was disliked).
 | H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |
 | Del | clear the selection box (fill with air); single blocks: right click in BUILD |
 | 1–9 / ^ | inventory: open folder or pick block / back to the parent folder |
+| Alt+1–9 | pick one of the recently placed blocks (the RECENT strip next to the hotbar) |
 | F1 | controls panel |
 
 ## View toggles

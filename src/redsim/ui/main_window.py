@@ -103,9 +103,9 @@ class MainWindow(QMainWindow):
         self.current_block = blocks.STONE
         self.last_steps: list[Any] = []
         self.viewport = Viewport(self.document, self.keymap)
-        # Layout (owner, round three): the 3D view in the middle; below it the Blender-like
-        # timeline and the Trackmania-like inventory; one tabbed panel on the right; a
-        # Blender-like hint bar at the very bottom.
+        # Layout: the 3D view in the middle, with the inventory drawn over its bottom in
+        # BUILD mode like the game's hotbar (round 8); below it the Blender-like timeline;
+        # one tabbed panel on the right; a Blender-like hint bar at the very bottom.
         self.simulation = TimelineBar()
         self.inventory = InventoryBar()
         central = QWidget()
@@ -114,7 +114,8 @@ class MainWindow(QMainWindow):
         column.setSpacing(0)
         column.addWidget(self.viewport, 1)
         column.addWidget(self.simulation)
-        column.addWidget(self.inventory)
+        self.viewport.add_overlay(self.inventory)
+        self.inventory.setVisible(self.viewport.mode == BUILD)
         self.setCentralWidget(central)
 
         self.inspector = InspectorPanel()
@@ -452,8 +453,15 @@ class MainWindow(QMainWindow):
             self._action(
                 inventory_menu,
                 f"Slot {number}",
-                lambda _=False, n=number: self.inventory.press(n),
+                lambda _=False, n=number: self._inventory_key(n),
                 f"inventory.{number}",
+            )
+        for number in range(1, 10):
+            self._action(
+                inventory_menu,
+                f"Recent block {number}",
+                lambda _=False, n=number: self.inventory.pick_recent(n - 1),
+                f"recent.{number}",
             )
         self._action(inventory_menu, "Up one folder", self.inventory.go_up, "inventory.up")
         self._action(
@@ -486,8 +494,15 @@ class MainWindow(QMainWindow):
             return
         self.viewport.set_mode(mode)
 
+    def _inventory_key(self, number: int) -> None:
+        """1–9: the inventory is only shown in BUILD mode, so a number key goes there."""
+        if self.viewport.mode != BUILD:
+            self.viewport.set_mode(BUILD)
+        self.inventory.press(number)
+
     def _mode_changed(self, mode: str) -> None:
         self._mode_actions[mode].setChecked(True)
+        self.inventory.setVisible(mode == BUILD)  # the hotbar belongs to BUILD mode
         self._message(f"{mode.upper()} mode: {self.viewport.mode_hint()}")
 
     def _show_controls(self) -> None:
