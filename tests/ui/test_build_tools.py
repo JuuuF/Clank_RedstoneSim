@@ -212,10 +212,10 @@ def test_camera_glides_but_the_build_layer_jumps_at_once(app: Any) -> None:
 
 
 def test_layer_grid_fades_and_drop_lines_reach_the_ground(app: Any) -> None:
-    from redsim.editor.clipboard import Region
-    from redsim.ui.main_window import MainWindow
     import numpy as np
 
+    from redsim.editor.clipboard import Region
+    from redsim.ui.main_window import MainWindow
     from redsim.ui.viewport import GRID_ALPHA, _layer_grid
 
     grid = _layer_grid(Region((0, 3, 0), (0, 3, 0)))
