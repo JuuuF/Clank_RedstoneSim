@@ -205,6 +205,34 @@ Not a feedback round; changes made while reviewing screenshots of every view
   alpha (blending was off), so the layer grid only looked faded where it z-fought with
   block tops; the window size and dock layout are remembered (`window.json`).
 
+## Eighth round of feedback (2026-10-12, after the overnight polish)
+
+The owner's full list, ordered by priority (quick control changes and bugs first, then
+build-mode comfort, looks, the keymap editor, and world import as the big feature).
+Status is kept up to date here; nothing in the message is left out.
+
+| # | Priority | Request | Status |
+|---|---|---|---|
+| 1 | P1 | Wheel zooms again (scrolling up/down felt unnatural); **Shift+wheel** moves the camera up and down. | open |
+| 2 | P1 | BUILD: **right click removes the block** under the cursor (instead of Del); **Del** only clears the selection (no more ambiguity with an active selection). | open |
+| 3 | P1 | Inventory: **^** (the key left of 1) goes to the parent folder (the row below) instead of Backspace/Del. | open |
+| 4 | P1 | The hint bar changes height between modes (the mouse icons are taller), resizing the views: keep it one fixed height. | open |
+| 5 | P1 | Closing prints "QOpenGLTexturePrivate::destroy() called without a current context. Texture has not been destroyed" (twice): fix. | open |
+| 6 | P1 | "Is the keymap file actually used?" The controls listed there do not match what the program does: investigate and explain/fix. | open |
+| 7 | P1 | Timeline playhead: smooth while playing (glides between ticks), snaps to ticks only when paused or dragged. | open |
+| 8 | P1 | Dust (and other flat models): a solid 16×1 model with side faces for every opaque pixel; now only the texture's edge pixels get sides and the inside is see-through. | open |
+| 9 | P2 | The inventory (item selection) only in BUILD mode, shown like the game's hotbar at the bottom of the viewport (above the timeline). | open |
+| 10 | P2 | Recent blocks are not discoverable: make them obvious and easy (the program should be easy to understand and use). | open |
+| 11 | P2 | Slabs on the top half (and similar variants): change the block to place with the selection's transform keys (rotate R / Shift+R, flip H / Shift+H). | open |
+| 12 | P2 | The camera pivot as a small block with a shadow (or another cue) so its position in space is clear. | open |
+| 13 | P3 | Selection gizmo arrows get outlines (hard to see sometimes). | open |
+| 14 | P3 | The selection box is filled with color, so what is inside reads at a glance. | open |
+| 15 | P3 | A small animation for the selection, so the program feels alive and interactive. | open |
+| 16 | P3 | Lighting a little less plain (a small change, not much effort). | open |
+| 17 | P4 | An in-program keymap editor (no more editing the JSON). | open |
+| 18 | P5 | **Open Minecraft worlds** (example: `data/minecraft_saves/Redstone/`): load chunks around the camera like the game instead of everything; cache in an own fast format keyed by save folder/seed; write changes back to the game's format. Design first ([[world-import]]). | open |
+| — | — | The grass ground is great (keep). | kept |
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,
