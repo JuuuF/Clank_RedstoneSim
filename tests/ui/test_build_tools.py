@@ -337,3 +337,19 @@ def test_monitor_track_reads_the_value_under_the_cursor(app: Any) -> None:
     y = canvas._tracks_top() + canvas.ROW_HEIGHT / 2
     assert canvas.track_reading(x, y) == "Redstone Dust 1 1 0 · tick 5: 15"
     assert canvas.track_reading(x, 2) is None  # on the ruler: no track
+
+
+def test_player_row_shows_only_for_lecterns(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    request = PlaceRequest(Direction.UP, 0.0, 30.0)
+    window.document.place_source((0, 1, 0), "barrel", 7, request)
+    window.document.place_source((2, 1, 0), "lectern", 7, request)
+    form = window.inspector._source_form
+    window._select((0, 1, 0))
+    assert not form.isRowVisible(window.inspector.page_row)  # no "Player" label alone
+    window._select((2, 1, 0))
+    assert form.isRowVisible(window.inspector.page_row)
+    window.document.dirty = False
+    window.close()

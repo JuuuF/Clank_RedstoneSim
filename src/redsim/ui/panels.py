@@ -288,7 +288,7 @@ class InspectorPanel(QWidget):
         )
         self.note.setWordWrap(True)
         self.source_box = QWidget()
-        source_layout = QFormLayout(self.source_box)
+        source_layout = self._source_form = QFormLayout(self.source_box)
         source_layout.setContentsMargins(0, 6, 0, 0)
         self.source_kind = QWidget()
         kind_layout = QHBoxLayout(self.source_kind)
@@ -463,7 +463,7 @@ class InspectorPanel(QWidget):
             self.source_strength.show_value(sources.strength_at(document.level, pos) or 0)
             page = getattr(be, "page", None) if getattr(be, "book", None) else None
             self._page = page
-            self.page_row.setVisible(kind == "lectern")
+            self._source_form.setRowVisible(self.page_row, kind == "lectern")  # with label
             self.page_row.setEnabled(page is not None)
         self.section_box.blockSignals(True)
         self.section_box.clear()
