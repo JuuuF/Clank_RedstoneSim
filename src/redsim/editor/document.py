@@ -13,7 +13,7 @@ a new branch (the old future is dropped). Section annotations are not part of th
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -61,6 +61,10 @@ def edit_row(action: Action) -> str:
     if kind in ("place", "clone", "stack_region"):
         return "build"
     return "edit"
+
+
+#: An editor choice applied to a block state before it is placed (turned, mirrored, …).
+Vary = Callable[[BlockState], BlockState] | None
 
 
 @dataclass(frozen=True)
@@ -199,16 +203,21 @@ class Document:
             if not self._batch_depth:
                 self._batch_saved = False
 
-    def place_many(self, positions: Iterable[Pos], block: Block, request: PlaceRequest) -> int:
+    def place_many(
+        self, positions: Iterable[Pos], block: Block, request: PlaceRequest, vary: Vary = None
+    ) -> int:
         """Place ``block`` at each free position that can hold it, as one edit batch and one
-        undo step; returns how many were placed."""
+        undo step; returns how many were placed. ``vary`` changes each placed state (the
+        editor's turn/mirror/upside-down choice)."""
         placed = 0
         with self.batch():
             for pos in positions:
                 if not self.state_at(pos).is_air:
                     continue
                 state = placement_state(block, request, self.engine.level, pos)
-                if state is None:
+                if state is not None and vary is not None:
+                    state = vary(state)
+                if state is None or not state.can_survive(self.engine.level, pos):
                     continue
                 try:
                     self._apply(Action("place", pos, repr(state)), f"place {block.name}")
@@ -217,8 +226,12 @@ class Document:
                 placed += 1
         return placed
 
-    def place(self, pos: Pos, block: Block, request: PlaceRequest) -> None:
+    def place(self, pos: Pos, block: Block, request: PlaceRequest, vary: Vary = None) -> None:
         state = placement_state(block, request, self.engine.level, pos)
+        if state is not None and vary is not None:
+            state = vary(state)
+            if not state.can_survive(self.engine.level, pos):
+                state = None
         if state is None:
             raise EditError(f"{block.name} cannot be placed there (needs support).")
         self._apply(Action("place", pos, repr(state)), f"place {block.name}")
@@ -229,13 +242,17 @@ class Document:
     def use(self, pos: Pos) -> None:
         self._apply(Action("use", pos), f"use {self.state_at(pos).block.name}")
 
-    def place_source(self, pos: Pos, kind: str, strength: int, request: PlaceRequest) -> None:
+    def place_source(
+        self, pos: Pos, kind: str, strength: int, request: PlaceRequest, vary: Vary = None
+    ) -> None:
         """Put a signal source of ``strength`` at ``pos``: the backing block, oriented like a
         player would place it, set with its block-entity data (``/setblock … {…}``)."""
         block = blocks.get(sources.KINDS[kind].block_id)
         if not self.state_at(pos).is_air:
             raise EditError(f"position {pos} is occupied")
         oriented = placement_state(block, request, self.engine.level, pos)
+        if oriented is not None and vary is not None:
+            oriented = vary(oriented)
         if oriented is None or not oriented.can_survive(self.engine.level, pos):
             raise EditError(f"{block.name} cannot be placed there (needs support).")
         self._set_source(pos, kind, strength, oriented)

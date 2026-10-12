@@ -738,9 +738,11 @@ class MainWindow(QMainWindow):
         kind = sources.SOURCE_BLOCKS.get(self.current_block.id)
         if kind is not None:
             strength = self.inventory.strength.value()
-            self._edit(self.document.place_source, target, kind, strength, request)
+            vary = self.viewport.vary_state
+            self._edit(self.document.place_source, target, kind, strength, request, vary)
         else:
-            self._edit(self.document.place, target, self.current_block, request)
+            vary = self.viewport.vary_state
+            self._edit(self.document.place, target, self.current_block, request, vary)
         self._remember_block(self.current_block)
 
     def _remember_block(self, block: Block) -> None:
@@ -812,7 +814,7 @@ class MainWindow(QMainWindow):
                     except EditError:
                         continue
         else:
-            placed = self.document.place_many(cells, block, request)
+            placed = self.document.place_many(cells, block, request, self.viewport.vary_state)
             if placed < len(cells):
                 self._message(
                     f"Placed {placed} of {len(cells)} blocks (the rest had no room or support)."
@@ -940,7 +942,12 @@ class MainWindow(QMainWindow):
         else the clipboard."""
         viewport, document = self.viewport, self.document
         direction = "clockwise" if quarter_turns == 1 else "counter-clockwise"
-        if viewport.paste_preview is not None and document.clipboard is not None:
+        if viewport.mode == BUILD and viewport.paste_preview is None:  # the block to place
+            variant = viewport.vary_build(turns=quarter_turns)
+            self._message(
+                f"Block to place: {variant} (R / Shift+R turn, H mirrors, Shift+H flips)."
+            )
+        elif viewport.paste_preview is not None and document.clipboard is not None:
             document.rotate_clipboard(quarter_turns)
             viewport.begin_paste(document.clipboard)
             self._message(f"Paste rotated 90° {direction}.")
@@ -958,7 +965,10 @@ class MainWindow(QMainWindow):
         sideways = "x" if abs(right[0]) >= abs(right[2]) else "z"
         axis = ("z" if sideways == "x" else "x") if depth else sideways
         viewport, document = self.viewport, self.document
-        if viewport.paste_preview is not None and document.clipboard is not None:
+        if viewport.mode == BUILD and viewport.paste_preview is None:  # the block to place
+            variant = viewport.vary_build(mirror=None if depth else axis, flip=depth)
+            self._message(f"Block to place: {variant} (Shift+H turns it upside down).")
+        elif viewport.paste_preview is not None and document.clipboard is not None:
             document.mirror_clipboard(axis)
             viewport.begin_paste(document.clipboard)
             self._message("Paste flipped.")

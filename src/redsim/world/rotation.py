@@ -114,3 +114,24 @@ def rotated_box(
         (min(a[0], b[0]), low[1], min(a[2], b[2])),
         (max(a[0], b[0]), high[1], max(a[2], b[2])),
     )
+
+
+#: Property values that swap when a block is turned upside down (by serialized text).
+_UPSIDE_DOWN = {"top": "bottom", "bottom": "top", "floor": "ceiling", "ceiling": "floor"}
+
+
+def upside_down(state: BlockState) -> BlockState:
+    """The block turned upside down, as far as its properties allow (editor only, for
+    choosing variants before placing): slab and half ``top``/``bottom``, attach face
+    ``floor``/``ceiling``, and a facing ``up``/``down``. Values the block does not have
+    stay (a hopper cannot face up)."""
+    for prop in state.block.properties:
+        value = state.get(prop)
+        if isinstance(value, Direction):
+            if value.axis is Direction.UP.axis and value.opposite in prop.values:
+                state = state.with_(prop, value.opposite)
+            continue
+        text = _UPSIDE_DOWN.get(prop.serialize(value))
+        if text is not None and text in {prop.serialize(v) for v in prop.values}:
+            state = state.with_(prop, prop.parse(text))
+    return state

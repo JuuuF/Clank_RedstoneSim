@@ -73,6 +73,11 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   to the ground, the badge shows `layer y=…`). **Shift+wheel** moves the layer (and
   the pivot) up or down one block per notch; the **wheel** zooms. Blocks are
   oriented as if placed on top of the block below, facing along the cursor ray.
+- **Variants of the block to place** (round 8): in BUILD, the selection's transform keys act
+  on the block about to be placed: **R** / Shift+R turn it, **H** mirrors it, **Shift+H**
+  turns it upside down (a slab on the top half, a piston or observer facing down, a lever
+  on the ceiling). The ghost shows it and the badge names it ("turned 90°, upside down");
+  choosing another block starts plain again. With a paste preview, R and H act on the paste.
 - **Line placement:** drag with the left button: the line runs on the build layer from the
   first cell along the axis (x or z) you moved most along, up to 64 blocks, with a preview
   of every block. On release all are placed as one edit batch and one undo step; cells that are

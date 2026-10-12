@@ -74,6 +74,7 @@ from redsim.ui.selection_tools import (
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 from redsim.world.properties import POWER
+from redsim.world.rotation import mirror_state, rotate_state, upside_down
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 ORBIT_DEGREES_PER_PIXEL = 0.3
@@ -223,6 +224,11 @@ class Viewport(QOpenGLWidget):
         self.gizmo_hover: Hotspot | None = None
         self.region_locked = False  # Enter: clicks can no longer replace the selection
         self._overlays: list[QWidget] = []  # widgets drawn over the bottom (add_overlay)
+        #: BUILD: how the block to place is varied (R, H, Shift+H, round 8): quarter turns
+        #: clockwise, mirrored axes, upside down (top slabs, pistons facing down, …).
+        self.build_turns = 0
+        self.build_mirrors: frozenset[str] = frozenset()
+        self.build_upside_down = False
         self._shift = False  # Shift held: resize arrows show their stacking look
         self._gizmo_cache: tuple[Any, tuple[np.ndarray, list[Hotspot]]] | None = None
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
@@ -306,6 +312,8 @@ class Viewport(QOpenGLWidget):
         self.update()
 
     def set_build_block(self, block: Block, strength: int) -> None:
+        if block is not self.build_block:  # a new block starts plain
+            self.build_turns, self.build_mirrors, self.build_upside_down = 0, frozenset(), False
         self.build_block = block
         self.build_strength = strength
         self._update_build_ghost()
@@ -347,6 +355,8 @@ class Viewport(QOpenGLWidget):
         if not level.get_block_state(target).is_air:
             return None
         state = placement_state(block, request, level, target)
+        if state is not None:
+            state = self.vary_state(state)
         kind = sources.SOURCE_BLOCKS.get(block.id)
         if state is not None and kind is not None:
             text, _ = sources.source_setblock(kind, self.build_strength, state)
@@ -728,6 +738,35 @@ class Viewport(QOpenGLWidget):
             x = (self.width() - theme.text_width(text)) // 2
             theme.draw_text(painter, x, top + index * line + 6, text, "#ffffff")
 
+    def vary_build(self, turns: int = 0, mirror: str | None = None, flip: bool = False) -> str:
+        """R / H / Shift+H in BUILD: vary the block to place; returns how it is varied."""
+        self.build_turns = (self.build_turns + turns) % 4
+        if mirror is not None:
+            self.build_mirrors = self.build_mirrors ^ {mirror}
+        if flip:
+            self.build_upside_down = not self.build_upside_down
+        self._build_meshes.clear()
+        self._update_build_ghost()
+        self.update()
+        return self.build_variant() or "as placed"
+
+    def vary_state(self, state: BlockState) -> BlockState:
+        """The block to place as varied by R / H / Shift+H."""
+        state = rotate_state(state, self.build_turns)
+        for axis in sorted(self.build_mirrors):
+            state = mirror_state(state, axis)
+        return upside_down(state) if self.build_upside_down else state
+
+    def build_variant(self) -> str:
+        parts = []
+        if self.build_turns:
+            parts.append(f"turned {90 * self.build_turns}°")
+        if self.build_mirrors:
+            parts.append("mirrored")
+        if self.build_upside_down:
+            parts.append("upside down")
+        return ", ".join(parts)
+
     def mode_status(self) -> str:
         """What the badge shows next to the mode: the block to place and the layer, the
         selection's size, or the inspected block."""
@@ -735,7 +774,9 @@ class Viewport(QOpenGLWidget):
             return f"layer y={self.working_height()}"
         if self.mode == BUILD:
             block = block_name(self.build_block.id) if self.build_block else "no block chosen"
-            return f"{block} · layer y={self.working_height()}"
+            variant = self.build_variant()
+            variant = f" ({variant})" if variant else ""
+            return f"{block}{variant} · layer y={self.working_height()}"
         if self.mode == SELECT and self.region is not None:
             low, high = self.region.low, self.region.high
             dx, dy, dz = (high[i] - low[i] + 1 for i in range(3))

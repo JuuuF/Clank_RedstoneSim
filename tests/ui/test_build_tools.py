@@ -454,3 +454,24 @@ def test_hotbar_is_a_build_mode_overlay_with_recent_blocks(app: Any) -> None:
     assert window.keymap.bindings("recent.2") == ("Alt+2",)
     window.document.dirty = False
     window.close()
+
+
+def test_build_keys_vary_the_block_to_place(app: Any) -> None:
+    from redsim.editor.clipboard import Region
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.viewport.region = Region((5, 1, 5), (6, 1, 6))  # a selection that must not turn
+    window.inventory.select_block(blocks.SMOOTH_STONE_SLAB)  # BUILD mode
+    window._flip(depth=True)  # Shift+H: upside down → a top slab
+    assert window.viewport.build_upside_down
+    assert "upside down" in window.viewport.mode_status()
+    window._place((0, 1, 0))
+    assert repr(window.document.state_at((0, 1, 0))).endswith("[type=top]")
+    window._rotate(1)  # R in BUILD turns the block to place, not the selection
+    assert window.viewport.build_turns == 1
+    assert window.viewport.region == Region((5, 1, 5), (6, 1, 6))
+    window.inventory.select_block(blocks.REPEATER)  # another block starts plain
+    assert window.viewport.build_variant() == ""
+    window.document.dirty = False
+    window.close()

@@ -57,9 +57,10 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
         return [
             (key("build.place"), "place"),
             (key("build.line"), "line"),
-            (key("build.layer"), "layer up/down"),
             (key("build.break"), "remove"),
-            (key("edit.rotate_block"), "turn"),
+            (key("build.layer"), "layer up/down"),
+            (key("edit.rotate"), "turn new block"),
+            (key("edit.flip_depth"), "upside down"),
             ("Middle Click", "pick"),
             ("1-9", "inventory"),
             (key("search.blocks").split(" / ")[0], "search"),
