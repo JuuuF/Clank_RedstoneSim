@@ -70,6 +70,16 @@ PANEL_REFRESH_SECONDS = 0.1
 HISTORY_MENU_SIZE = 25
 
 
+def history_label(label: str) -> str:
+    """An edit label for people: "place redstone_wire" → "Place Redstone Dust"."""
+    verb, _, rest = (label or "edit").partition(" ")
+    if rest and " " not in rest and f"minecraft:{rest}" in blocks.REGISTRY:
+        rest = block_name(f"minecraft:{rest}")
+    else:
+        rest = rest.replace("_", " ")
+    return f"{verb[:1].upper()}{verb[1:]} {rest}".strip()
+
+
 class MainWindow(QMainWindow):
     def __init__(self, document: Document | None = None, keymap: Keymap | None = None) -> None:
         super().__init__()
@@ -807,8 +817,7 @@ class MainWindow(QMainWindow):
             menu.addAction("Nothing to undo").setEnabled(False)
             return
         for count, label in enumerate(labels[:HISTORY_MENU_SIZE], start=1):
-            text = (label or "edit").replace("_", " ")
-            action = menu.addAction(f"{text[:1].upper()}{text[1:]}")
+            action = menu.addAction(history_label(label))
             action.setToolTip(f"Undo {count} step{'s' if count > 1 else ''}")
             action.triggered.connect(lambda _=False, n=count: self._undo_to(n))
         if len(labels) > HISTORY_MENU_SIZE:

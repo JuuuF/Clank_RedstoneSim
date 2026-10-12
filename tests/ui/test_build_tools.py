@@ -374,7 +374,7 @@ def test_undo_history_menu_undoes_several_steps(app: Any) -> None:
         window.document.place((x, 1, 0), blocks.REDSTONE_LAMP, request)
     window._fill_history_menu()
     entries = window._history_menu.actions()
-    assert [a.text() for a in entries] == ["Place redstone lamp"] * 3
+    assert [a.text() for a in entries] == ["Place Redstone Lamp"] * 3
     entries[1].trigger()  # back to before the second lamp
     assert window.document.state_at((0, 1, 0)).is_(blocks.REDSTONE_LAMP)
     assert window.document.state_at((1, 1, 0)).is_air
