@@ -272,6 +272,7 @@ class InspectorPanel(QWidget):
         layout.addWidget(self.form_widget)
         self.entity = QLabel("")
         self.entity.setWordWrap(True)
+        self.entity.setStyleSheet(f"color: {theme.TEXT_DIM};")
         layout.addWidget(self.entity)
         self.note = QLabel(
             f"<small style='color:{theme.TEXT_DIM}'>Edits apply at once with /setblock "
