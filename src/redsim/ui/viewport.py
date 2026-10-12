@@ -59,7 +59,7 @@ from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter
 from redsim.ui.preferences import Preferences
-from redsim.ui.renderer import Renderer
+from redsim.ui.renderer import GROUND_TEXTURE, Renderer
 from redsim.ui.selection_tools import (
     Handle,
     face_center,
@@ -433,7 +433,7 @@ class Viewport(QOpenGLWidget):
         # Called again whenever Qt recreates the context (e.g. on re-parenting), so all GPU
         # data must be uploaded again.
         self.renderer = Renderer()
-        self.renderer.set_atlas(self.atlas.image() if self.atlas is not None else None)
+        self._upload_atlas()
         self.world_mesh.reset()
         self._mesh_revision = -1
         context = self.context()
@@ -455,10 +455,29 @@ class Viewport(QOpenGLWidget):
             self.makeCurrent()
             for key in list(self.renderer.chunks):
                 self.renderer.remove_chunk(key)
-            self.renderer.set_atlas(self.atlas.image() if self.atlas is not None else None)
+            self._upload_atlas()
             self.doneCurrent()
         self._update_build_ghost()
         self.update()
+
+    def _horizon_ndc(self, mvp: np.ndarray) -> float:
+        """Screen height (normalized device coordinates) of the horizon: a far point
+        straight ahead at eye height."""
+        eye = np.asarray(self.camera.position, dtype=float)
+        far = eye + self.camera.horizontal_forward() * 900.0
+        clip = mvp @ np.array([far[0], far[1], far[2], 1.0])
+        return float(clip[1] / clip[3]) if clip[3] > 1e-6 else -1.0
+
+    def _upload_atlas(self) -> None:
+        """The block atlas and the ground's texture tile (context current)."""
+        assert self.renderer is not None
+        atlas = self.atlas
+        self.renderer.set_atlas(atlas.image() if atlas is not None else None)
+        if atlas is None:
+            self.renderer.set_ground(None, (0.0, 0.0, 0.0))
+            return
+        average = atlas.tile(GROUND_TEXTURE)[..., :3].reshape(-1, 3).mean(axis=0) / 255.0
+        self.renderer.set_ground(atlas.rect(GROUND_TEXTURE), tuple(float(c) for c in average))
 
     def _release_gl(self) -> None:
         if self.renderer is not None:
@@ -506,7 +525,8 @@ class Viewport(QOpenGLWidget):
             building_alpha=prefs.xray_building_alpha,
             circuit_alpha=prefs.xray_circuit_alpha,
             eye=tuple(float(v) for v in self.camera.position),  # type: ignore[arg-type]
-            fog=(60.0 + self.camera.distance, 200.0 + 2 * self.camera.distance),
+            fog=(40.0 + self.camera.distance, 160.0 + 2 * self.camera.distance),
+            horizon=self._horizon_ndc(mvp),
         )
         self.frame_rate.record(time.monotonic())
         self._draw_overlays()

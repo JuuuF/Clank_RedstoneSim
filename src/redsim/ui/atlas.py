@@ -21,7 +21,8 @@ TILE = 16
 CELL = TILE + 2
 
 #: Extra textures needed besides the block models' (none yet).
-EXTRA_TEXTURES: tuple[str, ...] = ()
+#: The ground around the floor (``renderer.GROUND_TEXTURE``).
+EXTRA_TEXTURES: tuple[str, ...] = ("minecraft:block/stone",)
 
 
 def decode_png(data: bytes) -> npt.NDArray[np.uint8] | None:
@@ -85,6 +86,11 @@ class Atlas:
     def uv(self, texture: str, u: float, v: float) -> tuple[float, float]:
         x, y = self._origin.get(texture, self._origin["#missing"])
         return ((x + u * TILE) / self.size, (y + v * TILE) / self.size)
+
+    def rect(self, texture: str) -> tuple[float, float, float, float]:
+        """The texture's tile in atlas coordinates: (u, v, width, height)."""
+        u, v = self.uv(texture, 0.0, 0.0)
+        return (u, v, TILE / self.size, TILE / self.size)
 
     def tile(self, texture: str) -> npt.NDArray[np.uint8]:
         x, y = self._origin.get(texture, self._origin["#missing"])

@@ -19,6 +19,7 @@ from PySide6.QtGui import (
     QOpenGLFunctions,
     QVector2D,
     QVector3D,
+    QVector4D,
 )
 from PySide6.QtOpenGL import (
     QOpenGLBuffer,
@@ -52,35 +53,42 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 color;
 layout(location = 2) in vec2 uv;
 uniform mat4 mvp;
-uniform vec3 eye;
 out vec4 vColor;
 out vec2 vUv;
-out float vDistance;
+out vec3 vWorld;
 void main() {
     gl_Position = mvp * vec4(position, 1.0);
     vColor = color;
     vUv = uv;
-    vDistance = distance(position, eye);
+    vWorld = position;  // the fog distance is per fragment: exact on large faces too
 }
 """
 FRAGMENT_SHADER = """#version 330 core
 in vec4 vColor;
 in vec2 vUv;
-in float vDistance;
+in vec3 vWorld;
+uniform vec3 eye;
 uniform float alphaScale;
 uniform vec3 fogColor;
 uniform vec2 fogRange;   // start, end (blocks)
 uniform float fogAmount; // 0 for overlays, 1 for the world
 uniform sampler2D atlas;
+uniform vec4 groundTile;   // atlas rect of the ground texture; zero width: untextured
+uniform vec3 groundAverage; // its average color, for the distance (no mipmaps)
 out vec4 fragColor;
 void main() {
     vec4 base = vColor;
-    if (vUv.x >= 0.0) {  // textured: the game's texture, tinted and shaded by the color
+    if (vUv.x < -1.5 && groundTile.z > 0.0) {  // the ground: the texture repeats per block
+        vec2 uv = groundTile.xy + fract(vWorld.xz) * groundTile.zw;
+        vec3 near = texture(atlas, uv).rgb;
+        float far = smoothstep(16.0, 64.0, distance(vWorld, eye));
+        base = vec4(mix(near, groundAverage, far) * vColor.rgb, 1.0);
+    } else if (vUv.x >= 0.0) {  // textured: the game's texture, tinted and shaded by the color
         vec4 texel = texture(atlas, vUv);
         if (texel.a < 0.1) discard;  // cutout (dust, torches, rails, glass)
         base = texel * vColor;
     }
-    float fog = clamp((vDistance - fogRange.x) / (fogRange.y - fogRange.x), 0.0, 1.0);
+    float fog = clamp((distance(vWorld, eye) - fogRange.x) / (fogRange.y - fogRange.x), 0.0, 1.0);
     vec3 rgb = mix(base.rgb, fogColor, fog * fogAmount);
     fragColor = vec4(rgb, base.a * alphaScale);
 }
@@ -88,6 +96,13 @@ void main() {
 #: Sky gradient (top of the screen, horizon); the fog fades the world into the horizon.
 SKY_TOP = (0.42, 0.62, 0.92)
 SKY_HORIZON = (0.72, 0.83, 0.96)
+#: The ground around the floor, like a superflat world fading into the horizon: just
+#: below the floor's top (hidden under it), out to where the fog hides its edge.
+GROUND_COLOR = (0.56, 0.58, 0.57)  # without the game's textures; else the texture's tint
+GROUND_SHADE = (0.82, 0.84, 0.83)
+GROUND_TEXTURE = "minecraft:block/stone"
+GROUND_Y = 0.98
+GROUND_REACH = 900.0  # inside the far plane (1000)
 #: Alpha of the parts of selection overlays hidden behind blocks.
 HIDDEN_OVERLAY_ALPHA = 0.4
 
@@ -144,13 +159,13 @@ class Renderer:
         #: of everything at reduced alpha so hidden parts stay visible ("x-ray").
         self.overlay = _Stream()
         self.sky = _Stream()
-        top, bottom = (*SKY_TOP, 1.0), (*SKY_HORIZON, 1.0)
-        quad = [
-            (-1, -1, 0.0, *bottom), (1, -1, 0.0, *bottom), (1, 1, 0.0, *top),
-            (-1, -1, 0.0, *bottom), (1, 1, 0.0, *top), (-1, 1, 0.0, *top),
-        ]  # fmt: skip
-        self.sky.upload(self.program, np.array(quad, dtype=np.float32))
+        self._sky_horizon: float | None = None
+        self._upload_sky(-1.0)
         self.volume = _Stream()  # faint translucent selection body
+        self.ground = _Stream()
+        self.ground_tile = (0.0, 0.0, 0.0, 0.0)
+        self.ground_average = (0.0, 0.0, 0.0)
+        self._upload_ground(GROUND_COLOR)
 
     def set_chunk(
         self, key: object, opaque: np.ndarray, translucent: np.ndarray, solid: np.ndarray
@@ -162,6 +177,36 @@ class Renderer:
         streams[0].upload(self.program, opaque)
         streams[1].upload(self.program, translucent)
         streams[2].upload(self.program, solid)
+
+    def _upload_sky(self, horizon: float) -> None:
+        """The sky behind everything, in screen space: the fog's color up to the horizon
+        line (``horizon``: its height in normalized device coordinates), so ground and
+        sky meet without a seam, then a gradient to the zenith color at the top."""
+        horizon = max(-1.0, min(1.0, horizon))
+        if horizon == self._sky_horizon:
+            return
+        self._sky_horizon = horizon
+        low, top = (*SKY_HORIZON, 1.0), (*SKY_TOP, 1.0)
+        rows = []
+        for y0, y1, c0, c1 in ((-1.0, horizon, low, low), (horizon, 1.0, low, top)):
+            rows += [(-1, y0, 0.0, *c0), (1, y0, 0.0, *c0), (1, y1, 0.0, *c1)]
+            rows += [(-1, y0, 0.0, *c0), (1, y1, 0.0, *c1), (-1, y1, 0.0, *c1)]
+        self.sky.upload(self.program, np.array(rows, dtype=np.float32))
+
+    def _upload_ground(self, color: tuple[float, float, float]) -> None:
+        r, y, c = GROUND_REACH, GROUND_Y, (*color, 1.0)
+        mark = (-2.0, -2.0)  # UV marker: the shader tiles the ground texture
+        plane = [(-r, y, -r, *c, *mark), (r, y, -r, *c, *mark), (r, y, r, *c, *mark)]
+        plane += [(-r, y, -r, *c, *mark), (r, y, r, *c, *mark), (-r, y, r, *c, *mark)]
+        self.ground.upload(self.program, np.array(plane, dtype=np.float32))
+
+    def set_ground(
+        self, tile: tuple[float, float, float, float] | None, average: tuple[float, ...]
+    ) -> None:
+        """The ground texture's atlas rect and average color; None: a plain color."""
+        self.ground_tile = tile or (0.0, 0.0, 0.0, 0.0)
+        self.ground_average = (average[0], average[1], average[2])
+        self._upload_ground(GROUND_SHADE if tile else GROUND_COLOR)
 
     def set_atlas(self, image: QImage | None) -> None:
         """The block texture atlas (nearest-neighbor sampling, like the game)."""
@@ -213,6 +258,7 @@ class Renderer:
         circuit_alpha: float = 0.50,
         eye: tuple[float, float, float] = (0.0, 0.0, 0.0),
         fog: tuple[float, float] = (80.0, 220.0),
+        horizon: float = -1.0,
     ) -> None:
         """Draw everything. ``xray`` 1: full building blocks become see-through (no depth
         writes) while circuit parts stay opaque; 2: circuit parts are see-through too."""
@@ -240,17 +286,24 @@ class Renderer:
         program.setUniformValue(program.uniformLocation("eye"), QVector3D(*eye))
         program.setUniformValue(program.uniformLocation("fogColor"), QVector3D(*SKY_HORIZON))
         program.setUniformValue(program.uniformLocation("fogRange"), QVector2D(*fog))
+        program.setUniformValue(program.uniformLocation("groundTile"), QVector4D(*self.ground_tile))
+        program.setUniformValue(
+            program.uniformLocation("groundAverage"), QVector3D(*self.ground_average)
+        )
         # Sky: a screen-filling gradient behind everything (no depth).
         program.setUniformValue1f(fog_amount, 0.0)
         program.setUniformValue(location, QMatrix4x4())
         gl.glDisable(GL_DEPTH_TEST)
         gl.glDepthMask(GL_FALSE)
+        self._upload_sky(horizon)
         self.sky.vao.bind()
         gl.glDrawArrays(GL_TRIANGLES, 0, self.sky.count)
         gl.glDepthMask(GL_TRUE)
         gl.glEnable(GL_DEPTH_TEST)
         program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
         program.setUniformValue1f(fog_amount, 1.0)
+        self.ground.vao.bind()
+        gl.glDrawArrays(GL_TRIANGLES, 0, self.ground.count)
         # World faces are wound counter-clockwise seen from outside, like the game's, which
         # draws them with back-face culling: flat parts (dust, rails) show one side only.
         gl.glEnable(GL_CULL_FACE)
