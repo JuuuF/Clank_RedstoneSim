@@ -20,10 +20,11 @@ import tempfile
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPixmap
-from PySide6.QtWidgets import QApplication, QStyleFactory, QTabWidget
+from PySide6.QtWidgets import QApplication, QProxyStyle, QStyle, QStyleFactory, QTabWidget
 
 from redsim.ui.assets import Assets
 
@@ -154,7 +155,7 @@ def apply(app: QApplication) -> None:
     """Dark Fusion palette plus the stylesheet, for the whole application."""
     style = QStyleFactory.create("Fusion")
     if style is not None:
-        app.setStyle(style)
+        app.setStyle(_Style(style))
     palette = QPalette()
     for role, color in (
         (QPalette.ColorRole.Window, PANEL),
@@ -219,6 +220,15 @@ QSpinBox::down-arrow {{ image: url({paths["down"]}); width: 14px; height: 8px; }
 QComboBox::down-arrow {{ image: url({paths["down"]}); width: 14px; height: 8px; }}
 QCheckBox::indicator:checked {{ image: url({paths["check"]}); }}
 """
+
+
+class _Style(QProxyStyle):
+    """Fusion without the desktop theme's icons on dialog buttons (Cancel, OK, …)."""
+
+    def styleHint(self, hint: Any, option: Any = None, widget: Any = None, data: Any = None) -> int:
+        if hint == QStyle.StyleHint.SH_DialogButtonBox_ButtonsHaveIcons:
+            return 0
+        return super().styleHint(hint, option, widget, data)
 
 
 class _TabFiller(QObject):

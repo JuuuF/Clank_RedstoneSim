@@ -1063,7 +1063,7 @@ class MainWindow(QMainWindow):
         if not self.document.dirty:
             return True
         box = QMessageBox(self)
-        box.setIcon(QMessageBox.Icon.Warning)
+        box.setIconPixmap(pixel_icons.pixel_pixmap("warning", theme.GOLD, 4, tight=True))
         box.setWindowTitle("Unsaved changes")
         box.setText("You still have unsaved changes. Do you want to save the changes?")
         discard = box.addButton(

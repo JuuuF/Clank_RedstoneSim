@@ -319,6 +319,16 @@ ICONS["tick_zero"] = (  # a flag: "the run starts here"
     "#......",
     "#......",
 )
+ICONS["warning"] = (
+    "....#....",
+    "...###...",
+    "...#.#...",
+    "..##.##..",
+    "..##.##..",
+    ".#######.",
+    ".###.###.",
+    "#########",
+)
 ICONS["less"] = _mirrored(ICONS["play"])  # stepper and page buttons
 ICONS["more"] = ICONS["play"]
 ICONS["undo"] = (
