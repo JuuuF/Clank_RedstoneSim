@@ -9,6 +9,7 @@ usable block (lever, button) can be toggled from the panel.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -50,10 +51,11 @@ class Group:
         return Group(data["name"], Region(pos(data["low"]), pos(data["high"])), ports)
 
 
-def port_reading(level: Level, port: Port) -> str:
-    """A short, signal-oriented description of the port block's current state."""
+def port_reading(level: Level, port: Port, display_name: Callable[[str], str] | None = None) -> str:
+    """A short, signal-oriented description of the port block's current state;
+    ``display_name`` turns a block id into the name to show (default: the plain name)."""
     state = level.get_block_state(port.pos)
-    name = state.block.name
+    name = display_name(state.block.id) if display_name else state.block.name
     if state.has(POWER):
         return f"{name} power {state.get(POWER)}"
     if state.has(POWERED):

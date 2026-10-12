@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QColorDialog,
@@ -763,8 +763,9 @@ class PreferencesDialog(QDialog):
         self.changed.emit()
 
 
-class ContraptionsPanel(QTabWidget):
-    """Prefab library and groups with exposed ports."""
+class ContraptionsPanel(QObject):
+    """Prefab library and groups with exposed ports: two pages (``prefab_page``,
+    ``group_page``) that the window shows as tabs next to the sections."""
 
     save_prefab = Signal()
     load_prefab = Signal(str)
@@ -778,10 +779,15 @@ class ContraptionsPanel(QTabWidget):
 
     def __init__(self) -> None:
         super().__init__()
-        prefab_page = QWidget()
+        self.prefab_page = prefab_page = QWidget()
         prefab_layout = QVBoxLayout(prefab_page)
         self.prefab_list = QListWidget()
-        self.prefab_list.itemDoubleClicked.connect(lambda item: self.load_prefab.emit(item.text()))
+        self.prefab_list.setToolTip("Double-click a prefab to put it on the clipboard")
+        self.prefab_list.itemDoubleClicked.connect(
+            lambda item: (
+                item.flags() & Qt.ItemFlag.ItemIsEnabled and self.load_prefab.emit(item.text())
+            )
+        )
         prefab_layout.addWidget(self.prefab_list)
         row = QHBoxLayout()
         for text, slot in (
@@ -803,14 +809,14 @@ class ContraptionsPanel(QTabWidget):
             row.addWidget(button)
         prefab_layout.addLayout(row)
         hint = QLabel(
-            "B: mark selection corners · Ctrl+C copy · Ctrl+V paste (like /clone) · "
-            "R rotate clipboard · Del clear selection (like /fill air)"
+            "Select a box in SELECT mode (V), then Save selection… to keep it here. "
+            "Copy and paste work like /clone; Del clears the box (like /fill air)."
         )
         hint.setWordWrap(True)
+        hint.setStyleSheet(f"color: {theme.TEXT_DIM};")
         prefab_layout.addWidget(hint)
-        self.addTab(prefab_page, "Prefabs")
 
-        group_page = QWidget()
+        self.group_page = group_page = QWidget()
         group_layout = QVBoxLayout(group_page)
         self.group_list = QListWidget()
         group_layout.addWidget(self.group_list)
@@ -835,19 +841,19 @@ class ContraptionsPanel(QTabWidget):
             "simulate block by block with unchanged timing."
         )
         note.setWordWrap(True)
+        note.setStyleSheet(f"color: {theme.TEXT_DIM};")
         group_layout.addWidget(note)
         self.group_list.currentTextChanged.connect(lambda _: self._refresh_ports())
-        self.addTab(group_page, "Groups")
         self._document: Document | None = None
 
     def _with_prefab(self, signal: Any) -> None:
         item = self.prefab_list.currentItem()
-        if item is not None:
+        if item is not None and item.flags() & Qt.ItemFlag.ItemIsEnabled:  # not a placeholder
             signal.emit(item.text())
 
     def _with_group(self, signal: Any) -> None:
         item = self.group_list.currentItem()
-        if item is not None:
+        if item is not None and item.flags() & Qt.ItemFlag.ItemIsEnabled:
             signal.emit(item.text())
 
     def _port_clicked(self, item: QListWidgetItem) -> None:
@@ -866,6 +872,9 @@ class ContraptionsPanel(QTabWidget):
             self.prefab_list.addItem(name)
             if name == selected:
                 self.prefab_list.setCurrentRow(self.prefab_list.count() - 1)
+        if not document.prefabs:
+            empty = QListWidgetItem("No prefabs yet: select a box, then Save selection…")
+            self.prefab_list.addItem(_placeholder(empty))
         current_group = self.group_list.currentItem()
         group_name = current_group.text() if current_group else None
         self.group_list.blockSignals(True)
@@ -874,6 +883,9 @@ class ContraptionsPanel(QTabWidget):
             self.group_list.addItem(name)
             if name == group_name:
                 self.group_list.setCurrentRow(self.group_list.count() - 1)
+        if not document.groups.groups:
+            empty = QListWidgetItem("No groups yet: select a box, then Group selection…")
+            self.group_list.addItem(_placeholder(empty))
         self.group_list.blockSignals(False)
         self._refresh_ports(port_reading)
 
@@ -890,5 +902,6 @@ class ContraptionsPanel(QTabWidget):
             return
         for port in group.ports:
             arrow = "→ in " if port.role == "input" else "out →"
-            value = reading(self._document.level, port)
-            self.ports.addItem(f"{arrow} {port.name} {port.pos}: {value}")
+            value = reading(self._document.level, port, block_name)
+            x, y, z = port.pos
+            self.ports.addItem(f"{arrow} {port.name} ({x} {y} {z}): {value}")
