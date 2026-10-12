@@ -278,6 +278,18 @@ class Document:
         payload = {"strength": strength, "ticks": 20 if arrow else 8}
         self._apply(Action("projectile_hit", pos, payload=payload), "projectile hit")
 
+    def plate_visitors(self, pos: Pos, mobs: int, others: int, ticks: int) -> None:
+        """Entities standing on a pressure plate (entities are not simulated): ``mobs``
+        (players count) and ``others`` (items, …) from the next tick on, for ``ticks``
+        ticks; the plate presses in the entity phase and releases at its next recheck
+        after they leave. Replaces earlier visitors of the plate."""
+        from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
+
+        if not isinstance(self.state_at(pos).block, BasePressurePlateBlock):
+            raise EditError(f"No pressure plate at {pos}.")
+        payload = {"mobs": mobs, "others": others, "ticks": ticks}
+        self._apply(Action("plate_visitors", pos, payload=payload), "step on a plate")
+
     def set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
         """Set one slot of a barrel or hopper (``slot=None``: empty them all), as
         ``/setblock`` with the block entity's data, so comparators update; a hopper keeps

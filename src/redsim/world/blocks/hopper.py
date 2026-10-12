@@ -160,9 +160,15 @@ def try_move_items(level: Level, pos: Pos, state: BlockState, hopper: HopperBloc
 
 
 def container_at(level: Level, pos: Pos) -> ContainerBlockEntity | None:
-    """``getContainerAt`` → ``getBlockContainer``: a block entity that is a container."""
-    if not level.get_block_state(pos).has_block_entity:
+    """``getContainerAt`` → ``getBlockContainer`` L378: a block entity that is a container;
+    a chest gives its double chest (even when blocked)."""
+    state = level.get_block_state(pos)
+    if not state.has_block_entity:
         return None
+    from redsim.world.blocks.chest import ChestBlock, chest_container
+
+    if isinstance(state.block, ChestBlock):
+        return chest_container(level, pos, state, ignore_blocked=True)
     entity = level.get_block_entity(pos)
     return entity if isinstance(entity, ContainerBlockEntity) else None
 

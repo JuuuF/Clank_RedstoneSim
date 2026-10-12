@@ -58,12 +58,23 @@ INVENTORY = Folder(
                 "minecraft:repeater",
                 "minecraft:comparator",
                 "minecraft:observer",
-                "minecraft:redstone_lamp",
                 "minecraft:redstone_block",
                 "minecraft:target",
                 Folder(
                     "Switches",
-                    ("minecraft:lever", "minecraft:stone_button", "minecraft:oak_button"),
+                    (
+                        "minecraft:lever",
+                        "minecraft:stone_button",
+                        "minecraft:oak_button",
+                        "minecraft:stone_pressure_plate",
+                        "minecraft:oak_pressure_plate",
+                        "minecraft:light_weighted_pressure_plate",
+                        "minecraft:heavy_weighted_pressure_plate",
+                    ),
+                ),
+                Folder(
+                    "Outputs",
+                    ("minecraft:redstone_lamp", "minecraft:copper_bulb", "minecraft:note_block"),
                 ),
             ),
         ),
@@ -78,7 +89,16 @@ INVENTORY = Folder(
             ),
         ),
         Folder("Signal sources", ("minecraft:barrel", "minecraft:lectern", "minecraft:cake")),
-        Folder("Items", ("minecraft:hopper",)),
+        Folder(
+            "Items",
+            (
+                "minecraft:hopper",
+                "minecraft:dropper",
+                "minecraft:dispenser",
+                "minecraft:chest",
+                "minecraft:trapped_chest",
+            ),
+        ),
         Folder("Rails", ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail")),
         Folder(
             "Building",

@@ -82,6 +82,11 @@ reading and unit tests only.
 | EXP-039 | `hopper_lock`: a redstone block beside the first hopper (ticks 10-30), a 0-tick lock on the second (tick 40), a redstone block on top of the second (50-60); an observer watching the first hopper fires on each lock change | 80 | match | 2026-10-11 |
 | EXP-040 | `hopper_clock`: two hoppers facing each other pass 4 items back and forth; a barrel above a down hopper feeds a second facing pair whose lower hopper also pulls from the one above | 80 | match | 2026-10-11 |
 | EXP-041 | `hopper_item_replace`: `/item replace` of 64 dust into an idle hopper, a barrel and a hopper facing a barrel: the barrel's comparator updates at once, the idle hopper's only after a block placed beside the comparator (tick 10 → 12), the third when the hopper moves its first item | 16 | match | 2026-10-11 |
+| EXP-042 | `note_blocks`: instruments from the block below (stone, glass, planks, wool), powered by a redstone block and through a repeater, an observer watching one, power from above with a block on top | 24 | match | 2026-10-12 |
+| EXP-043 | `copper_bulbs`: T flip-flop toggling, comparator reading 15 into a lamp, bulbs never conduct, a bulb placed next to power lights | 30 | match | 2026-10-12 |
+| EXP-044 | `droppers`: a dropper feeds a hopper chain into a chest per rising edge; a dispenser fires after a later neighbor update (QC); container contents compared | 40 | match | 2026-10-12 |
+| EXP-045 | `chests`: a barrel and hopper fill a double chest; comparators on both halves; a block on one half blocks both readings; a trapped chest beside wire; contents compared | 60 | match | 2026-10-12 |
+| EXP-046 | `pressure_plates`: armor stands and items (real entities) on stone, oak and weighted plates; pressed next tick, released at the recheck | 60 | match | 2026-10-12 |
 
 Hopper recordings also compare each hopper's `Items` and `TransferCooldown` (and the
 barrels' `Items`, `watch_items`) every tick with `data get block`.

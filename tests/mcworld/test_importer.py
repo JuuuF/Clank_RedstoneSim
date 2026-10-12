@@ -53,6 +53,7 @@ def test_example_world_opens_around_the_player() -> None:
     level = opened.document.level
     assert opened.area.chunks > 0 and opened.area.skipped_terrain > 0
     assert any(state.is_(blocks.REDSTONE_WIRE) for state in level.blocks.values())
-    assert "minecraft:note_block" in opened.foreign
+    assert "minecraft:quartz_stairs" in opened.foreign  # not simulated: kept as text
+    assert any(state.is_(blocks.NOTE_BLOCK) for state in level.blocks.values())  # simulated
     assert opened.document.extra["minecraft_world"]["name"] == "Redstone"
     opened.document.run_ticks(5)  # it simulates

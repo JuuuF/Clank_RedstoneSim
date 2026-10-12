@@ -948,6 +948,98 @@ COPPER_BULBS = Scenario(
     },
 )
 
+DROPPERS = Scenario(
+    name="droppers",
+    description=(
+        "A dropper pushes one item per rising edge into a hopper chain ending in a chest; "
+        "a dispenser with one stack fires only after a later neighbor update (power at "
+        "the block above: quasi-connectivity); comparators read both."
+    ),
+    size=(8, 5),
+    setup=[
+        ((1, 1, 1), "minecraft:dropper[facing=east]", _slots((REDSTONE, 3))),
+        ((2, 1, 1), "minecraft:hopper[facing=east]"),
+        ((3, 1, 1), "minecraft:chest[facing=north]"),
+        ((1, 1, 2), "minecraft:comparator[facing=north]"),
+        ((3, 1, 2), "minecraft:comparator[facing=north]"),
+        ((5, 1, 1), "minecraft:dispenser[facing=up]", _slots((PEARL, 2))),
+        ((5, 1, 2), "minecraft:comparator[facing=north]"),
+    ],
+    watch=[(1, 1, 1), (2, 1, 1), (3, 1, 1), (1, 1, 2), (3, 1, 2), (5, 1, 1), (5, 1, 2)],
+    ticks=40,
+    watch_items=True,
+    inputs={
+        2: [((0, 1, 1), RB)],
+        8: [((0, 1, 1), AIR)],
+        12: [((0, 1, 1), RB), ((6, 2, 1), RB)],  # (6,2,1) powers the air above the dispenser
+        16: [((0, 1, 1), AIR)],
+        22: [((6, 1, 1), "minecraft:stone")],  # a neighbor update: the dispenser notices
+        30: [((6, 2, 1), AIR), ((6, 1, 1), AIR)],
+    },
+)
+
+CHESTS = Scenario(
+    name="chests",
+    description=(
+        "A barrel feeds a double chest through a hopper; comparators read each half (one "
+        "54-slot container); a block on top of one half makes both comparators read 0; a "
+        "trapped chest is a signal source of 0 (wire beside it points at it)."
+    ),
+    size=(8, 5),
+    setup=[
+        ((1, 2, 1), "minecraft:barrel[facing=up]", _slots((REDSTONE, 64), (REDSTONE, 64))),
+        ((1, 1, 1), "minecraft:hopper[facing=east]"),
+        ((2, 1, 1), "minecraft:chest[facing=north,type=left]"),
+        ((3, 1, 1), "minecraft:chest[facing=north,type=right]"),
+        ((2, 1, 2), "minecraft:comparator[facing=north]"),
+        ((3, 1, 2), "minecraft:comparator[facing=north]"),
+        ((2, 1, 3), "minecraft:redstone_lamp"),
+        ((3, 1, 3), "minecraft:redstone_lamp"),
+        ((6, 1, 1), "minecraft:trapped_chest[facing=north]"),
+        ((6, 1, 2), "minecraft:redstone_wire"),
+    ],
+    watch=[(1, 1, 1), (2, 1, 1), (3, 1, 1), (2, 1, 2), (3, 1, 2), (2, 1, 3), (3, 1, 3), (6, 1, 2)],
+    ticks=60,
+    watch_items=True,
+    inputs={30: [((3, 2, 1), "minecraft:stone")], 45: [((3, 2, 1), AIR)]},
+)
+
+PRESSURE_PLATES = Scenario(
+    name="pressure_plates",
+    description=(
+        "Entities on pressure plates: an armor stand (a mob) presses a stone and an oak "
+        "plate, an item only the oak plate; weighted plates count entities. Each lamp "
+        "shows its plate; plates release at their next recheck after the entities go."
+    ),
+    size=(10, 4),
+    setup=[
+        ((1, 1, 1), "minecraft:stone_pressure_plate"),
+        ((1, 1, 2), "minecraft:redstone_lamp"),
+        ((3, 1, 1), "minecraft:oak_pressure_plate"),
+        ((3, 1, 2), "minecraft:redstone_lamp"),
+        ((5, 1, 1), "minecraft:stone_pressure_plate"),
+        ((5, 1, 2), "minecraft:redstone_lamp"),
+        ((7, 1, 1), "minecraft:light_weighted_pressure_plate"),
+        ((7, 1, 2), "minecraft:comparator[facing=south]"),
+        ((7, 1, 3), "minecraft:redstone_lamp"),
+    ],
+    watch=[(1, 1, 1), (1, 1, 2), (3, 1, 1), (3, 1, 2), (5, 1, 1), (5, 1, 2), (7, 1, 1), (7, 1, 2)],
+    ticks=60,
+    commands={
+        2: [
+            ("summon", (1, 1, 1), "armor_stand"),
+            ("summon", (3, 1, 1), "item"),
+            ("summon", (5, 1, 1), "item"),  # stone plates ignore items
+            ("summon", (7, 1, 1), "armor_stand"),
+            ("summon", (7, 1, 1), "armor_stand"),
+        ],
+        9: [("kill", (1, 1, 1))],
+        17: [("kill", (3, 1, 1)), ("kill", (7, 1, 1))],
+        30: [("summon", (3, 1, 1), "armor_stand")],
+        41: [("kill", (3, 1, 1))],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -991,6 +1083,9 @@ ALL = [
     HOPPER_ITEM_REPLACE,
     NOTE_BLOCKS,
     COPPER_BULBS,
+    DROPPERS,
+    CHESTS,
+    PRESSURE_PLATES,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

@@ -104,12 +104,12 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
 ## Verification status
 
-- `python -m pytest`: **340 tests pass** (2026-10-12), including the JDK oracle, the 80
+- `python -m pytest`: **397 tests pass** (2026-10-12), including the JDK oracle, the 80
   game-recording replays (40 named, 40 random), save round trips, history rewriting,
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
   directory (`tests/conftest.py`).
-- Real-game comparisons (`python -m tools.gameserver.run`): 40 of 40 named scenarios match
+- Real-game comparisons (`python -m tools.gameserver.run`): 45 of 45 named scenarios match
   in one fresh full run (2026-10-11); the 40 random circuits were re-recorded after hoppers
   joined the palette and all match. The harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay, the hopper 7-tick
@@ -154,8 +154,9 @@ Suggested next steps:
 1. **Owner review** of round 7 and the polish pass on the desktop
    (`redsim examples/showcase.redsim.json`); open questions are listed in the round-7
    summary (grass vs. stone ground, name fade, Lock/region button dimming).
-2. **Mechanics:** droppers/dispensers and chests (containers for hoppers), note blocks,
-   pressure plates (need entities), scheduled-tick-driven piston 0-ticks.
+2. **Mechanics:** done 2026-10-12: note blocks, copper bulbs, droppers/dispensers,
+   chests, pressure plates (entities as editor visitors). Left: scheduled-tick-driven
+   piston 0-ticks, dispense effects (entities, fluids), detector rails, daylight sensors.
 3. **Diagnostics:** an interactive causal trace ("why did this block change?"), a
    signal-strength heat view in the viewport.
 4. **Editing comfort:** named bookmarks on the timeline, a

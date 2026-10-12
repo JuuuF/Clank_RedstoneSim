@@ -108,6 +108,11 @@ class Level:
         self.block_events: dict[BlockEventKey, None] = {}  # insertion-ordered dedup set
         #: Projectiles that hit target blocks in the next entity phase: (pos, strength, ticks).
         self.projectile_hits: list[tuple[Pos, int, int]] = []
+        #: Entities standing on pressure plates (not simulated as entities): pos → (mobs,
+        #: other entities, last game time they are there).
+        self.plate_visitors: dict[Pos, tuple[int, int, int]] = {}
+        #: Plates whose visitors step on them in this tick's entity phase (in order).
+        self.entity_queue: list[Pos] = []
         self.tickers: list[TickerWrapper] = []
         self.pending_tickers: list[TickerWrapper] = []
         self.tickers_by_pos: dict[Pos, TickerWrapper] = {}
@@ -427,6 +432,11 @@ class Level:
         )
         return accepted
 
+    def plate_visitors_at(self, pos: Pos) -> tuple[int, int]:
+        """(mobs, other entities) standing on the plate at ``pos`` now."""
+        mobs, others, until = self.plate_visitors.get(pos, (0, 0, -1))
+        return (mobs, others) if self.game_time <= until else (0, 0)
+
     def has_scheduled_tick(self, pos: Pos, block: Block) -> bool:
         return self.block_ticks.has_scheduled_tick(pos, block.id)
 
@@ -570,6 +580,8 @@ class Level:
         other.block_ticks = self.block_ticks.clone()
         other.block_events = dict(self.block_events)
         other.projectile_hits = list(self.projectile_hits)
+        other.plate_visitors = dict(self.plate_visitors)
+        other.entity_queue = list(self.entity_queue)
         other.ticking_block_entities = self.ticking_block_entities
         other.handling_tick = self.handling_tick
         other.torch_toggles = list(self.torch_toggles)

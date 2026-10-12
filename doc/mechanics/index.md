@@ -17,6 +17,9 @@
 | [[target-block]] | Target block: dust connection, projectile hits (20/8 ticks), hit strength | researched | implemented (`world/blocks/target.py`; hits are an editor action) | unit tests; game EXP-031, 037 |
 | [[hopper]] | Hopper item transfer (8-tick cooldown, 7-tick rule), locking, comparator output | researched | implemented (`world/blocks/hopper.py`; block containers only) | unit tests; game EXP-031, 038..041 |
 | [[analog-sources]] | Barrel (container fill), lectern (book page, page-turn pulse), cake | researched | implemented (`world/blocks/container.py`, `lectern.py`, `cake.py`) | unit tests; game EXP-012/013, 024, 025 |
+| [[note-block-and-copper-bulb]] | Note block (instrument, block event), copper bulb (T flip-flop) | researched | implemented (`world/blocks/note_block.py`, `copper_bulb.py`) | unit tests; game EXP-042, 043 |
+| [[dispensers-and-chests]] | Dispenser/dropper (QC, 4-tick delay, random slot), chests (double, blocked), trapped chest | researched | implemented (`world/blocks/dispenser.py`, `chest.py`; dispense effects not simulated) | unit tests; game EXP-044, 045 |
+| [[pressure-plates]] | Stone/wooden/weighted plates with entities as editor "visitors" | researched | implemented (`world/blocks/pressure_plate.py`) | unit tests; game EXP-046 |
 
 Source locations for all of these: [[research/source-map]]. Quirks: [[quirks]]. Overall
 state: [[project-state]].

@@ -26,6 +26,7 @@ from redsim.core.pos import Pos
 from redsim.sim.engine import Action, Engine
 from redsim.world import blocks
 from redsim.world.block import BlockState
+from redsim.world.blocks.container import ContainerBlockEntity
 from tools.gameserver.server import GameServer
 
 FLOOR_Y = -61
@@ -135,6 +136,17 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
 def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action:
     from redsim.editor.clipboard import Prefab, Region
 
+    if command[0] in ("summon", "kill"):  # entities on a pressure plate: visitors
+        pos = absolute(origin, command[1])
+        mobs, others, until = engine.level.plate_visitors.get(pos, (0, 0, 0))
+        if command[0] == "kill":
+            mobs, others, ticks = 0, 0, 0
+        else:
+            mobs, others, ticks = (
+                (mobs + 1, others) if command[2] == "armor_stand" else (mobs, others + 1)
+            ) + (1_000_000,)
+        payload = {"mobs": mobs, "others": others, "ticks": ticks}
+        return Action("plate_visitors", pos, payload=payload)
     if command[0] == "item":
         _, rel, slot, (item, count) = command
         payload = {"slot": slot, "item": item, "count": count}
@@ -157,6 +169,18 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
 
 
 def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
+    if command[0] == "summon":  # an entity on the plate's touch box
+        _, rel, kind = command
+        x, y, z = absolute(origin, rel)
+        if kind == "armor_stand":  # with gravity: a NoGravity stand has no physics and
+            # ignores blocks (ArmorStand.hasPhysics L115); it stands on the floor below
+            return f"summon armor_stand {x + 0.5} {y} {z + 0.5} {{Invisible:1b}}"
+        item = '{NoGravity:1b,PickupDelay:32767,Age:-32768,Item:{id:"minecraft:stone",count:1}}'
+        return f"summon item {x + 0.5} {y + 0.0625} {z + 0.5} {item}"
+    if command[0] == "kill":
+        _, rel = command
+        x, y, z = absolute(origin, rel)
+        return f"kill @e[type=!player,x={x},y={y},z={z},dx=0,dy=0,dz=0]"
     if command[0] == "hit":
         _, rel, projectile = command
         x, y, z = absolute(origin, rel)
@@ -197,8 +221,8 @@ def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, st
         elif state.block.id == "minecraft:hopper" and be is not None:
             frame[f"{rel}#items"] = be.contents()  # type: ignore[attr-defined]
             frame[f"{rel}#cooldown"] = str(be.cooldown_time)  # type: ignore[attr-defined]
-        elif state.block.id == "minecraft:barrel" and be is not None and scenario.watch_items:
-            frame[f"{rel}#items"] = be.contents()  # type: ignore[attr-defined]
+        elif isinstance(be, ContainerBlockEntity) and scenario.watch_items:
+            frame[f"{rel}#items"] = be.contents()  # barrels, chests, droppers, dispensers
         elif state.block.id == "minecraft:moving_piston" and be is not None:
             # The saved "progress" tag is progressO (PistonMovingBlockEntity.saveAdditional).
             frame[f"{rel}#progress"] = str(float(be.progress_o))  # type: ignore[attr-defined]

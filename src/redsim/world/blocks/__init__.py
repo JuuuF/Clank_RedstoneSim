@@ -9,16 +9,23 @@ from __future__ import annotations
 from redsim.world.block import Block, BlockState, PushReaction
 from redsim.world.blocks.attached import ButtonBlock, LeverBlock
 from redsim.world.blocks.cake import CakeBlock
+from redsim.world.blocks.chest import ChestBlock, TrappedChestBlock
 from redsim.world.blocks.comparator import ComparatorBlock
 from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.copper_bulb import COPPER_BULB_IDS, CopperBulbBlock
 from redsim.world.blocks.diode import RepeaterBlock
+from redsim.world.blocks.dispenser import DispenserBlock, DropperBlock
 from redsim.world.blocks.hopper import HopperBlock
 from redsim.world.blocks.lamp import RedstoneLampBlock
 from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.note_block import NoteBlock
 from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import MovingPistonBlock, PistonBaseBlock, PistonHeadBlock
+from redsim.world.blocks.pressure_plate import (
+    PLATE_IDS,
+    PressurePlateBlock,
+    WeightedPressurePlateBlock,
+)
 from redsim.world.blocks.rail import PoweredRailBlock, RailBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.simple import (
@@ -127,6 +134,19 @@ POWERED_RAIL = register(PoweredRailBlock("minecraft:powered_rail"))
 ACTIVATOR_RAIL = register(PoweredRailBlock("minecraft:activator_rail"))
 TARGET = register(TargetBlock())
 NOTE_BLOCK = register(NoteBlock())
+DISPENSER = register(DispenserBlock())
+CHEST = register(ChestBlock())
+PRESSURE_PLATES = tuple(register(PressurePlateBlock(i)) for i in PLATE_IDS)
+STONE_PRESSURE_PLATE = PRESSURE_PLATES[0]
+OAK_PRESSURE_PLATE = PRESSURE_PLATES[2]
+LIGHT_WEIGHTED_PRESSURE_PLATE = register(
+    WeightedPressurePlateBlock("minecraft:light_weighted_pressure_plate", 15)
+)
+HEAVY_WEIGHTED_PRESSURE_PLATE = register(
+    WeightedPressurePlateBlock("minecraft:heavy_weighted_pressure_plate", 150)
+)
+TRAPPED_CHEST = register(TrappedChestBlock())
+DROPPER = register(DropperBlock())
 COPPER_BULBS = tuple(register(CopperBulbBlock(i)) for i in COPPER_BULB_IDS)
 COPPER_BULB = COPPER_BULBS[0]
 HOPPER = register(HopperBlock())
@@ -150,7 +170,16 @@ __all__ = [
     "LEVER",
     "COPPER_BULB",
     "COPPER_BULBS",
+    "CHEST",
+    "DISPENSER",
+    "TRAPPED_CHEST",
+    "DROPPER",
+    "HEAVY_WEIGHTED_PRESSURE_PLATE",
+    "LIGHT_WEIGHTED_PRESSURE_PLATE",
     "NOTE_BLOCK",
+    "OAK_PRESSURE_PLATE",
+    "PRESSURE_PLATES",
+    "STONE_PRESSURE_PLATE",
     "OAK_BUTTON",
     "REDSTONE_LAMP",
     "REDSTONE_TORCH",

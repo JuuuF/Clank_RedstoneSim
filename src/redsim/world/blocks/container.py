@@ -175,7 +175,13 @@ class BarrelBlockEntity(ContainerBlockEntity):
 
 
 def set_changed(entity: BlockEntity, level: Level) -> None:
-    """``BlockEntity.setChanged`` (L198): comparators around it re-read the value."""
+    """``BlockEntity.setChanged`` (L198): comparators around it re-read the value. A
+    double chest (``CompoundContainer.setChanged``) notifies both halves."""
+    parts = getattr(entity, "parts", None)
+    if parts is not None:
+        for part in parts:
+            set_changed(part, level)
+        return
     state = level.get_block_state(entity.pos)
     if not state.is_air:
         level.update_neighbour_for_output_signal(entity.pos, state.block)

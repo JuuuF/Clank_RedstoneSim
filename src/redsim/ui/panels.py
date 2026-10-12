@@ -282,6 +282,7 @@ class InspectorPanel(QWidget):
     page_requested = Signal(object, int)  # Pos, page (a player turning the page)
     monitor_requested = Signal(object)  # Pos: add/remove on the timeline monitor
     hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
+    plate_requested = Signal(object, int, int, int)  # Pos, mobs, others, ticks
     contents_requested = Signal(object, object, object, int)  # Pos, slot|None, item|None, n
 
     def __init__(self) -> None:
@@ -385,6 +386,33 @@ class InspectorPanel(QWidget):
             self.hit_buttons[arrow] = button
         target_layout.addRow("Projectile", hit_row)
         layout.addWidget(self.target_box)
+        self.plate_box = QWidget()  # pressure plates: entities standing on them
+        plate_layout = QFormLayout(self.plate_box)
+        plate_layout.setContentsMargins(0, 6, 0, 0)
+        self.plate_mobs = QSpinBox()
+        self.plate_mobs.setRange(0, 150)
+        self.plate_mobs.setValue(1)
+        self.plate_mobs.setToolTip("Players and other mobs (stone plates react only to these)")
+        plate_layout.addRow("Players/mobs", self.plate_mobs)
+        self.plate_items = QSpinBox()
+        self.plate_items.setRange(0, 150)
+        self.plate_items.setToolTip("Items and other entities (wooden and weighted plates)")
+        plate_layout.addRow("Items", self.plate_items)
+        self.plate_ticks = QSpinBox()
+        self.plate_ticks.setRange(1, 100000)
+        self.plate_ticks.setValue(20)
+        self.plate_ticks.setSuffix(" ticks")
+        self.plate_ticks.setToolTip("How long they stand on it (from the next tick on)")
+        plate_layout.addRow("For", self.plate_ticks)
+        self.plate_step = QPushButton("Step on it")
+        self.plate_step.setToolTip(
+            "Entities are not simulated: they stand on the plate from the next tick on; it "
+            "presses in that tick's entity phase and releases at its next recheck (20 ticks, "
+            "10 for weighted plates) after they leave."
+        )
+        self.plate_step.clicked.connect(self._step_on_plate)
+        plate_layout.addRow("", self.plate_step)
+        layout.addWidget(self.plate_box)
         self.contents_box = QWidget()
         contents_layout = QFormLayout(self.contents_box)
         contents_layout.setContentsMargins(0, 6, 0, 0)
@@ -438,6 +466,7 @@ class InspectorPanel(QWidget):
         self._pos = pos
         self.source_box.setVisible(False)
         self.target_box.setVisible(False)
+        self.plate_box.setVisible(False)
         self.contents_box.setVisible(False)
         if document is None or pos is None:
             self.monitor.setVisible(False)
@@ -474,6 +503,10 @@ class InspectorPanel(QWidget):
         be = document.level.get_block_entity(pos, create=False)
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
         self.target_box.setVisible(state.is_(blocks.TARGET))
+        from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
+
+        self.plate_box.setVisible(isinstance(state.block, BasePressurePlateBlock))
+        self.plate_box.setEnabled(editable)
         self.target_box.setEnabled(editable)
         if isinstance(be, ContainerBlockEntity):
             self.contents_box.setVisible(True)
@@ -580,6 +613,13 @@ class InspectorPanel(QWidget):
         if self._pos is not None:
             pos, strength = self._pos, int(self.hit_strength.value)
             _later(lambda: self.hit_requested.emit(pos, strength, arrow))
+
+    def _step_on_plate(self) -> None:
+        if self._pos is not None:
+            pos = self._pos
+            mobs, items = self.plate_mobs.value(), self.plate_items.value()
+            ticks = self.plate_ticks.value()
+            _later(lambda: self.plate_requested.emit(pos, mobs, items, ticks))
 
     def _turn_page(self, step: int) -> None:
         if self._pos is not None and self._page is not None:

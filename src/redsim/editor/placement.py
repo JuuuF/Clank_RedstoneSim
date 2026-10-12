@@ -29,8 +29,10 @@ from redsim.sim.level import Level
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState, PlacementContext
 from redsim.world.blocks.attached import FaceAttachedBlock
+from redsim.world.blocks.chest import ChestBlock
 from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.diode import DiodeBlock
+from redsim.world.blocks.dispenser import DispenserBlock
 from redsim.world.blocks.hopper import HopperBlock
 from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.observer import ObserverBlock
@@ -135,7 +137,7 @@ def placement_state(
     if isinstance(block, ObserverBlock):
         # ObserverBlock.getStateForPlacement L157: FACING = the nearest looking direction.
         return block.default_state.with_(FACING, ordered_by_nearest(request.yaw, request.pitch)[0])
-    if isinstance(block, PistonBaseBlock | BarrelBlock):
+    if isinstance(block, PistonBaseBlock | BarrelBlock | DispenserBlock):
         # PistonBaseBlock/BarrelBlock.getStateForPlacement: FACING = nearest looking
         # direction, reversed.
         first = ordered_by_nearest(request.yaw, request.pitch)[0]
@@ -146,6 +148,12 @@ def placement_state(
         return block.default_state.with_(
             FACING_HOPPER, Direction.DOWN if facing.axis is Axis.Y else facing
         )
+    if isinstance(block, ChestBlock):
+        # ChestBlock.getStateForPlacement L144: facing the player; it joins a neighbor.
+        requested = block.default_state.with_(
+            HORIZONTAL_FACING, horizontal_direction(request.yaw).opposite
+        )
+        return block.get_state_for_placement(PlacementContext(level, pos, requested))
     if isinstance(block, LecternBlock):
         # LecternBlock.getStateForPlacement L74: horizontal direction, reversed.
         facing = horizontal_direction(request.yaw).opposite

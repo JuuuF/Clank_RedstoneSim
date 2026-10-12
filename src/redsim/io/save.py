@@ -121,6 +121,8 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
             "overdue_collected": level.block_ticks.overdue_collected,
             "block_events": [[list(p), b, b0, b1] for p, b, b0, b1 in level.block_events],
             "projectile_hits": [[list(p), s, t] for p, s, t in level.projectile_hits],
+            "plate_visitors": [[list(p), *v] for p, v in level.plate_visitors.items()],
+            "entity_queue": [list(p) for p in level.entity_queue],
             "wrappers": wrappers,
             "tickers": tickers,
             "pending_tickers": pending,
@@ -176,6 +178,9 @@ def engine_from_json(data: dict[str, Any]) -> Engine:
         level.block_events[(_pos(p), block_id, int(b0), int(b1))] = None
     for p, strength, ticks in raw.get("projectile_hits", []):
         level.projectile_hits.append((_pos(p), int(strength), int(ticks)))
+    for p, mobs, others, until in raw.get("plate_visitors", []):
+        level.plate_visitors[_pos(p)] = (int(mobs), int(others), int(until))
+    level.entity_queue = [_pos(p) for p in raw.get("entity_queue", [])]
 
     wrappers = [
         TickerWrapper(None if index is None else _BoundTicker(entities[index]))

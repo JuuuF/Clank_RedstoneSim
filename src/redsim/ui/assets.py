@@ -190,6 +190,59 @@ def _up_face_uv(lo: Vec, hi: Vec, face: dict[str, Any]) -> Any:
     return uv
 
 
+#: Blocks the game draws with a block-entity renderer (no JSON model): their texture.
+ENTITY_MODELS = {
+    "minecraft:chest": "minecraft:entity/chest/normal",
+    "minecraft:trapped_chest": "minecraft:entity/chest/trapped",
+}
+_Y_ROT = {"north": 0, "east": 90, "south": 180, "west": 270}
+
+
+def _cube_faces(u: float, v: float, w: float, h: float, d: float, texture: str) -> dict[str, Any]:
+    """Minecraft's cube UV layout (``ModelPart.Cube``) for a box at texture offset (u, v)
+    of size w×h×d in a 64×64 texture, as model UVs (0–16)."""
+
+    def face(u0: float, v0: float, u1: float, v1: float) -> dict[str, Any]:
+        return {"texture": "#chest", "uv": [u0 / 4, v0 / 4, u1 / 4, v1 / 4]}
+
+    return {
+        "up": face(u + d + w, v + d, u + d, v),  # entity textures are upside down
+        "down": face(u + d + w, v, u + d + 2 * w, v + d),
+        "north": face(u + d, v + d, u + d + w, v + d + h),
+        "south": face(u + 2 * d + w, v + d, u + 2 * d + 2 * w, v + d + h),
+        "west": face(u, v + d, u + d, v + d + h),
+        "east": face(u + d + w, v + d, u + 2 * d + w, v + d + h),
+    }
+
+
+def chest_model(state: BlockState) -> tuple[dict[str, Any], int]:
+    """A block model for a chest from its entity texture (``ChestModel``: base, lid and
+    latch), and its y rotation. A half of a double chest reaches to its partner."""
+    props = state.properties_dict()
+    facing, kind = props.get("facing", "north"), props.get("type", "single")
+    x0, x1 = 1.0, 15.0
+    if kind == "left":  # the partner is clockwise of the facing: east of a north chest
+        x1 = 16.0
+    elif kind == "right":
+        x0 = 0.0
+    texture = ENTITY_MODELS[state.block.id]
+    elements = [
+        {"from": [x0, 0, 1], "to": [x1, 10, 15], "faces": _cube_faces(0, 19, 14, 10, 14, texture)},
+        {"from": [x0, 9, 1], "to": [x1, 14, 15], "faces": _cube_faces(0, 0, 14, 5, 14, texture)},
+    ]
+    if kind != "right":  # one latch per chest, on the left half's inner edge or centered
+        lx = 15.0 if kind == "left" else 7.0
+        elements.append(
+            {
+                "from": [lx, 7, 0],
+                "to": [lx + 2, 11, 1],
+                "faces": _cube_faces(0, 0, 2, 4, 1, texture),
+            }
+        )
+    model = {"textures": {"chest": texture, "particle": texture}, "elements": elements}
+    return model, _Y_ROT.get(facing, 0)
+
+
 def _matches(condition: dict[str, Any], props: dict[str, str]) -> bool:
     """A multipart ``when``: ``OR``/``AND`` lists or ``property: "a|b"``. A property the
     simulator does not model (e.g. ``waterlogged``) counts as its default
@@ -341,6 +394,9 @@ class Assets:
         for part in self.parts(state):
             model = self.model(part["model"])
             quads.extend(self.bake(model, int(part.get("x", 0)), int(part.get("y", 0))))
+        if not quads and state.block.id in ENTITY_MODELS:  # drawn by a renderer in the game
+            model, y_rot = chest_model(state)
+            quads.extend(self.bake(model, 0, y_rot))
         result = tuple(quads)
         self._quads[state] = result
         return result
@@ -506,6 +562,12 @@ class Assets:
         if path not in self._names:
             return None
         data = self.json(path).get("model", {})
-        while isinstance(data, dict) and data.get("type") != "minecraft:model":
+        for _ in range(16):  # select/condition/special wrappers, a few levels deep
+            if not isinstance(data, dict) or not data:
+                return None
+            if data.get("type") == "minecraft:model":
+                return data.get("model")
+            if data.get("type") == "minecraft:special":
+                return None  # drawn by a special renderer (chests): use the block model
             data = data.get("fallback") or data.get("model") or {}
-        return data.get("model") if isinstance(data, dict) else None
+        return None

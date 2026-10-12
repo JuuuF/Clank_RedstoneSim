@@ -211,6 +211,14 @@ a **Contents** row in the inspector: pick a slot, an item and a count and press 
 **Empty all slots**. Each is one `/setblock` with the block-entity data, so comparators
 update and a hopper keeps its transfer cooldown. Details: [[mechanics/hopper]].
 
+## Entities on pressure plates
+
+Entities are not simulated. Select a pressure plate (NORMAL mode) and use the inspector's
+**Step on it**: how many players/mobs and items stand on it, and for how many ticks. They
+arrive in the next tick: the plate presses in that tick's entity phase and releases at
+its recheck (every 20 ticks, 10 for weighted plates) after they leave. Stone plates count
+only players and mobs ([[mechanics/pressure-plates]]).
+
 ## Changing placed blocks
 
 - **Q / Shift+Q** turns the block under the cursor (repeaters, comparators, pistons facing

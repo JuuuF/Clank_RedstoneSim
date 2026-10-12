@@ -22,7 +22,12 @@ CELL = TILE + 2
 
 #: Extra textures needed besides the block models' (none yet).
 #: The ground around the floor (``renderer.GROUND_TEXTURE``).
-EXTRA_TEXTURES: tuple[str, ...] = ("minecraft:block/stone", "minecraft:block/grass_block_top")
+EXTRA_TEXTURES: tuple[str, ...] = (
+    "minecraft:block/stone",
+    "minecraft:block/grass_block_top",
+    "minecraft:entity/chest/normal",  # chests: no block model (assets.ENTITY_MODELS)
+    "minecraft:entity/chest/trapped",
+)
 
 
 def decode_png(data: bytes) -> npt.NDArray[np.uint8] | None:

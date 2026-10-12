@@ -47,6 +47,7 @@ ActionKind = Literal[
     "transform_region",
     "stack_region",
     "projectile_hit",
+    "plate_visitors",
 ]
 
 #: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
@@ -173,6 +174,8 @@ class Engine:
         if self.phase is Phase.ENTITIES and level.projectile_hits:
             pos, strength, ticks = level.projectile_hits[0]
             return f"projectile hits the target at {pos} (strength {strength}, {ticks} ticks)"
+        if self.phase is Phase.ENTITIES and level.entity_queue:
+            return f"entities on the pressure plate at {level.entity_queue[0]}"
         if self.phase is Phase.BLOCK_ENTITIES:
             for wrapper in level.tickers[self.be_index :]:
                 if not wrapper.is_removed():
@@ -224,6 +227,19 @@ class Engine:
                     info.detail["info"] = "skipped: block changed"
             finally:
                 self._end_step()
+        elif self.phase is Phase.ENTITIES and not level.projectile_hits:
+            from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
+
+            pos = level.entity_queue.pop(0)
+            info = self._begin_step("entity_inside", pos, {})
+            try:
+                state = level.get_block_state(pos)
+                if isinstance(state.block, BasePressurePlateBlock):
+                    state.block.entity_inside(state, level, pos)
+                else:
+                    info.detail["info"] = "skipped: no pressure plate"
+            finally:
+                self._end_step()
         elif self.phase is Phase.ENTITIES:
             from redsim.world.blocks.target import TargetBlock
 
@@ -262,8 +278,13 @@ class Engine:
                     return
                 level.handling_tick = False
                 self.phase = Phase.ENTITIES  # ServerLevel.tick: entities after block events
+                # Entities standing on plates step on them (Entity.applyEffectsFromBlocks).
+                level.plate_visitors = {
+                    p: v for p, v in level.plate_visitors.items() if v[2] >= level.game_time
+                }
+                level.entity_queue = list(level.plate_visitors)
             elif self.phase is Phase.ENTITIES:
-                if level.projectile_hits:
+                if level.projectile_hits or level.entity_queue:
                     return
                 # Level.tickBlockEntities L527: pending tickers join the list first.
                 level.ticking_block_entities = True
@@ -344,6 +365,15 @@ class Engine:
                 self._container_item(action.pos, action.payload)
             elif action.kind == "lectern_page":
                 self._lectern_page(action.pos, int(action.payload["page"]))
+            elif action.kind == "plate_visitors":
+                # Entities step on the plate from the next tick on, for ``ticks`` ticks.
+                payload = action.payload
+                until = level.game_time + int(payload["ticks"])
+                level.plate_visitors[action.pos] = (
+                    int(payload["mobs"]),
+                    int(payload.get("others", 0)),
+                    until,
+                )
             elif action.kind == "projectile_hit":
                 # A projectile launched now hits during the next tick's entity phase.
                 strength, ticks = int(action.payload["strength"]), int(action.payload["ticks"])

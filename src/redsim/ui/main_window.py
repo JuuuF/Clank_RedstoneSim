@@ -232,6 +232,7 @@ class MainWindow(QMainWindow):
         self.simulation.set_tick_zero.connect(self._set_tick_zero)
         self.inspector.monitor_requested.connect(self._toggle_monitor)
         self.inspector.hit_requested.connect(self._projectile_hit)
+        self.inspector.plate_requested.connect(self._plate_visitors)
         self.inspector.contents_requested.connect(self._set_container_slot)
         self.viewport.hover_changed.connect(self._hover)
         self.viewport.place_requested.connect(self._place)
@@ -733,6 +734,10 @@ class MainWindow(QMainWindow):
     def _projectile_hit(self, pos: Pos, strength: int, arrow: bool) -> None:
         self._edit(self.document.projectile_hit, pos, strength, arrow)
         self._message("The projectile lands during the next tick (step a tick to see it).")
+
+    def _plate_visitors(self, pos: Pos, mobs: int, others: int, ticks: int) -> None:
+        self._edit(self.document.plate_visitors, pos, mobs, others, ticks)
+        self._message(f"They step on the plate in the next tick and stay {ticks} ticks.")
 
     def _toggle_monitor(self, pos: Pos) -> None:
         on = self.document.toggle_monitor(pos)
