@@ -43,6 +43,7 @@ from PySide6.QtWidgets import (
 from redsim.core.pos import Pos
 from redsim.editor.document import EDIT_ROWS, Document, EditBatch
 from redsim.ui import pixel_icons, theme
+from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
 
 BACKGROUND = QColor(theme.PANEL)
@@ -67,6 +68,7 @@ class Track:
     pos: Pos
     label: str
     samples: dict[int, int]
+    block: str = ""  # block id, for the row's icon
 
 
 class TimelineCanvas(QWidget):
@@ -77,7 +79,7 @@ class TimelineCanvas(QWidget):
     delete_edits = Signal(object)  # step indices
     set_tick_zero = Signal()
 
-    LABEL_WIDTH = 150
+    LABEL_WIDTH = 180
     RULER_HEIGHT = 26
     EDIT_ROW_HEIGHT = 15
     ROW_HEIGHT = 18
@@ -211,7 +213,21 @@ class TimelineCanvas(QWidget):
             painter.drawText(22, top + self.EDIT_ROW_HEIGHT - 3, ROW_TITLES[name])
         for row, track in enumerate(self.tracks):
             y = self._tracks_top() + row * self.ROW_HEIGHT
-            painter.drawText(8, y + self.ROW_HEIGHT - 5, track.label)
+            text_x = 8
+            if track.block:
+                painter.drawPixmap(6, y + 2, block_pixmap(track.block, 14))
+                text_x = 24
+            # The position right-aligned and dim, the name shortened to what is left.
+            metrics = painter.fontMetrics()
+            where = " ".join(str(c) for c in track.pos)
+            where_x = self.LABEL_WIDTH - 6 - metrics.horizontalAdvance(where)
+            name = metrics.elidedText(
+                track.label, Qt.TextElideMode.ElideRight, where_x - text_x - 6
+            )
+            painter.drawText(text_x, y + self.ROW_HEIGHT - 5, name)
+            painter.setPen(TEXT_DIM)
+            painter.drawText(where_x, y + self.ROW_HEIGHT - 5, where)
+            painter.setPen(TEXT)
         x = self._x(self.current)
         if x >= self.LABEL_WIDTH:
             painter.setPen(PLAYHEAD)
@@ -572,8 +588,9 @@ class TimelineBar(QWidget):
         tracks = [
             Track(
                 pos,
-                f"{block_name(document.state_at(pos).block.id)} {pos}",
+                block_name(document.state_at(pos).block.id),
                 document.samples.get(pos, {}),
+                document.state_at(pos).block.id,
             )
             for pos in document.monitors
         ]
