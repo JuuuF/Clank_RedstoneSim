@@ -56,6 +56,7 @@ from redsim.ui.geometry import (
 )
 from redsim.ui.gizmos import BODY_ALPHA, Hotspot, box_faces, pick_hotspot, selection_gizmos
 from redsim.ui.keymap import HOLD, Keymap
+from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter
 from redsim.ui.preferences import Preferences
 from redsim.ui.renderer import Renderer
@@ -525,18 +526,21 @@ class Viewport(QOpenGLWidget):
                     8, top, theme.text_width(text) + 12, line + 4, QColor(0, 0, 0, 110)
                 )
                 theme.draw_text(painter, 14, top + 3, text, "#ffffff")
-        # Mode badge (bottom left) with what the mouse buttons do in this mode.
+        # Mode badge (bottom left) with what the mode works on (the hint bar below the
+        # window lists the keys).
         pasting = self.paste_preview is not None
         badge = "PASTE" if pasting else self.mode.upper()
         top = self.height() - line - 16
         badge_width = theme.text_width(badge) + 16
         room = max(0, self.width() - badge_width - 40)
-        hint = _elide(self.paste_hint() if pasting else self.mode_hint(), room)
+        hint = _elide(self.mode_status(), room)
         color = PASTE_COLOR if pasting else MODE_COLORS[self.mode]
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(0, 0, 0, 120))
-        painter.drawRoundedRect(8, top, badge_width + theme.text_width(hint) + 22, line + 8, 5, 5)
+        if hint:
+            width = badge_width + theme.text_width(hint) + 22
+            painter.drawRoundedRect(8, top, width, line + 8, 5, 5)
         painter.setBrush(color)
         painter.drawRoundedRect(8, top, badge_width, line + 8, 5, 5)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
@@ -617,11 +621,24 @@ class Viewport(QOpenGLWidget):
             painter.fillRect(left, top, box_width, box_height, background)
             theme.draw_text(painter, left + 5, top + 3, text, "#ffffff")
 
-    def paste_hint(self) -> str:
-        return (
-            f"layer y={self.working_height()} (Wheel moves it) · Left Click: place · "
-            "R: rotate · H: flip · Right Click / Esc: cancel"
-        )
+    def mode_status(self) -> str:
+        """What the badge shows next to the mode: the block to place and the layer, the
+        selection's size, or the inspected block."""
+        if self.paste_preview is not None:
+            return f"layer y={self.working_height()}"
+        if self.mode == BUILD:
+            block = block_name(self.build_block.id) if self.build_block else "no block chosen"
+            return f"{block} · layer y={self.working_height()}"
+        if self.mode == SELECT and self.region is not None:
+            low, high = self.region.low, self.region.high
+            dx, dy, dz = (high[i] - low[i] + 1 for i in range(3))
+            locked = " · locked" if self.region_locked else ""
+            return f"{dx}×{dy}×{dz} = {dx * dy * dz} blocks{locked}"
+        if self.mode == NORMAL and self.selection is not None:
+            state = self.document.state_at(self.selection)
+            x, y, z = self.selection
+            return f"{block_name(state.block.id)} at {x} {y} {z}"
+        return ""
 
     def mode_hint(self) -> str:
         """``Left Click: place · Left Drag: line · …`` for the current mode."""
