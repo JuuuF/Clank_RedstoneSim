@@ -178,8 +178,10 @@ Not a feedback round; changes made while reviewing screenshots of every view
 - Timeline: a darker ruler band with centered tick labels and a rounded playhead badge;
   the current tick in gold in the ruler's label column; monitor tracks as seamless step
   waveforms with the block's icon, name and dim position.
-- Inventory: 9-slot hotbar rows (empty slots complete short folders), folders as stacked
-  slots with an up chevron, number keys as small key caps.
+- Inventory: every row is the game's own hotbar (the `hotbar` and `hotbar_selection`
+  sprites from the jar, at 2×, 9 slots, empty slots complete short folders); folders
+  have an up chevron, number keys small key caps; recent blocks sit in a short piece of
+  the hotbar. Without the jar, painted slot frames.
 - Viewport: the mode badge shows what the mode works on (block and layer, selection
   size, inspected block) instead of repeating the hint bar; an empty world shows how to
   start; the build layer grid fades out.
@@ -194,6 +196,10 @@ Not a feedback round; changes made while reviewing screenshots of every view
 - Inspector: container contents as a Minecraft slot grid (item icons, stack counts, a
   click picks the slot for editing); pixel compass arrows on direction buttons; source
   kinds show their block.
+- Game touches: tooltips like the game's item tooltips (near black, purple frame); Help →
+  About with the title in the game's font; dialogs without desktop-theme icons and with a
+  pixel warning sign; pixel check marks and arrows in check, spin and combo boxes.
+- Preferences: a Looks group (game textures, scenery) in sync with the View menu.
 - Fixes: document-mode tab widgets left unpainted gaps (now filled); Fusion's bevel
   colors were light; spin and combo boxes had no arrows; guide lines ignored their
   alpha (blending was off), so the layer grid only looked faded where it z-fought with

@@ -402,3 +402,6 @@ Short records. Each one states the context, the decision, and its trade-offs.
   the same art, like Blender's status bar.
 - **Trade-offs:** New icons are hand-drawn in code; a test keeps all art rectangular and
   the common canvas size.
+- **Also:** where the game has a sprite for the exact thing (the hotbar, its selection
+  frame, the clouds), the jar's sprite is used at runtime instead of pixel art, with a
+  painted fallback without the jar (ADR-023: assets are never committed).
