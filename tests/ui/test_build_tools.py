@@ -395,3 +395,20 @@ def test_markers_get_a_strip_in_the_ruler(app: Any) -> None:
     assert canvas.marker_at(canvas._x(9), canvas.RULER_HEIGHT - 4) is None
     canvas.set_markers({})
     assert plain == canvas.RULER_HEIGHT
+
+
+def test_hint_bar_keeps_its_height_in_every_mode(app: Any) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1200, 800)
+    window.show()
+    heights = set()
+    for mode in ("normal", "build", "select"):
+        window.viewport.set_mode(mode)
+        window._update_hints()
+        QtWidgets.QApplication.processEvents()
+        heights.add((window.hint_bar.height(), window.viewport.height()))
+    assert len(heights) == 1  # nothing above it resizes
+    window.document.dirty = False
+    window.close()

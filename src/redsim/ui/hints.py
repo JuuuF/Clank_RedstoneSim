@@ -137,11 +137,18 @@ def keycaps_html(keys: str) -> str:
     return " / ".join(alternatives)
 
 
+#: Fits a pixel mouse keycap (20 px art) with its padding.
+HINT_BAR_HEIGHT = 30
+
+
 class HintBar(QWidget):
     def __init__(self) -> None:
         super().__init__()
         layout = QHBoxLayout(self)
         layout.setContentsMargins(6, 1, 6, 1)
+        # One height in every mode: hints with mouse icons are taller than plain keys, and
+        # a growing bar would resize the views above it.
+        self.setFixedHeight(HINT_BAR_HEIGHT)
         self.hints = QLabel()
         self.hints.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         layout.addWidget(self.hints, 3)
