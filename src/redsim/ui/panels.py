@@ -54,13 +54,14 @@ NO_SELECTION = (
     "NORMAL mode (Esc) to inspect it.</span>"
 )
 
+#: Direction values: button text and pixel icon.
 DIRECTION_LABELS = {
-    "north": "↑ N",
-    "east": "→ E",
-    "south": "↓ S",
-    "west": "← W",
-    "up": "⤒ Up",
-    "down": "⤓ Down",
+    "north": ("N", "north"),
+    "east": ("E", "east"),
+    "south": ("S", "south"),
+    "west": ("W", "west"),
+    "up": ("Up", "face_up"),
+    "down": ("Down", "face_down"),
 }
 
 
@@ -81,8 +82,10 @@ class _Choice(QWidget):
         self.buttons: dict[Any, QPushButton] = {}
         for value in prop.values:
             text = prop.serialize(value)
-            label = DIRECTION_LABELS.get(text, text) if isinstance(value, Direction) else text
-            button = QPushButton(label)
+            label, icon = DIRECTION_LABELS.get(text, (text, None))
+            button = QPushButton(label if isinstance(value, Direction) else text)
+            if isinstance(value, Direction) and icon:
+                button.setIcon(pixel_icons.pixel_icon(icon))
             button.setCheckable(True)
             button.setToolTip(f"{prop.name} = {text}")
             button.clicked.connect(lambda _=False, v=value: on_pick(v))

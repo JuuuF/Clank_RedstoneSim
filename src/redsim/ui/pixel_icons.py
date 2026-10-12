@@ -293,6 +293,21 @@ ICONS.update(
         ),
     }
 )
+# Compass arrows for direction properties; "face_*" point at the top or bottom face.
+ICONS["north"] = (
+    "...#...",
+    "..###..",
+    ".#####.",
+    "#######",
+    "..###..",
+    "..###..",
+    "..###..",
+)
+ICONS["south"] = ICONS["north"][::-1]
+ICONS["west"] = _transposed(ICONS["north"])
+ICONS["east"] = _mirrored(ICONS["west"])
+ICONS["face_up"] = ("#######", ".......", *ICONS["north"][:5])
+ICONS["face_down"] = ICONS["face_up"][::-1]
 ICONS["undo"] = (
     "..#......",
     ".##......",
