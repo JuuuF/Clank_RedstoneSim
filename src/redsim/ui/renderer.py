@@ -107,7 +107,7 @@ SKY_TOP = (0.42, 0.62, 0.92)
 SKY_HORIZON = (0.72, 0.83, 0.96)
 #: The ground around the floor, like a superflat world fading into the horizon: just
 #: below the floor's top (hidden under it), out to where the fog hides its edge.
-GROUND_COLOR = (0.56, 0.58, 0.57)  # without the game's textures; else the texture's tint
+GROUND_COLOR = (0.40, 0.53, 0.29)  # without the game's textures: a muted grass green
 GROUND_SHADE = (0.50, 0.66, 0.31)  # the plains grass color, a little darker
 GROUND_TEXTURE = "minecraft:block/grass_block_top"
 #: Clouds: the game's texture on a plane high above the floor, drifting along x.
