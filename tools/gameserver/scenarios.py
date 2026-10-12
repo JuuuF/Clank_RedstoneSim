@@ -1040,6 +1040,54 @@ PRESSURE_PLATES = Scenario(
     },
 )
 
+PISTON_SCHEDULED_PULSES = Scenario(
+    name="piston_scheduled_pulses",
+    description=(
+        "Sticky pistons driven by pulses that start and end in scheduled ticks "
+        "(isHandlingTick): a 2-tick input pulse through a 1-tick repeater, an observer's "
+        "2-tick pulse, and an observer pulse shortened by a repeater; does each piston "
+        "push, pull back, or spit its block?"
+    ),
+    size=(8, 7),
+    setup=[
+        # Row z=0: input pulse → repeater (delay 1) → sticky piston pushing stone east.
+        ((1, 1, 0), "minecraft:repeater[facing=west,delay=1]"),
+        ((2, 1, 0), "minecraft:sticky_piston[facing=east]"),
+        ((3, 1, 0), "minecraft:stone"),
+        # Row z=2: an observer watching (0,1,2) powers a sticky piston.
+        ((1, 1, 2), "minecraft:observer[facing=west]"),
+        ((2, 1, 2), "minecraft:sticky_piston[facing=east]"),
+        ((3, 1, 2), "minecraft:stone"),
+        # Row z=4: observer → repeater (delay 1) → sticky piston.
+        ((1, 1, 4), "minecraft:observer[facing=west]"),
+        ((2, 1, 4), "minecraft:repeater[facing=west,delay=1]"),
+        ((3, 1, 4), "minecraft:sticky_piston[facing=east]"),
+        ((4, 1, 4), "minecraft:stone"),
+    ],
+    watch=[
+        (1, 1, 0),
+        (2, 1, 0),
+        (3, 1, 0),
+        (4, 1, 0),
+        (1, 1, 2),
+        (2, 1, 2),
+        (3, 1, 2),
+        (4, 1, 2),
+        (1, 1, 4),
+        (2, 1, 4),
+        (3, 1, 4),
+        (4, 1, 4),
+        (5, 1, 4),
+    ],
+    ticks=30,
+    inputs={
+        2: [((0, 1, 0), RB)],
+        4: [((0, 1, 0), AIR)],
+        6: [((0, 1, 2), "minecraft:stone"), ((0, 1, 4), "minecraft:stone")],
+        16: [((0, 1, 2), AIR), ((0, 1, 4), AIR)],
+    },
+)
+
 ALL = [
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,
@@ -1086,6 +1134,7 @@ ALL = [
     DROPPERS,
     CHESTS,
     PRESSURE_PLATES,
+    PISTON_SCHEDULED_PULSES,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

@@ -109,7 +109,7 @@ rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
   directory (`tests/conftest.py`).
-- Real-game comparisons (`python -m tools.gameserver.run`): 45 of 45 named scenarios match
+- Real-game comparisons (`python -m tools.gameserver.run`): 46 of 46 named scenarios match
   in one fresh full run (2026-10-11); the 40 random circuits were re-recorded after hoppers
   joined the palette and all match. The harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay, the hopper 7-tick
@@ -159,8 +159,8 @@ Suggested next steps:
    (`redsim examples/showcase.redsim.json`); open questions are listed in the round-7
    summary (grass vs. stone ground, name fade, Lock/region button dimming).
 2. **Mechanics:** done 2026-10-12: note blocks, copper bulbs, droppers/dispensers,
-   chests, pressure plates (entities as editor visitors). Left: scheduled-tick-driven
-   piston 0-ticks, dispense effects (entities, fluids), detector rails, daylight sensors.
+   chests, pressure plates (entities as editor visitors), scheduled-tick piston pulses
+   (EXP-047). Left: dispense effects (entities, fluids), detector rails, daylight sensors.
 3. **World loading:** done 2026-10-12: opened Minecraft worlds stream in around the
    camera ([[world-import]], phase 3). Left: the "go to the builds" index, the on-disk
    cache, write-back (phase 4).

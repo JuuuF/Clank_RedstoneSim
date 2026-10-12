@@ -111,15 +111,14 @@ entity**.
   retraction, breaking the head removes the base, dust on a pushed block pops.
 - Game: EXP-015 (push/pull with block-entity progress), EXP-016 (1-/2-/3-tick sticky
   pulses), EXP-017 (QC + BUD), EXP-018 (QC door), EXP-019 (slime branching, honey),
-  EXP-020 (popping).
+  EXP-020 (popping), EXP-047 (pulses starting and ending in scheduled ticks: repeater-
+  and observer-driven sticky pistons, including a spit block).
 
 ## Unknowns
 
-- Event-2 window confirmed for between-tick inputs (EXP-016); retractions triggered from
-  scheduled ticks (`isHandlingTick`) still need a game scenario (repeater-driven pulses).
+- Event-2 window confirmed for between-tick inputs (EXP-016) and for retractions
+  triggered from scheduled ticks (`isHandlingTick`, EXP-047).
 - Entity pushing is out of scope.
-- Observers (BUD-free piston detection) and 0-tick contraptions driven by observers are
-  later scope.
 
 ## Related
 
