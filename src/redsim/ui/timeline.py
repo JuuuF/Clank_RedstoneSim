@@ -46,6 +46,8 @@ from redsim.ui import pixel_icons, theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
 
+#: Icon-only transport buttons: less side padding than text buttons.
+COMPACT = "QToolButton { padding: 3px 4px; }"
 BACKGROUND = QColor(theme.PANEL)
 RECORDED = QColor(theme.WIDGET)
 GRID = QColor(theme.LINE)
@@ -433,6 +435,7 @@ class TimelineCanvas(QWidget):
         ticks = {tick for tick, _ in self.selected}
         merge = menu.addAction("Merge selected into the earliest tick (M)")
         merge.setEnabled(len(ticks) > 1)
+        merge.setIcon(pixel_icons.pixel_icon("previous"))
         merge.triggered.connect(lambda: self.merge_edits.emit(chosen, None))
         if row is not None:
             name = EDIT_ROWS[row]
@@ -445,9 +448,11 @@ class TimelineCanvas(QWidget):
         bake.triggered.connect(lambda: self.merge_edits.emit(chosen, 0))
         delete = menu.addAction("Delete selected (Del)")
         delete.setEnabled(bool(chosen))
+        delete.setIcon(pixel_icons.pixel_icon("delete"))
         delete.triggered.connect(lambda: self.delete_edits.emit(chosen))
         menu.addSeparator()
         zero = menu.addAction("Set tick 0 here (the current state becomes the build)")
+        zero.setIcon(pixel_icons.pixel_icon("tick_zero"))
         zero.triggered.connect(self.set_tick_zero.emit)
         menu.exec(where)
 
@@ -495,6 +500,7 @@ class TimelineBar(QWidget):
             if text in pixel_icons.ICONS:
                 widget.setIcon(pixel_icons.pixel_icon(text))
                 widget.setIconSize(pixel_icons.ICON_SIZE)
+                widget.setStyleSheet(COMPACT)
             else:
                 widget.setText(text)
             widget.setToolTip(tip)
@@ -507,6 +513,7 @@ class TimelineBar(QWidget):
         button("back", "Tick back (Left); Ctrl+Left: one engine step", self.tick_back.emit)
         self.reverse = QToolButton()
         self.reverse.setIconSize(pixel_icons.ICON_SIZE)
+        self.reverse.setStyleSheet(COMPACT)
         self.reverse.setIcon(pixel_icons.pixel_icon("reverse"))
         self.reverse.setCheckable(True)
         self.reverse.setToolTip("Play backwards / pause (Ctrl+Shift+Space)")
@@ -514,6 +521,7 @@ class TimelineBar(QWidget):
         row.addWidget(self.reverse)
         self.play = QToolButton()
         self.play.setIconSize(pixel_icons.ICON_SIZE)
+        self.play.setStyleSheet(COMPACT)
         self.play.setIcon(pixel_icons.pixel_icon("play"))
         self.play.setCheckable(True)
         self.play.setToolTip("Run / pause (Space)")
@@ -531,7 +539,9 @@ class TimelineBar(QWidget):
             "block update its circuit. Later edits move along. (Ctrl+0)",
             self.set_tick_zero.emit,
         )
-        zero.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        zero.setIcon(pixel_icons.pixel_icon("tick_zero"))
+        zero.setIconSize(pixel_icons.ICON_SIZE)
+        zero.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         row.addSpacing(12)
         row.addWidget(QLabel("ticks/s"))
         self.speed = QSpinBox()

@@ -270,7 +270,7 @@ class MainWindow(QMainWindow):
                 "sim.run_back",
                 "reverse",
             ),
-            ("Set tick 0 here", self._set_tick_zero, "sim.set_zero", None),
+            ("Set tick 0 here", self._set_tick_zero, "sim.set_zero", "tick_zero"),
             ("Step tick", self._step_tick, "sim.tick", "step"),
             ("Step event", self._step_event, "sim.event", None),
             ("Tick back", self._tick_back, "sim.tick_back", "back"),
