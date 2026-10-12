@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -345,6 +346,22 @@ class Keymap:
         }
         path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
+    def changes(self) -> dict[str, list[str]]:
+        """The bindings that differ from the defaults (what a keymap file stores)."""
+        return {
+            spec.id: list(self._bindings[spec.id])
+            for spec in ACTIONS
+            if self._bindings[spec.id] != spec.defaults
+        }
+
+    @staticmethod
+    def save_changes(changes: dict[str, list[str]], path: Path | None = None) -> Keymap:
+        """Write ``changes`` (action → bindings) as the keymap file and return the keymap
+        it gives (the keymap editor's Apply)."""
+        path = path if path is not None else default_path()
+        Keymap.write_defaults(path, changes)
+        return Keymap.load(path)
+
     # ------------------------------------------------------------------ queries
     def bindings(self, action: str) -> tuple[str, ...]:
         return self._bindings[action]
@@ -517,3 +534,21 @@ def hotkey_sections(
     if rest:
         sections.append(("Other", None, rest))
     return sections
+
+
+def binding_text(key: int, modifiers: Iterable[str], text: str = "") -> str | None:
+    """A captured key as binding text ("Ctrl+Shift+R"), or None for a modifier alone.
+    ``key`` is a ``Qt.Key`` value; the dead ^ of German layouts becomes "^"."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QKeySequence
+
+    if key in (Qt.Key.Key_Shift, Qt.Key.Key_Control, Qt.Key.Key_Alt, Qt.Key.Key_Meta):
+        return None
+    name = "^" if key == Qt.Key.Key_Dead_Circumflex else QKeySequence(key).toString()
+    if not name:
+        name = text
+    if not name:
+        return None
+    order = ("Ctrl", "Alt", "Shift", "Meta")
+    held = [m for m in order if m in set(modifiers)]
+    return "+".join([*held, name])

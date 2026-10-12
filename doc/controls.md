@@ -173,6 +173,7 @@ reason the old Shift+T rewind was disliked).
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
 | R / Shift+R | rotate the selection (or the paste preview) 90° clockwise / counter-clockwise |
 | H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |
+| Settings → Keymap… | edit every binding in the program: filter, **Record key** (press the key with its modifiers), reset one or all; conflicts are marked; Save writes only your changes to the keymap file |
 | Del | clear the selection box (fill with air); single blocks: right click in BUILD |
 | 1–9 / ^ | inventory: open folder or pick block / back to the parent folder |
 | Alt+1–9 | pick one of the recently placed blocks (the RECENT strip next to the hotbar) |

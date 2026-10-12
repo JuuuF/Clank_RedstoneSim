@@ -229,7 +229,7 @@ Status is kept up to date here; nothing in the message is left out.
 | 14 | P3 | The selection box is filled with color, so what is inside reads at a glance. | done: filled with the selection color (20 %) |
 | 15 | P3 | A small animation for the selection, so the program feels alive and interactive. | done: the fill breathes slowly (±6 %, 1.8 s) |
 | 16 | P3 | Lighting a little less plain (a small change, not much effort). | done: sunlit tops a little warm, faces in the shade a little cool |
-| 17 | P4 | An in-program keymap editor (no more editing the JSON). | open |
+| 17 | P4 | An in-program keymap editor (no more editing the JSON). | done: Settings → Keymap… (filter, record a key, reset, live conflict check; saves only the changes) |
 | 18 | P5 | **Open Minecraft worlds** (example: `data/minecraft_saves/Redstone/`): load chunks around the camera like the game instead of everything; cache in an own fast format keyed by save folder/seed; write changes back to the game's format. Design first ([[world-import]]). | open |
 | — | — | The grass ground is great (keep). | kept |
 

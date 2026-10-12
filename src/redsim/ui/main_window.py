@@ -48,6 +48,7 @@ from redsim.ui.hints import Context, HintBar, context_hints
 from redsim.ui.icons import block_icon
 from redsim.ui.inventory import InventoryBar
 from redsim.ui.keymap import SPECS, Keymap, default_path
+from redsim.ui.keymap_editor import KeymapEditor
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panels import (
@@ -469,6 +470,7 @@ class MainWindow(QMainWindow):
         ).setIcon(pixel_icons.pixel_icon("search"))
         settings_menu = bar.addMenu("Se&ttings")
         self._action(settings_menu, "Preferences…", self._preferences)
+        self._action(settings_menu, "Keymap…", self._open_keymap_editor)
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
         self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
@@ -557,6 +559,15 @@ class MainWindow(QMainWindow):
     def _focus_pivot(self) -> None:
         if not self.viewport.focus_hover():
             self._message("Point at a block to move the pivot there.")
+
+    def _open_keymap_editor(self) -> None:
+        editor = KeymapEditor(self.keymap, self)
+        editor.applied.connect(self._keymap_saved)
+        editor.exec()
+
+    def _keymap_saved(self, keymap: Keymap) -> None:
+        self.set_keymap(keymap)
+        self._message(f"Keymap saved ({len(keymap.changes())} changes from the defaults).")
 
     def _edit_keymap(self) -> None:
         path = default_path()
