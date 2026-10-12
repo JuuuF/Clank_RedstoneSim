@@ -627,7 +627,9 @@ class MainWindow(QMainWindow):
         if Document.is_usable(block):
             self._edit(self.document.use, pos)
         else:
-            self._message(f"{block.name} cannot be used (to place blocks, switch to BUILD mode).")
+            self._message(
+                f"{block_name(block.id)} cannot be used (to place blocks, switch to BUILD mode)."
+            )
 
     def _rotate_block(self, quarter_turns: int) -> None:
         """Rotate the block under the cursor (else the inspected one) with ``/setblock``."""
@@ -653,7 +655,8 @@ class MainWindow(QMainWindow):
                     break
         if rotated is state:
             self._message(
-                f"{state.block.name} has no facing to turn; the inspector can set any property."
+                f"{block_name(state.block.id)} has no facing to turn; the inspector can set "
+                "any property."
             )
             return
         self._edit(self.document.setblock, pos, rotated)
@@ -922,7 +925,7 @@ class MainWindow(QMainWindow):
         if Document.is_usable(state.block):
             self._edit(self.document.use, port.pos)
         else:
-            self._message(f"{state.block.name} at {port.pos} cannot be used directly.")
+            self._message(f"{block_name(state.block.id)} at {port.pos} cannot be used directly.")
 
     def _delete_group(self, name: str) -> None:
         self.document.groups.remove(name)

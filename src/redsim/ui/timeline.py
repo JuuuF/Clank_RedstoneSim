@@ -263,17 +263,26 @@ class TimelineCanvas(QWidget):
             bottom = top + self.ROW_HEIGHT - 3
             painter.setPen(GRID)
             painter.drawLine(self.LABEL_WIDTH, bottom + 1, self.width(), bottom + 1)
-            painter.setPen(Qt.PenStyle.NoPen)
+            # One step waveform per track (a logic analyzer's trace): a filled outline,
+            # so neighboring ticks join without seams, and a bright top edge.
+            height = bottom - top
+            trace: list[QPointF] = []
             for tick in range(first, last + 1):
-                value = track.samples.get(tick)
-                if not value:
-                    continue
-                left, right = self._x(tick), self._x(tick + 1)
-                level = value / 15
-                bar = (bottom - top) * max(level, 0.12)
-                color = QColor(SIGNAL)
-                color.setAlphaF(0.35 + 0.65 * level)
-                painter.fillRect(QRectF(left, bottom - bar, max(1.0, right - left), bar), color)
+                value = track.samples.get(tick) or 0
+                y = bottom - (height * max(value / 15, 0.12) if value else 0.0)
+                trace += [QPointF(self._x(tick), y), QPointF(self._x(tick + 1), y)]
+            if not trace:
+                continue
+            ends = [QPointF(self._x(first), bottom), QPointF(self._x(last + 1), bottom)]
+            outline = QPolygonF([ends[0], *trace, ends[1]])
+            fill = QColor(SIGNAL)
+            fill.setAlphaF(0.45)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(fill)
+            painter.drawPolygon(outline)
+            painter.setPen(QPen(QColor(SIGNAL).lighter(140), 1.5))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawPolyline(QPolygonF(trace))
 
     # ------------------------------------------------------------------ input
     def mousePressEvent(self, event: QMouseEvent) -> None:
