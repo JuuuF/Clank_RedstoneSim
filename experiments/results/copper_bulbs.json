@@ -1,0 +1,761 @@
+{
+ "scenario": "copper_bulbs",
+ "description": "Copper bulbs as T flip-flops: each rising edge toggles lit; a comparator reads 15 from a lit bulb into a lamp; bulbs never conduct (a bulb between a redstone block and a lamp leaves it off); placing a bulb next to power lights it.",
+ "origin": [
+  24,
+  0,
+  0
+ ],
+ "start_time": 25,
+ "fingerprint": "f7c0ec49ae06035f",
+ "game_version": "26.3",
+ "ticks": 30,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=false,powered=false]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=false,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=false,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 15,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(2, 1, 0)#output": "0",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=true]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=false]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=true]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 16,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=true]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=true]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 17,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=true]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=true]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 18,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 19,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 20,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:air"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:air",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 21,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 22,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 23,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 24,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 25,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 26,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 27,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 28,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 29,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 30,
+   "sim": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(2, 1, 0)#output": "15",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]"
+   },
+   "game": {
+    "(1, 1, 0)": "minecraft:copper_bulb[lit=true,powered=false]",
+    "(2, 1, 0)": "minecraft:comparator[facing=west,mode=compare,powered=true]",
+    "(3, 1, 0)": "minecraft:redstone_lamp[lit=true]",
+    "(1, 1, 2)": "minecraft:oxidized_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 2)": "minecraft:redstone_lamp[lit=false]",
+    "(5, 1, 0)": "minecraft:waxed_exposed_copper_bulb[lit=true,powered=false]",
+    "(6, 1, 2)": "minecraft:weathered_copper_bulb[lit=true,powered=true]",
+    "(2, 1, 0)#output": "15"
+   },
+   "mismatches": []
+  }
+ ]
+}
