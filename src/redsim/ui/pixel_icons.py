@@ -308,6 +308,8 @@ ICONS["west"] = _transposed(ICONS["north"])
 ICONS["east"] = _mirrored(ICONS["west"])
 ICONS["face_up"] = ("#######", ".......", *ICONS["north"][:5])
 ICONS["face_down"] = ICONS["face_up"][::-1]
+ICONS["less"] = _mirrored(ICONS["play"])  # stepper and page buttons
+ICONS["more"] = ICONS["play"]
 ICONS["undo"] = (
     "..#......",
     ".##......",

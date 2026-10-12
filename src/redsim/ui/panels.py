@@ -113,7 +113,7 @@ class _Toggle(QPushButton):
 
 
 class _Stepper(QWidget):
-    """An integer property: ◀ value ▶."""
+    """An integer property: a value between back and next buttons."""
 
     def __init__(self, values: tuple[Any, ...], on_pick: Any, tooltip: str) -> None:
         super().__init__()
@@ -122,11 +122,13 @@ class _Stepper(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.back = QPushButton("◀")
+        self.back = QPushButton()
+        self.back.setIcon(pixel_icons.pixel_icon("less"))
         self.label = QLabel("")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setMinimumWidth(36)
-        self.next = QPushButton("▶")
+        self.next = QPushButton()
+        self.next.setIcon(pixel_icons.pixel_icon("more"))
         for button in (self.back, self.next):
             button.setMaximumWidth(40)
             button.setToolTip(tooltip)
@@ -293,6 +295,7 @@ class InspectorPanel(QWidget):
         self.kind_buttons: dict[str, QPushButton] = {}
         for kind in sources.KINDS.values():
             button = QPushButton(kind.id.capitalize())
+            button.setIcon(QIcon(block_pixmap(kind.block_id, 16)))
             button.setCheckable(True)
             button.setToolTip(kind.tooltip)
             button.clicked.connect(lambda _=False, k=kind.id: self._pick_source(k, None))
@@ -308,8 +311,11 @@ class InspectorPanel(QWidget):
         self.page_row = QWidget()
         page_layout = QHBoxLayout(self.page_row)
         page_layout.setContentsMargins(0, 0, 0, 0)
-        self.page_back = QPushButton("◀ Page")
-        self.page_next = QPushButton("Page ▶")
+        self.page_back = QPushButton("Page")
+        self.page_back.setIcon(pixel_icons.pixel_icon("less"))
+        self.page_next = QPushButton("Page")
+        self.page_next.setIcon(pixel_icons.pixel_icon("more"))
+        self.page_next.setLayoutDirection(Qt.LayoutDirection.RightToLeft)  # icon after text
         for button, step in ((self.page_back, -1), (self.page_next, 1)):
             button.setToolTip(
                 "Turn the page like a player: the signal changes and the lectern sends a "
