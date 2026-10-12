@@ -783,11 +783,7 @@ class ContraptionsPanel(QObject):
         prefab_layout = QVBoxLayout(prefab_page)
         self.prefab_list = QListWidget()
         self.prefab_list.setToolTip("Double-click a prefab to put it on the clipboard")
-        self.prefab_list.itemDoubleClicked.connect(
-            lambda item: (
-                item.flags() & Qt.ItemFlag.ItemIsEnabled and self.load_prefab.emit(item.text())
-            )
-        )
+        self.prefab_list.itemDoubleClicked.connect(lambda _: self._with_prefab(self.load_prefab))
         prefab_layout.addWidget(self.prefab_list)
         row = QHBoxLayout()
         for text, slot in (
