@@ -617,6 +617,17 @@ class Document:
         self._changed(dirty=True)
         return steps
 
+    def run_tick_until(self, deadline: float) -> tuple[list[StepInfo], bool]:
+        """Run the current tick until ``deadline`` (``time.perf_counter``); True once it
+        is complete. Views refresh only at the boundary (``revision``): a half-run tick
+        is never shown."""
+        steps, done = self.history.run_tick_until(deadline)
+        if done:
+            self._changed(dirty=True)
+        elif steps:
+            self.dirty = True
+        return steps, done
+
     def run_ticks(self, count: int) -> None:
         for _ in range(count):
             self.history.run_tick()

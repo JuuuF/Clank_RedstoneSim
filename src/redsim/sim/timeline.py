@@ -24,6 +24,7 @@ batches, and undo). See doc/decisions.md ADR-004 and ADR-022.
 
 from __future__ import annotations
 
+import time
 from bisect import bisect_left, insort
 from collections.abc import Callable
 
@@ -110,6 +111,21 @@ class Timeline:
             steps.append(self.step())
         steps.extend(self._recorded_edits_here())
         return steps
+
+    def run_tick_until(self, deadline: float) -> tuple[list[StepInfo], bool]:
+        """``run_tick`` in parts: stop when ``time.perf_counter()`` passes ``deadline``,
+        possibly mid-tick; call again to continue. Returns the steps run and whether the
+        tick boundary was reached (the run loop keeps frames coming during heavy ticks)."""
+        steps: list[StepInfo] = []
+        if self.engine.at_tick_boundary():
+            steps = self._recorded_edits_here()
+            steps.append(self.step())
+        while not self.engine.at_tick_boundary():
+            if steps and time.perf_counter() >= deadline:
+                return steps, False  # at least one step per call, so it always advances
+            steps.append(self.step())
+        steps.extend(self._recorded_edits_here())
+        return steps, True
 
     def _recorded_edits_here(self) -> list[StepInfo]:
         steps = []
@@ -215,7 +231,11 @@ class Timeline:
             if i == len(self.tick_starts) or self.tick_starts[i] != index:
                 insort(self.tick_starts, index)
         self.end = max(self.end, self.position)
-        if (self.position - self.start) % self.keyframe_interval == 0:
+        # A periodic keyframe at most once per tick (at its start), when the last one is
+        # ``keyframe_interval`` steps back: busy ticks have hundreds of steps.
+        if info.kind == "tick_start" and self.position - self._last_keyframe() >= (
+            self.keyframe_interval
+        ):
             self.keyframes.setdefault(self.position, self.engine.snapshot())
             self._thin_keyframes()
 
@@ -227,6 +247,9 @@ class Timeline:
         self.keyframes = {i: k for i, k in self.keyframes.items() if i <= index}
         self.tick_starts = [i for i in self.tick_starts if i < index]
         self.end = index
+
+    def _last_keyframe(self) -> int:
+        return max((k for k in self.keyframes if k <= self.position), default=self.start)
 
     def max_keyframes(self) -> int:
         """How many keyframes to keep: ``MAX_KEYFRAMES``, fewer for a large level."""

@@ -78,6 +78,9 @@ FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
 PLAY_INTERVAL_MS = 5
 RUN_BUDGET_SECONDS = 0.035
 PANEL_REFRESH_SECONDS = 0.1
+#: Running at a set speed: the longest one call may simulate before a frame is drawn
+#: (a heavy tick then takes several calls).
+STEP_BUDGET_SECONDS = 0.008
 #: Streaming an opened Minecraft world: how often, and the longest one call may read.
 STREAM_INTERVAL_MS = 60
 STREAM_BUDGET_S = 0.025
@@ -176,6 +179,7 @@ class MainWindow(QMainWindow):
         self.statusBar().addWidget(self.hint_bar, 1)
         self.statusBar().setSizeGripEnabled(False)
 
+        self._tick_steps: list[Any] = []  # steps of the tick being run in parts
         self.play_timer = QTimer(self)
         self.play_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self.play_timer.timeout.connect(self._play_tick)
@@ -793,7 +797,14 @@ class MainWindow(QMainWindow):
         state = self.document.state_at(hit.pos)
         self.hint_bar.show_hover(f"{hit.pos}  {state!r}")
 
+    def _finish_tick(self) -> None:
+        """Complete a tick the run loop left half-run (edits happen between ticks)."""
+        if not self.document.can_edit:
+            self._tick_steps.extend(self.document.run_tick())
+            self.last_steps, self._tick_steps = self._tick_steps, []
+
     def _edit(self, function: Any, *args: Any) -> None:
+        self._finish_tick()
         self.document.notice = ""
         try:
             function(*args)
@@ -1196,6 +1207,7 @@ class MainWindow(QMainWindow):
         else:
             self.play_timer.stop()
             self.viewport.tick_fraction = None
+            self._finish_tick()  # stopped mid-tick: finish it
             self.simulation.canvas.set_running(None)  # snap to the exact tick
             self._changed()
 
@@ -1216,17 +1228,25 @@ class MainWindow(QMainWindow):
         start = time.monotonic()
         warp = self.simulation.warp.isChecked()
         due = 1 << 30 if warp else self.pacer.due(start)
+        # Heavy ticks run in parts (engine steps within a short budget) so frames keep
+        # coming between them; the view only ever shows complete ticks.
+        budget = RUN_BUDGET_SECONDS if warp else STEP_BUDGET_SECONDS
+        deadline = time.perf_counter() + budget
         ran = 0
-        while ran < due:
+        while ran < due or not self.document.can_edit:
             if self.simulation.backwards:
                 if not self.document.tick_back():
                     self.simulation.stop()  # back at tick 0
                     break
                 self.last_steps = []
             else:
-                self.last_steps = self.document.run_tick()
+                steps, done = self.document.run_tick_until(deadline)
+                self._tick_steps.extend(steps)
+                if not done:
+                    break  # mid-tick: continue on the next call, after a frame
+                self.last_steps, self._tick_steps = self._tick_steps, []
             ran += 1
-            if time.monotonic() - start > RUN_BUDGET_SECONDS:
+            if time.perf_counter() > deadline:
                 break
         if not warp:
             self.pacer.ran(ran)

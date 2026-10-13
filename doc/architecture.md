@@ -303,6 +303,11 @@ uses the screen center). The renderer never writes world state.
   chunks (culling looks across borders). Only dirty chunks are rebuilt and re-uploaded.
   Chunks with moving pistons are rebuilt on every update, because their look follows the
   block entity's progress.
+- **Moving pistons** are not in the chunks: `ChunkedMesh.moving_mesh` draws them as one
+  small mesh every frame, at the partial tick (`Mesher.partial_tick`), grouped by state.
+- **Heavy ticks in parts.** At a set speed the run loop simulates at most
+  `STEP_BUDGET_SECONDS` (8 ms) per call (`Timeline.run_tick_until`), possibly stopping
+  mid-tick; meshes refresh only at tick boundaries, edits and pausing finish the tick.
 - **Vectorized geometry.** Each distinct face (box, direction, color) is a cached template of
   6 vertices; a block state maps to its template ids. Building a chunk is one lookup per
   block, then a numpy gather plus offset.

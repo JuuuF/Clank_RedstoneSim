@@ -84,13 +84,14 @@ class PlacementContext:
 class BlockState:
     """An interned, immutable block state (``BlockBehaviour.BlockStateBase``)."""
 
-    __slots__ = ("block", "values", "_neighbors", "_shape_cache")
+    __slots__ = ("block", "values", "_neighbors", "_shape_cache", "_repr")
 
     def __init__(self, block: Block, values: tuple[Any, ...]) -> None:
         self.block = block
         self.values = values
         self._neighbors: dict[tuple[str, Any], BlockState] = {}
         self._shape_cache: dict[str, Shape] = {}
+        self._repr: str | None = None  # states are immutable: the text is made once
 
     # --- StateHolder -------------------------------------------------------------------
     def get(self, prop: Property) -> Any:
@@ -261,8 +262,10 @@ class BlockState:
         return props
 
     def __repr__(self) -> str:
-        props = ",".join(f"{k}={v}" for k, v in self.properties_dict().items())
-        return f"{self.block.id}[{props}]" if props else self.block.id
+        if self._repr is None:
+            props = ",".join(f"{k}={v}" for k, v in self.properties_dict().items())
+            self._repr = f"{self.block.id}[{props}]" if props else self.block.id
+        return self._repr
 
 
 class StateDefinition:

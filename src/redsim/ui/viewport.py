@@ -81,6 +81,7 @@ from redsim.world.properties import POWER
 from redsim.world.rotation import mirror_state, rotate_state, upside_down
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
+MOVING_KEY = ("moving",)  # the renderer's mesh slot for moving pistons
 FRAME_INTERVAL_MS = 16  # ~60 frames per second while something moves
 BLOCKED_TINT = (1.0, 0.22, 0.22)  # a preview that cannot be placed: red
 SIGN_TEXT_DISTANCE = 16.0  # blocks: sign text shows (and fades out) within this
@@ -278,6 +279,7 @@ class Viewport(QOpenGLWidget):
         self.build_face = Direction.UP  # the face BUILD mode places against
         self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
         self.hovered_label: Pos | None = None  # the F3 label under the cursor
+        self._moving_shown = False  # the moving-piston mesh holds something
         self._label_rects: list[tuple[QRect, Pos]] = []
         self._label_range: LabelRange | None = None  # F3's label range slider (lazy)
         self._red_meshes: dict[BlockState, np.ndarray] = {}  # blocked previews
@@ -640,7 +642,8 @@ class Viewport(QOpenGLWidget):
         renderer = self.renderer
         if renderer is None:
             return
-        if self._mesh_revision != self.document.revision:
+        at_boundary = self.document.can_edit  # mid-tick (a heavy tick run in parts): keep
+        if self._mesh_revision != self.document.revision and at_boundary:
             # Only chunks whose blocks (or neighbors) changed are rebuilt and re-uploaded.
             chunks = self.world_mesh.chunks
             for key in self.world_mesh.update(self.document.level):
@@ -649,16 +652,19 @@ class Viewport(QOpenGLWidget):
                     renderer.remove_chunk(key)
                 else:
                     renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
-            for stale in [stale for stale in renderer.chunks if stale not in chunks]:
+            for stale in [
+                stale for stale in renderer.chunks if stale not in chunks and stale != MOVING_KEY
+            ]:
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
         partial = self.tick_fraction() if self.tick_fraction is not None else 1.0
-        if partial != self.world_mesh.mesher.partial_tick:
-            self.world_mesh.mesher.partial_tick = partial
-            for key in self.world_mesh.update_animated(self.document.level):
-                mesh = self.world_mesh.chunks.get(key)
-                if mesh is not None:
-                    renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
+        world = self.world_mesh
+        if (world.has_moving or self._moving_shown) and at_boundary:
+            # Moving pistons: one small mesh of their own, every frame while they move.
+            world.mesher.partial_tick = partial
+            moving = world.moving_mesh(self.document.level)
+            renderer.set_chunk(MOVING_KEY, moving.opaque, moving.translucent, moving.solid)
+            self._moving_shown = world.has_moving
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
         renderer.upload_outline(self._outline_triangles())

@@ -70,6 +70,8 @@ class Mesh:
     translucent: FloatArray
     #: Contains moving pistons, whose look changes every tick without a block change.
     animated: bool = False
+    #: Moving pistons left out of this mesh (``build(..., moving=False)``).
+    moving: list[Pos] = field(default_factory=list)
     #: Full opaque cubes (building blocks), kept apart so X-ray can make them see-through.
     solid: FloatArray = field(default_factory=lambda: np.zeros((0, 9), dtype=np.float32))
 
@@ -232,6 +234,7 @@ class Mesher:
         #: How far the running simulation is into the next tick (0..1): moving blocks are
         #: drawn between their last two positions, like the game's partial tick.
         self.partial_tick = 1.0  # paused: the state at the end of the tick
+        self._pieces: dict[BlockState, tuple[np.ndarray, np.ndarray]] = {}
 
     def render_progress(self, entity: PistonMovingBlockEntity) -> float:
         """``getProgress(partialTick)``: between the last and the current progress."""
@@ -309,8 +312,10 @@ class Mesher:
         self._models[state] = model
         return model
 
-    def build(self, level: Level, positions: Iterable[Pos]) -> Mesh:
-        """Mesh of the blocks at ``positions`` (faces against full neighbors are culled)."""
+    def build(self, level: Level, positions: Iterable[Pos], moving: bool = True) -> Mesh:
+        """Mesh of the blocks at ``positions`` (faces against full neighbors are culled).
+        With ``moving=False`` moving pistons are left out and listed in ``Mesh.moving``
+        (the viewport draws them apart, every frame)."""
         states = level.blocks
         models = self._models
         is_full = self._is_full
@@ -389,44 +394,97 @@ class Mesher:
             self._templates = np.stack(self._template_rows)
         opaque = [self._assemble(o_ids, o_pos, o_counts, o_shade)]
         translucent = [self._assemble(t_ids, t_pos, t_counts)]
-        for pos in dynamic:
-            self._moving(level, pos, opaque, translucent)
+        if moving:
+            for pos in dynamic:
+                self._moving(level, pos, opaque, translucent)
         solid = self._assemble(s_ids, s_pos, s_counts, s_shade)
-        return Mesh(_stack(opaque), _stack(translucent), animated=bool(dynamic), solid=solid)
+        return Mesh(
+            _stack(opaque),
+            _stack(translucent),
+            animated=bool(dynamic) and moving,
+            solid=solid,
+            moving=[] if moving else dynamic,
+        )
+
+    def _pieces_at(
+        self, level: Level, pos: Pos
+    ) -> list[tuple[BlockState, tuple[float, float, float]]] | None:
+        """What a moving piston at ``pos`` shows, with textures: (state, where its model
+        starts); None without textures (the box path)."""
+        entity = level.get_block_entity(pos, create=False)
+        if self.assets is None or not isinstance(entity, PistonMovingBlockEntity):
+            return None
+        # ``PistonHeadRenderer``: offset = step × getExtendedProgress(getProgress(partial)).
+        progress = entity.extended_progress(self.render_progress(entity))
+        sx, sy, sz = entity.direction.step
+        x, y, z = pos
+        shifted = (x + sx * progress, y + sy * progress, z + sz * progress)
+        if entity.is_source and not entity.extending:
+            sticky = entity.moved_state.block.id == "minecraft:sticky_piston"
+            head = blocks.PISTON_HEAD.default_state.with_(FACING, entity.direction).with_(
+                PISTON_TYPE, "sticky" if sticky else "normal"
+            )
+            base = entity.moved_state.with_(EXTENDED, True)
+            return [(base, (float(x), float(y), float(z))), (head, shifted)]
+        return [(entity.moved_state, shifted)]
+
+    def _piece_rows(self, state: BlockState) -> tuple[np.ndarray, np.ndarray]:
+        """All vertices of ``state``'s model at the origin (opaque, translucent), cached:
+        a moving block is then one copy and one add per frame."""
+        cached = self._pieces.get(state)
+        if cached is None:
+            model = self._models.get(state) or self._model(state)
+            parts = []
+            for group in (model.opaque, model.translucent):
+                ids = [i for slot in group for i in slot]
+                rows = (
+                    np.stack([self._template_rows[i] for i in ids]).reshape(-1, VERTEX_SIZE)
+                    if ids
+                    else np.zeros((0, VERTEX_SIZE), dtype=np.float32)
+                )
+                parts.append(rows)
+            cached = self._pieces[state] = (parts[0], parts[1])
+        return cached
+
+    def moving_mesh(self, level: Level, positions: Iterable[Pos]) -> Mesh:
+        """Only the moving pistons at ``positions``, at the current partial tick."""
+        opaque: list[np.ndarray] = []
+        translucent: list[np.ndarray] = []
+        grouped: dict[BlockState, list[tuple[float, float, float]]] = {}
+        for pos in positions:
+            state = level.blocks.get(pos)
+            if state is None or state.block is not blocks.MOVING_PISTON:
+                continue
+            pieces = self._pieces_at(level, pos)
+            if pieces is None:
+                self._moving(level, pos, opaque, translucent)
+                continue
+            for piece, at in pieces:
+                grouped.setdefault(piece, []).append(at)
+        # One numpy operation per kind of moving block: its model, repeated at every spot.
+        for piece, spots in grouped.items():
+            shifts = np.array(spots, dtype=np.float32)[:, None, :]
+            for rows, target in zip(self._piece_rows(piece), (opaque, translucent), strict=True):
+                if len(rows):
+                    moved = np.repeat(rows[None], len(spots), axis=0)
+                    moved[:, :, :3] += shifts
+                    target.append(moved.reshape(-1, rows.shape[1]))
+        return Mesh(_stack(opaque), _stack(translucent), animated=bool(opaque or translucent))
 
     def _moving(
         self, level: Level, pos: Pos, opaque: list[np.ndarray], translucent: list[np.ndarray]
     ) -> None:
         """Blocks moved by a piston: drawn at their progress, never culled against."""
         origin = np.array(pos, dtype=np.float32)
-        entity = level.get_block_entity(pos, create=False)
-        if self.assets is not None and isinstance(entity, PistonMovingBlockEntity):
-            # ``PistonHeadRenderer``: offset = step × getExtendedProgress(getProgress(partial)).
-            progress = entity.extended_progress(self.render_progress(entity))
-            shift = np.array(entity.direction.step, dtype=np.float32) * progress
-            pieces = [(entity.moved_state, shift)]
-            if entity.is_source and not entity.extending:
-                piston = (
-                    "sticky"
-                    if entity.moved_state.block.id == "minecraft:sticky_piston"
-                    else "normal"
-                )
-                head = blocks.PISTON_HEAD.default_state.with_(FACING, entity.direction).with_(
-                    PISTON_TYPE, piston
-                )
-                pieces = [(entity.moved_state.with_(EXTENDED, True), np.zeros(3, np.float32))]
-                pieces.append((head, shift))
-            for state, offset in pieces:
-                model = self._models.get(state) or self._model(state)
-                for group, target in ((model.opaque, opaque), (model.translucent, translucent)):
-                    ids = [i for slot in group for i in slot]
-                    if ids:
-                        rows = np.stack([self._template_rows[i] for i in ids]).reshape(
-                            -1, VERTEX_SIZE
-                        )
-                        rows = rows.copy()
-                        rows[:, :3] += origin + offset
-                        target.append(rows)
+        pieces = self._pieces_at(level, pos)
+        if pieces is not None:
+            for state, shift in pieces:
+                solid_rows, clear_rows = self._piece_rows(state)
+                for rows, target in ((solid_rows, opaque), (clear_rows, translucent)):
+                    if len(rows):
+                        moved = rows.copy()
+                        moved[:, :3] += np.array(shift, dtype=np.float32)
+                        target.append(moved)
             return
         moving = boxes_at(level, pos)
         noise = block_noise(pos) if is_full_opaque(moving) else 1.0
@@ -502,9 +560,9 @@ class ChunkedMesh:
     Changes come from the level's touched positions (``Level.take_touched``) while it is
     the same level; a different level (a timeline seek swaps in a restored copy, or a new
     document) is diffed against the block map seen last. A changed block dirties its own chunk and
-    the chunks of its 6 neighbors (face culling looks across chunk borders). Chunks holding
-    moving pistons are rebuilt on every update because their look follows the block
-    entity's progress.
+    the chunks of its 6 neighbors (face culling looks across chunk borders). Moving pistons
+    are not part of the chunks: ``moving_mesh`` draws them apart, rebuilt every frame
+    while they move, so many moving pistons cost only their own few faces.
     """
 
     def __init__(self, mesher: Mesher | None = None) -> None:
@@ -513,23 +571,24 @@ class ChunkedMesh:
         self._known: dict[Pos, BlockState] = {}
         self._level: Level | None = None  # the level ``_known`` follows
         self._members: dict[ChunkKey, set[Pos]] = {}
-        self._animated: set[ChunkKey] = set()
+        self._moving: dict[ChunkKey, list[Pos]] = {}  # moving pistons per chunk
 
     def reset(self) -> None:
         self.chunks.clear()
         self._known = {}
         self._level = None
         self._members.clear()
-        self._animated.clear()
+        self._moving.clear()
 
-    def update_animated(self, level: Level) -> set[ChunkKey]:
-        """Rebuild only the chunks with moving pistons (between ticks, as the partial tick
-        advances); returns their keys."""
-        for key in self._animated:
-            positions = self._members.get(key)
-            if positions:
-                self.chunks[key] = self.mesher.build(level, positions)
-        return set(self._animated)
+    def moving_mesh(self, level: Level) -> Mesh:
+        """All moving pistons as one small mesh, drawn apart from the chunks and rebuilt
+        every frame while they move (the chunks themselves stay as they are)."""
+        positions = [pos for chunk in self._moving.values() for pos in chunk]
+        return self.mesher.moving_mesh(level, positions)
+
+    @property
+    def has_moving(self) -> bool:
+        return bool(self._moving)
 
     def update(self, level: Level) -> set[ChunkKey]:
         """Bring the chunks up to date; returns the keys whose mesh changed or was removed."""
@@ -551,7 +610,7 @@ class ChunkedMesh:
             changed |= {pos for pos, _ in known.items() ^ current.items()}
             self._known = dict(current)
             self._level = level
-        dirty = set(self._animated)
+        dirty: set[ChunkKey] = set()
         if changed:
             members = self._members
             for pos in changed:
@@ -566,17 +625,19 @@ class ChunkedMesh:
                 dirty.add(key)
                 for dx, dy, dz in _STEPS:
                     dirty.add(chunk_of((x + dx, y + dy, z + dz)))
-        self._animated = set()
         for key in dirty:
             positions = self._members.get(key)
             if not positions:
                 self._members.pop(key, None)
                 self.chunks.pop(key, None)
+                self._moving.pop(key, None)
                 continue
-            mesh = self.mesher.build(level, positions)
+            mesh = self.mesher.build(level, positions, moving=False)
             self.chunks[key] = mesh
-            if mesh.animated:
-                self._animated.add(key)
+            if mesh.moving:
+                self._moving[key] = mesh.moving
+            else:
+                self._moving.pop(key, None)
         return dirty
 
 

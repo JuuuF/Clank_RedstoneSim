@@ -303,6 +303,16 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
 12. ☑ **Selection side tint flickers** where it meets blocks (z-fighting): draw the
     highlight box slightly larger than its contents (`BODY_MARGIN` = 0.02 blocks).
 13. ☐ **Multiple selections:** Shift+drag adds another selection; **Alt+A** removes all.
+15. ☑ **Frame rate with many moving pistons** (owner: 15–20 fps with bigger
+    contraptions). Measures: moving pistons are one small mesh of their own, built per
+    frame by state groups in one numpy operation (784 moving blocks: 2.4 ms per frame,
+    was 26 ms of chunk rebuilds); heavy ticks run in parts within an 8 ms budget per
+    call so frames keep coming (`Timeline.run_tick_until`, `STEP_BUDGET_SECONDS`; the
+    view refreshes only at tick boundaries, edits finish the tick first); block-state
+    text is cached and periodic keyframes are taken at most once per tick (a 168-piston
+    observer-clock test: 50 → 34 ms per tick). The engine is pure Python: a contraption
+    whose ticks take longer than 50 ms cannot run at 20 ticks/s; frames stay smooth, the
+    tick rate drops.
 14. ☐ **Favourite block palettes** like the creative mode's saved hotbars, instead of
     the recent-blocks strip.
 

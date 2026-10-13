@@ -209,3 +209,28 @@ def test_markers_follow_tick_zero_and_its_undo(tmp_path: Path) -> None:
     assert Document.open(tmp_path / "markers.redsim.json").markers == {3: "check"}
     doc.set_marker(3, "")
     assert doc.visible_markers() == {}
+
+
+def test_a_tick_run_in_parts_ends_like_a_whole_one() -> None:
+    from redsim.editor.document import Document
+    from redsim.world import blocks
+
+    def build() -> Document:
+        doc = Document.new_flat()
+        doc.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=up]"))
+        doc.setblock((0, 2, 0), blocks.parse_state("stone"))
+        doc.run_ticks(1)
+        doc.setblock((1, 1, 0), blocks.parse_state("redstone_block"))
+        return doc
+
+    whole, parts = build(), build()
+    for _ in range(4):
+        whole.run_tick()
+        revision = parts.revision
+        steps, done = parts.run_tick_until(0.0)  # the deadline has passed: one step
+        assert len(steps) >= 1 and (done or parts.revision == revision)  # no half view
+        while not done:
+            more, done = parts.run_tick_until(0.0)
+            steps += more
+        assert parts.level.blocks == whole.level.blocks
+        assert parts.engine.game_time == whole.engine.game_time
