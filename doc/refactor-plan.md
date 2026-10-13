@@ -94,4 +94,9 @@ a line to the log.**
   the tests from now on).
 - Owner requests during the night: dynamic or position-only labels for animated lines;
   muting pulses (items 9a, 9b).
+- Refactor: `ui/main_window.py` (1 650 lines) split into `main_window.py` (setup, menus,
+  modes, refresh, core editing; 990), `window_files.py`, `window_regions.py`,
+  `window_time.py` (run loop, stepping, history), `window_sequence.py` and
+  `window_common.py`; same technique as the viewport. Checks pass; the run loop runs at
+  20 ticks/s in a live check.
 

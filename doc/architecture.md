@@ -273,7 +273,7 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | `inventory.py`, `icons.py`, `block_search.py` | Trackmania-style inventory bar (folders, path, recent blocks), isometric block previews from the block models, quick block search |
 | `timeline.py` | Blender-like transport and timeline: ruler, keyframe rows (move/merge/delete edit batches, ADR-022), monitor tracks |
 | `hints.py`, `debug_screen.py`, `gizmos.py`, `preferences.py` | Hint bar, F3 screen text, selection gizmos, saved preferences |
-| `main_window.py` | Wires panels to the `Document`; menus and shortcuts; run loop; streaming an opened Minecraft world around the camera (`_stream_world`) |
+| `main_window.py` | Wires panels to the `Document`; menus and shortcuts; modes; refresh; core edits. Mixins: `window_files.py` (new/open/save, Minecraft worlds and chunk streaming), `window_regions.py` (selections, prefabs, groups), `window_time.py` (run loop, stepping, history, markers, undo), `window_sequence.py` (pulses, line groups); constants in `window_common.py` |
 | `app.py` | Entry point; selects `xcb` under Wayland; requests an OpenGL 3.3 core context |
 
 Controls: vim-like modes (NORMAL/BUILD/SELECT), an orbit camera around a drawn pivot and a

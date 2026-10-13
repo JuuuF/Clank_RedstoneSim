@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-import json
-import math
 import time
-from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QByteArray, QEvent, QObject, Qt, QTimer, QUrl
@@ -14,7 +11,6 @@ from PySide6.QtGui import (
     QAction,
     QActionGroup,
     QCloseEvent,
-    QColor,
     QCursor,
     QDesktopServices,
     QKeyEvent,
@@ -23,13 +19,9 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QAbstractSpinBox,
     QApplication,
-    QColorDialog,
     QDockWidget,
-    QFileDialog,
-    QInputDialog,
     QLineEdit,
     QMainWindow,
-    QMessageBox,
     QSplitter,
     QTabWidget,
     QToolButton,
@@ -39,16 +31,12 @@ from PySide6.QtWidgets import (
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.editor import sources
-from redsim.editor.clipboard import Prefab, Region
+from redsim.editor.clipboard import Region
 from redsim.editor.document import Document, EditError
-from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
-from redsim.mcworld.importer import open_world, stream_chunks
-from redsim.mcworld.writer import save_world_copy
 from redsim.ui import pixel_icons, theme
 from redsim.ui.block_popup import BlockPopup
 from redsim.ui.block_search import BlockSearch
-from redsim.ui.camera import Camera
 from redsim.ui.debug_screen import world_lines
 from redsim.ui.geometry import Hit
 from redsim.ui.hints import Context, HintBar, context_hints
@@ -71,65 +59,26 @@ from redsim.ui.preferences import load_window_layout, save_window_layout
 from redsim.ui.sequence_panel import SequencePanel
 from redsim.ui.timeline import TimelineBar
 from redsim.ui.viewport import ANIMATE, BUILD, MODE_COLORS, NORMAL, SELECT, Viewport
+from redsim.ui.window_common import (
+    PANEL_REFRESH_SECONDS,
+    STREAM_INTERVAL_MS,
+    TIMELINE_EXTRA,
+    history_label,
+)
+from redsim.ui.window_files import FileActions
+from redsim.ui.window_regions import RegionActions
+from redsim.ui.window_sequence import SequenceActions
+from redsim.ui.window_time import TimeActions
 from redsim.ui.world_picker import (
-    MINECRAFT,
     SIMULATION,
-    WorldPicker,
-    remember_world,
-    save_thumbnail,
 )
 from redsim.world import blocks
 from redsim.world.block import Block
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
-from redsim.world.rotation import default_pivot2, rotate_state
-
-FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
-#: Run loop: timer period, the longest it may simulate in one go (keeps the UI responsive),
-#: and how often the side panels refresh while running.
-PLAY_INTERVAL_MS = 5
-RUN_BUDGET_SECONDS = 0.035
-PANEL_REFRESH_SECONDS = 0.1
-TIMELINE_EXTRA = 40  # pixels beyond the timeline's lines (room for a few more)
-#: Running at a set speed: the longest one call may simulate before a frame is drawn
-#: (a heavy tick then takes several calls).
-STEP_BUDGET_SECONDS = 0.008
-#: Streaming an opened Minecraft world: how often, and the longest one call may read.
-STREAM_INTERVAL_MS = 60
-STREAM_BUDGET_S = 0.025
+from redsim.world.rotation import rotate_state
 
 
-def _plain_cube(block_id: str) -> bool:
-    """A foreign block that behaves like any full cube (quartz, bricks, …): nothing to warn
-    about."""
-    from redsim.world.blocks.foreign import foreign_block
-
-    name = block_id.split(":", 1)[-1]
-    block = foreign_block(block_id, {})
-    plain_names = ("_block", "bricks", "planks", "wool", "concrete", "terracotta", "stone")
-    components = ("note_block", "target", "observer", "dispenser", "dropper", "crafter", "bulb")
-    return (
-        block.full
-        and block.conductor.value == "default"
-        and name.endswith(plain_names)
-        and not any(part in name for part in components)
-    )
-
-
-#: Steps listed under Edit → Undo History.
-HISTORY_MENU_SIZE = 25
-
-
-def history_label(label: str) -> str:
-    """An edit label for people: "place redstone_wire" → "Place Redstone Dust"."""
-    verb, _, rest = (label or "edit").partition(" ")
-    if rest and " " not in rest and f"minecraft:{rest}" in blocks.REGISTRY:
-        rest = block_name(f"minecraft:{rest}")
-    else:
-        rest = rest.replace("_", " ")
-    return f"{verb[:1].upper()}{verb[1:]} {rest}".strip()
-
-
-class MainWindow(QMainWindow):
+class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMainWindow):
     def __init__(self, document: Document | None = None, keymap: Keymap | None = None) -> None:
         super().__init__()
         app = QApplication.instance()
@@ -663,78 +612,6 @@ class MainWindow(QMainWindow):
         setattr(self.viewport, attribute, on)
         self.viewport.update()
 
-    def _add_pulse(self, pos: Pos) -> None:
-        """ANIMATE click: power the position from the current tick (tick 1 at the build)."""
-        tick = max(1, self.document.tick)
-        strength, ticks = self.sequence.strength.value(), self.sequence.duration.value()
-        self._edit(self.document.add_pulse, pos, tick, strength, ticks)
-        self.viewport.flash(pos)
-        where = " ".join(str(v) for v in pos)
-        start = "" if self.document.tick else " (tick 0 is the build: from tick 1)"
-        self._message(
-            f"Pulse at {where}: strength {strength} for {ticks} ticks from tick {tick}{start}."
-        )
-        self.tabs.setCurrentWidget(self.sequence)
-
-    def _remove_pulse(self, pos: Pos) -> None:
-        """ANIMATE right click: remove the pulses at the position running at this tick."""
-        found = self.sequence.pulse_at(self.document.pulses(), pos, self.document.tick)
-        if not found:
-            self._message("No pulse there at this tick.", error=True)
-            return
-        self._edit(self.document.delete_edits, [p.index for p in found])
-
-    def _move_line(self, pos: Pos, group: int, row: int) -> None:
-        """A Powered line dragged to another place (or chosen group)."""
-        self.document.lines.move(pos, group, row)
-        self._lines_changed()
-
-    def _lines_changed(self) -> None:
-        self.document.dirty = True
-        self.document.revision += 1
-        self._changed()
-
-    def _new_line_group(self, pos: Pos | None = None) -> None:
-        name, ok = QInputDialog.getText(self, "New group", "Name of the group:", text="Inputs")
-        if ok and name.strip():
-            self.document.lines.add_group(name.strip(), [pos] if pos is not None else [])
-            self._lines_changed()
-
-    def _group_request(self, action: str, index: int) -> None:
-        """The timeline's group actions (fold, rename, color, order, new, delete)."""
-        lines = self.document.lines
-        if not 0 <= index < len(lines.groups):
-            return
-        group = lines.groups[index]
-        if action == "toggle":
-            group.collapsed = not group.collapsed
-        elif action == "rename":
-            name, ok = QInputDialog.getText(self, "Rename group", "Name:", text=group.name)
-            if not ok or not name.strip():
-                return
-            group.name = name.strip()
-        elif action == "color":
-            color = QColorDialog.getColor(QColor(group.color), self, "Group color")
-            if not color.isValid():
-                return
-            group.color = color.name()
-        elif action in ("up", "down"):
-            lines.move_group(index, -1 if action == "up" else 1)
-        elif action == "new":
-            self._new_line_group()
-            return
-        elif action == "delete":
-            lines.remove_group(index)
-        self._lines_changed()
-
-    def _show_pulse(self, pos: Pos, tick: int) -> None:
-        """A pulse clicked in the Sequence tab: go to its tick and flash its position."""
-        self.simulation.stop()
-        self._finish_tick()
-        self.document.seek_tick(tick)
-        self.viewport.flash(pos)
-        self._changed()
-
     def _open_block_popup(self) -> None:
         """The inspector of the block under the cursor (else the selected one) as a popup
         beside the cursor."""
@@ -876,21 +753,6 @@ class MainWindow(QMainWindow):
             self.document, rates, view, viewport.mode, viewport.region, viewport.region_locked
         )
 
-    def _set_tick_zero(self) -> None:
-        self._history_edit(self.document.set_tick_zero)
-
-    def _history_edit(self, function: Any, *args: Any) -> None:
-        """Keyframe operations re-run the history; the run stops first."""
-        self.simulation.stop()
-        self.last_steps = []
-        self._edit(function, *args)
-
-    def _scrub(self, tick: int) -> None:
-        self.simulation.stop()
-        if self.document.seek_tick(tick):
-            self.last_steps = []
-            self._changed()
-
     def _set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
         self._edit(self.document.set_container_slot, pos, slot, item, count)
 
@@ -928,12 +790,6 @@ class MainWindow(QMainWindow):
             return
         state = self.document.state_at(hit.pos)
         self.hint_bar.show_hover(f"{hit.pos}  {state!r}")
-
-    def _finish_tick(self) -> None:
-        """Complete a tick the run loop left half-run (edits happen between ticks)."""
-        if not self.document.can_edit:
-            self._tick_steps.extend(self.document.run_tick())
-            self.last_steps, self._tick_steps = self._tick_steps, []
 
     def _edit(self, function: Any, *args: Any) -> None:
         self._finish_tick()
@@ -1058,406 +914,11 @@ class MainWindow(QMainWindow):
         self.document.assign_section(pos, name)
         self._changed()
 
-    def _undo(self) -> None:
-        self.simulation.stop()
-        if not self.document.undo():
-            self._message("Nothing to undo.")
-        self._changed()
-
-    def _fill_history_menu(self) -> None:
-        """Edit → Undo History: the latest steps, newest first; choosing one undoes it and
-        everything after it (like Blender's undo history)."""
-        menu = self._history_menu
-        menu.clear()
-        labels = self.document.undo_labels
-        if not labels:
-            menu.addAction("Nothing to undo").setEnabled(False)
-            return
-        for count, label in enumerate(labels[:HISTORY_MENU_SIZE], start=1):
-            action = menu.addAction(history_label(label))
-            action.setToolTip(f"Undo {count} step{'s' if count > 1 else ''}")
-            action.triggered.connect(lambda _=False, n=count: self._undo_to(n))
-        if len(labels) > HISTORY_MENU_SIZE:
-            menu.addAction(f"… {len(labels) - HISTORY_MENU_SIZE} older steps").setEnabled(False)
-
-    def _add_marker(self) -> None:
-        tick = self.document.tick
-        name, ok = QInputDialog.getText(
-            self, "Add marker", f"Name of the marker at tick {tick}:", text=f"tick {tick}"
-        )
-        if ok:
-            self._name_marker(tick, name.strip() or f"tick {tick}")
-
-    def _rename_marker(self, tick: int) -> None:
-        current = self.document.markers.get(tick, "")
-        name, ok = QInputDialog.getText(self, "Rename marker", f"Tick {tick}:", text=current)
-        if ok:
-            self._name_marker(tick, name.strip())
-
-    def _name_marker(self, tick: int, name: str) -> None:
-        """Set, rename (or with an empty name delete) the marker at ``tick``."""
-        self.document.set_marker(tick, name)
-        self._changed()
-
-    def _undo_to(self, count: int) -> None:
-        self.simulation.stop()
-        if self.document.undo_to(count):
-            self._message(f"Undid {count} step{'s' if count > 1 else ''}.")
-        self._changed()
-
-    def _redo(self) -> None:
-        if not self.document.redo():
-            self._message("Nothing to redo.")
-        self._changed()
-
     # ------------------------------------------------------------------ regions
-    def _region_changed(self, region: Region | None) -> None:
-        if region is not None:
-            size = region.size
-            self._message(f"Selected {size[0]}×{size[1]}×{size[2]} blocks.")
-
-    def _region(self) -> Region | None:
-        if self.viewport.region is None:
-            self._message(
-                "No selection: press V (select mode), then click or drag over blocks.", error=True
-            )
-        return self.viewport.region
-
-    def _copy(self) -> None:
-        region = self._region()
-        if region is not None:
-            prefab = self.document.copy(region)
-            self._message(f"Copied {prefab.non_air_count} blocks (with air: {len(prefab.blocks)}).")
-
-    def _paste(self) -> None:
-        """Ctrl+V: preview the clipboard at the cursor; a left click places it."""
-        if self.document.clipboard is None:
-            self._message("The clipboard is empty.", error=True)
-            return
-        self.viewport.begin_paste(self.document.clipboard)
-        self._message("Paste: left click places it · R rotates · right click or Esc cancels.")
-
-    def _paste_at(self, origin: Pos) -> None:
-        self._edit(self.document.paste, origin)
-
-    def _move_region(self, region: Region, by: Pos, copy: bool) -> None:
-        """A dragged selection: ``/clone … replace move`` (or ``force`` for a copy)."""
-        self.document.notice = ""
-        try:
-            moved = self.document.clone_region(region, by, "force" if copy else "move")
-        except EditError as exc:
-            self._message(str(exc), error=True)
-        else:
-            self.viewport.region = moved
-            verb = "Copied" if copy else "Moved"
-            self._message(f"{verb} the selection by {by[0]}, {by[1]}, {by[2]}.")
-        self._changed()
-
-    def _rotate(self, quarter_turns: int) -> None:
-        """R / Shift+R: the paste preview if one is shown, else the selection in place,
-        else the clipboard."""
-        viewport, document = self.viewport, self.document
-        direction = "clockwise" if quarter_turns == 1 else "counter-clockwise"
-        if viewport.mode == BUILD and viewport.paste_preview is None:  # the block to place
-            variant = viewport.vary_build(turns=quarter_turns)
-            self._message(
-                f"Block to place: {variant} (R / Shift+R turn, H mirrors, Shift+H flips)."
-            )
-        elif viewport.paste_preview is not None and document.clipboard is not None:
-            document.rotate_clipboard(quarter_turns)
-            viewport.begin_paste(document.clipboard)
-            self._message(f"Paste rotated 90° {direction}.")
-        elif viewport.region is not None:
-            self._transform(quarter_turns=quarter_turns)
-        elif document.clipboard is not None:
-            document.rotate_clipboard(quarter_turns)
-            self._message(f"Clipboard rotated 90° {direction}.")
-        else:
-            self._message("Nothing to rotate: select a box (V) or copy something first.")
-
-    def _flip(self, depth: bool) -> None:
-        """H: mirror left/right as seen from the camera; Shift+H: front/back."""
-        right = self.viewport.camera.right()
-        sideways = "x" if abs(right[0]) >= abs(right[2]) else "z"
-        axis = ("z" if sideways == "x" else "x") if depth else sideways
-        viewport, document = self.viewport, self.document
-        if viewport.mode == BUILD and viewport.paste_preview is None:  # the block to place
-            variant = viewport.vary_build(mirror=None if depth else axis, flip=depth)
-            self._message(f"Block to place: {variant} (Shift+H turns it upside down).")
-        elif viewport.paste_preview is not None and document.clipboard is not None:
-            document.mirror_clipboard(axis)
-            viewport.begin_paste(document.clipboard)
-            self._message("Paste flipped.")
-        elif viewport.region is not None:
-            self._transform(mirror=axis)
-        else:
-            self._message("Nothing to flip: select a box (V) first.")
-
-    def _transform(self, quarter_turns: int = 0, mirror: str | None = None) -> None:
-        region = self.viewport.region
-        if region is None:
-            return
-        # Keep turning around the same pivot while the same selection is turned again, so
-        # R then Shift+R (or R four times) returns exactly to the start.
-        last = self._rotation_pivot
-        pivot = last[1] if last is not None and last[0] == region else None
-        if pivot is None:
-            pivot = default_pivot2(region.low, region.high)
-        try:
-            moved = self.document.transform_region(region, quarter_turns, mirror, pivot)
-            self.viewport.region = moved
-            self._rotation_pivot = (moved, pivot)
-        except EditError as exc:
-            self._message(str(exc), error=True)
-        else:
-            what = f"rotated {quarter_turns * 90}°" if quarter_turns else "flipped"
-            self._message(f"Selection {what} in place (no block updates).")
-        self._changed()
-
-    def _gizmo_transform(self, quarter_turns: int, mirror: str | None) -> None:
-        if mirror is not None:
-            self._transform(mirror=mirror)
-        else:
-            self._rotate(quarter_turns)
-
-    def _toggle_lock(self) -> None:
-        """Enter (like GIMP): lock the selection so clicks cannot replace it; rotate, flip,
-        move and stack keep working on it."""
-        viewport = self.viewport
-        if viewport.region is None:
-            self._message("Nothing to lock: select a box first (V).")
-            return
-        viewport.region_locked = not viewport.region_locked
-        viewport.update()
-        state = "locked (Enter or Esc unlocks)" if viewport.region_locked else "unlocked"
-        self._message(f"Selection {state}.")
-
-    def _stack_region(self, region: Region, step: Pos, count: int) -> None:
-        try:
-            self.viewport.region = self.document.stack_region(region, step, count)
-        except EditError as exc:
-            self._message(str(exc), error=True)
-        else:
-            self._message(f"Stacked {count} copies (no block updates).")
-        self._changed()
-
-    def _delete_region(self) -> None:
-        """Del: clear every selection, as one undo step (in BUILD mode, right click removes
-        single blocks)."""
-        if self._region() is None and not self.viewport.extra_regions:
-            return
-        with self.document.batch():
-            for region in self.viewport.all_regions():
-                self._edit(self.document.fill, region, blocks.AIR.default_state)
-
-    def _clear_selections(self) -> None:
-        self.viewport.clear_selections()
-        self._changed()
-
-    def _save_prefab(self) -> None:
-        region = self._region()
-        if region is None:
-            return
-        name, ok = QInputDialog.getText(self, "Save prefab", "Name:")
-        if ok and name:
-            self.document.save_prefab(name, region)
-            self._changed()
-
-    def _load_prefab(self, name: str) -> None:
-        self.document.clipboard = self.document.prefabs[name]
-        self._message(f"Prefab '{name}' is in the clipboard: Ctrl+V to paste.")
-
-    def _delete_prefab(self, name: str) -> None:
-        self.document.prefabs.pop(name, None)
-        self._changed()
-
-    def _import_prefab(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Import prefab", "", "Prefabs (*.json)")
-        if path:
-            try:
-                prefab = Prefab.from_json(json.loads(Path(path).read_text()))
-            except (OSError, ValueError, KeyError) as exc:
-                QMessageBox.critical(self, "Cannot import prefab", str(exc))
-                return
-            self.document.prefabs[prefab.name] = prefab
-            self._changed()
-
-    def _export_prefab(self, name: str) -> None:
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export prefab", f"{name}.prefab.json", "Prefabs (*.json)"
-        )
-        if path:
-            Path(path).write_text(
-                json.dumps(self.document.prefabs[name].to_json(), indent=1) + "\n"
-            )
-
-    def _create_group(self) -> None:
-        region = self._region()
-        if region is None:
-            return
-        name, ok = QInputDialog.getText(self, "New group", "Name:")
-        if ok and name:
-            self.document.groups.add(Group(name, region))
-            self._changed()
-
-    def _add_port(self, group_name: str) -> None:
-        pos = self.viewport.selection
-        if pos is None:
-            self._message("Ctrl+click the block to expose as a port first.", error=True)
-            return
-        role, ok = QInputDialog.getItem(self, "Port", "Role:", ["input", "output"], 0, False)
-        if not ok:
-            return
-        name, ok = QInputDialog.getText(self, "Port", "Port name:")
-        if ok and name:
-            self.document.groups.groups[group_name].ports.append(
-                Port(name, pos, "input" if role == "input" else "output")
-            )
-            self._changed()
-
-    def _toggle_port(self, group_name: str, index: int) -> None:
-        port = self.document.groups.groups[group_name].ports[index]
-        if port.role != "input":
-            return
-        state = self.document.state_at(port.pos)
-        if Document.is_usable(state.block):
-            self._edit(self.document.use, port.pos)
-        else:
-            self._message(f"{block_name(state.block.id)} at {port.pos} cannot be used directly.")
-
-    def _delete_group(self, name: str) -> None:
-        self.document.groups.remove(name)
-        self._changed()
 
     # ------------------------------------------------------------------ simulation
-    def _play(self, on: bool) -> None:
-        if on:
-            now = time.monotonic()
-            self.pacer.rate = self.simulation.speed.value()
-            self.pacer.start(now)
-            self.tick_rate.reset(now)
-            self.viewport.frame_rate.reset(now)
-            self.play_timer.start(PLAY_INTERVAL_MS)
-            self._glide(self.pacer.rate)
-            if not self.simulation.backwards and not self.simulation.warp.isChecked():
-                # Moving blocks are drawn between ticks (the game's partial tick).
-                self.viewport.tick_fraction = lambda: self.pacer.fraction(time.monotonic())
-            self.viewport.update()
-        else:
-            self.play_timer.stop()
-            self.viewport.tick_fraction = None
-            self._finish_tick()  # stopped mid-tick: finish it
-            self.simulation.canvas.set_running(None)  # snap to the exact tick
-            self._changed()
-
-    def _glide(self, rate: float) -> None:
-        """Let the timeline's playhead glide at ``rate`` ticks per second."""
-        sign = -1.0 if self.simulation.backwards else 1.0
-        self.simulation.canvas.set_running(sign * rate)
-
-    def _speed(self, tps: int) -> None:
-        self.pacer.set_rate(tps, time.monotonic())
-
-    def _play_tick(self) -> None:
-        """Run the ticks that are due by the wall clock (decoupled from drawing).
-
-        Rendering happens at most once per frame afterwards, however many ticks ran, so the
-        simulation keeps its rate even when drawing is slow.
-        """
-        start = time.monotonic()
-        warp = self.simulation.warp.isChecked()
-        due = 1 << 30 if warp else self.pacer.due(start)
-        # Heavy ticks run in parts (engine steps within a short budget) so frames keep
-        # coming between them; the view only ever shows complete ticks.
-        budget = RUN_BUDGET_SECONDS if warp else STEP_BUDGET_SECONDS
-        deadline = time.perf_counter() + budget
-        ran = 0
-        while ran < due or not self.document.can_edit:
-            if self.simulation.backwards:
-                if not self.document.tick_back():
-                    self.simulation.stop()  # back at tick 0
-                    break
-                self.last_steps = []
-            else:
-                steps, done = self.document.run_tick_until(deadline)
-                self._tick_steps.extend(steps)
-                if not done:
-                    break  # mid-tick: continue on the next call, after a frame
-                self.last_steps, self._tick_steps = self._tick_steps, []
-            ran += 1
-            if time.perf_counter() > deadline:
-                break
-        if not warp:
-            self.pacer.ran(ran)
-        if ran:  # nothing changed otherwise: no repaint
-            now = time.monotonic()
-            self.tick_rate.record(now, ran)
-            measured = self.tick_rate.rate(now)
-            self._glide(measured if measured > 0 else self.pacer.rate)
-            self._changed(running=True)
-
-    def _step_tick(self) -> None:
-        self.last_steps = self.document.run_tick()
-        self._changed()
-
-    def _step_event(self) -> None:
-        self.last_steps = [self.document.step()]
-        self._changed()
-
-    def _rewound(self, moved: bool) -> None:
-        self.simulation.stop()
-        self.last_steps = []
-        if not moved:
-            self._message("Already at the start of the recorded history.")
-        self._changed()
-
-    def _jump(self, where: str) -> None:
-        self.simulation.stop()
-        if not self.document.jump(where):
-            self._message("Already there.")
-        self.last_steps = []
-        self._changed()
-
-    def _tick_back(self) -> None:
-        self._rewound(self.document.tick_back())
-
-    def _step_back(self) -> None:
-        self._rewound(self.document.step_back())
-
-    def _seek(self, step_index: int) -> None:
-        self.simulation.stop()
-        self.document.seek(step_index)
-        self.last_steps = []
-        self._changed()
 
     # ------------------------------------------------------------------ files
-    def _confirm_discard(self, closing: bool = False) -> bool:
-        """Ask before unsaved changes would be lost; True means go ahead."""
-        if not self.document.dirty:
-            return True
-        box = QMessageBox(self)
-        box.setIconPixmap(pixel_icons.pixel_pixmap("warning", theme.GOLD, 4, tight=True))
-        box.setWindowTitle("Unsaved changes")
-        box.setText("You still have unsaved changes. Do you want to save the changes?")
-        discard = box.addButton(
-            "Close without saving" if closing else "Discard changes",
-            QMessageBox.ButtonRole.DestructiveRole,
-        )
-        cancel = box.addButton(QMessageBox.StandardButton.Cancel)
-        save = box.addButton(
-            "Save" if self.document.path is not None else "Save as…",
-            QMessageBox.ButtonRole.AcceptRole,
-        )
-        box.setDefaultButton(save)
-        box.setEscapeButton(cancel)
-        box.exec()
-        clicked = box.clickedButton()
-        if clicked is discard:
-            return True
-        if clicked is save:
-            self._save()
-            return not self.document.dirty  # a cancelled "Save as" keeps the window open
-        return False
 
     def _set_document(self, document: Document) -> None:
         self.simulation.stop()
@@ -1472,145 +933,6 @@ class MainWindow(QMainWindow):
         self.sections.set_document(document)
         self._apply_saved_camera()
         self._changed()
-
-    def _apply_saved_camera(self) -> None:
-        """Restore the camera stored in the file (``extra["camera"]``), else a default view."""
-        camera = self.document.extra.get("camera")
-        self.viewport.camera = Camera.from_json(camera) if camera else Camera()
-        self.viewport.update()
-
-    def _store_camera(self) -> None:
-        self.document.extra["camera"] = self.viewport.camera.to_json()
-
-    def _new(self) -> None:
-        if self._confirm_discard():
-            self._set_document(Document.new_flat())
-
-    def _open(self, tab: str = SIMULATION) -> None:
-        """The "Select World" screen (Minecraft saves, simulation worlds, Browse…)."""
-        if not self._confirm_discard():
-            return
-        picker = WorldPicker(self, tab)
-        if not picker.exec() or picker.chosen is None:
-            return
-        kind, path = picker.chosen
-        if kind == MINECRAFT:
-            self.open_minecraft_world(path)
-        else:
-            self.open_path(path)
-
-    def _open_minecraft_world(self) -> None:
-        """Import the area around the player of a Minecraft Java save (doc/world-import.md)."""
-        self._open(MINECRAFT)
-
-    def open_minecraft_world(self, folder: Path, radius: int = 4) -> None:
-        if not (folder / "level.dat").exists():
-            QMessageBox.critical(self, "Not a Minecraft world", f"{folder} has no level.dat.")
-            return
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            opened = open_world(folder, radius)
-        except (OSError, ValueError, KeyError) as exc:
-            QMessageBox.critical(self, "Cannot open the world", str(exc))
-            return
-        finally:
-            QApplication.restoreOverrideCursor()
-        self._set_document(opened.document)
-        remember_world(folder, MINECRAFT)
-        approx = [
-            f"{block_name(i)} ×{n}" for i, n in opened.foreign.most_common() if not _plain_cube(i)
-        ]
-        note = f" Approximated (not simulated yet): {', '.join(approx)}." if approx else ""
-        stream = opened.stream
-        self._message(
-            f"Opened {opened.info.name}: {len(stream.loaded)} chunks around the player, "
-            f"{len(opened.document.level.blocks)} blocks ({stream.skipped()} buried terrain "
-            f"blocks left out); more load around the camera.{note}"
-        )
-
-    def _stream_world(self) -> None:
-        """Load the next chunks of an opened world around the camera (a little per call,
-        nearest first), while the simulation is not mid-tick."""
-        document = self.document
-        if document.world is None or not document.can_edit:
-            return
-        x, _, z = (float(v) for v in self.viewport.camera.pivot)
-        center = (math.floor(x) >> 4, math.floor(z) >> 4)
-        radius = self.viewport.preferences.world_view_distance
-        if stream_chunks(document, center, radius, STREAM_BUDGET_S):
-            self.viewport.update()
-
-    def _save_minecraft_world(self) -> None:
-        """Write the document into a copy of the Minecraft save it was opened from."""
-        stream = self.document.world
-        if stream is None:
-            self._message(
-                "Only a world opened with File → Open Minecraft world… can be saved back.",
-                error=True,
-            )
-            return
-        source = stream.info.path
-        name, ok = QInputDialog.getText(
-            self,
-            "Save as Minecraft world",
-            f"Name of the copy (a new folder next to '{source.name}'; the original stays "
-            "untouched):",
-            text=f"{source.name} (redsim)",
-        )
-        if not ok or not name.strip():
-            return
-        self._finish_tick()
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            report = save_world_copy(self.document, source.parent / name.strip())
-        except (OSError, ValueError) as exc:
-            QMessageBox.critical(self, "Cannot save the world", str(exc))
-            return
-        finally:
-            QApplication.restoreOverrideCursor()
-        note = (
-            f" {report.outside} changed blocks outside the loaded chunks were left out."
-            if (report.outside)
-            else ""
-        )
-        self._message(
-            f"Saved the world '{report.target.name}': {report.blocks} changed blocks in "
-            f"{report.chunks} chunks.{note}"
-        )
-
-    def open_path(self, path: Path) -> None:
-        try:
-            self._set_document(Document.open(path))
-        except (OSError, ValueError, KeyError) as exc:
-            QMessageBox.critical(self, "Cannot open file", str(exc))
-            return
-        remember_world(path, SIMULATION)
-
-    def _saved(self, path: Path | None) -> None:
-        """After saving: the world goes to the recent list with a thumbnail of the view."""
-        if path is None or self.document.dirty:
-            return
-        remember_world(path, SIMULATION)
-        save_thumbnail(path, self.viewport.grabFramebuffer())
-
-    def _save(self) -> None:
-        if self.document.path is None:
-            self._save_as()
-            return
-        self._store_camera()
-        self._edit(self.document.save)
-        self._saved(self.document.path)
-        self._message(f"Saved {self.document.path}")
-
-    def _save_as(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Save world", "circuit.redsim.json", FILE_FILTER
-        )
-        if path:
-            self._store_camera()
-            self._edit(self.document.save, Path(path))
-            self._saved(Path(path))
-            self._message(f"Saved {path}")
 
     def restore_layout(self) -> bool:
         """Restore the saved window size and dock layout; False if none was saved."""
@@ -1660,3 +982,9 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
+__all__ = [
+    "MainWindow",
+    "history_label",
+]
