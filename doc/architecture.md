@@ -266,7 +266,7 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | `pacing.py` | Real-time run pacing (`TickPacer`) and rate measurement (`RateMeter`), no Qt |
 | `selection_tools.py` | Selection handles, resize and drag-plane math (no Qt); the edits are `/clone` actions (ADR-019) |
 | `viewport.py` | `QOpenGLWidget`: setup, GL, mouse and keyboard input via the keymap, orbit camera, hover and targeting; emits edit signals only. Mixins in their own modules: `viewport_edit.py` (BUILD target, preview and lines; SELECT drags; paste preview), `viewport_scene.py` (guides, selection boxes, gizmos, highlights, pivot), `viewport_text.py` (2D overlays: badge, F3, labels, sign text, Tab ring); shared constants in `view_common.py`. Mixin methods begin with `view = cast("Viewport", self)` (type-checked against the whole viewport) |
-| `panels.py` | Inspector (properties, sources, container contents, target hits, plate visitors), diagnostics, sections, groups, hotkeys, preferences dialog |
+| `panels.py` | Re-exports the panels: `panel_inspector.py` (properties, sources, contents, target hits, plate visitors), `panel_diagnostics.py`, `panel_circuit.py` (sections, groups, prefabs), `panel_settings.py` (hotkeys, preferences, about), shared widgets in `panel_widgets.py` |
 | `block_popup.py` | The inspector of the block under the cursor as a popup (E) |
 | `assets.py`, `atlas.py` | The game's blockstates, models, textures and font read from the supplied client jar at runtime (ADR-023): variant/multipart selection, FaceBakery-like quad baking, a texture atlas |
 | `theme.py` | Palette, app-wide stylesheet, the game's pixel font (ADR-024) |

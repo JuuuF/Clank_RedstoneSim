@@ -99,4 +99,8 @@ a line to the log.**
   `window_time.py` (run loop, stepping, history), `window_sequence.py` and
   `window_common.py`; same technique as the viewport. Checks pass; the run loop runs at
   20 ticks/s in a live check.
+- Refactor: `ui/panels.py` (1 400 lines) split by class into `panel_widgets.py`,
+  `panel_inspector.py`, `panel_diagnostics.py`, `panel_circuit.py`, `panel_settings.py`;
+  `panels.py` re-exports them. Found on the way: the Hotkeys tab had no color for
+  ANIMATE mode's section and did not mention K or the Tab ring.
 
