@@ -313,8 +313,10 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
     observer-clock test: 50 → 34 ms per tick). The engine is pure Python: a contraption
     whose ticks take longer than 50 ms cannot run at 20 ticks/s; frames stay smooth, the
     tick rate drops.
-14. ☐ **Favourite block palettes** like the creative mode's saved hotbars, instead of
-    the recent-blocks strip.
+14. ☑ **Favourite block palettes** like the creative mode's saved hotbars, instead of
+    the recent-blocks strip: 9 palettes × 9 slots (`inventory.FavouriteStrip`,
+    `favourite_blocks.json`); right click stores the chosen block, Alt+1–9 picks (the
+    keymap ids stay `recent.N` so saved keymaps keep working).
 
 ## Looks
 

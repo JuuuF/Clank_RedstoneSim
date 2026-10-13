@@ -44,8 +44,11 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   keys act on). Number keys (from any mode: they switch to BUILD) open a folder or pick the
   block with that number; **^** (the key left of 1; `` ` `` on US layouts) goes back to
   the parent folder. Folders: Redstone, Movement, Signal sources, Items, Rails, Building,
-  Special. **RECENT**, right next to the hotbar, shows the last nine blocks you placed
-  (kept between sessions; **Alt+1–9** or a click picks one). **Search** (Ctrl+Space, /, or
+  Special. **PALETTE**, right next to the hotbar, holds favourite blocks
+  like the game's saved creative hotbars: 9 palettes of 9 slots (kept between sessions;
+  **Alt+1–9** or a click picks one; **right click** a slot puts the chosen block there,
+  **Shift+right click** empties it; the **< >** arrows or the wheel over the strip switch
+  palettes). The first palette starts with your recently placed blocks. **Search** (Ctrl+Space, /, or
   pressing Shift twice like Rider) opens a quick search: type a few letters (fuzzy), Enter
   builds with the block. Signal sources show the strength box.
 - **Hint bar** (like Blender's): the essential keys for what you are doing right now (mode,
@@ -183,7 +186,7 @@ reason the old Shift+T rewind was disliked).
 | Settings → Keymap… | edit every binding in the program: filter, **Record key** (press the key with its modifiers), reset one or all; conflicts are marked; Save writes only your changes to the keymap file |
 | Del | clear the selection box (fill with air); single blocks: right click in BUILD |
 | 1–9 / ^ | inventory: open folder or pick block / back to the parent folder |
-| Alt+1–9 | pick one of the recently placed blocks (the RECENT strip next to the hotbar) |
+| Alt+1–9 | pick a favourite block of the shown palette (the PALETTE strip next to the hotbar) |
 | F1 | controls panel |
 
 ## View toggles

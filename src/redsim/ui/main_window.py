@@ -504,8 +504,8 @@ class MainWindow(QMainWindow):
         for number in range(1, 10):
             self._action(
                 inventory_menu,
-                f"Recent block {number}",
-                lambda _=False, n=number: self.inventory.pick_recent(n - 1),
+                f"Favourite block {number}",
+                lambda _=False, n=number: self.inventory.pick_favourite(n - 1),
                 f"recent.{number}",
             )
         self._action(inventory_menu, "Up one folder", self.inventory.go_up, "inventory.up")

@@ -3,8 +3,9 @@
 Number keys open the folder (or pick the block) with that number; Backspace goes up one
 level. Like Trackmania, every folder level above the current one stays visible as a
 compact row with the chosen folder highlighted; clicking there jumps to that level. Tiles
-show a preview of the block (``icons``). Recently placed blocks sit at the top right (saved in
-``recent_blocks.json`` next to the preferences). Choosing a block enters BUILD mode
+show a preview of the block (``icons``). Favourite blocks sit at the top right: 9 palettes
+of 9 slots like the game's saved creative hotbars (``favourite_blocks.json`` next to the
+preferences). Choosing a block enters BUILD mode
 (``block_chosen``). The folder tree is plain data (``INVENTORY``), so new blocks only need a
 line here; folders can nest when one grows past nine entries.
 """
@@ -15,6 +16,7 @@ import json
 from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, QTimer, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPen, QPixmap
@@ -194,6 +196,35 @@ def load_recent() -> list[str]:
         return []
     known = set(blocks.REGISTRY)
     return [b for b in data if isinstance(b, str) and b in known][:RECENT_LIMIT]
+
+
+PALETTES = 9  # favourite palettes, like the game's 9 saved creative hotbars
+PALETTE_SLOTS = 9
+
+
+def favourites_path() -> Path:
+    return config_dir() / "favourite_blocks.json"
+
+
+def load_favourites() -> tuple[list[list[str | None]], int]:
+    """The favourite palettes (9 × 9 block ids or None) and the one shown. Without a
+    file, the first palette starts with the recently placed blocks."""
+    known = set(blocks.REGISTRY)
+    empty: list[list[str | None]] = [[None] * PALETTE_SLOTS for _ in range(PALETTES)]
+    try:
+        data = json.loads(favourites_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        recent = load_recent()
+        empty[0][: len(recent)] = recent
+        return empty, 0
+    palettes = empty
+    raw = data.get("palettes", []) if isinstance(data, dict) else []
+    for i, palette in enumerate(raw[:PALETTES]):
+        if isinstance(palette, list):
+            for j, block_id in enumerate(palette[:PALETTE_SLOTS]):
+                palettes[i][j] = block_id if block_id in known else None
+    current = data.get("current", 0) if isinstance(data, dict) else 0
+    return palettes, current if isinstance(current, int) and 0 <= current < PALETTES else 0
 
 
 def block_label(block_id: str) -> str:
@@ -472,13 +503,14 @@ class InventoryCanvas(QWidget):
         self.bar.pick_at_level(spot.depth, spot.index)
 
 
-class RecentStrip(QWidget):
-    """The blocks placed last, as a short hotbar next to the inventory (Alt+1–9 pick
-    them). Always shown in BUILD mode, with empty slots and a hint until something is
-    placed, so it is easy to find."""
+class FavouriteStrip(QWidget):
+    """The favourite blocks: one of 9 palettes of 9 slots next to the inventory, like the
+    game's saved creative hotbars. Alt+1–9 or a click picks a slot; right click puts the
+    chosen block into a slot (Shift+right click empties it); the arrows or the wheel over
+    the strip switch palettes. Saved in ``favourite_blocks.json``."""
 
     SLOT = InventoryCanvas.SLOT
-    LABEL = 14  # the "RECENT" label above the slots
+    LABEL = 14  # the "PALETTE n" label above the slots
 
     def __init__(self, bar: InventoryBar) -> None:
         super().__init__()
@@ -487,39 +519,43 @@ class RecentStrip(QWidget):
         self.setMouseTracking(True)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
-    def slots(self) -> int:
-        return max(RECENT_SHOWN, len(self.bar.recent))
-
     def sizeHint(self) -> QSize:
-        return QSize(self.slots() * self.SLOT + 6, self.LABEL + self.SLOT + 4)
+        return QSize(PALETTE_SLOTS * self.SLOT + 6, self.LABEL + self.SLOT + 4)
 
     def _rect(self, index: int) -> QRect:
         return QRect(2 + index * self.SLOT, self.LABEL + 2, self.SLOT, self.SLOT)
 
+    def _arrows(self) -> tuple[QRect, QRect]:
+        """The "previous palette" and "next palette" spots at the label's right end."""
+        right = 2 + PALETTE_SLOTS * self.SLOT
+        return QRect(right - 30, 0, 14, self.LABEL), QRect(right - 14, 0, 14, self.LABEL)
+
     def slot_at(self, point: QPoint) -> int | None:
-        return next((i for i in range(self.slots()) if self._rect(i).contains(point)), None)
+        return next((i for i in range(PALETTE_SLOTS) if self._rect(i).contains(point)), None)
 
     def paintEvent(self, event: object) -> None:
         painter = QPainter(self)
-        theme.draw_text(painter, 2, 1, "RECENT", theme.GOLD, 1)
+        bar = self.bar
+        theme.draw_text(painter, 2, 1, f"PALETTE {bar.palette_index + 1}", theme.GOLD, 1)
+        back, forward = self._arrows()
+        theme.draw_text(painter, back.left() + 3, 1, "<", theme.TEXT, 1)
+        theme.draw_text(painter, forward.left() + 3, 1, ">", theme.TEXT, 1)
         hotbar = hud_sprite("hotbar")
-        count = self.slots()
-        if hotbar is not None:  # a piece of the game's hotbar, with its right end
-            width = 2 + self.SLOT * count
-            painter.drawPixmap(0, self.LABEL, hotbar, 0, 0, width, hotbar.height())
-            painter.drawPixmap(width, self.LABEL, hotbar, hotbar.width() - 2, 0, 2, hotbar.height())
+        if hotbar is not None:  # the game's hotbar has exactly 9 slots
+            painter.drawPixmap(0, self.LABEL, hotbar)
         selection = hud_sprite("hotbar_selection")
-        for index in range(count):
+        slots = bar.favourites[bar.palette_index]
+        for index in range(PALETTE_SLOTS):
             r = self._rect(index)
             if hotbar is None:
                 theme.paint_slot(painter, r.adjusted(1, 1, -1, -1))
             if index == self.hovered:
                 painter.fillRect(r.adjusted(4, 4, -4, -4), QColor(255, 255, 255, 60))
-            if index >= len(self.bar.recent):
+            block_id = slots[index]
+            if block_id is None:
                 continue
-            block_id = self.bar.recent[index]
             painter.drawPixmap(r.left() + 4, r.top() + 4, block_pixmap(block_id, r.width() - 8))
-            if block_id == self.bar.current and selection is not None:
+            if block_id == bar.current and selection is not None:
                 painter.drawPixmap(r.left() - 4, r.top() - 4, selection)
         painter.end()
 
@@ -528,19 +564,40 @@ class RecentStrip(QWidget):
         if index != self.hovered:
             self.hovered = index
             self.update()
-        if index is not None and index < len(self.bar.recent):
-            self.setToolTip(f"{block_label(self.bar.recent[index])} (Alt+{index + 1})")
+        slots = self.bar.favourites[self.bar.palette_index]
+        if index is not None and slots[index] is not None:
+            self.setToolTip(
+                f"{block_label(slots[index] or '')} (Alt+{index + 1}) · right click: put "
+                "the chosen block here · Shift+right click: empty"
+            )
         else:
-            self.setToolTip("The blocks you place appear here; Alt+1–9 picks them.")
+            self.setToolTip(
+                "Favourite blocks: right click a slot to put the chosen block there; "
+                "Alt+1–9 picks them; the arrows or the wheel switch between 9 palettes."
+            )
 
     def leaveEvent(self, event: object) -> None:
         self.hovered = None
         self.update()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        index = self.slot_at(event.position().toPoint())
-        if event.button() == Qt.MouseButton.LeftButton and index is not None:
-            self.bar.pick_recent(index)
+        point = event.position().toPoint()
+        back, forward = self._arrows()
+        if back.contains(point) or forward.contains(point):
+            self.bar.switch_palette(-1 if back.contains(point) else 1)
+            return
+        index = self.slot_at(point)
+        if index is None:
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.bar.pick_favourite(index)
+        elif event.button() == Qt.MouseButton.RightButton:
+            shift = bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+            self.bar.set_favourite(index, None if shift else self.bar.current)
+
+    def wheelEvent(self, event: Any) -> None:
+        self.bar.switch_palette(-1 if event.angleDelta().y() > 0 else 1)
+        event.accept()
 
 
 class InventoryBar(QWidget):
@@ -555,7 +612,8 @@ class InventoryBar(QWidget):
         super().__init__()
         self.nav = InventoryNav()
         self.current: str | None = None
-        self.recent: list[str] = load_recent()
+        self.recent: list[str] = load_recent()  # for the block search
+        self.favourites, self.palette_index = load_favourites()
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(14)
@@ -565,8 +623,8 @@ class InventoryBar(QWidget):
         side.setSpacing(4)
         side.setContentsMargins(0, 0, 0, 4)
         side.addStretch(1)
-        self.recent_strip = RecentStrip(self)
-        side.addWidget(self.recent_strip)
+        self.favourite_strip = FavouriteStrip(self)
+        side.addWidget(self.favourite_strip)
         tools = QHBoxLayout()
         tools.setSpacing(6)
         search = QToolButton()
@@ -596,8 +654,8 @@ class InventoryBar(QWidget):
     def refresh(self) -> None:
         self.canvas.resize_rows()
         self.canvas.update()
-        self.recent_strip.updateGeometry()
-        self.recent_strip.update()
+        self.favourite_strip.updateGeometry()
+        self.favourite_strip.update()
         is_source = self.current in sources.SOURCE_BLOCKS
         self.strength_label.setVisible(is_source)
         self.strength.setVisible(is_source)
@@ -646,10 +704,31 @@ class InventoryBar(QWidget):
         self.refresh()
         self.block_chosen.emit(block)
 
-    def pick_recent(self, index: int) -> None:
-        """Choose the ``index``-th recently placed block (Alt+1–9, or a click)."""
-        if 0 <= index < len(self.recent):
-            self.select_block(blocks.get(self.recent[index]))
+    def pick_favourite(self, index: int) -> None:
+        """Choose the ``index``-th block of the shown palette (Alt+1–9, or a click)."""
+        slots = self.favourites[self.palette_index]
+        if 0 <= index < len(slots) and slots[index] is not None:
+            self.select_block(blocks.get(slots[index] or ""))
+
+    def set_favourite(self, index: int, block_id: str | None) -> None:
+        """Put a block into a slot of the shown palette (None empties it); saved."""
+        self.favourites[self.palette_index][index] = block_id
+        self._save_favourites()
+        self.refresh()
+
+    def switch_palette(self, step: int) -> None:
+        self.palette_index = (self.palette_index + step) % PALETTES
+        self._save_favourites()
+        self.refresh()
+
+    def _save_favourites(self) -> None:
+        try:
+            path = favourites_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            data = {"palettes": self.favourites, "current": self.palette_index}
+            path.write_text(json.dumps(data) + "\n", encoding="utf-8")
+        except OSError:
+            pass
 
     def remember(self, block_id: str) -> None:
         """A block was placed: it goes to the front of the recent list (saved)."""

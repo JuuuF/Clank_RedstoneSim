@@ -88,7 +88,7 @@ class ActionSpec:
 
 
 def _recent(slot: int) -> ActionSpec:
-    return ActionSpec(f"recent.{slot}", f"Pick recent block {slot}", (f"Alt+{slot}",))
+    return ActionSpec(f"recent.{slot}", f"Pick favourite block {slot}", (f"Alt+{slot}",))
 
 
 def _inventory(slot: int) -> ActionSpec:

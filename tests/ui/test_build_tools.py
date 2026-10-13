@@ -447,11 +447,19 @@ def test_hotbar_is_a_build_mode_overlay_with_recent_blocks(app: Any) -> None:
     QtWidgets.QApplication.processEvents()
     assert window.viewport.mode == "build" and window.inventory.isVisible()
     assert window.viewport.height() == height  # nothing resized
-    window.inventory.remember("minecraft:observer")
-    window.inventory.remember("minecraft:repeater")
-    window.inventory.pick_recent(1)  # Alt+2
-    assert window.inventory.current == "minecraft:observer"
+    inventory = window.inventory
+    inventory.current = "minecraft:observer"
+    inventory.set_favourite(1, "minecraft:observer")  # right click on slot 2
+    inventory.current = None
+    inventory.pick_favourite(1)  # Alt+2
+    assert inventory.current == "minecraft:observer"
     assert window.keymap.bindings("recent.2") == ("Alt+2",)
+    inventory.switch_palette(1)  # another palette: slot 2 is empty there
+    inventory.current = None
+    inventory.pick_favourite(1)
+    assert inventory.current is None and inventory.palette_index == 1
+    inventory.switch_palette(-1)
+    assert inventory.favourites[0][1] == "minecraft:observer"
     window.document.dirty = False
     window.close()
 
