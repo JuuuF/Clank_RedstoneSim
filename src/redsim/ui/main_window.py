@@ -1188,8 +1188,13 @@ class MainWindow(QMainWindow):
             self.viewport.frame_rate.reset(now)
             self.play_timer.start(PLAY_INTERVAL_MS)
             self._glide(self.pacer.rate)
+            if not self.simulation.backwards and not self.simulation.warp.isChecked():
+                # Moving blocks are drawn between ticks (the game's partial tick).
+                self.viewport.tick_fraction = lambda: self.pacer.fraction(time.monotonic())
+            self.viewport.update()
         else:
             self.play_timer.stop()
+            self.viewport.tick_fraction = None
             self.simulation.canvas.set_running(None)  # snap to the exact tick
             self._changed()
 

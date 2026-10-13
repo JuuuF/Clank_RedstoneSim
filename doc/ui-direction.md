@@ -256,12 +256,17 @@ event" lost its secondary E binding (an explicit owner request overrides the ear
 
 Owner requests, in their words where short; status per item (☐ open, ☑ done):
 
-1. ☐ **Piston animation** (examples in `data/imgs/pistons/`): bases disappear while
+1. ☑ **Piston animation** (examples in `data/imga/pistons/`): bases disappear while
    extending, the head sticks out of the piston's back, moving blocks disappear. "Make
-   it run smoothly again."
-2. ☐ **Clouds** jump when tabbing back into the app after a while, and only move while
-   the simulation runs or ticks are played (both directions). They should drift on the
-   wall clock.
+   it run smoothly again." Cause: the textured path subtracted 1 from the extended
+   progress twice, drawing heads and moved blocks a block behind. Fixed, and moving
+   blocks are now drawn between ticks while running (`Mesher.partial_tick`,
+   `ChunkedMesh.update_animated`), like the game's partial tick.
+2. ☑ **Clouds** jump when tabbing back into the app after a while, and only move while
+   the simulation runs or ticks are played (both directions). Now the viewport repaints
+   at ~60 fps while the window is active (scenery on), a running simulation or a
+   selection; the cloud clock advances only while frames are drawn (at most 0.1 s per
+   frame), so nothing jumps after tabbing back.
 3. ☐ **Diagnostics tab:** clicking a block or coordinates highlights it in the viewport.
 4. ☐ **Signs** show their text.
 5. ☐ **Placing on the side of blocks** like in Minecraft (the clicked face decides the
@@ -273,7 +278,8 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
 8. ☐ **Rails** are drawn one pixel too high (floating).
 9. ☐ **Camera pivot marker** smaller and less obvious ("only a little helper"; it need
    not be neon); its shadow is wrong on non-full blocks (dust, repeaters, signs).
-10. ☐ **60 fps** rendering while running, for a smooth feel.
+10. ☑ **60 fps** rendering while running, for a smooth feel (`viewport.FRAME_INTERVAL_MS`; ticks
+    still run at the chosen rate, frames interpolate between them).
 11. ☐ **F3 signal labels:** a slider for the display range with a smooth fade-out (now
     every dust level in view is labeled); hovering a label highlights it; F jumps to it.
 12. ☐ **Selection side tint flickers** where it meets blocks (z-fighting): draw the

@@ -107,3 +107,30 @@ def test_flat_dust_is_extruded_pixel_by_pixel() -> None:
         assert max(xs) - min(xs) <= 1 and max(zs) - min(zs) <= 1
         us = {round(u * 16, 4) for u, _ in quad.uvs}
         assert max(us) - min(us) == 1
+
+
+def test_moved_blocks_are_drawn_at_their_progress(app: Any) -> None:
+    """A block pushed east, half way: it spans x 1.5–2.5 (``PistonHeadRenderer``), and
+    between ticks it is drawn between its last two positions (the partial tick)."""
+    from redsim.editor.document import Document
+    from redsim.ui.atlas import Atlas
+    from redsim.ui.geometry import Mesher
+
+    assert assets is not None
+    doc = Document.new_flat()
+    doc.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=east]"))
+    doc.setblock((1, 1, 0), blocks.parse_state("stone"))
+    doc.run_ticks(1)
+    doc.setblock((-1, 1, 0), blocks.parse_state("redstone_block"))
+    for _ in range(3):
+        doc.step()
+    mesher = Mesher(assets, Atlas.for_blocks(assets, []))
+
+    def span(partial: float) -> tuple[float, float]:
+        mesher.partial_tick = partial
+        mesh = mesher.build(doc.level, [(2, 1, 0)])
+        rows = np.vstack([mesh.solid, mesh.opaque, mesh.translucent])
+        return float(rows[:, 0].min()), float(rows[:, 0].max())
+
+    assert span(1.0) == (1.5, 2.5)
+    assert span(0.0) == (1.0, 2.0)  # the tick before: still at the start

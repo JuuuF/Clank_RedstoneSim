@@ -229,6 +229,14 @@ class Mesher:
         self._templates = np.zeros((0, 6, VERTEX_SIZE), dtype=np.float32)
         self._models: dict[BlockState, _Model] = {}
         self._full: dict[BlockState, bool] = {}
+        #: How far the running simulation is into the next tick (0..1): moving blocks are
+        #: drawn between their last two positions, like the game's partial tick.
+        self.partial_tick = 1.0  # paused: the state at the end of the tick
+
+    def render_progress(self, entity: PistonMovingBlockEntity) -> float:
+        """``getProgress(partialTick)``: between the last and the current progress."""
+        old, new = entity.progress_o, entity.progress
+        return min(1.0, old + (new - old) * self.partial_tick)
 
     @property
     def textured(self) -> bool:
@@ -389,8 +397,9 @@ class Mesher:
         origin = np.array(pos, dtype=np.float32)
         entity = level.get_block_entity(pos, create=False)
         if self.assets is not None and isinstance(entity, PistonMovingBlockEntity):
-            progress = entity.extended_progress(entity.progress)
-            shift = np.array(entity.direction.step, dtype=np.float32) * (progress - 1.0)
+            # ``PistonHeadRenderer``: offset = step × getExtendedProgress(getProgress(partial)).
+            progress = entity.extended_progress(self.render_progress(entity))
+            shift = np.array(entity.direction.step, dtype=np.float32) * progress
             pieces = [(entity.moved_state, shift)]
             if entity.is_source and not entity.extending:
                 piston = (
@@ -508,6 +517,15 @@ class ChunkedMesh:
         self._level = None
         self._members.clear()
         self._animated.clear()
+
+    def update_animated(self, level: Level) -> set[ChunkKey]:
+        """Rebuild only the chunks with moving pistons (between ticks, as the partial tick
+        advances); returns their keys."""
+        for key in self._animated:
+            positions = self._members.get(key)
+            if positions:
+                self.chunks[key] = self.mesher.build(level, positions)
+        return set(self._animated)
 
     def update(self, level: Level) -> set[ChunkKey]:
         """Bring the chunks up to date; returns the keys whose mesh changed or was removed."""

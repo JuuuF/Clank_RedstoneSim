@@ -44,6 +44,10 @@ class TickPacer:
     def ran(self, count: int) -> None:
         self._done += count
 
+    def fraction(self, now: float) -> float:
+        """How far the wall clock is into the next tick (0..1), for drawing between ticks."""
+        return min(1.0, max(0.0, (now - self._origin) * self.rate - self._done))
+
 
 class RateMeter:
     """Events per second over the last ``window`` seconds."""

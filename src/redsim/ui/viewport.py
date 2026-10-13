@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import math
 import time
+from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
@@ -79,6 +80,7 @@ from redsim.world.properties import POWER
 from redsim.world.rotation import mirror_state, rotate_state, upside_down
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
+FRAME_INTERVAL_MS = 16  # ~60 frames per second while something moves
 ORBIT_DEGREES_PER_PIXEL = 0.3
 #: Trackpad scrolling: pixels of finger travel per zoom notch and per block up/down.
 TRACKPAD_PIXELS_PER_NOTCH = 40.0
@@ -247,7 +249,11 @@ class Viewport(QOpenGLWidget):
         self._gizmo_cache: tuple[Any, tuple[np.ndarray, list[Hotspot]]] | None = None
         self._gizmo_outline = np.zeros((0, 7), dtype=np.float32)
         self._pulse = QTimer(self)  # repaints while a selection breathes
-        self._pulse.setInterval(33)
+        self._pulse.setInterval(FRAME_INTERVAL_MS)
+        self._pulse.setTimerType(Qt.TimerType.PreciseTimer)
+        #: While the simulation runs: how far into the next tick the wall clock is (the
+        #: main window sets it); None when paused.
+        self.tick_fraction: Callable[[], float] | None = None
         self._pulse.timeout.connect(self.update)
         self._resize: tuple[Handle, Region, QPoint, np.ndarray] | None = None
         self._move: _MoveDrag | None = None
@@ -607,14 +613,28 @@ class Viewport(QOpenGLWidget):
             for stale in [stale for stale in renderer.chunks if stale not in chunks]:
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
+        partial = self.tick_fraction() if self.tick_fraction is not None else 1.0
+        if partial != self.world_mesh.mesher.partial_tick:
+            self.world_mesh.mesher.partial_tick = partial
+            for key in self.world_mesh.update_animated(self.document.level):
+                mesh = self.world_mesh.chunks.get(key)
+                if mesh is not None:
+                    renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
         renderer.upload_outline(self._outline_triangles())
         renderer.upload_volume(np.vstack([self._selection_body(), self._pivot_shadow()]))
         # The selection breathes: keep repainting while there is one.
-        if self.region is not None and not self._pulse.isActive():
+        # Frames at ~60 per second while anything moves: the breathing selection, a
+        # running simulation (moving pistons between ticks), drifting clouds.
+        animating = (
+            self.region is not None
+            or self.tick_fraction is not None
+            or (self.preferences.scenery and self.window().isActiveWindow())
+        )
+        if animating and not self._pulse.isActive():
             self._pulse.start()
-        elif self.region is None and self._pulse.isActive():
+        elif not animating and self._pulse.isActive():
             self._pulse.stop()
         renderer.upload_top_lines(self._pivot_lines())
         self._upload_ghost(renderer)

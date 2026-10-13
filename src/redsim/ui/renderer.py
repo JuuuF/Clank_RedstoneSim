@@ -196,6 +196,8 @@ class Renderer:
         self._upload_sky(-1.0)
         self.volume = _Stream()  # faint translucent selection body
         self.clouds: QOpenGLTexture | None = None
+        self._cloud_time = 0.0  # seconds the clouds have drifted
+        self._cloud_frame = time.monotonic()
         self.cloud_plane = _Stream()  # UV marker -3: the shader samples the cloud texture
         self.cloud_plane.upload(self.program, _plane(CLOUD_Y, CLOUD_COLOR, -3.0))
         self.ground = _Stream()
@@ -336,7 +338,12 @@ class Renderer:
             self.clouds.bind(1)
             program.setUniformValue1i(program.uniformLocation("clouds"), 1)
             gl.glActiveTexture(GL_TEXTURE0)  # QPainter overlays expect unit 0 active
-        drift = (time.monotonic() * CLOUD_SPEED) % 3072.0
+        # The cloud clock only runs while frames are drawn, a frame at most 0.1 s apart:
+        # coming back to the window after a while does not make the clouds jump.
+        now = time.monotonic()
+        self._cloud_time += min(0.1, max(0.0, now - self._cloud_frame))
+        self._cloud_frame = now
+        drift = (self._cloud_time * CLOUD_SPEED) % 3072.0
         program.setUniformValue(program.uniformLocation("cloudOffset"), QVector2D(drift, 0.0))
         location = program.uniformLocation("mvp")
         alpha = program.uniformLocation("alphaScale")
