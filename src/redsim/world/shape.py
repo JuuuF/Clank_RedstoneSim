@@ -38,12 +38,16 @@ class SupportType(Enum):
 class Shape:
     """Immutable voxel shape. Index order of the grid is ``[x, y, z]`` in pixels."""
 
-    __slots__ = ("_grid", "_sturdy_cache")
+    __slots__ = ("_grid", "_sturdy_cache", "_full", "_empty")
 
     def __init__(self, grid: Grid) -> None:
         self._grid = grid
         self._grid.setflags(write=False)
         self._sturdy_cache: dict[tuple[Direction, SupportType], bool] = {}
+        # Answers that never change (the grid is read-only), computed on first use: the
+        # conductor check asks for them on every signal query.
+        self._full: bool | None = None
+        self._empty: bool | None = None
 
     @property
     def grid(self) -> Grid:
@@ -65,11 +69,15 @@ class Shape:
         return Shape(grid)
 
     def is_empty(self) -> bool:
-        return not bool(self._grid.any())
+        if self._empty is None:
+            self._empty = not bool(self._grid.any())
+        return self._empty
 
     def is_full_block(self) -> bool:
         """``Block.isShapeFullBlock``."""
-        return bool(self._grid.all())
+        if self._full is None:
+            self._full = bool(self._grid.all())
+        return self._full
 
     def bounds(self) -> tuple[int, int, int, int, int, int]:
         """Bounding box in pixels ``(x0, y0, z0, x1, y1, z1)`` (``VoxelShape.bounds``)."""

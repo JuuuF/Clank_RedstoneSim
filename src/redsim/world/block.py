@@ -84,7 +84,7 @@ class PlacementContext:
 class BlockState:
     """An interned, immutable block state (``BlockBehaviour.BlockStateBase``)."""
 
-    __slots__ = ("block", "values", "_neighbors", "_shape_cache", "_repr")
+    __slots__ = ("block", "values", "_neighbors", "_shape_cache", "_repr", "_conductor")
 
     def __init__(self, block: Block, values: tuple[Any, ...]) -> None:
         self.block = block
@@ -92,6 +92,7 @@ class BlockState:
         self._neighbors: dict[tuple[str, Any], BlockState] = {}
         self._shape_cache: dict[str, Shape] = {}
         self._repr: str | None = None  # states are immutable: the text is made once
+        self._conductor: bool | None = None  # cached when it depends on the state only
 
     # --- StateHolder -------------------------------------------------------------------
     def get(self, prop: Property) -> Any:
@@ -160,7 +161,19 @@ class BlockState:
         return self.get_block_support_shape().is_face_sturdy(direction, support)
 
     def is_redstone_conductor(self, level: Level, pos: Pos) -> bool:
-        return self.block.is_redstone_conductor(self, level, pos)
+        cached = self._conductor
+        if cached is not None:
+            return cached
+        block = self.block
+        result = block.is_redstone_conductor(self, level, pos)
+        # The default rule reads only the state's own collision shape (the game caches it
+        # per state too, BlockStateBase.Cache); blocks with their own rule or a dynamic
+        # shape are asked every time.
+        if not block.dynamic_shape and (
+            type(block).is_redstone_conductor is Block.is_redstone_conductor
+        ):
+            self._conductor = result
+        return result
 
     def is_solid(self) -> bool:
         """``BlockStateBase.isSolid`` (``calculateSolid``, BlockBehaviour.java L483)."""
