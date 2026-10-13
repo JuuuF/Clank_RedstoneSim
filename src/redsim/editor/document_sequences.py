@@ -32,6 +32,7 @@ class SequenceOps:
                         action.pos,
                         int(payload.get("strength", 15)),
                         int(payload.get("ticks", 1)),
+                        bool(payload.get("muted", False)),
                     )
                 )
         return sorted(out, key=lambda p: (p.tick, p.index))
@@ -55,7 +56,7 @@ class SequenceOps:
             raise EditError("No such pulse.")
         if not 1 <= strength <= 15 or ticks < 0:
             raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
-        changed = replace(action, payload={"strength": strength, "ticks": ticks})
+        changed = replace(action, payload={**action.payload, "strength": strength, "ticks": ticks})
         view._replan_with({max(1, tick): [changed]}, {index: None}, "change a pulse")
 
     def edit_pulses(self, changes: list[tuple[int, int, int, int, Pos]]) -> None:
@@ -70,12 +71,32 @@ class SequenceOps:
                 raise EditError("No such pulse.")
             if not 1 <= strength <= 15 or ticks < 0:
                 raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
-            changed = replace(action, pos=pos, payload={"strength": strength, "ticks": ticks})
+            payload = {**action.payload, "strength": strength, "ticks": ticks}
+            changed = replace(action, pos=pos, payload=payload)
             additions.setdefault(max(1, tick), []).append(changed)
             removed[index] = None
         if additions:
             label = "change a pulse" if len(changes) == 1 else f"change {len(changes)} pulses"
             view._replan_with(additions, removed, label)
+
+    def set_pulses_muted(self, indices: list[int], muted: bool) -> None:
+        """Bypass pulses (``muted``) or bring them back: they stay in the sequence and the
+        timeline; muted ones have no effect. One re-run, one undo step."""
+        view = cast("Document", self)
+        additions: dict[int, list[Action]] = {}
+        removed: dict[int, None] = {}
+        for index in indices:
+            action = view.history.inputs.get(index)
+            if action is None or action.kind != "power_pulse":
+                continue
+            if bool((action.payload or {}).get("muted")) == muted:
+                continue
+            changed = replace(action, payload={**action.payload, "muted": muted})
+            additions.setdefault(view.edit_ticks.get(index, 1), []).append(changed)
+            removed[index] = None
+        if additions:
+            verb = "mute" if muted else "unmute"
+            self._replan_with(additions, removed, f"{verb} {len(removed)} pulses")
 
     def _replan_with(
         self, additions: dict[int, list[Action]], removed: dict[int, None], label: str
@@ -113,3 +134,4 @@ class Pulse:
     pos: Pos
     strength: int
     ticks: int
+    muted: bool = False  # bypassed: shown, but without effect

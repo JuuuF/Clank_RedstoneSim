@@ -386,7 +386,9 @@ class Engine:
                 # Editor power at the position for ``ticks`` ticks (sequences, not vanilla).
                 payload = action.payload
                 ticks = int(payload["ticks"])
-                if ticks == 0:  # a 0-tick pulse: on and off inside the next tick
+                if payload.get("muted"):  # bypassed: kept in the timeline, no effect
+                    info.detail["info"] = "muted pulse: skipped"
+                elif ticks == 0:  # a 0-tick pulse: on and off inside the next tick
                     level.zero_tick_pulses.append((action.pos, int(payload["strength"])))
                 else:
                     level.force_power(action.pos, int(payload["strength"]), level.game_time + ticks)

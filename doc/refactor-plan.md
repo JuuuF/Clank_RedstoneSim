@@ -45,10 +45,10 @@ a line to the log.**
    streaming and annotations in separate parts.
 8. [x] **Memory and large worlds:** copy-on-write block maps for keyframes, measure a
    streamed world at view distance 12 for an hour of ticks.
-9a. [ ] **Owner request (2026-10-14): timeline labels of animated blocks.** Lines name the
+9a. [x] **Owner request (2026-10-14): timeline labels of animated blocks.** Lines name the
    block at the position, which changes when pistons move blocks: show what is there at
    the current tick (dynamic), or only the position.
-9b. [ ] **Owner request (2026-10-14): bypass animation keyframes.** Mute pulses without
+9b. [x] **Owner request (2026-10-14): bypass animation keyframes.** Mute pulses without
    deleting them (per pulse, per line, per group, and all at once), like muting in
    Blender/Ableton; muted pulses stay in the timeline, greyed out, and are skipped.
 9. [ ] **Docs:** architecture and implementation notes updated to the new structure;
@@ -118,4 +118,9 @@ a line to the log.**
   ~12 MB each and the total stays bounded. Copy-on-write keyframes were not built: the
   compiled `Level` needs `blocks` to be a real `dict`, and streamed chunks must reach
   every stored level; the cap is enough for now (noted in project-state as an option).
+- 9b done: pulses can be muted (payload `muted`, skipped by the engine with a trace note,
+  kept by edits): `0` on selected pulses, the Sequence tab's On checkbox, right-click
+  menus per pulse, selection, line, group and all; grey dashed bars; muted-only positions
+  get no ANIMATE marker. 9a done: lines are named by position, with the block there at
+  the current tick dim behind it ("empty" when moved away).
 

@@ -171,3 +171,18 @@ def test_sequences_and_recorded_edits_survive_saving(tmp_path: Path) -> None:
         doc.seek_tick(tick)
         loaded.seek_tick(tick)
         assert loaded.level.blocks == doc.level.blocks
+
+
+def test_muted_pulses_stay_but_do_nothing() -> None:
+    doc = piston_doc()
+    doc.add_pulse((0, 1, 0), tick=2, ticks=4)
+    pulse = doc.pulses()[0]
+    doc.set_pulses_muted([pulse.index], True)
+    assert [p.muted for p in doc.pulses()] == [True]  # still there
+    doc.run_ticks(8 - doc.tick)
+    assert not extended_at(doc, 4)  # bypassed: the piston stays retracted
+    doc.edit_pulses([(doc.pulses()[0].index, 3, 15, 4, (0, 1, 0))])  # editing keeps it muted
+    assert doc.pulses()[0].muted
+    doc.set_pulses_muted([doc.pulses()[0].index], False)
+    doc.run_ticks(10 - doc.tick)
+    assert extended_at(doc, 5)  # active again

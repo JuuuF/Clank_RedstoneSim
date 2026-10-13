@@ -77,8 +77,11 @@ class LineArea:
     ) -> _Line:
         view = cast("TimelineCanvas", self)
         where = " ".join(str(v) for v in pos)
-        name = view.names.get(pos, "")
-        return _Line("block", row, f"{where} {name}".strip(), depth, color, group, pos)
+        # The block there now (at the current tick): pistons move blocks, the line stays
+        # with the position.
+        line = _Line("block", row, where, depth, color, group, pos)
+        line.detail = view.names.get(pos, "")
+        return line
 
     def _line_at(self, y: float) -> int | None:
         view = cast("TimelineCanvas", self)
@@ -145,10 +148,12 @@ class LineArea:
                         continue
                     fill = QColor(line.color)
                     fill.setAlpha(110 + 9 * pulse.strength)
+                    edge = QPen(fill.lighter(150), 1)
+                    if pulse.muted:  # bypassed: grey and dashed
+                        fill = QColor(120, 120, 128, 70)
+                        edge = QPen(QColor(150, 150, 158), 1, Qt.PenStyle.DashLine)
                     selected = pulse.index in view.selected_pulses
-                    painter.setPen(
-                        QPen(QColor(255, 255, 255), 1.6) if selected else QPen(fill.lighter(150), 1)
-                    )
+                    painter.setPen(QPen(QColor(255, 255, 255), 1.6) if selected else edge)
                     painter.setBrush(fill)
                     painter.drawRoundedRect(box, 2, 2)
                 continue
@@ -205,6 +210,9 @@ class LineArea:
                 assert line.pos is not None
                 view._line_drag = (line.pos, y)
                 return True
+            if right_button and line.kind == "category" and line.row == "power":
+                self._power_menu(where)
+                return True
             if right_button and line.kind == "group" and line.group is not None:
                 view._group_menu(where, line.group)
                 return True
@@ -222,10 +230,16 @@ class LineArea:
             remove = menu.addAction(f"Delete this pulse (tick {pulse.tick}, {pulse.ticks} ticks)")
             remove.setIcon(pixel_icons.pixel_icon("delete"))
             remove.triggered.connect(lambda: view.pulses_deleted.emit([pulse.index]))
+            mute = menu.addAction("Unmute this pulse" if pulse.muted else "Mute this pulse (0)")
+            mute.triggered.connect(lambda: view.pulses_muted.emit([pulse.index], not pulse.muted))
             if len(view.selected_pulses) > 1 and pulse.index in view.selected_pulses:
                 chosen = sorted(view.selected_pulses)
                 every = menu.addAction(f"Delete the {len(chosen)} selected pulses (Del)")
                 every.triggered.connect(lambda: view.pulses_deleted.emit(chosen))
+                for muted, verb in ((True, "Mute"), (False, "Unmute")):
+                    menu.addAction(f"{verb} the {len(chosen)} selected pulses").triggered.connect(
+                        lambda _=False, m=muted: view.pulses_muted.emit(chosen, m)
+                    )
             menu.exec(where)
             return True
         if left_button and hit is not None:
@@ -293,6 +307,30 @@ class LineArea:
         bottom = view._tops[rows[-1][0]] + view.EDIT_ROW_HEIGHT
         return last, len(view.groups[last].members), bottom
 
+    def _add_mute_actions(self, menu: QMenu, pulses: list[Pulse], what: str) -> None:
+        """ "Mute …" / "Unmute …" entries for these pulses (bypassed, not deleted)."""
+        view = cast("TimelineCanvas", self)
+        indices = [p.index for p in pulses]
+        if not indices:
+            return
+        menu.addSeparator()
+        if any(not p.muted for p in pulses):
+            menu.addAction(f"Mute {what}").triggered.connect(
+                lambda: view.pulses_muted.emit(indices, True)
+            )
+        if any(p.muted for p in pulses):
+            menu.addAction(f"Unmute {what}").triggered.connect(
+                lambda: view.pulses_muted.emit(indices, False)
+            )
+
+    def _power_menu(self, where: QPoint) -> None:
+        """The Powered category's menu: mute or unmute every pulse."""
+        view = cast("TimelineCanvas", self)
+        menu = QMenu(view)
+        self._add_mute_actions(menu, view.pulses, "all pulses")
+        if not menu.isEmpty():
+            menu.exec(where)
+
     def _group_menu(self, where: QPoint, group: int) -> None:
         view = cast("TimelineCanvas", self)
         menu = QMenu(view)
@@ -307,6 +345,10 @@ class LineArea:
         ):
             item = menu.addAction(text)
             item.triggered.connect(lambda _=False, a=action: view.group_request.emit(a, group))
+        members = set(view.groups[group].members)
+        self._add_mute_actions(
+            menu, [p for p in view.pulses if p.pos in members], f"the group “{name}”"
+        )
         menu.exec(where)
 
     def _line_menu(self, where: QPoint, pos: Pos) -> None:
@@ -320,6 +362,7 @@ class LineArea:
         menu.addAction("New group with this line…").triggered.connect(
             lambda: view.line_group_new.emit(pos)
         )
+        self._add_mute_actions(menu, [p for p in view.pulses if p.pos == pos], "this line")
         menu.exec(where)
 
     def _hover_position(self, y: float) -> None:
@@ -359,3 +402,4 @@ class _Line:
     pos: Pos | None = None
     expandable: bool = False
     expanded: bool = False
+    detail: str = ""  # shown dim after the title (a block line: what is there now)

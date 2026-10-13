@@ -85,6 +85,7 @@ class TimelineCanvas(LineArea, QWidget):
     set_tick_zero = Signal()
     pulses_changed = Signal(object)  # [(index, tick, strength, ticks, pos)]
     pulses_deleted = Signal(object)  # [index]
+    pulses_muted = Signal(object, bool)  # [index], muted (bypassed, kept in the timeline)
     position_hovered = Signal(object)  # Pos | None: a line's block, to show in the view
     pulse_added = Signal(object, int)  # Pos, tick
     line_moved = Signal(object, int, int)  # Pos, group, row
@@ -305,6 +306,16 @@ class TimelineCanvas(LineArea, QWidget):
                 painter.drawRect(QRectF(left + 2, top + 2, 3, self.EDIT_ROW_HEIGHT - 4))
             painter.setPen(TEXT if line.kind != "block" else TEXT_DIM)
             text_x = left + (24 if line.kind != "block" else 10)
+            if line.kind == "block":  # the position bright, what is there now dim
+                painter.setPen(TEXT)
+                painter.drawText(text_x, top + self.EDIT_ROW_HEIGHT - 3, line.title)
+                detail_x = text_x + metrics.horizontalAdvance(line.title) + 6
+                detail = metrics.elidedText(
+                    line.detail, Qt.TextElideMode.ElideRight, self.LABEL_WIDTH - detail_x - 4
+                )
+                painter.setPen(TEXT_DIM)
+                painter.drawText(detail_x, top + self.EDIT_ROW_HEIGHT - 3, detail)
+                continue
             title = metrics.elidedText(
                 line.title, Qt.TextElideMode.ElideRight, self.LABEL_WIDTH - text_x - 4
             )
@@ -699,7 +710,7 @@ class TimelineCanvas(LineArea, QWidget):
         # window's shortcuts see them).
         if event.type() == QEvent.Type.ShortcutOverride and (self.selected or self.selected_pulses):
             key = event.key()  # type: ignore[attr-defined]
-            if key in (Qt.Key.Key_Delete, Qt.Key.Key_M, Qt.Key.Key_Backspace):
+            if key in (Qt.Key.Key_Delete, Qt.Key.Key_M, Qt.Key.Key_Backspace, Qt.Key.Key_0):
                 event.accept()
                 return True
         return super().event(event)
@@ -708,6 +719,9 @@ class TimelineCanvas(LineArea, QWidget):
         if self.selected_pulses and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
             self.pulses_deleted.emit(sorted(self.selected_pulses))
             self.selected_pulses = set()
+        elif self.selected_pulses and event.key() == Qt.Key.Key_0:  # Ableton: (de)activate
+            chosen = [p for p in self.pulses if p.index in self.selected_pulses]
+            self.pulses_muted.emit([p.index for p in chosen], not all(p.muted for p in chosen))
         elif self.selected and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
             self.delete_edits.emit(self.selected_indices())
             self.selected = set()
@@ -934,7 +948,11 @@ class TimelineBar(QWidget):
             if index in inputs
         ]
         positions = {pulse.pos for pulse in pulses} | {event.pos for event in events}
-        names = {pos: block_name(document.state_at(pos).block.id) for pos in positions}
+        names = {  # what is at each line's position at the current tick
+            pos: "empty" if state.is_air else block_name(state.block.id)
+            for pos in positions
+            for state in (document.state_at(pos),)
+        }
         self.canvas.set_data(
             0,
             end,

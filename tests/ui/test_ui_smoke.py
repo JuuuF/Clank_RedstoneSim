@@ -724,3 +724,36 @@ def test_closing_the_window_stops_its_timers(app: object) -> None:
     window.document.dirty = False
     window.close()
     assert not [t for t in window.findChildren(QTimer) if t.isActive()]
+
+
+def test_pulses_mute_from_the_timeline_and_the_sequence_tab(app: object) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QKeyEvent
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=east]"))
+    document.add_pulse((0, 1, 0), 2, 15, 3)
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.expanded = {"power"}
+    window._changed()
+    canvas.selected_pulses = {document.pulses()[0].index}
+    key = QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key.Key_0, Qt.KeyboardModifier.NoModifier)
+    canvas.keyPressEvent(key)  # 0: mute the selected pulses
+    assert document.pulses()[0].muted
+    window._changed()
+    box = window.sequence.table.cellWidget(0, 4)
+    assert box is not None
+    check = box.findChild(QtWidgets.QCheckBox)
+    assert check is not None and not check.isChecked()  # shown as off in the Sequence tab
+    check.setChecked(True)  # back on
+    assert not document.pulses()[0].muted
+    # Lines are named by their position; what is there now follows as a dim detail.
+    window._changed()
+    line = next(line for line in canvas.lines if line.kind == "block")
+    assert line.title == "0 1 0" and line.detail == "Sticky Piston"
+    document.dirty = False
+    window.close()

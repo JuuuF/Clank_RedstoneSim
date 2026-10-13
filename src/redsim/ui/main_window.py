@@ -233,6 +233,9 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
                 self.document.edit_pulse, i, tick, strength, ticks
             )
         )
+        self.sequence.mute_requested.connect(
+            lambda indices, muted: self._edit(self.document.set_pulses_muted, indices, muted)
+        )
         self.sequence.delete_requested.connect(
             lambda i: self._edit(self.document.delete_edits, [i])
         )
@@ -252,6 +255,9 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
                 self.sequence.strength.value(),
                 self.sequence.duration.value(),
             )
+        )
+        canvas.pulses_muted.connect(
+            lambda indices, muted: self._edit(self.document.set_pulses_muted, indices, muted)
         )
         canvas.line_moved.connect(self._move_line)
         canvas.group_request.connect(self._group_request)

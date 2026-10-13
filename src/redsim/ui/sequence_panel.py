@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFormLayout,
     QHBoxLayout,
     QHeaderView,
@@ -33,6 +34,7 @@ EDIT_DELAY_MS = 450  # spin box changes are applied after this pause (one re-run
 class SequencePanel(QWidget):
     edit_requested = Signal(int, int, int, int)  # index, tick, strength, ticks
     delete_requested = Signal(int)  # index
+    mute_requested = Signal(object, bool)  # [index], muted
     pulse_selected = Signal(object, int)  # Pos, tick
     position_hovered = Signal(object)  # Pos | None: a row is hovered
 
@@ -65,8 +67,11 @@ class SequencePanel(QWidget):
         form.addRow("New pulses: strength", self.strength)
         form.addRow("Duration", self.duration)
         layout.addLayout(form)
-        self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["Tick", "Position", "Strength", "Ticks", ""])
+        self.table = QTableWidget(0, 6)
+        self.table.setHorizontalHeaderLabels(["Tick", "Position", "Strength", "Ticks", "On", ""])
+        on_header = self.table.horizontalHeaderItem(4)
+        if on_header is not None:
+            on_header.setToolTip("Unchecked: the pulse is muted (kept, but without effect)")
         self.table.verticalHeader().setVisible(False)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -123,7 +128,12 @@ class SequencePanel(QWidget):
             row_layout = QHBoxLayout(holder)
             row_layout.setContentsMargins(0, 0, 0, 0)
             row_layout.addWidget(remove)
-            self.table.setCellWidget(row, 4, holder)
+            self.table.setCellWidget(row, 5, holder)
+            active = QCheckBox()
+            active.setChecked(not pulse.muted)
+            active.setToolTip("Unchecked: muted (kept in the sequence, without effect)")
+            active.toggled.connect(lambda on, i=pulse.index: self.mute_requested.emit([i], not on))
+            self.table.setCellWidget(row, 4, _centered(active))
         if not pulses:
             self.table.setRowCount(1)
             empty = QTableWidgetItem("No pulses yet.")
@@ -155,3 +165,13 @@ class SequencePanel(QWidget):
     def pulse_at(self, pulses: list[Pulse], pos: Pos, tick: int) -> list[Pulse]:
         """The pulses at ``pos`` running at ``tick`` (or starting there)."""
         return [p for p in pulses if p.pos == pos and p.tick <= tick < p.tick + max(1, p.ticks)]
+
+
+def _centered(widget: QWidget) -> QWidget:
+    holder = QWidget()
+    layout = QHBoxLayout(holder)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.addStretch(1)
+    layout.addWidget(widget)
+    layout.addStretch(1)
+    return holder

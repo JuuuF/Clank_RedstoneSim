@@ -233,7 +233,7 @@ class SceneGeometry:
             red, green, blue, _ = _hex_color(lines.color_of(pos))
             parts.append(box_faces(lo, lo + 1.06, (red, green, blue, alpha)))
         if animate:
-            for pos in {pulse.pos for pulse in view.document.pulses()}:
+            for pos in {pulse.pos for pulse in view.document.pulses() if not pulse.muted}:
                 if pos not in level.forced_power:
                     lo = np.array(pos, dtype=float) - 0.02
                     red, green, blue, _ = _hex_color(lines.color_of(pos))

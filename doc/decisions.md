@@ -446,3 +446,7 @@ extension event cancels itself (`triggerEvent` with no signal), so 0-ticks did n
 to pistons. Sequences are saved with the document now: a file with recorded edits keeps
 the build (`extra["history"]["base"]`) and the plan, and opening re-runs them.
 
+**Addendum to ADR-026 (2026-10-14):** pulses can be muted (`payload["muted"]`): the
+engine applies the edit as a step with no effect, so muting keeps the timeline, the
+undo history and the step numbering of everything else as it was.
+

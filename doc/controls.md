@@ -89,6 +89,13 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   drag a bar's end to change the duration (of all selected); **Del** deletes the selected
   pulses; double click an empty spot to add a pulse there; right click a bar to delete
   it. Powered positions glow in their group's color in the view.
+- **Bypassing pulses (mute):** a muted pulse stays in the timeline (grey, dashed) and the
+  Sequence tab but has no effect. Mute with **0** on selected pulses (like Ableton's
+  deactivate), the Sequence tab's **On** checkbox, or right click: a bar (this pulse /
+  the selected ones), a line's label (the whole line), a group (the whole group) or the
+  Powered row (all pulses). Muting is one undo step and re-runs the history.
+- Timeline lines are named by their **position**; what is there **at the current tick**
+  follows in dim text ("empty" when a piston moved the block away).
 - **Where is that block?** Hovering coordinates lights the block up in the view (a gold
   frame, visible through blocks): timeline lines and monitor tracks, Sequence rows, the
   inspector's title (also in the E popup), Diagnostics rows and trace lines. Drag the handle
