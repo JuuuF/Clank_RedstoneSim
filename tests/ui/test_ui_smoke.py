@@ -477,3 +477,28 @@ def test_several_selections_are_deleted_together_and_cleared_with_alt_a(app: obj
     assert viewport.region is None and viewport.extra_regions == []
     document.dirty = False
     window.close()
+
+
+def test_world_picker_lists_saves_and_recent_worlds(app: object, tmp_path: object) -> None:
+    from pathlib import Path
+
+    from redsim.ui.world_picker import (
+        MINECRAFT,
+        SIMULATION,
+        WorldPicker,
+        load_recent,
+        remember_world,
+    )
+
+    example = Path(__file__).resolve().parents[2] / "examples" / "showcase.redsim.json"
+    remember_world(example, SIMULATION)
+    assert load_recent()[0]["path"] == str(example.resolve())
+    picker = WorldPicker(None, SIMULATION)
+    names = [picker.list.item(r).data(0x0100).name for r in range(picker.list.count())]
+    assert "showcase" in names
+    picker.search.setText("showc")
+    picker._open()
+    assert picker.chosen is not None and picker.chosen[0] == SIMULATION
+    assert picker.chosen[1].name == "showcase.redsim.json"
+    saves = WorldPicker(None, MINECRAFT)  # lists whatever saves exist (maybe none)
+    assert saves.kind == MINECRAFT

@@ -68,6 +68,13 @@ from redsim.ui.panels import (
 from redsim.ui.preferences import load_window_layout, save_window_layout
 from redsim.ui.timeline import TimelineBar
 from redsim.ui.viewport import BUILD, MODE_COLORS, NORMAL, SELECT, Viewport
+from redsim.ui.world_picker import (
+    MINECRAFT,
+    SIMULATION,
+    WorldPicker,
+    remember_world,
+    save_thumbnail,
+)
 from redsim.world import blocks
 from redsim.world.block import Block
 from redsim.world.blocks.torch import RedstoneWallTorchBlock
@@ -85,13 +92,6 @@ STEP_BUDGET_SECONDS = 0.008
 #: Streaming an opened Minecraft world: how often, and the longest one call may read.
 STREAM_INTERVAL_MS = 60
 STREAM_BUDGET_S = 0.025
-
-
-#: Where Minecraft keeps its saves (the example world first).
-MINECRAFT_SAVE_FOLDERS = (
-    Path("data/minecraft_saves"),
-    Path.home() / ".minecraft" / "saves",
-)
 
 
 def _plain_cube(block_id: str) -> bool:
@@ -306,7 +306,7 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
         file_menu = bar.addMenu("&File")
         self._action(file_menu, "&New", self._new, "file.new")
-        self._action(file_menu, "&Open…", self._open, "file.open")
+        self._action(file_menu, "&Open…", lambda: self._open(SIMULATION), "file.open")
         self._action(file_menu, "Open Minecraft world…", self._open_minecraft_world)
         self._action(file_menu, "Save as Minecraft world…", self._save_minecraft_world)
         self._action(file_menu, "&Save", self._save, "file.save")
@@ -1352,23 +1352,22 @@ class MainWindow(QMainWindow):
         if self._confirm_discard():
             self._set_document(Document.new_flat())
 
-    def _open(self) -> None:
+    def _open(self, tab: str = SIMULATION) -> None:
+        """The "Select World" screen (Minecraft saves, simulation worlds, Browse…)."""
         if not self._confirm_discard():
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Open world", "", FILE_FILTER)
-        if path:
-            self.open_path(Path(path))
+        picker = WorldPicker(self, tab)
+        if not picker.exec() or picker.chosen is None:
+            return
+        kind, path = picker.chosen
+        if kind == MINECRAFT:
+            self.open_minecraft_world(path)
+        else:
+            self.open_path(path)
 
     def _open_minecraft_world(self) -> None:
         """Import the area around the player of a Minecraft Java save (doc/world-import.md)."""
-        if not self._confirm_discard():
-            return
-        start = next((str(p) for p in MINECRAFT_SAVE_FOLDERS if p.exists()), str(Path.home()))
-        folder = QFileDialog.getExistingDirectory(
-            self, "Open Minecraft world (a save folder)", start
-        )
-        if folder:
-            self.open_minecraft_world(Path(folder))
+        self._open(MINECRAFT)
 
     def open_minecraft_world(self, folder: Path, radius: int = 4) -> None:
         if not (folder / "level.dat").exists():
@@ -1383,6 +1382,7 @@ class MainWindow(QMainWindow):
         finally:
             QApplication.restoreOverrideCursor()
         self._set_document(opened.document)
+        remember_world(folder, MINECRAFT)
         approx = [
             f"{block_name(i)} ×{n}" for i, n in opened.foreign.most_common() if not _plain_cube(i)
         ]
@@ -1449,6 +1449,15 @@ class MainWindow(QMainWindow):
             self._set_document(Document.open(path))
         except (OSError, ValueError, KeyError) as exc:
             QMessageBox.critical(self, "Cannot open file", str(exc))
+            return
+        remember_world(path, SIMULATION)
+
+    def _saved(self, path: Path | None) -> None:
+        """After saving: the world goes to the recent list with a thumbnail of the view."""
+        if path is None or self.document.dirty:
+            return
+        remember_world(path, SIMULATION)
+        save_thumbnail(path, self.viewport.grabFramebuffer())
 
     def _save(self) -> None:
         if self.document.path is None:
@@ -1456,6 +1465,7 @@ class MainWindow(QMainWindow):
             return
         self._store_camera()
         self._edit(self.document.save)
+        self._saved(self.document.path)
         self._message(f"Saved {self.document.path}")
 
     def _save_as(self) -> None:
@@ -1465,6 +1475,7 @@ class MainWindow(QMainWindow):
         if path:
             self._store_camera()
             self._edit(self.document.save, Path(path))
+            self._saved(Path(path))
             self._message(f"Saved {path}")
 
     def restore_layout(self) -> bool:

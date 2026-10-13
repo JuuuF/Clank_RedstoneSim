@@ -309,7 +309,13 @@ affected.
 
 ## Minecraft worlds
 
-File → Open Minecraft world… opens a Java 26.x save around the player; chunks load
+**Ctrl+O** (File → Open…) and File → Open Minecraft world… show the **Select World**
+screen, like the game's: a tab with the Minecraft saves (from `.minecraft/saves`, the
+macOS and Windows locations, and the project's example saves, newest first, with each
+save's icon, last-played date and version) and a tab with simulation worlds (recently
+opened or saved `.redsim.json` files with a thumbnail of the view, and the examples).
+Type to search, ↑/↓ to choose, Enter or a double click opens; **Browse…** opens any other
+file or save folder. Opening a Minecraft save shows the area around the player; further chunks load
 around the camera (Preferences → Minecraft worlds). File → Save as Minecraft world…
 writes the current state into a copy of the save next to the original (it asks for the
 copy's name; the original stays untouched); open the copy in the game.

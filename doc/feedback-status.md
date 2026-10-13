@@ -20,6 +20,13 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O10 | **Final look**: "a technical version of Minecraft", panels | round 1 (Looks) | Largely answered by the game's textures, the theme and the polish pass; the owner has not yet reviewed the result as a whole. |
 | O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
 
+## Done after the list was compiled
+
+- Save as Minecraft world (a copy of the save), 2026-10-13 ([[world-import]] phase 4).
+- **Select World screen** like the game's (owner: the file dialog was slow): Minecraft
+  saves, simulation worlds with thumbnails, search, Browse… (`ui/world_picker.py`,
+  `recent_worlds.json`, `thumbnails/` in the config folder).
+
 ## Implemented
 
 ### Project brief (milestones 0–7)
