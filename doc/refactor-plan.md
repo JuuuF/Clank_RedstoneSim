@@ -21,13 +21,13 @@ a line to the log.**
 
 ## Checklist
 
-1. [ ] **Baseline:** full tests, full game regression (46 named + 40 random), and speed
+1. [x] **Baseline:** full tests, full game regression (46 named + 40 random), and speed
    numbers (engine ticks/s on a busy contraption, mesh build, open world, UI paint) in a
    benchmark script under `tools/bench.py` so later steps can compare.
 2. [ ] **Engine hot paths (pure Python first):** profile, then trim per-call overhead in
    `Level.get_block_state`, signal queries, the neighbor updater, scheduled ticks and the
    trace (e.g. no keyword dicts per record when nobody reads them), keeping semantics.
-3. [ ] **Compile the hot core (optional speed-up):** try mypyc (ships with mypy) or
+3. [x] **Compile the hot core (optional speed-up):** try mypyc (ships with mypy) or
    Cython on `core/`, `sim/neighbor_updater.py`, `sim/level.py`, `sim/ticks.py`, with
    the pure-Python modules as the fallback when no compiler is available; measure;
    keep only if the gain is real and tests pass both ways. Document how to build.
@@ -51,3 +51,14 @@ a line to the log.**
 ## Log
 
 - 2026-10-13: plan written; nudge scheduled (hourly while idle, session-only, 7 days).
+- Baseline (before this pass): pistons 24.6 ticks/s, dust 8.2, mesh 23 ms, open world
+  0.81 s; 46 of 46 game scenarios match.
+- Cached shape fullness and conductor answers per state: pistons 29.6, dust 12.2.
+- Compiled build (mypyc, 30 modules; optional, fingerprint-checked): pistons 48.3, dust
+  23.1 (pure Python 27.0 / 11.7). Fixes needed for it: ClassVar/Final declarations, no
+  class decorators, a `Slots` protocol for container slots, `BlockEntity.clone` without
+  `copy.copy`, `redsim.REPO_ROOT` for file lookups. Tests pass both ways.
+- Incident: an interactive `cp` alias skipped a backup step; the owner's working
+  `examples/showcase.redsim.json` was overwritten for a moment and restored from the
+  21:29 backup (only edits between 21:29 and 21:42 could be lost).
+

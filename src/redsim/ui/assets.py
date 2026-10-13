@@ -33,10 +33,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+import redsim
 from redsim.core.direction import Direction
 from redsim.world.block import BlockState
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = redsim.REPO_ROOT  # not from __file__: a compiled build lives elsewhere
 DEFAULT_JAR = REPO_ROOT / "data" / "minecraft_jars" / "client.jar"
 
 #: FaceInfo vertex order per face: which corner (min/max) on x, y, z.

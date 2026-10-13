@@ -20,7 +20,8 @@ conda env create -f environment.yml   # once: Python 3.12 + PySide6 6.9.2, numpy
 conda activate redsim
 python -m pip install -e . --no-deps  # once: provides the `redsim` command (the env's pip)
 redsim examples/showcase.redsim.json  # open the example world (guided tour: doc/tour.md)
-python -m pytest                      # run the test suite (~2 s)
+python -m tools.build_compiled        # optional: compile the engine (about 2× faster)
+python -m pytest                      # run the test suite
 python -m tools.gameserver.run        # optional: compare against a sandboxed 26.3 server
                                       # (needs Java 25 and the JARs in data/)
 ```

@@ -35,7 +35,6 @@ DISPENSER = "minecraft:dispenser"
 DROPPER = "minecraft:dropper"
 
 
-@register_block_entity
 class DispenserBlockEntity(ContainerBlockEntity):
     type_id = "dispenser"
     valid_blocks = frozenset({DISPENSER})
@@ -56,7 +55,6 @@ class DispenserBlockEntity(ContainerBlockEntity):
         return chosen
 
 
-@register_block_entity
 class DropperBlockEntity(DispenserBlockEntity):
     type_id = "dropper"
     valid_blocks = frozenset({DROPPER})
@@ -157,3 +155,8 @@ def _less(stack: tuple[str, int] | None) -> tuple[str, int] | None:
     if stack is None or stack[1] <= 1:
         return None
     return (stack[0], stack[1] - 1)
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(DispenserBlockEntity)
+register_block_entity(DropperBlockEntity)

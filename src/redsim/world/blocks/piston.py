@@ -573,7 +573,6 @@ class MovingPistonBlock(Block):
         return False
 
 
-@register_block_entity
 class PistonMovingBlockEntity(BlockEntity):
     type_id = "piston"
     valid_blocks = frozenset({ids.MOVING_PISTON})
@@ -694,3 +693,7 @@ class PistonMovingBlockEntity(BlockEntity):
         kind = "head" if self.is_source else repr(self.moved_state)
         motion = "extending" if self.extending else "retracting"
         return f"moving {kind} {motion} {self.direction.serialized} progress={self.progress}"
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(PistonMovingBlockEntity)

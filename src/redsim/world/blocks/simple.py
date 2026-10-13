@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from redsim.core.compiled import mypyc_attr
 from redsim.core.pos import Pos
 from redsim.world.block import Block, BlockState, Conductor, PushReaction
 from redsim.world.properties import SLAB_TYPE, SNOWY
@@ -25,6 +26,7 @@ class AirBlock(Block):
         return EMPTY
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)  # ForeignBlock, test blocks
 class SimpleBlock(Block):
     """A block with a fixed shape and default behavior (stone, glass, obsidian, ...)."""
 

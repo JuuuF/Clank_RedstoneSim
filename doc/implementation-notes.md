@@ -32,6 +32,34 @@ python -m tools.gameserver.run and_gate   # selected scenarios
 
 `python -m tools.gameserver.run` needs `PYTHONPATH=src` unless the package is installed.
 
+## Compiled build (optional, about 2× faster simulation)
+
+`python -m tools.build_compiled` compiles the engine core and the block behaviors with
+mypyc (ships with mypy; needs a C compiler) into `build/compiled/<fingerprint>/`, a copy
+of `src/redsim` with compiled modules. `import redsim` puts that copy in front of the
+sources **only if its fingerprint (a hash of every source file) matches**, so after any
+edit the program runs as plain Python again until the next build; `REDSIM_PURE=1` forces
+plain Python. `python -m tools.build_compiled --clean` removes all builds. Measured
+2026-10-13 (`python -m tools.bench`): 168 pistons on observer clocks 27 → 48 ticks/s,
+dust update storms 11.7 → 23 ticks/s.
+
+Rules for code in compiled modules (`tools/build_compiled.MODULES`), checked by building:
+- class-level settings that subclasses override are `ClassVar` (`properties`,
+  `has_block_entity`, `type_id`, `SIZE`, …); constants in `UpdateFlags` are `Final`;
+- classes that plain Python subclasses carry `@mypyc_attr(allow_interpreted_subclasses=
+  True)` (`Block`, `SimpleBlock`, `BlockEntity`); no other class decorators (register
+  block entities with a call after the class);
+- attribute types are enforced at runtime (a double chest's slots are a `Slots`
+  protocol, not a `list`); `copy.copy` does not work on compiled objects
+  (`BlockEntity.clone` rebuilds them from `__mypyc_attrs__`);
+- file paths come from `redsim.REPO_ROOT`, never from a module's `__file__` (a compiled
+  build lives in another folder); positional-only parameters are not enforced (name
+  them so they cannot clash with `**kwargs`).
+- Not compiled: `sim/engine.py` (mypyc internal error), `core/direction.py` (its Enum
+  crashes compiled code), `world/blocks/foreign.py`, editor, I/O, UI.
+- Run the tests in both modes before committing engine changes: build, run the suite,
+  then `REDSIM_PURE=1` and run it again.
+
 ## Conventions
 
 - Source citations use paths relative to `data/minecraft_src/client-src/` plus class,

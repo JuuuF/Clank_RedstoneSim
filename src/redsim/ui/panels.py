@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 import importlib.metadata
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
@@ -286,7 +286,7 @@ class ContainerGrid(QWidget):
     def slot_size(self) -> int:
         return max(24, min(36, (self.width() - 2) // self.COLUMNS))
 
-    def set_items(self, items: list[tuple[str, int] | None]) -> None:
+    def set_items(self, items: Iterable[tuple[str, int] | None]) -> None:
         self.items = list(items)
         if self.selected is not None and self.selected >= len(self.items):
             self.selected = None

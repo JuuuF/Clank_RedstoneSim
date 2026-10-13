@@ -76,7 +76,6 @@ def _shapes() -> dict[Direction, Shape]:
 SHAPES = _shapes()
 
 
-@register_block_entity
 class HopperBlockEntity(ContainerBlockEntity):
     type_id = "hopper"
     valid_blocks = frozenset({ids.HOPPER})
@@ -330,3 +329,7 @@ class HopperBlock(Block):
 
 
 __all__ = ["MOVE_ITEM_SPEED", "SHAPES", "HopperBlock", "HopperBlockEntity", "container_at"]
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(HopperBlockEntity)

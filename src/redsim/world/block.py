@@ -14,8 +14,9 @@ from __future__ import annotations
 import itertools
 from collections.abc import Iterable, Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar, Final
 
+from redsim.core.compiled import mypyc_attr
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.world.properties import Property
@@ -47,19 +48,19 @@ class Conductor(Enum):
 class UpdateFlags:
     """``Block.UPDATE_*`` constants (Block.java L90-106)."""
 
-    NEIGHBORS = 1
-    CLIENTS = 2
-    INVISIBLE = 4
-    IMMEDIATE = 8
-    KNOWN_SHAPE = 16
-    SUPPRESS_DROPS = 32
-    MOVE_BY_PISTON = 64
-    SKIP_SHAPE_UPDATE_ON_WIRE = 128
-    SKIP_BLOCK_ENTITY_SIDEEFFECTS = 256
-    SKIP_ON_PLACE = 512
-    ALL = 3
-    ALL_IMMEDIATE = 11
-    UPDATE_LIMIT = 512
+    NEIGHBORS: Final = 1
+    CLIENTS: Final = 2
+    INVISIBLE: Final = 4
+    IMMEDIATE: Final = 8
+    KNOWN_SHAPE: Final = 16
+    SUPPRESS_DROPS: Final = 32
+    MOVE_BY_PISTON: Final = 64
+    SKIP_SHAPE_UPDATE_ON_WIRE: Final = 128
+    SKIP_BLOCK_ENTITY_SIDEEFFECTS: Final = 256
+    SKIP_ON_PLACE: Final = 512
+    ALL: Final = 3
+    ALL_IMMEDIATE: Final = 11
+    UPDATE_LIMIT: Final = 512
 
 
 class PlacementContext:
@@ -296,10 +297,11 @@ class StateDefinition:
         return self.states.values()
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class Block:
     """Base block with ``BlockBehaviour`` defaults. Subclasses override the hooks."""
 
-    properties: tuple[Property, ...] = ()
+    properties: ClassVar[tuple[Property, ...]] = ()
     #: Properties carried as text only (``ForeignBlock``: blocks not simulated).
     extra_properties: dict[str, str] = {}  # noqa: RUF012 - never mutated
 
@@ -338,16 +340,16 @@ class Block:
         return INSTRUMENTS.get(self.id, "harp")
 
     # --- block entities -------------------------------------------------------------------
-    has_block_entity: bool = False
-    has_ticker: bool = False
+    has_block_entity: ClassVar[bool] = False
+    has_ticker: ClassVar[bool] = False
     #: ``BaseRailBlock`` instances get removal side effects even without a block change.
-    is_rail: bool = False
+    is_rail: ClassVar[bool] = False
     #: ``DiodeBlock.isDiode`` (repeaters and comparators).
-    is_diode: bool = False
+    is_diode: ClassVar[bool] = False
     #: ``Properties.forceSolidOn/Off``; None means "derived from the collision shape".
-    force_solid: bool | None = None
+    force_solid: ClassVar[bool | None] = None
     #: ``Properties.dynamicShape``: support/collision depend on the level (no cache).
-    dynamic_shape: bool = False
+    dynamic_shape: ClassVar[bool] = False
 
     def get_dynamic_support_shape(self, state: BlockState, level: Level, pos: Pos) -> Shape:
         """Support shape of a ``dynamic_shape`` block, evaluated in the level."""

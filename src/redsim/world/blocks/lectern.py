@@ -57,7 +57,6 @@ def page_signal(page: int, page_count: int, has_book: bool) -> int:
     return math.floor(np.float32(progress * np.float32(14.0))) + (1 if has_book else 0)
 
 
-@register_block_entity
 class LecternBlockEntity(BlockEntity):
     type_id = "lectern"
     valid_blocks = frozenset({ids.LECTERN})
@@ -170,3 +169,7 @@ class LecternBlock(Block):
     ) -> None:
         if state.get(POWERED):
             update_below(level, pos, state)
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(LecternBlockEntity)

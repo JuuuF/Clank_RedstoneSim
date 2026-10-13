@@ -85,8 +85,8 @@ class Trace:
 
     def emit(
         self,
-        kind: str,
-        pos: Pos | None = None,
+        record_kind: str,
+        record_pos: Pos | None = None,
         /,
         parent: int | None | bool = True,
         **detail: Any,
@@ -101,11 +101,11 @@ class Trace:
         self.records.append(
             TraceRecord(
                 record_id,
-                kind,
+                record_kind,
                 actual_parent if isinstance(actual_parent, int) else None,
                 self.game_time,
                 self.step,
-                pos,
+                record_pos,
                 detail,
             )
         )

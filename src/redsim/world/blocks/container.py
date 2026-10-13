@@ -21,10 +21,9 @@ Barrels have a block entity, so pistons cannot move them (``PistonBaseBlock.isPu
 
 from __future__ import annotations
 
-import copy
 import math
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import numpy as np
 
@@ -55,6 +54,19 @@ ITEM_MAX_STACK = {
 Stack = tuple[str, int]  # item id, count
 
 
+def empty_slots(size: int) -> list[Stack | None]:
+    return [None] * size
+
+
+class Slots(Protocol):
+    """A container's slots: a list, or two lists joined (a double chest)."""
+
+    def __len__(self) -> int: ...
+    def __getitem__(self, slot: int) -> Stack | None: ...
+    def __setitem__(self, slot: int, stack: Stack | None) -> None: ...
+    def __iter__(self) -> Iterator[Stack | None]: ...
+
+
 def item_max_stack(item_id: str) -> int:
     return ITEM_MAX_STACK.get(item_id, 64)
 
@@ -70,7 +82,7 @@ def lerp_discrete(alpha: np.float32, p0: int, p1: int) -> int:
     return p0 + math.floor(np.float32(alpha * np.float32(delta - 1))) + (1 if alpha > 0 else 0)
 
 
-def container_signal(stacks: Sequence[Stack | None], size: int) -> int:
+def container_signal(stacks: Iterable[Stack | None], size: int) -> int:
     """``AbstractContainerMenu.getRedstoneSignalFromContainer`` (32-bit float, as in Java)."""
     total = np.float32(0.0)
     for stack in stacks:
@@ -87,12 +99,13 @@ class ContainerBlockEntity(BlockEntity):
     that notify comparators do so where the game calls ``setChanged``.
     """
 
-    SIZE = 0
-    NAME = "container"
+    SIZE: ClassVar[int] = 0
+    NAME: ClassVar[str] = "container"
 
     def __init__(self, pos: Pos, state: BlockState) -> None:
         super().__init__(pos, state)
-        self.items: list[Stack | None] = [None] * self.SIZE
+        #: The slots (a list; a double chest joins two lists, ``chest._Halves``).
+        self.items: Slots = empty_slots(self.SIZE)
 
     def signal(self) -> int:
         return container_signal(self.items, self.SIZE)
@@ -131,7 +144,8 @@ class ContainerBlockEntity(BlockEntity):
         return (stack[0], taken)
 
     def clone(self) -> BlockEntity:
-        other = copy.copy(self)
+        other = super().clone()
+        assert isinstance(other, ContainerBlockEntity)
         other.items = list(self.items)
         return other
 
@@ -146,7 +160,7 @@ class ContainerBlockEntity(BlockEntity):
         }
 
     def load_json(self, data: dict[str, Any]) -> None:
-        self.items = [None] * self.SIZE
+        self.items = empty_slots(self.SIZE)
         for entry in data.get("Items", []):
             slot = int(entry["Slot"])
             if 0 <= slot < self.SIZE and int(entry.get("count", 1)) > 0:
@@ -166,7 +180,6 @@ class ContainerBlockEntity(BlockEntity):
         return f"{self.NAME}: {total} items in {filled} slots, signal {self.signal()}"
 
 
-@register_block_entity
 class BarrelBlockEntity(ContainerBlockEntity):
     type_id = "barrel"
     valid_blocks = frozenset({ids.BARREL})
@@ -216,3 +229,7 @@ class BarrelBlock(Block):
         self, state: BlockState, level: Level, pos: Pos, moved_by_piston: bool
     ) -> None:
         level.update_neighbour_for_output_signal(pos, self)
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(BarrelBlockEntity)

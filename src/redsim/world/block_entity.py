@@ -7,8 +7,9 @@ Concrete block entities live next to their blocks (comparator, moving piston, co
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
+from redsim.core.compiled import mypyc_attr
 from redsim.core.pos import Pos
 
 if TYPE_CHECKING:
@@ -25,10 +26,11 @@ def register_block_entity(cls: type[BlockEntity]) -> type[BlockEntity]:
     return cls
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class BlockEntity:
-    type_id: str = "block_entity"
+    type_id: ClassVar[str] = "block_entity"
     #: Block ids this entity type is valid for (``BlockEntityType.isValid``).
-    valid_blocks: frozenset[str] = frozenset()
+    valid_blocks: ClassVar[frozenset[str]] = frozenset()
 
     def __init__(self, pos: Pos, state: BlockState) -> None:
         self.pos = pos
@@ -48,8 +50,18 @@ class BlockEntity:
         return None
 
     def clone(self) -> BlockEntity:
-        """Deep copy for history snapshots."""
-        return copy.copy(self)
+        """A shallow copy for history snapshots (subclasses copy their mutable parts).
+        Compiled classes (mypyc) cannot be copied with ``copy.copy``: they are rebuilt
+        and get every attribute mypyc lists for them."""
+        cls = type(self)
+        names = getattr(cls, "__mypyc_attrs__", None)
+        if names is None:
+            return copy.copy(self)
+        other = cls(self.pos, self.block_state)
+        for name in names:
+            if name != "__dict__" and hasattr(self, name):
+                setattr(other, name, getattr(self, name))
+        return other
 
     def to_json(self) -> dict[str, Any]:
         return {}

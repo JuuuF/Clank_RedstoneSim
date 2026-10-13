@@ -13,7 +13,7 @@ plates count entities: light (gold) up to 15, heavy (iron) up to 150.
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos, below
@@ -52,7 +52,7 @@ class BasePressurePlateBlock(Block):
             block_id, has_collision=False, push_reaction=PushReaction.POPPED, destroy_speed=0.5
         )
 
-    pressed_time = 20  # getPressedTime
+    pressed_time: ClassVar[int] = 20  # getPressedTime
 
     # --- the subclass parts --------------------------------------------------------------
     def signal_for_state(self, state: BlockState) -> int:

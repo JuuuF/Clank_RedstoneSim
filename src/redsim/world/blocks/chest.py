@@ -19,7 +19,7 @@ from redsim.core.direction import Direction
 from redsim.core.pos import Pos, above, offset
 from redsim.world.block import Block, BlockState, PlacementContext
 from redsim.world.block_entity import BlockEntity, register_block_entity
-from redsim.world.blocks.container import ContainerBlockEntity, Stack
+from redsim.world.blocks.container import ContainerBlockEntity, Slots, Stack
 from redsim.world.properties import HORIZONTAL_FACING, Property, boolean
 from redsim.world.shape import Shape, box, column
 
@@ -41,7 +41,6 @@ HALF_SHAPES = {
 }
 
 
-@register_block_entity
 class ChestBlockEntity(ContainerBlockEntity):
     type_id = "chest"
     valid_blocks = frozenset({CHEST})
@@ -49,7 +48,6 @@ class ChestBlockEntity(ContainerBlockEntity):
     NAME = "chest"
 
 
-@register_block_entity
 class TrappedChestBlockEntity(ChestBlockEntity):
     type_id = "trapped_chest"
     valid_blocks = frozenset({TRAPPED_CHEST})
@@ -57,9 +55,10 @@ class TrappedChestBlockEntity(ChestBlockEntity):
 
 
 class _Halves:
-    """The slots of two containers as one list (``CompoundContainer`` indexing)."""
+    """The slots of two containers as one list (``CompoundContainer`` indexing); its
+    length is fixed."""
 
-    def __init__(self, first: list[Stack | None], second: list[Stack | None]) -> None:
+    def __init__(self, first: Slots, second: Slots) -> None:
         self.first, self.second = first, second
 
     def __len__(self) -> int:
@@ -91,7 +90,7 @@ class CompoundContainer(ContainerBlockEntity):
     def __init__(self, first: ChestBlockEntity, second: ChestBlockEntity) -> None:
         super().__init__(first.pos, first.block_state)
         self.first, self.second = first, second
-        self.items = _Halves(first.items, second.items)  # type: ignore[assignment]
+        self.items = _Halves(first.items, second.items)
 
     @property
     def parts(self) -> tuple[ChestBlockEntity, ChestBlockEntity]:
@@ -236,3 +235,8 @@ class TrappedChestBlock(ChestBlock):
 
     def is_signal_source(self, state: BlockState) -> bool:
         return True
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(ChestBlockEntity)
+register_block_entity(TrappedChestBlockEntity)

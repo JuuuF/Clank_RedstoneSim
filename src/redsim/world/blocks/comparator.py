@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from redsim.sim.level import Level
 
 
-@register_block_entity
 class ComparatorBlockEntity(BlockEntity):
     type_id = "comparator"
     valid_blocks = frozenset({ids.COMPARATOR})
@@ -159,3 +158,7 @@ class ComparatorBlock(DiodeBlock):
         if level.get_block_state(pos).is_(self):
             self.refresh_output_state(level, pos, state)
         return True
+
+
+# Registered here, not with a class decorator (classes stay compilable by mypyc).
+register_block_entity(ComparatorBlockEntity)

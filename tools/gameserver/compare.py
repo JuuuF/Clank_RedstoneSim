@@ -145,7 +145,7 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
             mobs, others, ticks = (
                 (mobs + 1, others) if command[2] == "armor_stand" else (mobs, others + 1)
             ) + (1_000_000,)
-        payload = {"mobs": mobs, "others": others, "ticks": ticks}
+        payload: dict[str, Any] = {"mobs": mobs, "others": others, "ticks": ticks}
         return Action("plate_visitors", pos, payload=payload)
     if command[0] == "item":
         _, rel, slot, (item, count) = command

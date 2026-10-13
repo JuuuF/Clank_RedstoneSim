@@ -18,12 +18,12 @@ Burnout is deterministic: ``RECENT_TOGGLES`` maps each level to one list of
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from redsim.core.direction import ALL, Direction
 from redsim.core.pos import Pos, below, offset
 from redsim.world.block import Block, BlockState, PlacementContext, PushReaction
-from redsim.world.properties import HORIZONTAL_FACING, LIT
+from redsim.world.properties import HORIZONTAL_FACING, LIT, Property
 from redsim.world.shape import EMPTY, Shape, SupportType
 
 if TYPE_CHECKING:
@@ -50,7 +50,7 @@ def is_toggled_too_frequently(level: Level, pos: Pos, add: bool) -> bool:
 
 
 class RedstoneTorchBlock(Block):
-    properties: tuple = (LIT,)
+    properties: ClassVar[tuple[Property, ...]] = (LIT,)
 
     def __init__(self, block_id: str = "minecraft:redstone_torch") -> None:
         super().__init__(
