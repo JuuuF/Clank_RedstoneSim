@@ -37,7 +37,7 @@ a line to the log.**
 5. [x] **Bug hunt, UI:** every action on an empty document and on a busy one without a
    crash (an automated "click everything" smoke test), signal handlers that can raise,
    stale state after opening another document, timers after closing.
-6. [ ] **Refactor the big UI modules:** `ui/viewport.py` (2 000 lines),
+6. [x] **Refactor the big UI modules:** `ui/viewport.py` (2 000 lines),
    `ui/main_window.py` (1 600), `ui/panels.py` (1 400), `ui/timeline.py` (1 300) into
    focused modules (overlays, input handling, picking; window actions per area; one
    module per panel; timeline lines vs. transport), without behavior changes.
@@ -103,4 +103,8 @@ a line to the log.**
   `panel_inspector.py`, `panel_diagnostics.py`, `panel_circuit.py`, `panel_settings.py`;
   `panels.py` re-exports them. Found on the way: the Hotkeys tab had no color for
   ANIMATE mode's section and did not mention K or the Tab ring.
+- Refactor: `ui/timeline.py` (1 270 lines): the per-block lines (groups, pulse bars,
+  drags, menus) moved into the `LineArea` mixin in `timeline_lines.py`, constants into
+  `timeline_common.py`; `timeline.py` keeps the canvas core and the transport bar (962).
+  Item 6 done: the largest UI module is now `main_window.py` with 990 lines.
 

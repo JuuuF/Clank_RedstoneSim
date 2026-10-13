@@ -271,7 +271,7 @@ preserved), counters, torch toggles, flags and the engine position, plus editor 
 | `assets.py`, `atlas.py` | The game's blockstates, models, textures and font read from the supplied client jar at runtime (ADR-023): variant/multipart selection, FaceBakery-like quad baking, a texture atlas |
 | `theme.py` | Palette, app-wide stylesheet, the game's pixel font (ADR-024) |
 | `inventory.py`, `icons.py`, `block_search.py` | Trackmania-style inventory bar (folders, path, recent blocks), isometric block previews from the block models, quick block search |
-| `timeline.py` | Blender-like transport and timeline: ruler, keyframe rows (move/merge/delete edit batches, ADR-022), monitor tracks |
+| `timeline.py` | Blender-like transport and timeline: ruler, keyframe rows (move/merge/delete edit batches, ADR-022), monitor tracks; the per-block lines with groups and pulse bars are the `LineArea` mixin in `timeline_lines.py`, constants in `timeline_common.py` |
 | `hints.py`, `debug_screen.py`, `gizmos.py`, `preferences.py` | Hint bar, F3 screen text, selection gizmos, saved preferences |
 | `main_window.py` | Wires panels to the `Document`; menus and shortcuts; modes; refresh; core edits. Mixins: `window_files.py` (new/open/save, Minecraft worlds and chunk streaming), `window_regions.py` (selections, prefabs, groups), `window_time.py` (run loop, stepping, history, markers, undo), `window_sequence.py` (pulses, line groups); constants in `window_common.py` |
 | `app.py` | Entry point; selects `xcb` under Wayland; requests an OpenGL 3.3 core context |

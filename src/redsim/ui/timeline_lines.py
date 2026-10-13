@@ -1,0 +1,361 @@
+"""The timeline's per-block lines: each category opens into one line per block position;
+Powered lines sit in the owner's colored groups and order, with pulse bars to select,
+move (also onto another line), stretch, add, delete and mute; line labels, dragging and
+their menus."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, cast
+
+from PySide6.QtCore import QPoint, QPointF, QRectF, Qt
+from PySide6.QtGui import (
+    QColor,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QPolygonF,
+)
+from PySide6.QtWidgets import (
+    QMenu,
+    QWidget,
+)
+
+from redsim.core.pos import Pos
+from redsim.editor.document import EDIT_ROWS, Pulse
+from redsim.ui import pixel_icons
+from redsim.ui.timeline_common import BACKGROUND, ROW_COLORS, ROW_TITLES
+
+if TYPE_CHECKING:
+    from redsim.ui.timeline import TimelineCanvas
+
+
+class LineArea:
+    """Part of ``TimelineCanvas`` (a mixin; its methods run on it)."""
+
+    def _build_lines(self) -> None:
+        """The edit area's lines: each category, and when expanded its per-block lines
+        (Powered: in the user's groups and order)."""
+        view = cast("TimelineCanvas", self)
+        lines: list[_Line] = []
+        for row in EDIT_ROWS:
+            if row == "power":
+                children = [g.members for g in view.groups]
+                has = any(children)
+            else:
+                order: dict[Pos, None] = {}
+                for event in sorted(view.events, key=lambda e: (e.tick, e.index)):
+                    if event.row == row:
+                        order.setdefault(event.pos)
+                has = bool(order)
+            open_ = has and row in view.expanded
+            lines.append(_Line("category", row, ROW_TITLES[row], 0, ROW_COLORS[row], None,
+                               None, has, open_))  # fmt: skip
+            if not open_:
+                continue
+            if row == "power":
+                for index, group in enumerate(view.groups):
+                    color = QColor(group.color)
+                    title = f"{group.name} ({len(group.members)})"
+                    lines.append(_Line("group", row, title, 1, color, index, None, True,
+                                       not group.collapsed))  # fmt: skip
+                    if not group.collapsed:
+                        for pos in group.members:
+                            lines.append(view._block_line(row, pos, color, 2, index))
+            else:
+                for pos in order:
+                    lines.append(view._block_line(row, pos, ROW_COLORS[row], 1, None))
+        view.lines = lines
+        tops, y = [], view.RULER_HEIGHT
+        for _ in lines:
+            tops.append(y)
+            y += view.EDIT_ROW_HEIGHT
+        view._tops = tops
+
+    def _block_line(
+        self, row: str, pos: Pos, color: QColor, depth: int, group: int | None
+    ) -> _Line:
+        view = cast("TimelineCanvas", self)
+        where = " ".join(str(v) for v in pos)
+        name = view.names.get(pos, "")
+        return _Line("block", row, f"{where} {name}".strip(), depth, color, group, pos)
+
+    def _line_at(self, y: float) -> int | None:
+        view = cast("TimelineCanvas", self)
+        if y < view.RULER_HEIGHT:
+            return None
+        index = int((y - view.RULER_HEIGHT) // view.EDIT_ROW_HEIGHT)
+        return index if 0 <= index < len(view.lines) else None
+
+    def _power_positions(self) -> list[Pos]:
+        """The positions of the shown Powered lines, top to bottom."""
+        view = cast("TimelineCanvas", self)
+        return [
+            line.pos
+            for line in view.lines
+            if line.kind == "block" and line.row == "power" and line.pos is not None
+        ]
+
+    def _previewed(self, pulse: Pulse) -> tuple[int, int, Pos]:
+        """Where a pulse is shown: moved or stretched while the selection is dragged."""
+        view = cast("TimelineCanvas", self)
+        tick, ticks, pos = pulse.tick, pulse.ticks, pulse.pos
+        if view._pulse_drag is None or pulse.index not in view.selected_pulses:
+            return tick, ticks, pos
+        mode = view._pulse_drag[1]
+        dt, dl = view._drag_offset
+        if mode == "resize":
+            return tick, max(0, ticks + dt), pos
+        if dl:
+            order = view._power_positions()
+            if pos in order:
+                pos = order[max(0, min(len(order) - 1, order.index(pos) + dl))]
+        return max(1, tick + dt), ticks, pos
+
+    def _pulse_box(self, tick: int, ticks: int, top: float) -> QRectF:
+        view = cast("TimelineCanvas", self)
+        left, right = view._x(tick), view._x(tick + ticks)
+        return QRectF(left, top + 3, max(4.0, right - left), view.EDIT_ROW_HEIGHT - 6)
+
+    def _paint_block_lines(self, painter: QPainter) -> None:
+        """Per-block lines: pulse bars (Powered, in the group's color, 0-ticks as thin
+        marks) or the block's edits as small diamonds."""
+        view = cast("TimelineCanvas", self)
+        for line, top in zip(view.lines, view._tops, strict=True):
+            if line.kind == "group":  # a faint summary of the group's pulses
+                members = set(view.groups[line.group or 0].members) if view.groups else set()
+                color = QColor(line.color)
+                color.setAlpha(70)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(color)
+                for pulse in view.pulses:
+                    if pulse.pos in members:
+                        painter.drawRect(view._pulse_box(pulse.tick, pulse.ticks, top))
+                continue
+            if line.kind != "block":
+                continue
+            y = top + view.EDIT_ROW_HEIGHT / 2
+            if line.row == "power":
+                for pulse in view.pulses:
+                    tick, ticks, pos = view._previewed(pulse)
+                    if pos != line.pos:
+                        continue
+                    box = view._pulse_box(tick, ticks, top)
+                    if box.right() < view.LABEL_WIDTH:
+                        continue
+                    fill = QColor(line.color)
+                    fill.setAlpha(110 + 9 * pulse.strength)
+                    selected = pulse.index in view.selected_pulses
+                    painter.setPen(
+                        QPen(QColor(255, 255, 255), 1.6) if selected else QPen(fill.lighter(150), 1)
+                    )
+                    painter.setBrush(fill)
+                    painter.drawRoundedRect(box, 2, 2)
+                continue
+            painter.setBrush(line.color)
+            painter.setPen(QPen(BACKGROUND, 1))
+            for event in view.events:
+                if event.row == line.row and event.pos == line.pos:
+                    x = view._x(event.tick)
+                    if x >= view.LABEL_WIDTH:
+                        size = 3.5
+                        painter.drawPolygon(
+                            QPolygonF(
+                                [
+                                    QPointF(x, y - size),
+                                    QPointF(x + size, y),
+                                    QPointF(x, y + size),
+                                    QPointF(x - size, y),
+                                ]
+                            )
+                        )
+
+    def _pulse_hit(self, line: _Line, x: float, top: float) -> tuple[Pulse, str] | None:
+        """The pulse of a Powered line under ``x``: ("resize" near its end, else "move")."""
+        view = cast("TimelineCanvas", self)
+        for pulse in reversed(view.pulses):
+            if pulse.pos != line.pos:
+                continue
+            box = view._pulse_box(pulse.tick, pulse.ticks, top)
+            if abs(x - box.right()) <= 4 and pulse.ticks > 0:
+                return pulse, "resize"
+            if box.left() - 3 <= x <= box.right():
+                return pulse, "move"
+        return None
+
+    def _line_press(self, event: QMouseEvent, line: _Line, top: float) -> bool:
+        """Clicks on the lines' labels and on pulse bars; True when handled."""
+        view = cast("TimelineCanvas", self)
+        x, y = event.position().x(), event.position().y()
+        left_button = event.button() == Qt.MouseButton.LeftButton
+        right_button = event.button() == Qt.MouseButton.RightButton
+        where = event.globalPosition().toPoint()
+        power_block = line.kind == "block" and line.row == "power" and line.pos is not None
+        if x < view.LABEL_WIDTH:
+            if left_button and line.kind == "category" and line.expandable:
+                view.expanded ^= {line.row}
+                view._build_lines()
+                view._resize_to_tracks()
+                view.update()
+                return True
+            if left_button and line.kind == "group" and line.group is not None:
+                view.group_request.emit("toggle", line.group)
+                return True
+            if left_button and power_block:
+                assert line.pos is not None
+                view._line_drag = (line.pos, y)
+                return True
+            if right_button and line.kind == "group" and line.group is not None:
+                view._group_menu(where, line.group)
+                return True
+            if right_button and power_block:
+                assert line.pos is not None
+                view._line_menu(where, line.pos)
+                return True
+            return False
+        if not power_block:
+            return False
+        hit = view._pulse_hit(line, x, top)
+        if right_button and hit is not None:
+            menu = QMenu(view)
+            pulse = hit[0]
+            remove = menu.addAction(f"Delete this pulse (tick {pulse.tick}, {pulse.ticks} ticks)")
+            remove.setIcon(pixel_icons.pixel_icon("delete"))
+            remove.triggered.connect(lambda: view.pulses_deleted.emit([pulse.index]))
+            if len(view.selected_pulses) > 1 and pulse.index in view.selected_pulses:
+                chosen = sorted(view.selected_pulses)
+                every = menu.addAction(f"Delete the {len(chosen)} selected pulses (Del)")
+                every.triggered.connect(lambda: view.pulses_deleted.emit(chosen))
+            menu.exec(where)
+            return True
+        if left_button and hit is not None:
+            pulse, mode = hit
+            additive = bool(
+                event.modifiers()
+                & (Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.ControlModifier)
+            )
+            view._pulse_additive = additive
+            if additive:
+                view.selected_pulses ^= {pulse.index}
+            elif pulse.index not in view.selected_pulses:
+                view.selected_pulses = {pulse.index}
+            view.selected = set()
+            if pulse.index in view.selected_pulses:
+                order = view._power_positions()
+                line_index = order.index(line.pos) if line.pos in order else 0
+                view._pulse_drag = (pulse, mode, x, line_index)
+                view._drag_offset = (0, 0)
+            view.setFocus()
+            view.update()
+            return True
+        if left_button and view.selected_pulses:
+            view.selected_pulses = set()
+            view.update()
+        return False
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        """A double click on an empty spot of a Powered line adds a pulse there."""
+        view = cast("TimelineCanvas", self)
+        x, y = event.position().x(), event.position().y()
+        index = view._line_at(y)
+        if index is not None and x >= view.LABEL_WIDTH:
+            line = view.lines[index]
+            power = line.kind == "block" and line.row == "power" and line.pos is not None
+            if power and view._pulse_hit(line, x, view._tops[index]) is None:
+                assert line.pos is not None
+                view.pulse_added.emit(line.pos, max(1, view.tick_at(x)))
+                return
+        QWidget.mouseDoubleClickEvent(view, event)
+
+    def _drop_target(self, y: float) -> tuple[int, int, float] | None:
+        """Where a dragged Powered line would go: (group, row, the marker's y)."""
+        view = cast("TimelineCanvas", self)
+        if not view.groups:
+            return None
+        rows = [
+            (i, line)
+            for i, line in enumerate(view.lines)
+            if line.row == "power" and line.kind != "category"
+        ]
+        if not rows:
+            return None
+        for i, line in rows:
+            top = view._tops[i]
+            if y < top + view.EDIT_ROW_HEIGHT:
+                below = y > top + view.EDIT_ROW_HEIGHT / 2
+                if line.kind == "group" and line.group is not None:
+                    return line.group, 0, top + view.EDIT_ROW_HEIGHT
+                if line.group is not None and line.pos is not None:
+                    members = view.groups[line.group].members
+                    row = members.index(line.pos) + (1 if below else 0)
+                    return line.group, row, top + (view.EDIT_ROW_HEIGHT if below else 0)
+        last = len(view.groups) - 1
+        bottom = view._tops[rows[-1][0]] + view.EDIT_ROW_HEIGHT
+        return last, len(view.groups[last].members), bottom
+
+    def _group_menu(self, where: QPoint, group: int) -> None:
+        view = cast("TimelineCanvas", self)
+        menu = QMenu(view)
+        name = view.groups[group].name
+        for text, action in (
+            (f"Rename “{name}”…", "rename"),
+            ("Color…", "color"),
+            ("Move group up", "up"),
+            ("Move group down", "down"),
+            ("New group…", "new"),
+            ("Delete group (its lines join the group above)", "delete"),
+        ):
+            item = menu.addAction(text)
+            item.triggered.connect(lambda _=False, a=action: view.group_request.emit(a, group))
+        menu.exec(where)
+
+    def _line_menu(self, where: QPoint, pos: Pos) -> None:
+        view = cast("TimelineCanvas", self)
+        menu = QMenu(view)
+        move = menu.addMenu("Move to group")
+        for index, group in enumerate(view.groups):
+            move.addAction(group.name).triggered.connect(
+                lambda _=False, g=index: view.line_moved.emit(pos, g, len(view.groups[g].members))
+            )
+        menu.addAction("New group with this line…").triggered.connect(
+            lambda: view.line_group_new.emit(pos)
+        )
+        menu.exec(where)
+
+    def _hover_position(self, y: float) -> None:
+        """Tell which block's line is under the cursor (the view lights it up)."""
+        view = cast("TimelineCanvas", self)
+        index = view._line_at(y)
+        pos = view.lines[index].pos if index is not None else None
+        if pos is None and y >= view._tracks_top():  # a monitor track
+            row = int((y - view._tracks_top()) // view.ROW_HEIGHT)
+            pos = view.tracks[row].pos if 0 <= row < len(view.tracks) else None
+        if pos != view._hovered_pos:
+            view._hovered_pos = pos
+            view.position_hovered.emit(pos)
+
+
+@dataclass(frozen=True)
+class EditEvent:
+    """One recorded edit, for the per-block lines of a category."""
+
+    index: int
+    tick: int
+    row: str
+    pos: Pos
+    label: str
+
+
+@dataclass
+class _Line:
+    """A line of the edit area: a category, a group (Powered), or one block's events."""
+
+    kind: str  # "category" | "group" | "block"
+    row: str  # the category (EDIT_ROWS)
+    title: str
+    depth: int
+    color: QColor
+    group: int | None = None
+    pos: Pos | None = None
+    expandable: bool = False
+    expanded: bool = False
