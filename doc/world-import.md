@@ -103,5 +103,6 @@ the moment of writing are stored the way the game stores them (`block_ticks`,
    yet: blocks outside loaded chunks (reported), pending scheduled ticks of the
    document, sections the save lacks, writing into the original save, and a check in
    the real game.
-5. Write back (copy first), with a round-trip test: import → export → import is
-   identical, and untouched chunks are byte-identical.
+5. Later: write into the original save (after checking `session.lock`, with backups of
+   changed region files), pending ticks, and a test that untouched chunks stay
+   byte-identical.
