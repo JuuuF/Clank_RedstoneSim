@@ -435,3 +435,22 @@ def test_diagnostics_clicks_flash_the_block(app: object) -> None:
     assert len(window.viewport._highlight_body()) > 0
     window.document.dirty = False
     window.close()
+
+
+def test_f3_labels_fade_out_within_the_range(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    for x in range(0, 30, 2):
+        window.document.setblock((x, 1, 0), blocks.REDSTONE_WIRE.default_state)
+    viewport = window.viewport
+    viewport.camera.pivot = np.array([0.5, 1.0, 0.5])
+    viewport.preferences.info_label_range = 13
+    labels = viewport._labels()
+    assert {pos[0] for *_, pos, _ in labels} == set(range(0, 13, 2))  # within 13 blocks
+    alphas = {pos[0]: alpha for *_, pos, alpha in labels}
+    assert alphas[0] == 1.0 and 0 < alphas[12] < alphas[8] <= 1.0  # fading at the end
+    viewport.show_info, viewport.hovered_label = True, (8, 1, 0)
+    assert viewport.focus_hover()  # F jumps to the hovered label's block
+    window.document.dirty = False
+    window.close()

@@ -294,8 +294,12 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
    the block shape under the pivot (`Viewport.pivot_ground` uses the visual boxes).
 10. ☑ **60 fps** rendering while running, for a smooth feel (`viewport.FRAME_INTERVAL_MS`; ticks
     still run at the chosen rate, frames interpolate between them).
-11. ☐ **F3 signal labels:** a slider for the display range with a smooth fade-out (now
+11. ☑ **F3 signal labels:** a slider for the display range with a smooth fade-out (now
     every dust level in view is labeled); hovering a label highlights it; F jumps to it.
+    Now a slider at the top of the view while F3 is on sets the range (4–64 blocks from
+    the camera pivot, preference `info_label_range`, default 16); labels fade out over
+    the last third; the hovered label gets a white frame and F moves the pivot to its
+    block (`Viewport._labels`, `label_at`, `LabelRange`).
 12. ☑ **Selection side tint flickers** where it meets blocks (z-fighting): draw the
     highlight box slightly larger than its contents (`BODY_MARGIN` = 0.02 blocks).
 13. ☐ **Multiple selections:** Shift+drag adds another selection; **Alt+A** removes all.

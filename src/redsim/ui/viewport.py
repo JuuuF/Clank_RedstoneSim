@@ -20,7 +20,7 @@ from functools import lru_cache
 from typing import Any
 
 import numpy as np
-from PySide6.QtCore import QEvent, QObject, QPoint, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, QPoint, QRect, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QFocusEvent,
@@ -33,7 +33,7 @@ from PySide6.QtGui import (
     QWheelEvent,
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QWidget
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
@@ -63,7 +63,7 @@ from redsim.ui.gizmos import Hotspot, box_faces, pick_hotspot, selection_gizmos
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter
-from redsim.ui.preferences import Preferences
+from redsim.ui.preferences import INT_RANGES, Preferences
 from redsim.ui.renderer import CLOUD_TEXTURE, GROUND_TEXTURE, Renderer
 from redsim.ui.selection_tools import (
     Handle,
@@ -277,6 +277,9 @@ class Viewport(QOpenGLWidget):
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
         self.build_face = Direction.UP  # the face BUILD mode places against
         self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
+        self.hovered_label: Pos | None = None  # the F3 label under the cursor
+        self._label_rects: list[tuple[QRect, Pos]] = []
+        self._label_range: LabelRange | None = None  # F3's label range slider (lazy)
         self._red_meshes: dict[BlockState, np.ndarray] = {}  # blocked previews
         #: BUILD mode line drag: the start cell.
         self._line: Pos | None = None
@@ -614,6 +617,8 @@ class Viewport(QOpenGLWidget):
         return super().eventFilter(watched, event)
 
     def resizeEvent(self, event: Any) -> None:
+        if self._label_range is not None:
+            self._label_range.place()
         super().resizeEvent(event)
         self.place_overlays()
 
@@ -699,6 +704,9 @@ class Viewport(QOpenGLWidget):
     def _draw_overlays(self) -> None:
         """2D overlays in the game's pixel font (``theme.draw_text``): status lines, the
         mode badge with the mouse hints, view tags, F3 columns and signal labels."""
+        if self.label_range.isVisible() != self.show_info:
+            self.label_range.setVisible(self.show_info)
+            self.label_range.place()
         painter = QPainter(self)
         line = theme.line_height(2)
         self._draw_sign_texts(painter)
@@ -746,14 +754,24 @@ class Viewport(QOpenGLWidget):
             theme.draw_text(painter, 16, tag_top + 5, tag, theme.GOLD)
         painter.end()
 
-    def info_labels(self, max_distance: float = 48.0) -> list[tuple[np.ndarray, str, str]]:
+    def info_labels(self, max_distance: float | None = None) -> list[tuple[np.ndarray, str, str]]:
         """Signal values shown by the info overlay: (world point, text, kind), nearest last.
 
         Wire: its power; signal sources (barrel, lectern, cake): the value a comparator
-        reads; comparators: their stored output signal."""
+        reads; comparators: their stored output signal. Within ``max_distance`` (default:
+        the F3 range preference)."""
+        return [(point, text, kind) for point, text, kind, _, _ in self._labels(max_distance)]
+
+    def _labels(
+        self, max_distance: float | None = None
+    ) -> list[tuple[np.ndarray, str, str, Pos, float]]:
+        """``info_labels`` with each label's block and opacity (fading out over the last
+        third of the range). Distances count from the camera pivot."""
+        if max_distance is None:
+            max_distance = float(self.preferences.info_label_range)
         level = self.document.level
-        eye = self.camera.position
-        labels: list[tuple[float, np.ndarray, str, str]] = []
+        eye = np.asarray(self.camera.pivot, dtype=float)  # zooming keeps the same labels
+        labels: list[tuple[float, np.ndarray, str, str, Pos]] = []
         for pos, state in level.blocks.items():
             block_id = state.block.id
             if block_id == "minecraft:redstone_wire":
@@ -774,9 +792,13 @@ class Viewport(QOpenGLWidget):
             point = np.array([pos[0] + 0.5, pos[1] + height, pos[2] + 0.5])
             distance = float(np.linalg.norm(point - eye))
             if distance <= max_distance:
-                labels.append((distance, point, text, kind))
+                labels.append((distance, point, text, kind, pos))
         labels.sort(key=lambda label: -label[0])
-        return [(point, text, kind) for _, point, text, kind in labels[-INFO_LABEL_LIMIT:]]
+        fade = max(1.0, max_distance / 3)
+        return [
+            (point, text, kind, pos, min(1.0, (max_distance - distance) / fade))
+            for distance, point, text, kind, pos in labels[-INFO_LABEL_LIMIT:]
+        ]
 
     def _draw_debug_columns(self, painter: QPainter) -> None:
         """Minecraft's F3 text: world state on the left, the targeted block on the right,
@@ -836,22 +858,44 @@ class Viewport(QOpenGLWidget):
         width, height = max(self.width(), 1), max(self.height(), 1)
         mvp = self.camera.projection_matrix(width / height) @ self.camera.view_matrix()
         line = theme.line_height(2)
-        for point, text, kind in self.info_labels():
+        rects: list[tuple[QRect, Pos]] = []
+        for point, text, kind, pos, alpha in self._labels():
             clip = mvp @ np.array([*point, 1.0])
-            if clip[3] <= 0.05:
-                continue  # behind the camera
+            if clip[3] <= 0.05 or alpha <= 0:
+                continue  # behind the camera, or faded out
             x = (clip[0] / clip[3] + 1) / 2 * width
             y = (1 - clip[1] / clip[3]) / 2 * height
             if not (0 <= x <= width and 0 <= y <= height):
                 continue
             box_width = theme.text_width(text) + 10
             box_height = line + 4
-            left, top = int(x - box_width / 2), int(y - box_height / 2)
+            rect = QRect(int(x - box_width / 2), int(y - box_height / 2), box_width, box_height)
+            hovered = pos == self.hovered_label
             background = INFO_COLORS[kind]
             if text == "0":
                 background = QColor(70, 70, 70, 170)
-            painter.fillRect(left, top, box_width, box_height, background)
-            theme.draw_text(painter, left + 5, top + 3, text, "#ffffff")
+            painter.setOpacity(1.0 if hovered else alpha)
+            if hovered:  # a white frame and a little larger: F jumps to it
+                painter.fillRect(rect.adjusted(-2, -2, 2, 2), QColor(255, 255, 255, 230))
+            painter.fillRect(rect, background)
+            theme.draw_text(painter, rect.left() + 5, rect.top() + 3, text, "#ffffff")
+            rects.append((rect, pos))
+        painter.setOpacity(1.0)
+        self._label_rects = rects
+
+    @property
+    def label_range(self) -> LabelRange:
+        """The F3 labels' range slider (top center), made on first use."""
+        if self._label_range is None:
+            self._label_range = LabelRange(self)
+        return self._label_range
+
+    def label_at(self, point: QPoint) -> Pos | None:
+        """The block of the F3 label under ``point`` (the nearest label wins)."""
+        for rect, pos in reversed(self._label_rects):
+            if rect.contains(point):
+                return pos
+        return None
 
     def welcome_lines(self) -> list[str]:
         """How to start, while the world is only its floor (nothing above y=0)."""
@@ -1615,6 +1659,10 @@ class Viewport(QOpenGLWidget):
         return pick(self.document.level, origin, direction)
 
     def _update_hover(self, point: QPoint) -> None:
+        label = self.label_at(point) if self.show_info else None
+        if label != self.hovered_label:
+            self.hovered_label = label
+            self.update()
         hit = self._pick_at(point)
         spot = self._gizmo_at(point) if self._press is None else self.gizmo_hover
         if spot != self.gizmo_hover:
@@ -1707,7 +1755,11 @@ class Viewport(QOpenGLWidget):
         return super().event(event)
 
     def focus_hover(self) -> bool:
-        """Move the pivot to the center of the block under the cursor."""
+        """Move the pivot to the center of the block under the cursor (or of the hovered
+        F3 label's block)."""
+        if self.show_info and self.hovered_label is not None:
+            self.look_at(self.hovered_label)
+            return True
         if self.hover is None:
             return False
         self.look_at(self.hover.pos)
@@ -1785,3 +1837,34 @@ def _hex_color(text: str) -> tuple[float, float, float, float]:
 
 
 __all__ = ["BUILD", "NORMAL", "SELECT", "Direction", "Viewport"]
+
+
+class LabelRange(QWidget):
+    """F3's range slider for the signal labels (top center of the view)."""
+
+    def __init__(self, viewport: Viewport) -> None:
+        super().__init__(viewport)
+        self.viewport = viewport
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 3, 8, 3)
+        self.text = QLabel()
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider.setRange(*INT_RANGES["info_label_range"])
+        self.slider.setFixedWidth(140)
+        self.slider.setValue(viewport.preferences.info_label_range)
+        self.slider.setToolTip("How far signal labels show (they fade out towards the end)")
+        self.slider.valueChanged.connect(self._changed)
+        layout.addWidget(self.text)
+        layout.addWidget(self.slider)
+        self.setStyleSheet("background: rgba(40, 40, 44, 200); color: #e0e0e0;")
+        self._changed(self.slider.value())
+        self.hide()
+
+    def _changed(self, value: int) -> None:
+        self.viewport.preferences.info_label_range = value
+        self.text.setText(f"Labels within {value} blocks")
+        self.viewport.update()
+
+    def place(self) -> None:
+        self.adjustSize()
+        self.move((self.viewport.width() - self.width()) // 2, 6)

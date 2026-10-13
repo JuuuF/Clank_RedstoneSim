@@ -190,6 +190,7 @@ reason the old Shift+T rewind was disliked).
 
 | Keys | Toggle |
 |---|---|
+| F (on an F3 label) | move the pivot to that label's block; the slider at the top sets how far labels show |
 | F3 | **Debug screen** (like Minecraft's): left, the engine and world (rates, game time, phase, engine step and next step, pending scheduled ticks and block events, counts, camera, mode, selection); right, the block under the cursor (id, every property, block entity, comparator reading, the strong and weak power it receives from each side, best neighbor signal, its scheduled ticks, conductor/solid/push reaction). Signal values are labeled on the blocks too: dust power (red), signal-source strength (purple), comparator output (dark); zeros grey. |
 | View → Game textures | Blocks drawn with the game's own models and textures (read from the supplied client jar; saved preference). Off, or without the jar: simple colored models. |
 | View → Scenery | A grass superflat around the floor (the game's grass texture, fading into the horizon) and the game's clouds; saved preference. Off: the floor alone in the sky. |

@@ -22,6 +22,8 @@ def config_dir() -> Path:
 
 
 MAX_VIEW_DISTANCE = 24
+#: Bounds of the integer preferences.
+INT_RANGES = {"world_view_distance": (2, MAX_VIEW_DISTANCE), "info_label_range": (4, 64)}
 
 
 @dataclass
@@ -39,6 +41,8 @@ class Preferences:
     trackpad_navigation: bool = sys.platform == "darwin"
     #: How far chunks of an opened Minecraft world load around the camera (in chunks).
     world_view_distance: int = 8
+    #: F3 signal labels show within this many blocks of the camera, fading out at the end.
+    info_label_range: int = 16
 
     @staticmethod
     def path() -> Path:
@@ -58,7 +62,8 @@ class Preferences:
                     setattr(prefs, field.name, value)
             elif isinstance(getattr(prefs, field.name), int):
                 if isinstance(value, int) and not isinstance(value, bool):
-                    setattr(prefs, field.name, min(MAX_VIEW_DISTANCE, max(2, value)))
+                    low, high = INT_RANGES.get(field.name, (2, MAX_VIEW_DISTANCE))
+                    setattr(prefs, field.name, min(high, max(low, value)))
             elif isinstance(value, int | float) and not isinstance(value, bool):
                 setattr(prefs, field.name, min(1.0, max(0.0, float(value))))
         return prefs
