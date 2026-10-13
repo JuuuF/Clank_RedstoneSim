@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from redsim.core.direction import NEIGHBOR_UPDATE_ORDER, Direction
-from redsim.core.pos import Pos, offset
+from redsim.core.pos import Pos
 from redsim.sim import trace as tr
 
 if TYPE_CHECKING:
@@ -121,8 +121,10 @@ class _MultiNeighborUpdate(_Update):
     def run_next(self, level: Level) -> bool:
         direction = NEIGHBOR_UPDATE_ORDER[self.idx]
         self.idx += 1
-        neighbor_pos = offset(self.source_pos, direction)
-        state = level.get_block_state(neighbor_pos)
+        x, y, z = self.source_pos
+        dx, dy, dz = direction.step
+        neighbor_pos = (x + dx, y + dy, z + dz)  # offset(), inlined: the hottest loop
+        state = level.blocks.get(neighbor_pos, level.air)
         level.execute_neighbor_update(
             self.cause, state, neighbor_pos, self.source, False, "multi", self.source_pos
         )

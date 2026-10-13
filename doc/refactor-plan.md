@@ -24,7 +24,7 @@ a line to the log.**
 1. [x] **Baseline:** full tests, full game regression (46 named + 40 random), and speed
    numbers (engine ticks/s on a busy contraption, mesh build, open world, UI paint) in a
    benchmark script under `tools/bench.py` so later steps can compare.
-2. [ ] **Engine hot paths (pure Python first):** profile, then trim per-call overhead in
+2. [x] **Engine hot paths (pure Python first):** profile, then trim per-call overhead in
    `Level.get_block_state`, signal queries, the neighbor updater, scheduled ticks and the
    trace (e.g. no keyword dicts per record when nobody reads them), keeping semantics.
 3. [x] **Compile the hot core (optional speed-up):** try mypyc (ships with mypy) or
@@ -61,4 +61,7 @@ a line to the log.**
 - Incident: an interactive `cp` alias skipped a backup step; the owner's working
   `examples/showcase.redsim.json` was overwritten for a moment and restored from the
   21:29 backup (only edits between 21:29 and 21:42 could be lost).
+- Pure-Python trims: block names computed once, the neighbor-update loop inlines its
+  position math: pistons 30.2, dust 13.0 (pure). Further trims stopped there: the
+  remaining cost is spread thin; the compiled build is the lever (item 3).
 

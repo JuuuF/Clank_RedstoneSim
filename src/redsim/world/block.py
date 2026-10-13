@@ -316,6 +316,7 @@ class Block:
         is_air: bool = False,
     ) -> None:
         self.id = block_id
+        self.name = block_id.split(":", 1)[-1]  # e.g. "redstone_wire" (traces use it a lot)
         self.has_collision = has_collision
         self.push_reaction = push_reaction
         self.destroy_speed = destroy_speed
@@ -327,10 +328,6 @@ class Block:
 
     def register_default_state(self, state: BlockState) -> None:
         self.default_state = state
-
-    @property
-    def name(self) -> str:
-        return self.id.split(":", 1)[-1]
 
     @property
     def instrument(self) -> str:
