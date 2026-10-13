@@ -806,7 +806,7 @@ class MainWindow(QMainWindow):
         """A click in BUILD mode: place on the working layer, like a player clicking the top
         of the block below (orientation from the cursor ray)."""
         yaw, pitch = self.viewport.player_view()
-        request = PlaceRequest(Direction.UP, yaw, pitch)
+        request = PlaceRequest(self.viewport.build_face, yaw, pitch)
         kind = sources.SOURCE_BLOCKS.get(self.current_block.id)
         if kind is not None:
             strength = self.inventory.strength.value()

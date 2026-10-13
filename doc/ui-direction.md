@@ -273,10 +273,12 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
    the sign within 16 blocks, fading out (`viewport._draw_sign_texts`). All 13 signs in
    the example save are empty, so it shows nothing there; signs placed in the editor have
    no text yet.
-5. ☐ **Placing on the side of blocks** like in Minecraft (the clicked face decides the
-   cell, not only the build layer).
-6. ☐ **Blocked placement preview:** when a block cannot be placed, the preview stays and
-   turns red.
+5. ☑ **Placing on the side of blocks** like in Minecraft: when the cursor ray meets a
+   block before the working layer, the block goes against the face it points at, and
+   that face orients it like a player's click (levers and torches on walls); over open
+   space the working layer still decides (`Viewport.build_target`, `build_face`).
+6. ☑ **Blocked placement preview:** when a block cannot be placed, the preview stays and
+   turns red (`BLOCKED_TINT`; the red outline stays too).
 7. ☑ The **oak sign at -4 89 36** in the example save has no texture; **standing signs
    make the faces of the blocks below transparent** (culling). Causes: the save stores
    that sign as a bare id (the default state), which matched no blockstate variant (now

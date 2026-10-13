@@ -402,3 +402,23 @@ def test_e_opens_the_block_under_the_cursor_in_a_popup(app: object) -> None:
     assert not popup.isVisible() and popup.pos_ is None
     window.document.dirty = False
     window.close()
+
+
+def test_build_places_against_the_pointed_face_like_minecraft(app: object) -> None:
+    from PySide6.QtCore import QPoint
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.document.setblock((0, 1, 0), blocks.STONE.default_state)
+    viewport = window.viewport
+    # A level ray at y 1.5 towards +x: it meets the stone's west face, never the layer.
+    viewport._ray = lambda point: (np.array([-5.0, 1.5, 0.5]), np.array([1.0, 0.0, 0.0]))
+    assert viewport.build_target(QPoint(0, 0)) == (-1, 1, 0)
+    assert viewport.build_face is Direction.WEST
+    # Looking down at open floor: the working layer decides.
+    viewport._ray = lambda point: (np.array([5.5, 6.0, 5.5]), np.array([0.0, -1.0, 0.0]))
+    assert viewport.build_target(QPoint(0, 0)) == (5, 1, 5)
+    assert viewport.build_face is Direction.UP
+    window.document.dirty = False
+    window.close()

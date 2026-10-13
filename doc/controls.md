@@ -71,6 +71,9 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - In BUILD, **right click** removes the block under the cursor; **Del** only ever clears the
   selection box. **Q** / Shift+Q turn the block under the cursor; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.
+- **Placing against blocks (like Minecraft):** pointing at a block that is nearer than
+  the build layer places against the face under the cursor, oriented by that face. A
+  preview that cannot be placed turns red.
 - **Build layer (Trackmania-style):** blocks go on the horizontal layer at the camera
   pivot's height, in the cell under the cursor (a grid around the target cell marks the
   layer and fades out with the distance, yellow lines drop

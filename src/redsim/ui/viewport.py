@@ -81,6 +81,7 @@ from redsim.world.rotation import mirror_state, rotate_state, upside_down
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 FRAME_INTERVAL_MS = 16  # ~60 frames per second while something moves
+BLOCKED_TINT = (1.0, 0.22, 0.22)  # a preview that cannot be placed: red
 SIGN_TEXT_DISTANCE = 16.0  # blocks: sign text shows (and fades out) within this
 ORBIT_DEGREES_PER_PIXEL = 0.3
 #: Trackpad scrolling: pixels of finger travel per zoom notch and per block up/down.
@@ -271,6 +272,8 @@ class Viewport(QOpenGLWidget):
         self._line_ghost: tuple[Any, np.ndarray] | None = None
         self._last_shift = 0.0
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
+        self.build_face = Direction.UP  # the face BUILD mode places against
+        self._red_meshes: dict[BlockState, np.ndarray] = {}  # blocked previews
         #: BUILD mode line drag: the start cell.
         self._line: Pos | None = None
         self._line_end: Pos | None = None
@@ -353,6 +356,7 @@ class Viewport(QOpenGLWidget):
         self.atlas = Atlas.for_blocks(self.assets, foreign)
         self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
         self._build_meshes.clear()
+        self._red_meshes.clear()
         if self.renderer is not None:
             self.makeCurrent()
             for key in list(self.renderer.chunks):
@@ -394,10 +398,13 @@ class Viewport(QOpenGLWidget):
         elif self.mode == BUILD and block is not None and not busy:
             target = self.build_target()
             self._build_cell = target
-            request = PlaceRequest(Direction.UP, *self.player_view())
+            request = PlaceRequest(self.build_face, *self.player_view())
             state = None if target is None else self._placed_state(block, request, target)
             if target is not None and state is None:
+                # Cannot be placed here: the preview stays, tinted red (round 9).
                 blocked = target
+                shown = placement_state(block, request, self.document.level, target)
+                ghost = (self._single_ghost(shown or block.default_state, red=True), target)
             elif target is not None and state is not None:
                 ghost = (self._single_ghost(state), target)
         if _ghost_key(ghost) != _ghost_key(self._build_ghost) or blocked != self.build_blocked:
@@ -419,7 +426,14 @@ class Viewport(QOpenGLWidget):
             return None
         return state
 
-    def _single_ghost(self, state: BlockState) -> np.ndarray:
+    def _single_ghost(self, state: BlockState, red: bool = False) -> np.ndarray:
+        if red:
+            tinted = self._red_meshes.get(state)
+            if tinted is None:
+                tinted = self._single_ghost(state).copy()
+                tinted[:, 3:6] *= np.array(BLOCKED_TINT, dtype=np.float32)
+                self._red_meshes[state] = tinted
+            return tinted
         vertices = self._build_meshes.get(state)
         if vertices is None:
             vertices = ghost_mesh({(0, 0, 0): state}, 0.5, self.world_mesh.mesher)
@@ -461,14 +475,28 @@ class Viewport(QOpenGLWidget):
         ]
 
     def build_target(self, point: QPoint | None = None) -> Pos | None:
-        """BUILD mode places on the working layer (the camera pivot's height; the wheel
-        moves it), in the cell under the cursor, like Trackmania's editor."""
+        """Where BUILD mode places: like Minecraft, against the face of the block the
+        cursor points at (``build_face`` is that face) when the ray meets a block before
+        the working layer; otherwise on the working layer (the camera pivot's height; the
+        wheel moves it), in the cell under the cursor, like Trackmania's editor."""
         point = point if point is not None else self._last_mouse
         if point is None:
             return None
         origin, direction = self._ray(point)
         self._hover_direction = direction
-        return paste_origin(origin, direction, self.working_height(), (1, 1, 1))
+        layer_y = self.working_height()
+        on_layer = paste_origin(origin, direction, layer_y, (1, 1, 1))
+        crossing = plane_point(origin, direction, float(layer_y))
+        hit = pick(self.document.level, origin, direction)
+        layer_distance = (
+            float(np.linalg.norm(crossing - origin)) if crossing is not None else math.inf
+        )
+        if hit is not None and hit.distance <= layer_distance:
+            self.build_face = hit.face
+            step = hit.face.step
+            return (hit.pos[0] + step[0], hit.pos[1] + step[1], hit.pos[2] + step[2])
+        self.build_face = Direction.UP
+        return on_layer
 
     def _begin_line(self, point: QPoint) -> bool:
         start = self.build_target(point)
@@ -515,6 +543,7 @@ class Viewport(QOpenGLWidget):
         self.assets, self.atlas = game_textures() if on else (None, None)
         self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
         self._build_meshes.clear()
+        self._red_meshes.clear()
         self._line_ghost = None
         self._mesh_revision = -1
         if self.renderer is not None:
@@ -862,6 +891,7 @@ class Viewport(QOpenGLWidget):
         if flip:
             self.build_upside_down = not self.build_upside_down
         self._build_meshes.clear()
+        self._red_meshes.clear()
         self._update_build_ghost()
         self.update()
         return self.build_variant() or "as placed"
