@@ -8,6 +8,7 @@ Blocks the simulator does not model come in as foreign blocks; their ids are rep
 
 from __future__ import annotations
 
+import json
 import math
 import time
 from collections import Counter
@@ -110,6 +111,39 @@ def foreign_ids(texts: Iterable[str]) -> Counter[str]:
     return Counter(i for i in ids if i not in blocks.REGISTRY)
 
 
+def sign_texts(entities: dict[Pos, Any], texts: dict[Pos, str]) -> dict[str, list[str]]:
+    """The front text of every sign among ``entities`` ("x,y,z" → its 4 lines). Signs are
+    not simulated (foreign blocks without a block entity), so their text is kept as
+    document data for the viewport (``extra["signs"]``)."""
+    out: dict[str, list[str]] = {}
+    for pos, data in entities.items():
+        if not texts.get(pos, "").split("[", 1)[0].endswith("_sign"):
+            continue
+        front = data.get("front_text") or {}
+        messages = front.get("messages") or [data.get(f"Text{i}", "") for i in range(1, 5)]
+        lines = [_plain_text(message) for message in messages]
+        if any(lines):
+            out[f"{pos[0]},{pos[1]},{pos[2]}"] = lines
+    return out
+
+
+def _plain_text(message: Any) -> str:
+    """A text component (JSON text, a plain string, or a compound) as plain text."""
+    if isinstance(message, str):
+        try:
+            message = json.loads(message)
+        except ValueError:
+            return message
+    if isinstance(message, str):
+        return message
+    if isinstance(message, list):
+        return "".join(_plain_text(part) for part in message)
+    if isinstance(message, dict):
+        text = str(message.get("text", message.get("translate", "")))
+        return text + "".join(_plain_text(part) for part in message.get("extra", []))
+    return str(message)
+
+
 def block_states(texts: dict[Pos, str]) -> dict[Pos, Any]:
     """Block states for save texts."""
     return {pos: _state(text) for pos, text in texts.items()}
@@ -147,6 +181,7 @@ def open_world(path: Path, radius: int = 4, center: tuple[int, int] | None = Non
         ticks += 1
     document = Document(engine=engine)
     document.world = stream
+    document.extra["signs"] = sign_texts(load.block_entities, load.blocks)
     x, y, z = info.player_pos if info.player_pos is not None else info.spawn
     yaw, pitch = info.player_rotation
     document.extra["camera"] = {
@@ -179,6 +214,7 @@ def stream_chunks(document: Any, center: tuple[int, int], radius: int, budget: f
             break
     if load.blocks:
         document.add_world_blocks(block_states(load.blocks), _plain(load.block_entities))
+        document.extra.setdefault("signs", {}).update(sign_texts(load.block_entities, load.blocks))
     return len(load.chunks)
 
 

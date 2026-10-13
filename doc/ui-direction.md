@@ -268,14 +268,22 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
    selection; the cloud clock advances only while frames are drawn (at most 0.1 s per
    frame), so nothing jumps after tabbing back.
 3. ☐ **Diagnostics tab:** clicking a block or coordinates highlights it in the viewport.
-4. ☐ **Signs** show their text.
+4. ☑ **Signs** show their text: the front lines of signs from an opened world are kept
+   in `extra["signs"]` (signs are foreign blocks without a block entity) and drawn over
+   the sign within 16 blocks, fading out (`viewport._draw_sign_texts`). All 13 signs in
+   the example save are empty, so it shows nothing there; signs placed in the editor have
+   no text yet.
 5. ☐ **Placing on the side of blocks** like in Minecraft (the clicked face decides the
    cell, not only the build layer).
 6. ☐ **Blocked placement preview:** when a block cannot be placed, the preview stays and
    turns red.
-7. ☐ The **oak sign at -4 89 36** in the example save has no texture; **standing signs
-   make the faces of the blocks below transparent** (culling).
-8. ☐ **Rails** are drawn one pixel too high (floating).
+7. ☑ The **oak sign at -4 89 36** in the example save has no texture; **standing signs
+   make the faces of the blocks below transparent** (culling). Causes: the save stores
+   that sign as a bare id (the default state), which matched no blockstate variant (now
+   the first variant agreeing with the given properties is used); non-full foreign
+   blocks counted as full cubes for face culling (now `ForeignBlock.full` decides).
+8. ☑ **Rails** are drawn one pixel too high (floating): flat floor elements (rails at
+   y 1, dust at 0.25) are now extruded to lie on the floor (0–1 px, `assets._extrude`).
 9. ☐ **Camera pivot marker** smaller and less obvious ("only a little helper"; it need
    not be neon); its shadow is wrong on non-full blocks (dust, repeaters, signs).
 10. ☑ **60 fps** rendering while running, for a smooth feel (`viewport.FRAME_INTERVAL_MS`; ticks

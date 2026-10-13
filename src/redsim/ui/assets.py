@@ -141,7 +141,9 @@ def _extrude(lo: Vec, hi: Vec, faces: dict[str, Any]) -> tuple[Vec, Vec, dict[st
     if not flat:
         return lo, hi, faces
     axis = flat[0]
-    if low[axis] <= 8:
+    if axis == 1 and low[axis] <= 1:
+        low[axis], high[axis] = 0, 1  # on the floor (rails at 1, dust at 0.25): lie on it
+    elif low[axis] <= 8:
         high[axis] = low[axis] + 1
     else:
         low[axis] = high[axis] - 1
@@ -377,6 +379,14 @@ class Assets:
                 if _matches(conditions, props):
                     best = value
                     break
+            if best is None:
+                # A save may store a bare id (the default state, e.g. ``oak_sign``): take
+                # the first variant that agrees on the properties the state does have.
+                for key, value in data["variants"].items():
+                    conditions = dict(p.split("=", 1) for p in key.split(",") if "=" in p)
+                    if all(props.get(k, v) == v for k, v in conditions.items()):
+                        best = value
+                        break
             if best is not None:
                 chosen.append(best[0] if isinstance(best, list) else best)
         for part in data.get("multipart", []):

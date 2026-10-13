@@ -245,7 +245,11 @@ class Mesher:
     def _is_full(self, state: BlockState) -> bool:
         full = self._full.get(state)
         if full is None:
-            full = state.block is not blocks.MOVING_PISTON and is_full_opaque(block_boxes(state))
+            full = (
+                state.block is not blocks.MOVING_PISTON
+                and getattr(state.block, "full", True)  # a foreign sign's box is a guess
+                and is_full_opaque(block_boxes(state))
+            )
             self._full[state] = full
         return full
 

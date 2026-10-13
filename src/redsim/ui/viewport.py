@@ -81,6 +81,7 @@ from redsim.world.rotation import mirror_state, rotate_state, upside_down
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 FRAME_INTERVAL_MS = 16  # ~60 frames per second while something moves
+SIGN_TEXT_DISTANCE = 16.0  # blocks: sign text shows (and fades out) within this
 ORBIT_DEGREES_PER_PIXEL = 0.3
 #: Trackpad scrolling: pixels of finger travel per zoom notch and per block up/down.
 TRACKPAD_PIXELS_PER_NOTCH = 40.0
@@ -664,6 +665,7 @@ class Viewport(QOpenGLWidget):
         mode badge with the mouse hints, view tags, F3 columns and signal labels."""
         painter = QPainter(self)
         line = theme.line_height(2)
+        self._draw_sign_texts(painter)
         if self.show_info:
             self._draw_info_labels(painter)
             self._draw_debug_columns(painter)
@@ -752,6 +754,47 @@ class Viewport(QOpenGLWidget):
                 top = 4 + index * line
                 painter.fillRect(left, top, width, line, QColor(80, 80, 80, 144))
                 theme.draw_text(painter, left + 3, top + 2, text, "#e0e0e0")
+
+    def _draw_sign_texts(self, painter: QPainter) -> None:
+        """The text of signs from an opened world (``extra["signs"]``) over the sign,
+        fading out with the distance (signs are drawn by an entity renderer in the game)."""
+        signs = self.document.extra.get("signs")
+        if not signs:
+            return
+        width, height = max(self.width(), 1), max(self.height(), 1)
+        mvp = self.camera.projection_matrix(width / height) @ self.camera.view_matrix()
+        eye = self.camera.position
+        line = theme.line_height(2)
+        level = self.document.level
+        shown: list[tuple[float, float, float, list[str]]] = []
+        for key, lines in signs.items():
+            x, y, z = (int(v) for v in key.split(","))
+            state = level.blocks.get((x, y, z))
+            if state is None or not state.block.id.endswith("_sign"):
+                continue
+            standing = "wall" not in state.block.id and "hanging" not in state.block.id
+            point = np.array([x + 0.5, y + (0.85 if standing else 0.5), z + 0.5])
+            distance = float(np.linalg.norm(point - eye))
+            if distance > SIGN_TEXT_DISTANCE:
+                continue
+            clip = mvp @ np.array([*point, 1.0])
+            if clip[3] <= 0.05:
+                continue
+            sx = (clip[0] / clip[3] + 1) / 2 * width
+            sy = (1 - clip[1] / clip[3]) / 2 * height
+            if 0 <= sx <= width and 0 <= sy <= height:
+                shown.append((distance, sx, sy, [text for text in lines if text]))
+        for distance, sx, sy, lines in sorted(shown, reverse=True):  # nearest on top
+            fade = min(1.0, (SIGN_TEXT_DISTANCE - distance) / 4.0)
+            box_width = max(theme.text_width(text) for text in lines) + 10
+            box_height = len(lines) * line + 6
+            left, top = int(sx - box_width / 2), int(sy - box_height / 2)
+            painter.setOpacity(fade)
+            painter.fillRect(left, top, box_width, box_height, QColor(40, 28, 16, 200))
+            for index, text in enumerate(lines):
+                tx = int(sx - theme.text_width(text) / 2)
+                theme.draw_text(painter, tx, top + 3 + index * line, text, "#f4ead2")
+        painter.setOpacity(1.0)
 
     def _draw_info_labels(self, painter: QPainter) -> None:
         width, height = max(self.width(), 1), max(self.height(), 1)

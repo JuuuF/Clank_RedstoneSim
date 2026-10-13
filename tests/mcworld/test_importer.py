@@ -47,3 +47,14 @@ def test_example_world_opens_around_the_player() -> None:
 
     assert stream_chunks(opened.document, player_chunk(opened.info), 3, 10.0) > 0
     assert len(opened.document.level.blocks) > before  # more chunks streamed in
+
+
+def test_sign_text_is_read_from_every_message_form() -> None:
+    from redsim.mcworld.importer import sign_texts
+
+    entities = {
+        (1, 2, 3): {"front_text": {"messages": ['"Hello"', '{"text":"a","extra":["b"]}', "", "x"]}},
+        (4, 5, 6): {"front_text": {"messages": ["", "", "", ""]}},  # empty: not kept
+    }
+    texts = {(1, 2, 3): "minecraft:oak_sign[rotation=0]", (4, 5, 6): "minecraft:oak_sign"}
+    assert sign_texts(entities, texts) == {"1,2,3": ["Hello", "ab", "", "x"]}
