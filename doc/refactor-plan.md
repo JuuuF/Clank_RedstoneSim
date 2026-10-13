@@ -45,6 +45,12 @@ a line to the log.**
    streaming and annotations in separate parts.
 8. [ ] **Memory and large worlds:** copy-on-write block maps for keyframes, measure a
    streamed world at view distance 12 for an hour of ticks.
+9a. [ ] **Owner request (2026-10-14): timeline labels of animated blocks.** Lines name the
+   block at the position, which changes when pistons move blocks: show what is there at
+   the current tick (dynamic), or only the position.
+9b. [ ] **Owner request (2026-10-14): bypass animation keyframes.** Mute pulses without
+   deleting them (per pulse, per line, per group, and all at once), like muting in
+   Blender/Ableton; muted pulses stay in the timeline, greyed out, and are skipped.
 9. [ ] **Docs:** architecture and implementation notes updated to the new structure;
    project-state and feedback-status refreshed; a summary for the owner.
 
@@ -84,4 +90,8 @@ a line to the log.**
   so they stay fully type-checked. Names other modules import from `viewport` are
   re-exported. Also: the timeline opens tall enough for all its lines, and its height
   is remembered with the window layout.
+- Game: 20 new random circuits (fuzz_41–60) all match; recordings committed (replayed by
+  the tests from now on).
+- Owner requests during the night: dynamic or position-only labels for animated lines;
+  muting pulses (items 9a, 9b).
 
