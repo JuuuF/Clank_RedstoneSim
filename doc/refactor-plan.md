@@ -64,4 +64,10 @@ a line to the log.**
 - Pure-Python trims: block names computed once, the neighbor-update loop inlines its
   position math: pistons 30.2, dust 13.0 (pure). Further trims stopped there: the
   remaining cost is spread thin; the compiled build is the lever (item 3).
+- Bug hunt (engine/editor): randomized history test (`tests/editor/test_fuzz_history.py`:
+  random builds, later edits, levers, pulses incl. 0-ticks, moves, breaks; replay
+  back and forth, save/open, undo all/redo all) passes; a one-off sweep of 60 more
+  seeds found nothing. Probed overlapping moves and copies, containers and scheduled
+  ticks in moves: all as the game's /clone does (a moved block's old tick stays and is
+  skipped on air, as in the game).
 
