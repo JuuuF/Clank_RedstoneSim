@@ -161,6 +161,8 @@ page is the summary to start from.*
 
 ## Next steps (in order)
 
+Everything the owner has asked for, done and open, is listed in [[feedback-status]].
+
 **The ninth feedback round** (2026-10-13) is done: 15 items with what changed and where
 in [[ui-direction]] ("Ninth round of feedback"). Open from it: copying several selections
 at once, sign text for signs placed in the editor, and game-speed limits of very heavy

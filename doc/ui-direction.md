@@ -1,7 +1,7 @@
 # UI and product direction (owner feedback)
 
-Feedback from the first hands-on session (2026-10-11), recorded as design input.
-Implementation status is tracked in [[roadmap]] and [[project-state]].
+Feedback from every hands-on session, recorded as design input with its status. One
+combined list of what is done and open: [[feedback-status]].
 
 ## Interaction
 
@@ -230,7 +230,7 @@ Status is kept up to date here; nothing in the message is left out.
 | 15 | P3 | A small animation for the selection, so the program feels alive and interactive. | done: the fill breathes slowly (±6 %, 1.8 s) |
 | 16 | P3 | Lighting a little less plain (a small change, not much effort). | done: sunlit tops a little warm, faces in the shade a little cool |
 | 17 | P4 | An in-program keymap editor (no more editing the JSON). | done: Settings → Keymap… (filter, record a key, reset, live conflict check; saves only the changes) |
-| 18 | P5 | **Open Minecraft worlds** (example: `data/minecraft_saves/Redstone/`): load chunks around the camera like the game instead of everything; cache in an own fast format keyed by save folder/seed; write changes back to the game's format. Design first ([[world-import]]). | in progress: design in [[world-import]]; phases 1–2 done (reading saves; File → Open Minecraft world… imports the area around the player); next: streaming chunks, cache, write-back |
+| 18 | P5 | **Open Minecraft worlds** (example: `data/minecraft_saves/Redstone/`): load chunks around the camera like the game instead of everything; cache in an own fast format keyed by save folder/seed; write changes back to the game's format. Design first ([[world-import]]). | in progress: phases 1–3 done (reading saves, opening, streaming chunks around the camera); open: builds index, cache, write-back ([[world-import]], [[feedback-status]] O1) |
 | — | — | The grass ground is great (keep). | kept |
 
 ## Mac support (2026-10-12)

@@ -1,0 +1,119 @@
+# Feedback and feature requests: status
+
+One list of everything the owner asked for, across the project brief and all feedback
+rounds, compiled 2026-10-13. Details, causes and code locations per item are in
+[[ui-direction]] (rounds 1–9), [[world-import]], [[project-state]] and [[controls]].
+
+## Still open
+
+| # | Request | From | What is missing |
+|---|---|---|---|
+| O1 | **Open Minecraft worlds**, load around the camera, own cache, write back | round 8 #18 | Done: reading saves, opening, streaming chunks around the camera. Open: an index of the save's builds with "go to the builds"; the on-disk cache (keyed by save and seed, chunk timestamps); unloading far chunks; re-attaching the stream when a `.redsim.json` saved from a world is reopened; **writing changes back** to the game's format (to a copy first). |
+| O2 | **Diagnostics**: "why did this block change?" and a signal view | owner priority list 2026-10-12 (after missing blocks and world loading); brief M3/M6 | Done: trace per step, Diagnostics tab, clicking flashes the block, F3 labels. Open: a clickable cause chain per block (from `sim/trace.py` records), a signal-strength heat view in the viewport. |
+| O3 | **Several selections** | round 9 #13 | Done: Shift+drag adds boxes, Del clears all, Alt+A removes all. Open: copy, move, rotate and flip several boxes at once (they act on the active box). |
+| O4 | **Sign text** | round 9 #4 | Done: text of signs from opened worlds is drawn over them. Open: text on the sign's face itself (now a label above it), and entering text for signs placed in the editor. |
+| O5 | **Smooth 60 fps with big contraptions** | round 9 (follow-up) | Done: moving-piston mesh, heavy ticks in parts, faster engine paths. Open: very heavy contraptions still cannot reach 20 ticks/s (pure Python engine); the owner's own frame-rate check on the desktop. |
+| O6 | **Generic signal-strength source** that maps to a real block, hot-swappable | round 1 (Analog signal sources) | Done for barrel, lectern and cake. Open: hopper, composter and chest as source kinds (chests and hoppers exist as blocks; composters do not). |
+| O7 | **Mechanics left** (brief "later extensions") | brief; project-state | Open: dispense effects (shooting, placing, fluids), detector rails (need minecarts), daylight sensors, composters, furnaces and other containers, water streams; entities stay out of scope. |
+| O8 | **Abstract (black-box) group models** | brief M7 | Deferred on purpose (ADR-016): groups expose ports but always simulate their blocks. |
+| O9 | **Schematic import/export** | brief M7 ("deferred until the core is stable") | Not started; the core is stable now, so it could follow. |
+| O10 | **Final look**: "a technical version of Minecraft", panels | round 1 (Looks) | Largely answered by the game's textures, the theme and the polish pass; the owner has not yet reviewed the result as a whole. |
+| O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
+
+## Implemented
+
+### Project brief (milestones 0–7)
+
+- M0 reconnaissance, M1 source research (every mechanic in [[mechanics/index]] with source
+  references), M3 deterministic engine (phases, scheduled ticks, block events, trace,
+  snapshots), M4 core redstone (lever, buttons, lamp, torch with burnout, wire,
+  repeater, comparator), M5 pistons (QC, BUD, slime/honey, 0-ticks, scheduled-tick
+  pulses), M6 playback (run, step tick/event, warp, step back, save mid-tick, pending
+  ticks view), M7 contraptions (prefabs, copy/paste, groups with ports).
+- Beyond the initial scope, on request: observers, rails (plain/powered/activator),
+  target blocks, hoppers, barrels, lecterns, cake, note blocks, copper bulbs, dispensers,
+  droppers, chests (double, trapped), pressure plates; the game's textures (owner asked).
+- Verified in the real game: 46 named scenarios and 40 random circuits match tick for
+  tick ([[experiments/index]]).
+
+### Round 1 (2026-10-11)
+
+- Vim-like modes NORMAL / BUILD / SELECT with a mode badge; camera keys separate from
+  command keys; Axiom-like box selections with handles, move and copy.
+- Orbit camera around a visible pivot (Blender/Trackmania mix); rebindable keymap.
+- Hot-swappable signal source backed by barrel, lectern or cake (see O6 for more kinds).
+- Real-time speed: chunked meshes, decoupled run loop, ticks/s and frames/s shown.
+
+### Round 2
+
+- Hotkeys panel (F1); distinct pin handles; thick see-through selection outline; bottom
+  face grabbable; Trackmania-style paste on the camera's layer; update-free editor
+  cloning (game-verified); translucent build preview; info overlay (F3); X-ray;
+  immediate-apply inspector with arrows and toggles; rotate, flip and stack in place.
+
+### Round 3
+
+- Ordered layout; Trackmania inventory with number keys; low-alpha selection body;
+  Blender-like gizmos; wheel moves the paste layer; Blender timeline keys and monitor;
+  three-way X-ray with adjustable alphas; Enter locks a selection; context hints; stack
+  handles change while Shift is held; Ctrl+drag copy fixed; delete keeps neighbor
+  updates; F3 debug screen; stress tests against the game (fuzzing); observers, rails,
+  target blocks, hoppers.
+
+### Round 4
+
+- Drag to place a line; preview without z-fighting; inventory with favourites row, path
+  and block previews; quick block search (double Shift, Ctrl+Space, /); atomic edit
+  batches per tick; replay error fixed; fast placements no longer lost; keyframes that
+  move and merge, color-coded rows; tick 0 as the build state; fast step back and
+  backward playback; observer facing visible.
+- Superseded later: "left places, right rotates, Del removes" (round 8 changed it).
+
+### Round 5
+
+- Placing on the layer at the pivot's height (later combined with face placement, round
+  9); stacked inventory rows; curved rails; plain observer face; "Set tick 0 here".
+
+### Round 6
+
+- Smoother feel; coherent look; Minecraft vibe with a Blender-like dark UI; the game's
+  models and textures from the jar; inventory growing upwards; tick 0 restarts the clock.
+
+### Round 7
+
+- Wheel behavior (changed again in round 8); same-looking folder rows; the game's block
+  names; no "unknown action hotbar.N" warnings; fixed-width preferences; X-ray defaults
+  30 %/50 %; flat models one pixel high; the layer grid explained and faded.
+
+### UI polish pass (owner: "keep iterating until 6 AM")
+
+- Pixel-art icons, restyled timeline, the game's hotbar sprites, scenery (grass and
+  clouds), slot grids for containers, game-style tooltips, remembered window layout.
+
+### Round 8
+
+- Wheel zooms, Shift+wheel moves up/down; BUILD right click removes, Del only clears the
+  selection, Q turns; ^ goes up a folder; fixed hint bar height; GL textures freed on
+  close; keymap file explained and cleaned; gliding playhead; solid voxel dust; inventory
+  only in BUILD as a hotbar overlay; recent blocks (later replaced by palettes, round 9);
+  R/H vary the block to place (top slabs etc.); pivot block with a shadow (made quieter
+  in round 9); gizmo outlines; filled, breathing selection; warm/cool light; keymap
+  editor; world import (see O1 for what is left). The grass ground was kept.
+
+### Mac support and block popup (2026-10-12)
+
+- Mac: extra defaults (⌘F, ⌫, ⌥+right click, ⌘I, ⌘/), symbols, trackpad pinch, rotate,
+  smart zoom, two-finger navigation; existing bindings unchanged.
+- E over a block opens its inspector as a popup in the viewport.
+- Owner priorities of the day: missing blocks (done), world loading (O1), diagnostics
+  (O2).
+
+### Round 9 (2026-10-13)
+
+- Piston animation fixed and interpolated between ticks; clouds drift steadily without
+  jumps; Diagnostics clicks flash the block; sign texts from saves (see O4); placing
+  against the pointed face like Minecraft; red preview when blocked; textures for
+  bare-id signs, no see-through faces under signs; rails on the floor; a smaller, quiet
+  pivot with a correct shadow; 60 fps frames; F3 label range slider, fade, hover and F
+  jump; selection fill without flicker; several selections (see O3); favourite
+  palettes; frame rate with many moving pistons (see O5).
