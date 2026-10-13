@@ -30,9 +30,11 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QCheckBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QMenu,
+    QScrollArea,
     QSizePolicy,
     QSpinBox,
     QToolButton,
@@ -42,7 +44,8 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.core.pos import Pos
-from redsim.editor.document import EDIT_ROWS, Document, EditBatch
+from redsim.editor.document import EDIT_ROWS, Document, EditBatch, Pulse, edit_row
+from redsim.editor.lines import LineGroup
 from redsim.ui import pixel_icons, theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
@@ -84,6 +87,32 @@ class Track:
     block: str = ""  # block id, for the row's icon
 
 
+@dataclass(frozen=True)
+class EditEvent:
+    """One recorded edit, for the per-block lines of a category."""
+
+    index: int
+    tick: int
+    row: str
+    pos: Pos
+    label: str
+
+
+@dataclass
+class _Line:
+    """A line of the edit area: a category, a group (Powered), or one block's events."""
+
+    kind: str  # "category" | "group" | "block"
+    row: str  # the category (EDIT_ROWS)
+    title: str
+    depth: int
+    color: QColor
+    group: int | None = None
+    pos: Pos | None = None
+    expandable: bool = False
+    expanded: bool = False
+
+
 class TimelineCanvas(QWidget):
     scrub = Signal(int)  # tick (since tick 0)
     remove_monitor = Signal(object)  # Pos
@@ -93,8 +122,15 @@ class TimelineCanvas(QWidget):
     merge_edits = Signal(object, object)  # step indices, target tick (None: earliest)
     delete_edits = Signal(object)  # step indices
     set_tick_zero = Signal()
+    pulse_changed = Signal(int, int, int, int)  # index, tick, strength, ticks
+    pulse_added = Signal(object, int)  # Pos, tick
+    pulse_deleted = Signal(int)  # index
+    line_moved = Signal(object, int, int)  # Pos, group, row
+    group_request = Signal(str, int)  # action, group ("toggle", "rename", "color", …)
+    line_group_new = Signal(object)  # Pos: a new group holding this line
 
     LABEL_WIDTH = 180
+    INDENT = 12
     RULER_HEIGHT = 26  # grows by MARKER_STRIP while there are markers (their names)
     MARKER_STRIP = 14
     EDIT_ROW_HEIGHT = 15
@@ -109,6 +145,18 @@ class TimelineCanvas(QWidget):
         self.current = 0
         self.batches: list[EditBatch] = []
         self.pulse_spans: list[tuple[int, int]] = []  # sequence pulses: (start, ticks)
+        self.pulses: list[Pulse] = []
+        self.events: list[EditEvent] = []
+        self.groups: list[LineGroup] = []
+        self.names: dict[Pos, str] = {}  # block names for the per-block lines
+        self.expanded: set[str] = set()  # categories showing their per-block lines
+        self.lines: list[_Line] = []
+        self._tops: list[int] = []
+        self._line_drag: tuple[Pos, float] | None = None  # a Powered line being reordered
+        self._drop_y: float | None = None
+        #: A pulse bar being dragged: (pulse, "move" | "resize", press x); its preview.
+        self._pulse_drag: tuple[Pulse, str, float] | None = None
+        self._pulse_preview: tuple[int, int] | None = None  # (tick, ticks)
         self.selected: set[tuple[int, str]] = set()  # (tick, row)
         self.tracks: list[Track] = []
         self._scrubbing = False
@@ -130,6 +178,7 @@ class TimelineCanvas(QWidget):
         self._glide_timer.setInterval(16)
         self._glide_timer.timeout.connect(self.update)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self._build_lines()
         self._resize_to_tracks()
 
     # ------------------------------------------------------------------ data
@@ -141,6 +190,10 @@ class TimelineCanvas(QWidget):
         batches: list[EditBatch],
         tracks: list[Track],
         pulse_spans: list[tuple[int, int]] | None = None,
+        pulses: list[Pulse] | None = None,
+        events: list[EditEvent] | None = None,
+        groups: list[LineGroup] | None = None,
+        names: dict[Pos, str] | None = None,
     ) -> None:
         if self._glide_rate is not None:  # carry on from where the playhead is shown
             now = time.monotonic()
@@ -150,6 +203,11 @@ class TimelineCanvas(QWidget):
         self.start, self.end, self.current = start, end, current
         self.batches, self.tracks = batches, tracks
         self.pulse_spans = pulse_spans or []
+        self.pulses = pulses or []
+        self.events = events or []
+        self.groups = groups or []
+        self.names = names or {}
+        self._build_lines()
         present = {(b.tick, b.row) for b in batches}
         self.selected &= present
         self._resize_to_tracks()
@@ -180,15 +238,74 @@ class TimelineCanvas(QWidget):
         width = max(1, self.width() - self.LABEL_WIDTH)
         return math.floor(self.view_start + (x - self.LABEL_WIDTH) / width * self.view_span)
 
+    def _build_lines(self) -> None:
+        """The edit area's lines: each category, and when expanded its per-block lines
+        (Powered: in the user's groups and order)."""
+        lines: list[_Line] = []
+        for row in EDIT_ROWS:
+            if row == "power":
+                children = [g.members for g in self.groups]
+                has = any(children)
+            else:
+                order: dict[Pos, None] = {}
+                for event in sorted(self.events, key=lambda e: (e.tick, e.index)):
+                    if event.row == row:
+                        order.setdefault(event.pos)
+                has = bool(order)
+            open_ = has and row in self.expanded
+            lines.append(_Line("category", row, ROW_TITLES[row], 0, ROW_COLORS[row], None,
+                               None, has, open_))  # fmt: skip
+            if not open_:
+                continue
+            if row == "power":
+                for index, group in enumerate(self.groups):
+                    color = QColor(group.color)
+                    title = f"{group.name} ({len(group.members)})"
+                    lines.append(_Line("group", row, title, 1, color, index, None, True,
+                                       not group.collapsed))  # fmt: skip
+                    if not group.collapsed:
+                        for pos in group.members:
+                            lines.append(self._block_line(row, pos, color, 2, index))
+            else:
+                for pos in order:
+                    lines.append(self._block_line(row, pos, ROW_COLORS[row], 1, None))
+        self.lines = lines
+        tops, y = [], self.RULER_HEIGHT
+        for _ in lines:
+            tops.append(y)
+            y += self.EDIT_ROW_HEIGHT
+        self._tops = tops
+
+    def _block_line(
+        self, row: str, pos: Pos, color: QColor, depth: int, group: int | None
+    ) -> _Line:
+        where = " ".join(str(v) for v in pos)
+        name = self.names.get(pos, "")
+        return _Line("block", row, f"{where} {name}".strip(), depth, color, group, pos)
+
     def _row_top(self, row: int) -> int:
+        """The top of category ``EDIT_ROWS[row]``'s line."""
+        name = EDIT_ROWS[row]
+        for line, top in zip(self.lines, self._tops, strict=True):
+            if line.kind == "category" and line.row == name:
+                return top
         return self.RULER_HEIGHT + row * self.EDIT_ROW_HEIGHT
 
     def _tracks_top(self) -> int:
-        return self._row_top(len(EDIT_ROWS)) + 2
+        bottom = self._tops[-1] + self.EDIT_ROW_HEIGHT if self._tops else self.RULER_HEIGHT
+        return bottom + 2
+
+    def _line_at(self, y: float) -> int | None:
+        if y < self.RULER_HEIGHT:
+            return None
+        index = int((y - self.RULER_HEIGHT) // self.EDIT_ROW_HEIGHT)
+        return index if 0 <= index < len(self.lines) else None
 
     def _edit_row_at(self, y: float) -> int | None:
-        row = int((y - self.RULER_HEIGHT) // self.EDIT_ROW_HEIGHT)
-        return row if 0 <= row < len(EDIT_ROWS) and y >= self.RULER_HEIGHT else None
+        index = self._line_at(y)
+        if index is None or self.lines[index].kind != "category":
+            return None
+        return EDIT_ROWS.index(self.lines[index].row)
 
     def _batch_at(self, x: float, y: float) -> EditBatch | None:
         row = self._edit_row_at(y)
@@ -248,13 +365,36 @@ class TimelineCanvas(QWidget):
             theme.draw_text(painter, x + 4, 6, f"/ {self.end}", theme.TEXT_DIM, 1, False)
         elif self.current == 0:
             theme.draw_text(painter, x + 4, 6, "BUILD", theme.TEXT_DIM, 1, False)
-        for row, name in enumerate(EDIT_ROWS):
-            top = self._row_top(row)
+        metrics = painter.fontMetrics()
+        for line, top in zip(self.lines, self._tops, strict=True):
+            left = 4 + line.depth * self.INDENT
+            if line.expandable:  # ▸ / ▾
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(TEXT_DIM)
+                cx, cy = left + 3.5, top + self.EDIT_ROW_HEIGHT / 2
+                arrow = (
+                    [QPointF(cx - 3, cy - 2), QPointF(cx + 3, cy - 2), QPointF(cx, cy + 2)]
+                    if line.expanded
+                    else [QPointF(cx - 2, cy - 3), QPointF(cx + 2, cy), QPointF(cx - 2, cy + 3)]
+                )
+                painter.drawPolygon(QPolygonF(arrow))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(ROW_COLORS[name])
-            painter.drawEllipse(QRectF(10, top + 4, 7, 7))
-            painter.setPen(TEXT)
-            painter.drawText(22, top + self.EDIT_ROW_HEIGHT - 3, ROW_TITLES[name])
+            painter.setBrush(line.color)
+            if line.kind == "category":
+                painter.drawEllipse(QRectF(left + 10, top + 4, 7, 7))
+            elif line.kind == "group":
+                painter.drawRoundedRect(QRectF(left + 10, top + 3, 9, 9), 2, 2)
+            else:
+                painter.drawRect(QRectF(left + 2, top + 2, 3, self.EDIT_ROW_HEIGHT - 4))
+            painter.setPen(TEXT if line.kind != "block" else TEXT_DIM)
+            text_x = left + (24 if line.kind != "block" else 10)
+            title = metrics.elidedText(
+                line.title, Qt.TextElideMode.ElideRight, self.LABEL_WIDTH - text_x - 4
+            )
+            painter.drawText(text_x, top + self.EDIT_ROW_HEIGHT - 3, title)
+        if self._line_drag is not None and self._drop_y is not None:  # where it will go
+            painter.setPen(QPen(QColor(255, 255, 255), 2))
+            painter.drawLine(QPointF(4, self._drop_y), QPointF(self.width(), self._drop_y))
         for row, track in enumerate(self.tracks):
             y = self._tracks_top() + row * self.ROW_HEIGHT
             text_x = 8
@@ -343,9 +483,18 @@ class TimelineCanvas(QWidget):
 
     def _paint_edit_rows(self, painter: QPainter) -> None:
         painter.setPen(GRID)
-        for row in range(len(EDIT_ROWS) + 1):
-            line = self._row_top(row)
-            painter.drawLine(self.LABEL_WIDTH, line, self.width(), line)
+        for line, top in zip(self.lines, self._tops, strict=True):
+            if line.kind != "block":  # groups and categories are separated by a line
+                painter.drawLine(self.LABEL_WIDTH, top, self.width(), top)
+            else:
+                band = QColor(line.color)
+                band.setAlpha(14)
+                painter.fillRect(
+                    QRectF(self.LABEL_WIDTH, top, self.width(), self.EDIT_ROW_HEIGHT), band
+                )
+        bottom = self._tracks_top() - 2
+        painter.drawLine(self.LABEL_WIDTH, bottom, self.width(), bottom)
+        self._paint_block_lines(painter)
         shift = self._drag_delta if self._dragging_edits else 0
         # Sequence pulses: how long each stays on, as a bar on the Powered row.
         power_y = self._row_top(EDIT_ROWS.index("power")) + self.EDIT_ROW_HEIGHT / 2
@@ -384,6 +533,62 @@ class TimelineCanvas(QWidget):
             painter.setBrush(QColor(80, 150, 255, 40))
             painter.drawRect(self._band)
 
+    def _pulse_box(self, tick: int, ticks: int, top: float) -> QRectF:
+        left, right = self._x(tick), self._x(tick + ticks)
+        return QRectF(left, top + 3, max(4.0, right - left), self.EDIT_ROW_HEIGHT - 6)
+
+    def _paint_block_lines(self, painter: QPainter) -> None:
+        """Per-block lines: pulse bars (Powered, in the group's color, 0-ticks as thin
+        marks) or the block's edits as small diamonds."""
+        drag = self._pulse_drag
+        for line, top in zip(self.lines, self._tops, strict=True):
+            if line.kind == "group":  # a faint summary of the group's pulses
+                members = set(self.groups[line.group or 0].members) if self.groups else set()
+                color = QColor(line.color)
+                color.setAlpha(70)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(color)
+                for pulse in self.pulses:
+                    if pulse.pos in members:
+                        painter.drawRect(self._pulse_box(pulse.tick, pulse.ticks, top))
+                continue
+            if line.kind != "block":
+                continue
+            y = top + self.EDIT_ROW_HEIGHT / 2
+            if line.row == "power":
+                for pulse in self.pulses:
+                    if pulse.pos != line.pos:
+                        continue
+                    tick, ticks = pulse.tick, pulse.ticks
+                    if drag is not None and drag[0].index == pulse.index and self._pulse_preview:
+                        tick, ticks = self._pulse_preview
+                    box = self._pulse_box(tick, ticks, top)
+                    if box.right() < self.LABEL_WIDTH:
+                        continue
+                    fill = QColor(line.color)
+                    fill.setAlpha(110 + 9 * pulse.strength)
+                    painter.setPen(QPen(fill.lighter(150), 1))
+                    painter.setBrush(fill)
+                    painter.drawRoundedRect(box, 2, 2)
+                continue
+            painter.setBrush(line.color)
+            painter.setPen(QPen(BACKGROUND, 1))
+            for event in self.events:
+                if event.row == line.row and event.pos == line.pos:
+                    x = self._x(event.tick)
+                    if x >= self.LABEL_WIDTH:
+                        size = 3.5
+                        painter.drawPolygon(
+                            QPolygonF(
+                                [
+                                    QPointF(x, y - size),
+                                    QPointF(x + size, y),
+                                    QPointF(x, y + size),
+                                    QPointF(x - size, y),
+                                ]
+                            )
+                        )
+
     def _paint_tracks(self, painter: QPainter) -> None:
         first = max(math.floor(self.view_start), self.start)
         last = min(math.ceil(self.view_start + self.view_span), self.end)
@@ -419,6 +624,9 @@ class TimelineCanvas(QWidget):
         button = event.button()
         if button == Qt.MouseButton.MiddleButton:
             self._pan_from = (int(x), self.view_start)
+            return
+        index = self._line_at(y)
+        if index is not None and self._line_press(event, self.lines[index], self._tops[index]):
             return
         if button == Qt.MouseButton.RightButton:
             marker = self.marker_at(x, y)
@@ -463,8 +671,175 @@ class TimelineCanvas(QWidget):
         self._scrubbing = True
         self._scrub_to(x)
 
+    # ------------------------------------------------------------------ lines
+    def _pulse_hit(self, line: _Line, x: float, top: float) -> tuple[Pulse, str] | None:
+        """The pulse of a Powered line under ``x``: ("resize" near its end, else "move")."""
+        for pulse in reversed(self.pulses):
+            if pulse.pos != line.pos:
+                continue
+            box = self._pulse_box(pulse.tick, pulse.ticks, top)
+            if abs(x - box.right()) <= 4 and pulse.ticks > 0:
+                return pulse, "resize"
+            if box.left() - 3 <= x <= box.right():
+                return pulse, "move"
+        return None
+
+    def _line_press(self, event: QMouseEvent, line: _Line, top: float) -> bool:
+        """Clicks on the lines' labels and on pulse bars; True when handled."""
+        x, y = event.position().x(), event.position().y()
+        left_button = event.button() == Qt.MouseButton.LeftButton
+        right_button = event.button() == Qt.MouseButton.RightButton
+        where = event.globalPosition().toPoint()
+        power_block = line.kind == "block" and line.row == "power" and line.pos is not None
+        if x < self.LABEL_WIDTH:
+            if left_button and line.kind == "category" and line.expandable:
+                self.expanded ^= {line.row}
+                self._build_lines()
+                self._resize_to_tracks()
+                self.update()
+                return True
+            if left_button and line.kind == "group" and line.group is not None:
+                self.group_request.emit("toggle", line.group)
+                return True
+            if left_button and power_block:
+                assert line.pos is not None
+                self._line_drag = (line.pos, y)
+                return True
+            if right_button and line.kind == "group" and line.group is not None:
+                self._group_menu(where, line.group)
+                return True
+            if right_button and power_block:
+                assert line.pos is not None
+                self._line_menu(where, line.pos)
+                return True
+            return False
+        if not power_block:
+            return False
+        hit = self._pulse_hit(line, x, top)
+        if right_button and hit is not None:
+            menu = QMenu(self)
+            pulse = hit[0]
+            remove = menu.addAction(f"Delete this pulse (tick {pulse.tick}, {pulse.ticks} ticks)")
+            remove.setIcon(pixel_icons.pixel_icon("delete"))
+            remove.triggered.connect(lambda: self.pulse_deleted.emit(pulse.index))
+            menu.exec(where)
+            return True
+        if left_button and hit is not None:
+            self._pulse_drag = (hit[0], hit[1], x)
+            self._pulse_preview = (hit[0].tick, hit[0].ticks)
+            return True
+        return False
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        """A double click on an empty spot of a Powered line adds a pulse there."""
+        x, y = event.position().x(), event.position().y()
+        index = self._line_at(y)
+        if index is not None and x >= self.LABEL_WIDTH:
+            line = self.lines[index]
+            power = line.kind == "block" and line.row == "power" and line.pos is not None
+            if power and self._pulse_hit(line, x, self._tops[index]) is None:
+                assert line.pos is not None
+                self.pulse_added.emit(line.pos, max(1, self.tick_at(x)))
+                return
+        super().mouseDoubleClickEvent(event)
+
+    def _drop_target(self, y: float) -> tuple[int, int, float] | None:
+        """Where a dragged Powered line would go: (group, row, the marker's y)."""
+        if not self.groups:
+            return None
+        rows = [
+            (i, line)
+            for i, line in enumerate(self.lines)
+            if line.row == "power" and line.kind != "category"
+        ]
+        if not rows:
+            return None
+        for i, line in rows:
+            top = self._tops[i]
+            if y < top + self.EDIT_ROW_HEIGHT:
+                below = y > top + self.EDIT_ROW_HEIGHT / 2
+                if line.kind == "group" and line.group is not None:
+                    return line.group, 0, top + self.EDIT_ROW_HEIGHT
+                if line.group is not None and line.pos is not None:
+                    members = self.groups[line.group].members
+                    row = members.index(line.pos) + (1 if below else 0)
+                    return line.group, row, top + (self.EDIT_ROW_HEIGHT if below else 0)
+        last = len(self.groups) - 1
+        bottom = self._tops[rows[-1][0]] + self.EDIT_ROW_HEIGHT
+        return last, len(self.groups[last].members), bottom
+
+    def _group_menu(self, where: QPoint, group: int) -> None:
+        menu = QMenu(self)
+        name = self.groups[group].name
+        for text, action in (
+            (f"Rename “{name}”…", "rename"),
+            ("Color…", "color"),
+            ("Move group up", "up"),
+            ("Move group down", "down"),
+            ("New group…", "new"),
+            ("Delete group (its lines join the group above)", "delete"),
+        ):
+            item = menu.addAction(text)
+            item.triggered.connect(lambda _=False, a=action: self.group_request.emit(a, group))
+        menu.exec(where)
+
+    def _line_menu(self, where: QPoint, pos: Pos) -> None:
+        menu = QMenu(self)
+        move = menu.addMenu("Move to group")
+        for index, group in enumerate(self.groups):
+            move.addAction(group.name).triggered.connect(
+                lambda _=False, g=index: self.line_moved.emit(pos, g, len(self.groups[g].members))
+            )
+        menu.addAction("New group with this line…").triggered.connect(
+            lambda: self.line_group_new.emit(pos)
+        )
+        menu.exec(where)
+
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.position().x(), event.position().y()
+        if self._pulse_drag is not None:
+            pulse, mode, start_x = self._pulse_drag
+            delta = self.tick_at(x) - self.tick_at(start_x)
+            if mode == "move":
+                self._pulse_preview = (max(1, pulse.tick + delta), pulse.ticks)
+            else:
+                self._pulse_preview = (pulse.tick, max(0, pulse.ticks + delta))
+            preview = self._pulse_preview
+            QToolTip.showText(
+                event.globalPosition().toPoint(), f"tick {preview[0]} · {preview[1]} ticks"
+            )
+            self.update()
+            return
+        if self._line_drag is not None:
+            target = self._drop_target(y)
+            self._drop_y = target[2] if target is not None else None
+            self.update()
+            return
+        index = self._line_at(y)
+        if index is not None and x >= self.LABEL_WIDTH:
+            line = self.lines[index]
+            hit = (
+                self._pulse_hit(line, x, self._tops[index])
+                if line.kind == "block" and line.row == "power"
+                else None
+            )
+            shape = (
+                Qt.CursorShape.SizeHorCursor
+                if hit is not None and hit[1] == "resize"
+                else Qt.CursorShape.OpenHandCursor
+                if hit is not None
+                else Qt.CursorShape.ArrowCursor
+            )
+            self.setCursor(shape)
+            if hit is not None:
+                pulse = hit[0]
+                QToolTip.showText(
+                    event.globalPosition().toPoint(),
+                    f"Pulse at {' '.join(map(str, pulse.pos))}: tick {pulse.tick}, "
+                    f"{pulse.ticks} ticks, strength {pulse.strength}\n"
+                    "Drag to move, drag its end to change the duration, right click to delete",
+                )
+                return
         if self._scrubbing:
             self._scrub_to(x)
         elif self._pan_from is not None:
@@ -523,6 +898,22 @@ class TimelineCanvas(QWidget):
             self.update()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if self._pulse_drag is not None:
+            pulse = self._pulse_drag[0]
+            preview = self._pulse_preview
+            self._pulse_drag, self._pulse_preview = None, None
+            if preview is not None and preview != (pulse.tick, pulse.ticks):
+                self.pulse_changed.emit(pulse.index, preview[0], pulse.strength, preview[1])
+            self.update()
+            return
+        if self._line_drag is not None:
+            pos = self._line_drag[0]
+            target = self._drop_target(event.position().y())
+            self._line_drag, self._drop_y = None, None
+            if target is not None:
+                self.line_moved.emit(pos, target[0], target[1])
+            self.update()
+            return
         if self._band is not None:
             band = self._band
             if band.width() < 3 and band.height() < 3:
@@ -712,7 +1103,14 @@ class TimelineBar(QWidget):
         self.status.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         row.addWidget(self.status, 1)
         self.canvas = TimelineCanvas()
-        layout.addWidget(self.canvas)
+        # The canvas grows with its lines; the bar is resizable (the window's splitter)
+        # and scrolls when the lines do not fit.
+        self.scroller = QScrollArea()
+        self.scroller.setWidget(self.canvas)
+        self.scroller.setWidgetResizable(True)
+        self.scroller.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        layout.addWidget(self.scroller, 1)
 
     def _toggled(self, on: bool) -> None:
         self.play.setIcon(pixel_icons.pixel_icon("pause" if on else "play"))
@@ -760,5 +1158,26 @@ class TimelineBar(QWidget):
             for pos in document.monitors
         ]
         self.canvas.set_markers(document.visible_markers())
-        spans = [(pulse.tick, pulse.ticks) for pulse in document.pulses()]
-        self.canvas.set_data(0, end, tick, document.edit_batches(), tracks, spans)
+        pulses = document.pulses()
+        document.lines.sync(pulse.pos for pulse in pulses)
+        spans = [(pulse.tick, pulse.ticks) for pulse in pulses]
+        inputs = document.history.inputs
+        events = [
+            EditEvent(index, t, edit_row(inputs[index]), inputs[index].pos, inputs[index].label)
+            for index, t in document.edit_ticks.items()
+            if index in inputs
+        ]
+        positions = {pulse.pos for pulse in pulses} | {event.pos for event in events}
+        names = {pos: block_name(document.state_at(pos).block.id) for pos in positions}
+        self.canvas.set_data(
+            0,
+            end,
+            tick,
+            document.edit_batches(),
+            tracks,
+            spans,
+            pulses,
+            events,
+            document.lines.groups,
+            names,
+        )

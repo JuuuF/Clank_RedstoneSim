@@ -79,6 +79,14 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   row jumps to its tick and flashes the position); every change re-runs the history from
   tick 0, keeping all other edits. Powered positions glow red; the timeline's "Powered"
   row shows each pulse with a bar for its duration.
+- **Timeline lines:** the arrow at a category (Placed, Removed, Changed, Used, Powered)
+  opens one line per block position. Powered lines live in groups (like Ableton Live's
+  group tracks): click a group's arrow to fold it, right click it to rename, recolor,
+  reorder, add or delete groups; drag a line's label up or down to reorder it or move it
+  into another group (right click: "Move to group", "New group with this line…"). On a
+  line, drag a pulse bar to move it, drag its end to change its duration, double click
+  an empty spot to add a pulse there, right click a bar to delete it. Drag the handle
+  between the view and the timeline to make the timeline taller; it scrolls when needed.
 - Inspector: setting a piston base to *extended* also puts its head in front (if there
   is room), in the same edit.
 - Middle click picks the block type under the cursor in every mode.

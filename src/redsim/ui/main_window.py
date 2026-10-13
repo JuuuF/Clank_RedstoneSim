@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QAction,
     QActionGroup,
     QCloseEvent,
+    QColor,
     QCursor,
     QDesktopServices,
     QKeyEvent,
@@ -22,15 +23,16 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QAbstractSpinBox,
     QApplication,
+    QColorDialog,
     QDockWidget,
     QFileDialog,
     QInputDialog,
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QSplitter,
     QTabWidget,
     QToolButton,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -145,12 +147,14 @@ class MainWindow(QMainWindow):
         # one tabbed panel on the right; a Blender-like hint bar at the very bottom.
         self.simulation = TimelineBar()
         self.inventory = InventoryBar()
-        central = QWidget()
-        column = QVBoxLayout(central)
-        column.setContentsMargins(0, 0, 0, 0)
-        column.setSpacing(0)
-        column.addWidget(self.viewport, 1)
-        column.addWidget(self.simulation)
+        # The view above the timeline, with a handle between them to resize the timeline.
+        central = QSplitter(Qt.Orientation.Vertical)
+        central.setChildrenCollapsible(False)
+        central.addWidget(self.viewport)
+        central.addWidget(self.simulation)
+        central.setStretchFactor(0, 1)
+        central.setStretchFactor(1, 0)
+        self.splitter = central
         self.viewport.add_overlay(self.inventory)
         self.inventory.setVisible(self.viewport.mode == BUILD)
         self.setCentralWidget(central)
@@ -271,6 +275,25 @@ class MainWindow(QMainWindow):
             lambda i: self._edit(self.document.delete_edits, [i])
         )
         self.sequence.pulse_selected.connect(self._show_pulse)
+        canvas = self.simulation.canvas
+        canvas.pulse_changed.connect(
+            lambda i, tick, strength, ticks: self._edit(
+                self.document.edit_pulse, i, tick, strength, ticks
+            )
+        )
+        canvas.pulse_added.connect(
+            lambda pos, tick: self._edit(
+                self.document.add_pulse,
+                pos,
+                tick,
+                self.sequence.strength.value(),
+                self.sequence.duration.value(),
+            )
+        )
+        canvas.pulse_deleted.connect(lambda i: self._edit(self.document.delete_edits, [i]))
+        canvas.line_moved.connect(self._move_line)
+        canvas.group_request.connect(self._group_request)
+        canvas.line_group_new.connect(self._new_line_group)
         self.viewport.place_requested.connect(self._place)
         self.viewport.line_requested.connect(self._place_line)
         self.viewport.rotate_requested.connect(self._rotate_block_at)
@@ -647,6 +670,49 @@ class MainWindow(QMainWindow):
             self._message("No pulse there at this tick.", error=True)
             return
         self._edit(self.document.delete_edits, [p.index for p in found])
+
+    def _move_line(self, pos: Pos, group: int, row: int) -> None:
+        """A Powered line dragged to another place (or chosen group)."""
+        self.document.lines.move(pos, group, row)
+        self._lines_changed()
+
+    def _lines_changed(self) -> None:
+        self.document.dirty = True
+        self.document.revision += 1
+        self._changed()
+
+    def _new_line_group(self, pos: Pos | None = None) -> None:
+        name, ok = QInputDialog.getText(self, "New group", "Name of the group:", text="Inputs")
+        if ok and name.strip():
+            self.document.lines.add_group(name.strip(), [pos] if pos is not None else [])
+            self._lines_changed()
+
+    def _group_request(self, action: str, index: int) -> None:
+        """The timeline's group actions (fold, rename, color, order, new, delete)."""
+        lines = self.document.lines
+        if not 0 <= index < len(lines.groups):
+            return
+        group = lines.groups[index]
+        if action == "toggle":
+            group.collapsed = not group.collapsed
+        elif action == "rename":
+            name, ok = QInputDialog.getText(self, "Rename group", "Name:", text=group.name)
+            if not ok or not name.strip():
+                return
+            group.name = name.strip()
+        elif action == "color":
+            color = QColorDialog.getColor(QColor(group.color), self, "Group color")
+            if not color.isValid():
+                return
+            group.color = color.name()
+        elif action in ("up", "down"):
+            lines.move_group(index, -1 if action == "up" else 1)
+        elif action == "new":
+            self._new_line_group()
+            return
+        elif action == "delete":
+            lines.remove_group(index)
+        self._lines_changed()
 
     def _show_pulse(self, pos: Pos, tick: int) -> None:
         """A pulse clicked in the Sequence tab: go to its tick and flash its position."""

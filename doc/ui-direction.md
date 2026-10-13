@@ -343,10 +343,17 @@ duration bars, the Tab ring.
    hold applies while running).
 3. ☑ **Inspector extends a piston without its head:** `Document.set_state` adds the head.
 4. ☑ **Note block buttons widen the side panel:** long value lists wrap (`FlowLayout`).
-5. ☐ **Timeline:** one line per animated block with rows the owner can reorder; a
+5. ☑ **Timeline:** one line per animated block with rows the owner can reorder; a
    resizable timeline; every category's events expandable into per-block lines;
    hierarchical groups with colors like Ableton Live (e.g. "input signals", "output
-   signals").
+   signals"). Done: every category row (Placed, Removed, Changed, Used, Powered) has an
+   arrow that opens one line per block position with its events; Powered lines sit in
+   named, colored, foldable groups (`editor/lines.py`, saved as `extra["line_groups"]`),
+   dragged by their label into any order or group; pulse bars move by dragging and change
+   their duration by dragging their end; a double click on a line adds a pulse; right
+   clicks offer group and pulse actions. The timeline sits under a splitter handle
+   (drag to resize) and scrolls when its lines do not fit. Open: groups for the other
+   categories' lines (they keep the order of their first edit).
 
 ## Looks
 

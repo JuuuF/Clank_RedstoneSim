@@ -24,6 +24,7 @@ from redsim.editor import sources
 from redsim.editor.annotations import Sections
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.groups import Groups
+from redsim.editor.lines import Lines
 from redsim.editor.monitor import monitor_value
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
@@ -130,6 +131,8 @@ class Document:
     #: here" (kept so an undo brings them back); they are not shown or saved.
     markers: dict[int, str] = field(default_factory=dict)
     samples: dict[Pos, dict[int, int]] = field(default_factory=dict)
+    #: Timeline lines of the sequence: groups of powered positions (saved).
+    lines: Lines = field(default_factory=Lines)
     #: The Minecraft save this document streams chunks from (``mcworld.stream.WorldStream``;
     #: not saved).
     world: Any = None
@@ -785,6 +788,7 @@ class Document:
         extra["groups"] = self.groups.to_json()
         extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
         extra["monitors"] = [list(pos) for pos in self.monitors]
+        extra["line_groups"] = self.lines.to_json()
         extra["markers"] = {str(tick): name for tick, name in self.visible_markers().items()}
         save_io.save(target, self.engine, extra)
         self.path = target
@@ -798,6 +802,7 @@ class Document:
         groups = Groups.from_json(extra.pop("groups", []))
         prefabs = {name: Prefab.from_json(data) for name, data in extra.pop("prefabs", {}).items()}
         monitors = [(int(x), int(y), int(z)) for x, y, z in extra.pop("monitors", [])]
+        lines = Lines.from_json(extra.pop("line_groups", []))
         markers = {int(tick): str(name) for tick, name in extra.pop("markers", {}).items()}
         return Document(
             engine=engine,
@@ -808,6 +813,7 @@ class Document:
             prefabs=prefabs,
             monitors=monitors,
             markers=markers,
+            lines=lines,
         )
 
     # ------------------------------------------------------------------ timeline view

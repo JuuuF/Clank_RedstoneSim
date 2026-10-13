@@ -537,3 +537,54 @@ def test_tab_ring_switches_modes_and_animate_clicks_add_pulses(app: object) -> N
     assert document.pulses() == []
     document.dirty = False
     window.close()
+
+
+def test_timeline_lines_expand_and_pulse_bars_move(app: object) -> None:
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=east]"))
+    document.add_pulse((0, 1, 0), 2, 15, 3)
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.resize(900, canvas.height())
+    canvas.view_start, canvas.view_span = 0, 20
+    power = next(i for i, line in enumerate(canvas.lines) if line.row == "power")
+    assert canvas.lines[power].expandable and not canvas.lines[power].expanded
+
+    def click(x: float, y: float, button: object = Qt.MouseButton.LeftButton) -> None:
+        for kind in (QMouseEvent.Type.MouseButtonPress, QMouseEvent.Type.MouseButtonRelease):
+            event = QMouseEvent(kind, QPointF(x, y), QPointF(x, y), button, button,
+                                Qt.KeyboardModifier.NoModifier)  # fmt: skip
+            (canvas.mousePressEvent if kind == QMouseEvent.Type.MouseButtonPress
+             else canvas.mouseReleaseEvent)(event)  # fmt: skip
+
+    click(8, canvas._tops[power] + 7)  # the arrow: expand Powered
+    kinds = [line.kind for line in canvas.lines if line.row == "power"]
+    assert kinds == ["category", "group", "block"]
+    line = len(canvas.lines) - 1 if canvas.lines[-1].kind == "block" else power + 2
+    top = canvas._tops[line] + 7
+    moved: list[tuple[int, int, int, int]] = []
+    canvas.pulse_changed.connect(lambda *a: moved.append(a))
+    start = canvas._x(3)  # inside the bar (ticks 2–5)
+    press = QMouseEvent(QMouseEvent.Type.MouseButtonPress, QPointF(start, top), QPointF(start, top),
+                        Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton,
+                        Qt.KeyboardModifier.NoModifier)  # fmt: skip
+    canvas.mousePressEvent(press)
+    to = canvas._x(7)
+    move = QMouseEvent(QMouseEvent.Type.MouseMove, QPointF(to, top), QPointF(to, top),
+                       Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton,
+                       Qt.KeyboardModifier.NoModifier)  # fmt: skip
+    canvas.mouseMoveEvent(move)
+    release = QMouseEvent(QMouseEvent.Type.MouseButtonRelease, QPointF(to, top),
+                          QPointF(to, top), Qt.MouseButton.LeftButton,
+                          Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier)  # fmt: skip
+    canvas.mouseReleaseEvent(release)
+    assert moved and moved[0][1:] == (6, 15, 3)  # moved 4 ticks later
+    assert [(p.tick, p.ticks) for p in document.pulses()] == [(6, 3)]
+    document.dirty = False
+    window.close()
