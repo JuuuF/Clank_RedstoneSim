@@ -161,6 +161,9 @@ page is the summary to start from.*
 
 ## Next steps (in order)
 
+**First: the ninth feedback round** (2026-10-13), 14 items listed with their status in
+[[ui-direction]] ("Ninth round of feedback"). Work on branch `feat/round9`.
+
 Eight owner feedback rounds are done ([[ui-direction]]). The owner's latest priority order
 (2026-10-12) was: missing blocks → improve world (game) loading → diagnostics; the owner
 tests the Mac support themselves. Status and what is left:

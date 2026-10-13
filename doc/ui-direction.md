@@ -252,6 +252,36 @@ the full inspector of the hovered block next to the cursor in every mode; "Step 
 event" lost its secondary E binding (an explicit owner request overrides the earlier
 "do not change existing keybinds"; old keymap files migrate automatically).
 
+## Ninth round of feedback (2026-10-13)
+
+Owner requests, in their words where short; status per item (☐ open, ☑ done):
+
+1. ☐ **Piston animation** (examples in `data/imgs/pistons/`): bases disappear while
+   extending, the head sticks out of the piston's back, moving blocks disappear. "Make
+   it run smoothly again."
+2. ☐ **Clouds** jump when tabbing back into the app after a while, and only move while
+   the simulation runs or ticks are played (both directions). They should drift on the
+   wall clock.
+3. ☐ **Diagnostics tab:** clicking a block or coordinates highlights it in the viewport.
+4. ☐ **Signs** show their text.
+5. ☐ **Placing on the side of blocks** like in Minecraft (the clicked face decides the
+   cell, not only the build layer).
+6. ☐ **Blocked placement preview:** when a block cannot be placed, the preview stays and
+   turns red.
+7. ☐ The **oak sign at -4 89 36** in the example save has no texture; **standing signs
+   make the faces of the blocks below transparent** (culling).
+8. ☐ **Rails** are drawn one pixel too high (floating).
+9. ☐ **Camera pivot marker** smaller and less obvious ("only a little helper"; it need
+   not be neon); its shadow is wrong on non-full blocks (dust, repeaters, signs).
+10. ☐ **60 fps** rendering while running, for a smooth feel.
+11. ☐ **F3 signal labels:** a slider for the display range with a smooth fade-out (now
+    every dust level in view is labeled); hovering a label highlights it; F jumps to it.
+12. ☐ **Selection side tint flickers** where it meets blocks (z-fighting): draw the
+    highlight box slightly larger than its contents.
+13. ☐ **Multiple selections:** Shift+drag adds another selection; **Alt+A** removes all.
+14. ☐ **Favourite block palettes** like the creative mode's saved hotbars, instead of
+    the recent-blocks strip.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,
