@@ -728,13 +728,20 @@ def first_position(text: str) -> Pos | None:
 
 class HoverWatch(QObject):
     """Calls ``on_enter`` when the mouse enters a widget and ``on_leave`` when it leaves
-    (panels light up the block whose coordinates are under the mouse)."""
+    (panels light up the block whose coordinates are under the mouse); with ``on_move``,
+    also on every mouse move (the point), e.g. to notice the empty space below a list."""
 
     def __init__(
-        self, widget: QWidget, on_enter: Callable[[], object], on_leave: Callable[[], object]
+        self,
+        widget: QWidget,
+        on_enter: Callable[[], object],
+        on_leave: Callable[[], object],
+        on_move: Callable[[QPoint], object] | None = None,
     ) -> None:
         super().__init__(widget)
-        self.on_enter, self.on_leave = on_enter, on_leave
+        self.on_enter, self.on_leave, self.on_move = on_enter, on_leave, on_move
+        if on_move is not None:
+            widget.setMouseTracking(True)
         widget.installEventFilter(self)
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
@@ -742,6 +749,8 @@ class HoverWatch(QObject):
             self.on_enter()
         elif event.type() == QEvent.Type.Leave:
             self.on_leave()
+        elif event.type() == QEvent.Type.MouseMove and self.on_move is not None:
+            self.on_move(event.position().toPoint())  # type: ignore[attr-defined]
         return False
 
 
@@ -781,8 +790,19 @@ class DiagnosticsPanel(QTabWidget):
         self.events.itemEntered.connect(self._hover_item)
         self.trace.viewport().setMouseTracking(True)
         self.trace.viewport().installEventFilter(self)
-        for widget in (self.ticks.viewport(), self.events.viewport()):
-            HoverWatch(widget, lambda: None, lambda: self.position_hovered.emit(None))
+        HoverWatch(self.ticks.viewport(), lambda: None, self._unhover, self._ticks_moved)
+        HoverWatch(self.events.viewport(), lambda: None, self._unhover, self._events_moved)
+
+    def _unhover(self) -> None:
+        self.position_hovered.emit(None)
+
+    def _ticks_moved(self, point: QPoint) -> None:
+        if self.ticks.rowAt(point.y()) < 0:  # below the last row
+            self._unhover()
+
+    def _events_moved(self, point: QPoint) -> None:
+        if self.events.itemAt(point) is None:
+            self._unhover()
 
     def _hover_item(self, item: Any) -> None:
         pos = item.data(Qt.ItemDataRole.UserRole) if item is not None else None

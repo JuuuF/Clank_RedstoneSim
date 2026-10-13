@@ -807,6 +807,21 @@ class Document:
         extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
         extra["monitors"] = [list(pos) for pos in self.monitors]
         extra["line_groups"] = self.lines.to_json()
+        history = self.history
+        if history.inputs:  # the recorded edits (sequences too) and the build they start from
+            base = Engine()
+            base.restore(history.base)
+            extra["history"] = {
+                "base": save_io.engine_to_json(base),
+                "plan": {
+                    str(tick): [action.to_json() for action in actions]
+                    for tick, actions in history.plan().items()
+                },
+                "end_tick": self.end_tick,
+                "tick": self.tick,
+            }
+        else:
+            extra.pop("history", None)
         extra["markers"] = {str(tick): name for tick, name in self.visible_markers().items()}
         save_io.save(target, self.engine, extra)
         self.path = target
@@ -822,7 +837,8 @@ class Document:
         monitors = [(int(x), int(y), int(z)) for x, y, z in extra.pop("monitors", [])]
         lines = Lines.from_json(extra.pop("line_groups", []))
         markers = {int(tick): str(name) for tick, name in extra.pop("markers", {}).items()}
-        return Document(
+        history = extra.pop("history", None)
+        document = Document(
             engine=engine,
             sections=sections,
             path=path,
@@ -833,6 +849,18 @@ class Document:
             markers=markers,
             lines=lines,
         )
+        if isinstance(history, dict) and history.get("plan"):
+            # Re-run the recorded edits from the saved build (the file's own state is
+            # the result at the saved tick, recomputed here).
+            base = save_io.engine_from_json(history["base"]).snapshot()
+            plan: Plan = {
+                int(tick): [Action.from_json(a) for a in actions]
+                for tick, actions in history["plan"].items()
+            }
+            end, tick = int(history.get("end_tick", 0)), int(history.get("tick", 0))
+            document._rebuild(HistoryState(base, plan, end, tick))
+            document.dirty = False
+        return document
 
     # ------------------------------------------------------------------ timeline view
     def _observe(self) -> None:

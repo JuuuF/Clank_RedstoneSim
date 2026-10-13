@@ -123,6 +123,8 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
             "projectile_hits": [[list(p), s, t] for p, s, t in level.projectile_hits],
             "plate_visitors": [[list(p), *v] for p, v in level.plate_visitors.items()],
             "forced_power": [[list(p), *v] for p, v in level.forced_power.items()],
+            "zero_tick_pulses": [[list(p), s] for p, s in level.zero_tick_pulses],
+            "zero_tick_ends": [list(p) for p in level.zero_tick_ends],
             "entity_queue": [list(p) for p in level.entity_queue],
             "wrappers": wrappers,
             "tickers": tickers,
@@ -183,6 +185,8 @@ def engine_from_json(data: dict[str, Any]) -> Engine:
         level.plate_visitors[_pos(p)] = (int(mobs), int(others), int(until))
     for p, strength, until in raw.get("forced_power", []):
         level.forced_power[_pos(p)] = (int(strength), int(until))
+    level.zero_tick_pulses = [(_pos(p), int(s)) for p, s in raw.get("zero_tick_pulses", [])]
+    level.zero_tick_ends = [_pos(p) for p in raw.get("zero_tick_ends", [])]
     level.entity_queue = [_pos(p) for p in raw.get("entity_queue", [])]
 
     wrappers = [

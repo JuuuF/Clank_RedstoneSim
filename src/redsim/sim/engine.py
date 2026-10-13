@@ -172,6 +172,8 @@ class Engine:
         if self.phase is Phase.BLOCK_EVENTS and level.block_events:
             pos, block_id, b0, b1 = next(iter(level.block_events))
             return f"block event {block_id.removeprefix('minecraft:')} at {pos} ({b0}, {b1})"
+        if self.phase is Phase.ENTITIES and level.zero_tick_ends:
+            return f"the 0-tick pulse at {level.zero_tick_ends[0]} ends"
         if self.phase is Phase.ENTITIES and level.projectile_hits:
             pos, strength, ticks = level.projectile_hits[0]
             return f"projectile hits the target at {pos} (strength {strength}, {ticks} ticks)"
@@ -197,6 +199,11 @@ class Engine:
                 level.trace.game_time = level.game_time
                 info.game_time = level.game_time
                 count = level.block_ticks.collect(level.game_time)
+                # 0-tick pulses switch on inside the tick (off after its block events).
+                for pos, strength in level.zero_tick_pulses:
+                    level.force_power(pos, strength, level.game_time)
+                    level.zero_tick_ends.append(pos)
+                level.zero_tick_pulses = []
                 info.detail["info"] = f"{count} scheduled tick(s) due"
                 self.phase = Phase.BLOCK_TICKS
             finally:
@@ -228,6 +235,13 @@ class Engine:
                     state.trigger_event(level, pos, b0, b1)
                 else:
                     info.detail["info"] = "skipped: block changed"
+            finally:
+                self._end_step()
+        elif self.phase is Phase.ENTITIES and level.zero_tick_ends:
+            pos = level.zero_tick_ends.pop(0)
+            info = self._begin_step("zero_tick_end", pos, {})
+            try:
+                level.force_power(pos, 0, level.game_time)  # the 0-tick pulse ends
             finally:
                 self._end_step()
         elif self.phase is Phase.ENTITIES and not level.projectile_hits:
@@ -287,7 +301,7 @@ class Engine:
                 }
                 level.entity_queue = list(level.plate_visitors)
             elif self.phase is Phase.ENTITIES:
-                if level.projectile_hits or level.entity_queue:
+                if level.zero_tick_ends or level.projectile_hits or level.entity_queue:
                     return
                 # Level.tickBlockEntities L527: pending tickers join the list first.
                 level.ticking_block_entities = True
@@ -372,9 +386,10 @@ class Engine:
                 # Editor power at the position for ``ticks`` ticks (sequences, not vanilla).
                 payload = action.payload
                 ticks = int(payload["ticks"])
-                level.force_power(action.pos, int(payload["strength"]), level.game_time + ticks)
-                if ticks == 0:  # a 0-tick pulse: off again at once (two updates, one moment)
-                    level.force_power(action.pos, 0, level.game_time)
+                if ticks == 0:  # a 0-tick pulse: on and off inside the next tick
+                    level.zero_tick_pulses.append((action.pos, int(payload["strength"])))
+                else:
+                    level.force_power(action.pos, int(payload["strength"]), level.game_time + ticks)
             elif action.kind == "plate_visitors":
                 # Entities step on the plate from the next tick on, for ``ticks`` ticks.
                 payload = action.payload

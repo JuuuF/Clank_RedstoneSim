@@ -117,6 +117,10 @@ class Level:
         #: invisible redstone block next to the block, from every side): pos → (strength,
         #: last game time it is on). Locked to the position, whatever block is there.
         self.forced_power: dict[Pos, tuple[int, int]] = {}
+        #: 0-tick pulses: (pos, strength) that switch on at the next tick's start and off
+        #: right after its block events (``zero_tick_ends``), inside one tick.
+        self.zero_tick_pulses: list[tuple[Pos, int]] = []
+        self.zero_tick_ends: list[Pos] = []
         #: Plates whose visitors step on them in this tick's entity phase (in order).
         self.entity_queue: list[Pos] = []
         self.tickers: list[TickerWrapper] = []
@@ -632,6 +636,8 @@ class Level:
         other.projectile_hits = list(self.projectile_hits)
         other.plate_visitors = dict(self.plate_visitors)
         other.forced_power = dict(self.forced_power)
+        other.zero_tick_pulses = list(self.zero_tick_pulses)
+        other.zero_tick_ends = list(self.zero_tick_ends)
         other.entity_queue = list(self.entity_queue)
         other.ticking_block_entities = self.ticking_block_entities
         other.handling_tick = self.handling_tick

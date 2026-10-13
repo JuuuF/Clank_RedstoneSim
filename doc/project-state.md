@@ -148,7 +148,8 @@ page is the summary to start from.*
 - Experimental redstone (`redstone_experiments`) is out of scope (ADR-006).
 - The trace keeps the last 200 000 records; the UI shows the last step's records as an
   indented causal list (no interactive tree yet).
-- Saves contain the current state only, not the timeline history.
+- Saves keep the timeline's recorded edits (sequences too) with the build they start
+  from, and opening re-runs them; undo history and samples are not saved.
 - Chunks of an opened Minecraft world that stream in later join every stored level as if
   they had always been loaded; their pending scheduled ticks are not imported (only those
   of the first area are). A `.redsim.json` saved from an opened world keeps the blocks

@@ -670,3 +670,21 @@ def test_hovered_coordinates_light_up_and_groups_color_the_view(app: object) -> 
     assert window.viewport.located is None
     document.dirty = False
     window.close()
+
+
+def test_leaving_the_last_sequence_row_stops_the_highlight(app: object) -> None:
+    from PySide6.QtCore import QPoint
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.document.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=east]"))
+    window.document.add_pulse((0, 1, 0), 2, 15, 2)
+    window._changed()
+    panel = window.sequence
+    panel._hovered(0, 1)
+    assert window.viewport.located == (0, 1, 0)
+    panel._moved(QPoint(5, panel.table.viewport().height() - 2))  # below the only row
+    assert window.viewport.located is None
+    window.document.dirty = False
+    window.close()

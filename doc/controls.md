@@ -70,10 +70,10 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   power (strength and duration from the Sequence tab) from that tick on, whatever block
   is there then (a piston that moves away no longer gets it, a block moving in does).
   Clicking at tick 0 starts the pulse at tick 1 (tick 0 is the build). A duration of
-  **0 ticks is a 0-tick pulse**: on and off again at the same moment between ticks (two
-  block updates, like placing and removing a redstone block within one game tick; a
-  lamp lights, a piston only queues an extension that its own event then cancels, as in
-  the game). Right click
+  **0 ticks is a 0-tick pulse**: power switches on at the start of the next tick and off
+  right after that tick's block events, inside one game tick, as redstone 0-ticks do. A
+  sticky piston then starts extending and retracts at once, leaving its block pushed
+  ("spitting" it); a lamp lights. Right click
   removes the pulses at that position running at the current tick. The Sequence tab
   lists every pulse with editable tick, strength and duration (× removes; a click on a
   row jumps to its tick and flashes the position); every change re-runs the history from

@@ -8,7 +8,7 @@ from tick 0 with the new sequence (one undo step).
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
@@ -75,7 +75,12 @@ class SequencePanel(QWidget):
         self.table.cellClicked.connect(self._clicked)
         self.table.setMouseTracking(True)
         self.table.cellEntered.connect(self._hovered)
-        HoverWatch(self.table.viewport(), lambda: None, lambda: self.position_hovered.emit(None))
+        HoverWatch(
+            self.table.viewport(),
+            lambda: None,
+            lambda: self.position_hovered.emit(None),
+            self._moved,  # below the last row: nothing is hovered
+        )
         layout.addWidget(self.table, 1)
         self._shown: list[Pulse] = []
         self._pending: dict[int, tuple[int, int, int]] = {}
@@ -133,6 +138,10 @@ class SequencePanel(QWidget):
         pending, self._pending = self._pending, {}
         for index, (tick, strength, ticks) in pending.items():
             self.edit_requested.emit(index, tick, strength, ticks)
+
+    def _moved(self, point: QPoint) -> None:
+        if not 0 <= self.table.rowAt(point.y()) < len(self._shown):
+            self.position_hovered.emit(None)
 
     def _hovered(self, row: int, column: int) -> None:
         pos = self._shown[row].pos if 0 <= row < len(self._shown) else None

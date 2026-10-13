@@ -91,17 +91,27 @@ def test_extending_a_piston_in_the_inspector_adds_its_head() -> None:
     assert doc.state_at((2, 1, 0)).is_(blocks.PISTON_HEAD)  # at once, in the same edit
 
 
-def test_a_0_tick_pulse_is_on_and_off_at_the_same_moment() -> None:
+def test_a_0_tick_pulse_is_on_and_off_inside_one_tick() -> None:
     doc = Document.new_flat()
     doc.setblock((0, 1, 0), P("redstone_lamp"))
     doc.add_pulse((0, 1, 0), tick=2, ticks=0)
     assert [(p.tick, p.ticks) for p in doc.pulses()] == [(2, 0)]
-    doc.run_ticks(6 - doc.tick)
-    assert doc.level.forced_power == {}  # never left on
-    assert doc.seek_tick(2)  # the lamp saw the power: lit at once (a lamp lights at once)
-    assert doc.state_at((0, 1, 0)).get(LIT)
-    assert doc.seek_tick(6)
-    assert not doc.state_at((0, 1, 0)).get(LIT)  # and goes off 4 ticks later
+    doc.run_ticks(9 - doc.tick)
+    assert doc.level.forced_power == {}  # never left on at a tick boundary
+    assert doc.seek_tick(2) and not doc.state_at((0, 1, 0)).get(LIT)
+    assert doc.seek_tick(3) and doc.state_at((0, 1, 0)).get(LIT)  # lit during tick 3
+    assert doc.seek_tick(8) and not doc.state_at((0, 1, 0)).get(LIT)  # 4 ticks later off
+
+
+def test_a_0_tick_pulse_makes_a_sticky_piston_spit_its_block() -> None:
+    """On at the tick's start, off after its block events: the piston starts extending,
+    then retracts at once (event 2, PistonBaseBlock.checkIfExtend) and leaves the block."""
+    doc = piston_doc()
+    doc.add_pulse((0, 1, 0), tick=2, ticks=0)
+    doc.run_ticks(8 - doc.tick)
+    assert doc.state_at((2, 1, 0)).is_(blocks.STONE)  # pushed and left behind
+    assert doc.state_at((1, 1, 0)).is_air
+    assert not doc.state_at((0, 1, 0)).get(EXTENDED)
 
 
 def test_dragging_a_moving_piston_keeps_its_movement() -> None:
@@ -139,3 +149,25 @@ def test_pulses_move_together_and_change_their_position() -> None:
     assert [(p.tick, p.pos) for p in doc.pulses()] == [(4, (0, 1, 2)), (10, (0, 1, 2))]
     doc.undo()  # one undo step for both
     assert [(p.tick, p.pos) for p in doc.pulses()] == [(2, (0, 1, 0)), (8, (0, 1, 0))]
+
+
+def test_sequences_and_recorded_edits_survive_saving(tmp_path: Path) -> None:
+    doc = piston_doc()
+    doc.setblock((0, 1, 2), P("sticky_piston[facing=east]"))
+    doc.setblock((1, 1, 2), P("stone"))
+    doc.add_pulse((0, 1, 0), tick=2, ticks=4)
+    doc.add_pulse((0, 1, 2), tick=3, ticks=0)  # a 0-tick
+    doc.run_ticks(12 - doc.tick)
+    doc.seek_tick(5)
+    doc.save(tmp_path / "seq.redsim.json")
+    loaded = Document.open(tmp_path / "seq.redsim.json")
+    assert [(p.tick, p.pos, p.ticks) for p in loaded.pulses()] == [
+        (p.tick, p.pos, p.ticks) for p in doc.pulses()
+    ]
+    assert loaded.tick == 5 and loaded.end_tick == 12
+    assert loaded.level.blocks == doc.level.blocks
+    assert not loaded.dirty
+    for tick in (4, 8, 12):  # the whole history replays the same
+        doc.seek_tick(tick)
+        loaded.seek_tick(tick)
+        assert loaded.level.blocks == doc.level.blocks

@@ -102,7 +102,7 @@ GLIDE_SECONDS = 0.07
 PIVOT_COLOR = (0.92, 0.92, 0.88, 0.85)  # round 9: a quiet helper, not a neon marker
 #: The selection's fill: opacity, how far it breathes, and one breath in seconds.
 BODY_ALPHA = 0.2
-LOCATE_COLOR = (1.0, 0.85, 0.2, 1.0)  # hovered coordinates
+LOCATE_COLOR = (1.0, 0.9, 0.55, 0.55)  # hovered coordinates: a soft frame
 HIGHLIGHT_SECONDS = 3.0  # how long a flashed block (Diagnostics click) stays lit
 BODY_MARGIN = 0.02  # blocks the fill box stands out of its contents (no z-fighting)
 BODY_PULSE = 0.06
@@ -1099,7 +1099,7 @@ class Viewport(QOpenGLWidget):
         width = self._edge_width()
         if self.located is not None:  # hovered coordinates: a bright frame through blocks
             lo = np.array(self.located, dtype=float) - 0.05
-            parts.append(thick_edges(lo, lo + 1.1, LOCATE_COLOR, width * 1.6))
+            parts.append(thick_edges(lo, lo + 1.1, LOCATE_COLOR, width * 0.8))
         for extra in self.extra_regions:
             lo, hi = _bounds(extra)
             parts.append(thick_edges(lo, hi, EXTRA_SELECTION_COLOR, width))
@@ -1231,7 +1231,7 @@ class Viewport(QOpenGLWidget):
         parts = []
         if self.located is not None:
             lo = np.array(self.located, dtype=float) - 0.05
-            alpha = 0.3 + 0.12 * math.sin(time.monotonic() * 2 * math.pi)
+            alpha = 0.1 + 0.04 * math.sin(time.monotonic() * 2 * math.pi)
             parts.append(box_faces(lo, lo + 1.1, (*LOCATE_COLOR[:3], alpha)))
         flashed = self._flash_body()
         if len(flashed):

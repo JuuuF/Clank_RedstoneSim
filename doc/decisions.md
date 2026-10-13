@@ -438,3 +438,11 @@ a block entity (an invisible "block 36" that never finishes), which made dragged
 saved mid-movement disappear in the editor. Plain `/clone` commands (game comparisons)
 keep the vanilla behavior.
 
+**Addendum to ADR-026 (2026-10-13):** a 0-tick pulse (duration 0) is on *inside* one
+tick: on at the next tick's start step (with `handling_tick` set), off in a step of its
+own right after that tick's block events (`Level.zero_tick_pulses`, `zero_tick_ends`).
+The first version switched on and off at one moment between ticks, where a piston's own
+extension event cancels itself (`triggerEvent` with no signal), so 0-ticks did nothing
+to pistons. Sequences are saved with the document now: a file with recorded edits keeps
+the build (`extra["history"]["base"]`) and the plan, and opening re-runs them.
+

@@ -41,6 +41,10 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   pulse selection with Del, moving selected pulses together, dragging pulses onto
   another block's line.
 
+- **Round 12**: 0-tick pulses act inside a tick (pistons spit their block); sequences
+  and all recorded edits are saved with the file (they were lost on reopening); the
+  hover highlight clears below the last list row and is more subtle.
+
 ## Implemented
 
 ### Project brief (milestones 0–7)
