@@ -973,7 +973,7 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _apply_state(self, pos: Pos, state: Any) -> None:
-        self._edit(self.document.setblock, pos, state)
+        self._edit(self.document.set_state, pos, state)
 
     def _assign_section(self, pos: Pos, name: str | None) -> None:
         self.document.assign_section(pos, name)

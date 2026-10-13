@@ -19,7 +19,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from redsim.core.pos import Pos
+from redsim.core.pos import Pos, offset
 from redsim.editor import sources
 from redsim.editor.annotations import Sections
 from redsim.editor.clipboard import Prefab, Region
@@ -327,10 +327,11 @@ class Document:
 
     def add_pulse(self, pos: Pos, tick: int, strength: int = 15, ticks: int = 2) -> None:
         """Power the position ``pos`` (whatever block is there then) with ``strength`` from
-        tick ``tick`` (≥ 1; tick 0 is the build) for ``ticks`` ticks. Later edits stay:
+        tick ``tick`` (≥ 1; tick 0 is the build) for ``ticks`` ticks; 0 ticks is a 0-tick
+        pulse: on and off again at the same moment between ticks. Later edits stay:
         the history is re-run with the pulse in it (one undo step)."""
-        if not 1 <= strength <= 15 or ticks < 1:
-            raise EditError("A pulse needs a strength of 1–15 and at least one tick.")
+        if not 1 <= strength <= 15 or ticks < 0:
+            raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
         action = Action("power_pulse", pos, payload={"strength": strength, "ticks": ticks})
         self._replan_with({max(1, tick): [replace(action, label="power pulse")]}, {}, "power pulse")
 
@@ -339,8 +340,8 @@ class Document:
         action = self.history.inputs.get(index)
         if action is None or action.kind != "power_pulse":
             raise EditError("No such pulse.")
-        if not 1 <= strength <= 15 or ticks < 1:
-            raise EditError("A pulse needs a strength of 1–15 and at least one tick.")
+        if not 1 <= strength <= 15 or ticks < 0:
+            raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
         changed = replace(action, payload={"strength": strength, "ticks": ticks})
         self._replan_with({max(1, tick): [changed]}, {index: None}, "change a pulse")
 
@@ -387,6 +388,28 @@ class Document:
     def turn_page(self, pos: Pos, page: int) -> None:
         """A player turning a lectern's page (comparator update and a 2-tick pulse)."""
         self._apply(Action("lectern_page", pos, payload={"page": page}), f"turn to page {page}")
+
+    def set_state(self, pos: Pos, state: BlockState) -> None:
+        """An inspector edit: ``setblock``, keeping a piston whole: extending a piston base
+        this way also puts its head in front (if there is room), as one undo step. (The
+        head of a retracted base removes itself through its shape update.)"""
+        from redsim.world.blocks.piston import PistonBaseBlock
+        from redsim.world.properties import EXTENDED, FACING, PISTON_TYPE
+
+        block = state.block
+        if not isinstance(block, PistonBaseBlock) or not state.get(EXTENDED):
+            self.setblock(pos, state)
+            return
+        facing = state.get(FACING)
+        front = offset(pos, facing)
+        with self.batch():
+            self.setblock(pos, state)
+            if self.state_at(front).is_air:
+                sticky = block.id == "minecraft:sticky_piston"
+                head = blocks.PISTON_HEAD.default_state.with_(FACING, facing).with_(
+                    PISTON_TYPE, "sticky" if sticky else "normal"
+                )
+                self.setblock(front, head)
 
     def setblock(self, pos: Pos, state: BlockState) -> None:
         """Inspector edit: ``/setblock`` semantics (shape-adjusted state, neighbor updates)."""

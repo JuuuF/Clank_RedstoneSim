@@ -332,6 +332,22 @@ build, animate). Status: done ([[controls]] "Sequences", [[decisions]] ADR-026):
 mode (K or the ring), the Sequence tab, pulses in the timeline's "Powered" row with
 duration bars, the Tab ring.
 
+## Round 10 (2026-10-13)
+
+1. ☑ **0-tick pulses** in sequences: duration 0 = on and off at the same moment between
+   ticks.
+2. ☑ **Piston heads sticking out of the base's back** (stepping back, sometimes forward):
+   the game draws a *short* head while the progress is low (`PistonHeadRenderer`: SHORT
+   when progress ≤ 0.5 extending, ≥ 0.5 retracting); we always drew the long arm. Also:
+   stepping event by event (paused) shows every step again (the "complete ticks only"
+   hold applies while running).
+3. ☑ **Inspector extends a piston without its head:** `Document.set_state` adds the head.
+4. ☑ **Note block buttons widen the side panel:** long value lists wrap (`FlowLayout`).
+5. ☐ **Timeline:** one line per animated block with rows the owner can reorder; a
+   resizable timeline; every category's events expandable into per-block lines;
+   hierarchical groups with colors like Ableton Live (e.g. "input signals", "output
+   signals").
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

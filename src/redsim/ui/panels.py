@@ -7,7 +7,7 @@ import importlib.metadata
 import re
 from typing import Any
 
-from PySide6.QtCore import QObject, QPoint, QRect, Qt, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -20,6 +20,8 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QInputDialog,
     QLabel,
+    QLayout,
+    QLayoutItem,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
@@ -75,14 +77,81 @@ def _later(callback: Any) -> None:
     QTimer.singleShot(0, callback)
 
 
+class FlowLayout(QLayout):
+    """Widgets in rows that wrap at the available width (Qt's flow layout example), so
+    long button lists (a note block's 23 instruments) never widen the panel."""
+
+    def __init__(self, parent: QWidget | None = None, spacing: int = 2) -> None:
+        super().__init__(parent)
+        self._items: list[QLayoutItem] = []
+        self.setSpacing(spacing)
+        self.setContentsMargins(0, 0, 0, 0)
+
+    def addItem(self, item: QLayoutItem) -> None:  # noqa: N802 - Qt's name
+        self._items.append(item)
+
+    def count(self) -> int:
+        return len(self._items)
+
+    def itemAt(self, index: int) -> QLayoutItem | None:  # noqa: N802
+        return self._items[index] if 0 <= index < len(self._items) else None
+
+    def takeAt(self, index: int) -> QLayoutItem:  # noqa: N802
+        return self._items.pop(index) if 0 <= index < len(self._items) else None  # type: ignore[return-value]
+
+    def expandingDirections(self) -> Qt.Orientation:  # noqa: N802
+        return Qt.Orientation(0)
+
+    def hasHeightForWidth(self) -> bool:  # noqa: N802
+        return True
+
+    def heightForWidth(self, width: int) -> int:  # noqa: N802
+        return self._arrange(QRect(0, 0, width, 0), apply=False)
+
+    def setGeometry(self, rect: QRect) -> None:  # noqa: N802
+        super().setGeometry(rect)
+        self._arrange(rect, apply=True)
+
+    def sizeHint(self) -> QSize:  # noqa: N802
+        return self.minimumSize()
+
+    def minimumSize(self) -> QSize:  # noqa: N802
+        size = QSize()
+        for item in self._items:
+            size = size.expandedTo(item.minimumSize())
+        return size
+
+    def _arrange(self, rect: QRect, apply: bool) -> int:
+        x, y, line = rect.x(), rect.y(), 0
+        gap = self.spacing()
+        for item in self._items:
+            hint = item.sizeHint()
+            if x + hint.width() > rect.right() + 1 and line > 0:
+                x, y, line = rect.x(), y + line + gap, 0
+            if apply:
+                item.setGeometry(QRect(QPoint(x, y), hint))
+            x += hint.width() + gap
+            line = max(line, hint.height())
+        return y + line - rect.y()
+
+
 class _Choice(QWidget):
-    """Exclusive buttons for a property's values (directions get arrows)."""
+    """Exclusive buttons for a property's values (directions get arrows). More than six
+    values wrap into rows that fit the panel."""
 
     def __init__(self, prop: Property, on_pick: Any) -> None:
         super().__init__()
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+        layout: QLayout
+        if len(prop.values) > 6:
+            layout = FlowLayout(self)
+            policy = self.sizePolicy()
+            policy.setHeightForWidth(True)
+            policy.setHorizontalPolicy(QSizePolicy.Policy.Ignored)
+            self.setSizePolicy(policy)
+        else:
+            layout = QHBoxLayout(self)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(2)
         self.buttons: dict[Any, QPushButton] = {}
         for value in prop.values:
             text = prop.serialize(value)

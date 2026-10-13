@@ -21,7 +21,7 @@ from redsim.ui.style import Box, Color, block_boxes, moving_boxes, wire_color
 from redsim.world import blocks
 from redsim.world.block import BlockState
 from redsim.world.blocks.piston import PistonMovingBlockEntity
-from redsim.world.properties import EXTENDED, FACING, PISTON_TYPE, POWER
+from redsim.world.properties import EXTENDED, FACING, PISTON_TYPE, POWER, SHORT
 
 if TYPE_CHECKING:
     from redsim.ui.atlas import Atlas
@@ -415,7 +415,8 @@ class Mesher:
         if self.assets is None or not isinstance(entity, PistonMovingBlockEntity):
             return None
         # ``PistonHeadRenderer``: offset = step × getExtendedProgress(getProgress(partial)).
-        progress = entity.extended_progress(self.render_progress(entity))
+        raw = self.render_progress(entity)
+        progress = entity.extended_progress(raw)
         sx, sy, sz = entity.direction.step
         x, y, z = pos
         shifted = (x + sx * progress, y + sy * progress, z + sz * progress)
@@ -424,9 +425,14 @@ class Mesher:
             head = blocks.PISTON_HEAD.default_state.with_(FACING, entity.direction).with_(
                 PISTON_TYPE, "sticky" if sticky else "normal"
             )
+            # A short arm while the head is mostly inside the base (no arm out of its back).
+            head = head.with_(SHORT, raw >= 0.5)
             base = entity.moved_state.with_(EXTENDED, True)
             return [(base, (float(x), float(y), float(z))), (head, shifted)]
-        return [(entity.moved_state, shifted)]
+        moved = entity.moved_state
+        if moved.block is blocks.PISTON_HEAD:  # an extending head: short early on
+            moved = moved.with_(SHORT, raw <= 0.5)
+        return [(moved, shifted)]
 
     def _piece_rows(self, state: BlockState) -> tuple[np.ndarray, np.ndarray]:
         """All vertices of ``state``'s model at the origin (opaque, translucent), cached:

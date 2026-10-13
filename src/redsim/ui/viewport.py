@@ -659,7 +659,9 @@ class Viewport(QOpenGLWidget):
         renderer = self.renderer
         if renderer is None:
             return
-        at_boundary = self.document.can_edit  # mid-tick (a heavy tick run in parts): keep
+        # While running, a heavy tick runs in parts: keep showing the last complete tick.
+        # Stepping event by event (paused) shows every step.
+        at_boundary = self.document.can_edit or self.tick_fraction is None
         if self._mesh_revision != self.document.revision and at_boundary:
             # Only chunks whose blocks (or neighbors) changed are rebuilt and re-uploaded.
             chunks = self.world_mesh.chunks

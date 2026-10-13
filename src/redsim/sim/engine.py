@@ -371,9 +371,10 @@ class Engine:
             elif action.kind == "power_pulse":
                 # Editor power at the position for ``ticks`` ticks (sequences, not vanilla).
                 payload = action.payload
-                level.force_power(
-                    action.pos, int(payload["strength"]), level.game_time + int(payload["ticks"])
-                )
+                ticks = int(payload["ticks"])
+                level.force_power(action.pos, int(payload["strength"]), level.game_time + ticks)
+                if ticks == 0:  # a 0-tick pulse: off again at once (two updates, one moment)
+                    level.force_power(action.pos, 0, level.game_time)
             elif action.kind == "plate_visitors":
                 # Entities step on the plate from the next tick on, for ``ticks`` ticks.
                 payload = action.payload

@@ -51,10 +51,15 @@ class SequencePanel(QWidget):
         self.strength.setValue(15)
         self.strength.setToolTip("Signal strength of new pulses")
         self.duration = QSpinBox()
-        self.duration.setRange(1, 10000)
+        self.duration.setRange(0, 10000)
+        self.duration.setSpecialValueText("0-tick (on and off at once)")
         self.duration.setValue(2)
         self.duration.setSuffix(" ticks")
-        self.duration.setToolTip("How long new pulses stay on")
+        self.duration.setToolTip(
+            "How long new pulses stay on. 0: a 0-tick pulse, on and off again at the same "
+            "moment between ticks (two block updates, like placing and removing a redstone "
+            "block within one tick)"
+        )
         form.addRow("New pulses: strength", self.strength)
         form.addRow("Duration", self.duration)
         layout.addLayout(form)
@@ -85,7 +90,7 @@ class SequencePanel(QWidget):
             for column, (value, low, high) in (
                 (0, (pulse.tick, 1, 1_000_000)),
                 (2, (pulse.strength, 1, 15)),
-                (3, (pulse.ticks, 1, 10_000)),
+                (3, (pulse.ticks, 0, 10_000)),
             ):
                 box = QSpinBox()
                 box.setRange(low, high)

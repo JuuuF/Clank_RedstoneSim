@@ -78,3 +78,27 @@ def test_a_running_pulse_survives_saving(tmp_path: Path) -> None:
     assert loaded.level.forced_power == {
         (0, 1, 0): (strength, until - now + loaded.level.game_time)
     }
+
+
+def test_extending_a_piston_in_the_inspector_adds_its_head() -> None:
+    from redsim.world.properties import EXTENDED
+
+    doc = Document.new_flat()
+    doc.setblock((1, 1, 0), P("piston[facing=east]"))
+    assert doc.state_at((2, 1, 0)).is_air
+    doc.set_state((1, 1, 0), doc.state_at((1, 1, 0)).with_(EXTENDED, True))
+    assert doc.state_at((1, 1, 0)).get(EXTENDED)
+    assert doc.state_at((2, 1, 0)).is_(blocks.PISTON_HEAD)  # at once, in the same edit
+
+
+def test_a_0_tick_pulse_is_on_and_off_at_the_same_moment() -> None:
+    doc = Document.new_flat()
+    doc.setblock((0, 1, 0), P("redstone_lamp"))
+    doc.add_pulse((0, 1, 0), tick=2, ticks=0)
+    assert [(p.tick, p.ticks) for p in doc.pulses()] == [(2, 0)]
+    doc.run_ticks(6 - doc.tick)
+    assert doc.level.forced_power == {}  # never left on
+    assert doc.seek_tick(2)  # the lamp saw the power: lit at once (a lamp lights at once)
+    assert doc.state_at((0, 1, 0)).get(LIT)
+    assert doc.seek_tick(6)
+    assert not doc.state_at((0, 1, 0)).get(LIT)  # and goes off 4 ticks later
