@@ -161,8 +161,10 @@ page is the summary to start from.*
 
 ## Next steps (in order)
 
-**First: the ninth feedback round** (2026-10-13), 14 items listed with their status in
-[[ui-direction]] ("Ninth round of feedback"). Work on branch `feat/round9`.
+**The ninth feedback round** (2026-10-13) is done: 15 items with what changed and where
+in [[ui-direction]] ("Ninth round of feedback"). Open from it: copying several selections
+at once, sign text for signs placed in the editor, and game-speed limits of very heavy
+contraptions (pure Python engine).
 
 Eight owner feedback rounds are done ([[ui-direction]]). The owner's latest priority order
 (2026-10-12) was: missing blocks → improve world (game) loading → diagnostics; the owner

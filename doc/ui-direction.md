@@ -302,7 +302,11 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
     block (`Viewport._labels`, `label_at`, `LabelRange`).
 12. ☑ **Selection side tint flickers** where it meets blocks (z-fighting): draw the
     highlight box slightly larger than its contents (`BODY_MARGIN` = 0.02 blocks).
-13. ☐ **Multiple selections:** Shift+drag adds another selection; **Alt+A** removes all.
+13. ☑ **Multiple selections:** Shift+drag adds another selection; **Alt+A** removes all.
+    Shift+drag on a face handle still stacks; elsewhere it keeps the current box (drawn
+    calmer blue, `Viewport.extra_regions`) and draws a new active one. Del clears every
+    box as one undo step; Esc in NORMAL and Alt+A remove all boxes. Copy, move, rotate
+    and the gizmos act on the active box only (open: copying several boxes at once).
 15. ☑ **Frame rate with many moving pistons** (owner: 15–20 fps with bigger
     contraptions). Measures: moving pistons are one small mesh of their own, built per
     frame by state groups in one numpy operation (784 moving blocks: 2.4 ms per frame,

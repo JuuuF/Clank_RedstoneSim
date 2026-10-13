@@ -344,6 +344,7 @@ class MainWindow(QMainWindow):
         mode_menu.addSeparator()
         self._action(mode_menu, "Move pivot to the block", self._focus_pivot, "camera.focus")
         self._action(mode_menu, "Inspect the block (popup)", self._open_block_popup, "block.popup")
+        self._action(mode_menu, "Remove all selections", self._clear_selections, "select.clear_all")
         sim_menu = bar.addMenu("&Simulation")
         # The transport buttons' pixel icons, where a button does the same.
         for text, slot, keymap_id, icon in (
@@ -535,7 +536,7 @@ class MainWindow(QMainWindow):
             self._message("Paste cancelled.")
             return
         if mode == NORMAL and self.viewport.mode == NORMAL:
-            self.viewport.region = None
+            self.viewport.clear_selections()
             self._select(None)
             return
         self.viewport.set_mode(mode)
@@ -1110,10 +1111,17 @@ class MainWindow(QMainWindow):
         self._changed()
 
     def _delete_region(self) -> None:
-        """Del: clear the selection (in BUILD mode, right click removes single blocks)."""
-        region = self._region()
-        if region is not None:
-            self._edit(self.document.fill, region, blocks.AIR.default_state)
+        """Del: clear every selection, as one undo step (in BUILD mode, right click removes
+        single blocks)."""
+        if self._region() is None and not self.viewport.extra_regions:
+            return
+        with self.document.batch():
+            for region in self.viewport.all_regions():
+                self._edit(self.document.fill, region, blocks.AIR.default_state)
+
+    def _clear_selections(self) -> None:
+        self.viewport.clear_selections()
+        self._changed()
 
     def _save_prefab(self) -> None:
         region = self._region()

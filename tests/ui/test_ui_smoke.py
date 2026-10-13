@@ -454,3 +454,26 @@ def test_f3_labels_fade_out_within_the_range(app: object) -> None:
     assert viewport.focus_hover()  # F jumps to the hovered label's block
     window.document.dirty = False
     window.close()
+
+
+def test_several_selections_are_deleted_together_and_cleared_with_alt_a(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    for x in (0, 5):
+        document.setblock((x, 1, 0), blocks.STONE.default_state)
+    viewport = window.viewport
+    viewport.extra_regions = [Region((0, 1, 0), (0, 1, 0))]  # Shift+drag kept the first
+    viewport.region = Region((5, 1, 0), (5, 1, 0))
+    assert len(viewport._selection_body()) > 0
+    window._delete_region()  # Del clears every selection, one undo step
+    assert document.state_at((0, 1, 0)).is_air and document.state_at((5, 1, 0)).is_air
+    document.undo()
+    assert document.state_at((0, 1, 0)).is_(blocks.STONE)
+    assert document.state_at((5, 1, 0)).is_(blocks.STONE)
+    assert window.keymap.bindings("select.clear_all") == ("Alt+A",)
+    window._actions["select.clear_all"].trigger()
+    assert viewport.region is None and viewport.extra_regions == []
+    document.dirty = False
+    window.close()

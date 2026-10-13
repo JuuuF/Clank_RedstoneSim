@@ -107,6 +107,7 @@ BODY_PULSE = 0.06
 PULSE_SECONDS = 1.8
 SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
 LOCKED_COLOR = (1.0, 0.62, 0.15, 1.0)
+EXTRA_SELECTION_COLOR = (0.35, 0.65, 0.95, 0.8)  # further selections (Shift+drag): calmer
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
 NORMAL, BUILD, SELECT = "normal", "build", "select"
@@ -279,6 +280,8 @@ class Viewport(QOpenGLWidget):
         self.build_face = Direction.UP  # the face BUILD mode places against
         self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
         self.hovered_label: Pos | None = None  # the F3 label under the cursor
+        #: Further selections (Shift+drag adds one; the active one is ``region``).
+        self.extra_regions: list[Region] = []
         self._moving_shown = False  # the moving-piston mesh holds something
         self._label_rects: list[tuple[QRect, Pos]] = []
         self._label_range: LabelRange | None = None  # F3's label range slider (lazy)
@@ -341,6 +344,7 @@ class Viewport(QOpenGLWidget):
         self.document = document
         self.selection = None
         self.region = None
+        self.extra_regions = []
         self._mesh_revision = -1  # the diff against the old world drops what is gone
         self._cover_foreign_textures()
         self.update()
@@ -1065,6 +1069,9 @@ class Viewport(QOpenGLWidget):
         and the pivot block."""
         parts = [self._pivot_block()]
         width = self._edge_width()
+        for extra in self.extra_regions:
+            lo, hi = _bounds(extra)
+            parts.append(thick_edges(lo, hi, EXTRA_SELECTION_COLOR, width))
         if self.region is not None:
             lo, hi = _bounds(self.region)
             color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
@@ -1139,14 +1146,21 @@ class Viewport(QOpenGLWidget):
     def _selection_body(self) -> np.ndarray:
         """The selection filled with its color (round 8), so what is inside reads at a
         glance; the fill breathes slowly, so the selection feels alive."""
+        extras = [
+            box_faces(
+                lo - BODY_MARGIN, hi + BODY_MARGIN, (*EXTRA_SELECTION_COLOR[:3], BODY_ALPHA / 2)
+            )
+            for lo, hi in (_bounds(extra) for extra in self.extra_regions)
+        ]
         if self.region is None:
-            return np.zeros((0, 7), dtype=np.float32)
+            return np.vstack(extras) if extras else np.zeros((0, 7), dtype=np.float32)
         lo, hi = _bounds(self.region)
         # A little larger than its blocks: faces in the same plane as block faces flicker
         # (z-fighting where the box meets them).
         lo, hi = lo - BODY_MARGIN, hi + BODY_MARGIN
         color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
-        return box_faces(lo, hi, (color[0], color[1], color[2], self.body_alpha()))
+        body = box_faces(lo, hi, (color[0], color[1], color[2], self.body_alpha()))
+        return np.vstack([body, *extras])
 
     def flash(self, pos: Pos) -> None:
         """Highlight a block for a few seconds (a click in the Diagnostics tab)."""
@@ -1544,13 +1558,37 @@ class Viewport(QOpenGLWidget):
         elif resize is not None or self._region_anchor is not None:
             self.region_changed.emit(self.region)
 
+    def _begin_extra_box(self, start: QPoint) -> None:
+        """Keep the current selection and draw another one (Shift+drag off the handles)."""
+        if self.region is not None:
+            self.extra_regions.append(self.region)
+        self.region, self.region_locked = None, False
+        origin, direction = self._ray(start)
+        block = pick(self.document.level, origin, direction)
+        self._region_anchor = block.pos if block else None
+        self._drag_action = "select.box"  # the rest of the drag draws the new box
+        self._extend_box()
+
+    def clear_selections(self) -> None:
+        """Remove every selection (Alt+A; Esc in NORMAL mode)."""
+        self.extra_regions = []
+        self.region, self.region_locked = None, False
+        self.region_changed.emit(None)
+        self.update()
+
+    def all_regions(self) -> list[Region]:
+        """Every selection, the active one last."""
+        return [*self.extra_regions, *([self.region] if self.region is not None else [])]
+
     def _begin_stack(self, start: QPoint) -> None:
         """Shift+drag on a face handle: repeat the selection along that face's normal."""
         region = self.region
         if region is None:
+            self._begin_extra_box(start)
             return
         spot = self._gizmo_at(start)
         if spot is None or spot.kind != "resize":
+            self._begin_extra_box(start)  # Shift+drag elsewhere: one more selection
             return
         handle = spot.data
         center = face_center(region, handle)

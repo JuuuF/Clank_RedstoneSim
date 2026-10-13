@@ -70,7 +70,11 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   again or a click outside closes it (`ui/block_popup.py`, keymap action `block.popup`).
 - The badge in the bottom-left corner shows the mode and what it works on; the hint bar below lists the keys.
 - Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
-- Esc in NORMAL clears the inspector selection and the selection box.
+- Esc in NORMAL clears the inspector selection and every selection box.
+- **Several selections:** in SELECT mode, **Shift+drag** away from the face handles keeps
+  the current box and draws another one (Shift+drag on a face handle still stacks copies).
+  **Del** clears all boxes at once; **Alt+A** removes all selections. Copy, move and
+  rotate act on the active (bright) box.
 - In BUILD, **right click** removes the block under the cursor; **Del** only ever clears the
   selection box. **Q** / Shift+Q turn the block under the cursor; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.

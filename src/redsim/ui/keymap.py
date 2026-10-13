@@ -147,8 +147,12 @@ ACTIONS: tuple[ActionSpec, ...] = (
         "select.copy_drag", "Drag a copy of the box (from inside it)", ("Ctrl+Left Drag",), MOUSE
     ),
     ActionSpec(
-        "select.stack", "Stack copies: drag a face handle outwards", ("Shift+Left Drag",), MOUSE
+        "select.stack",
+        "Stack copies: drag a face handle outwards; elsewhere: add another selection",
+        ("Shift+Left Drag",),
+        MOUSE,
     ),
+    ActionSpec("select.clear_all", "Remove all selections", ("Alt+A",)),
     ActionSpec("select.lock", "Lock / unlock the selection (Enter, like GIMP)", ("Return",)),
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
@@ -508,6 +512,7 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
             "edit.paste",
             "edit.delete",
             "select.lock",
+            "select.clear_all",
         ),
     ),
     (
