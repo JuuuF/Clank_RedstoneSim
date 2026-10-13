@@ -52,6 +52,7 @@ from redsim.ui.geometry import (
     Mesher,
     block_outline,
     box_lines,
+    boxes_at,
     ghost_mesh,
     pick,
     ray_box,
@@ -96,9 +97,10 @@ MAX_LINE = 64
 DOUBLE_SHIFT_SECONDS = 0.35
 #: Time constant of the smooth camera (seconds to cover ~63 % of the way).
 GLIDE_SECONDS = 0.07
-PIVOT_COLOR = (1.0, 0.35, 0.05, 1.0)
+PIVOT_COLOR = (0.92, 0.92, 0.88, 0.85)  # round 9: a quiet helper, not a neon marker
 #: The selection's fill: opacity, how far it breathes, and one breath in seconds.
 BODY_ALPHA = 0.2
+BODY_MARGIN = 0.02  # blocks the fill box stands out of its contents (no z-fighting)
 BODY_PULSE = 0.06
 PULSE_SECONDS = 1.8
 SELECTION_COLOR = (0.0, 0.85, 0.95, 1.0)
@@ -1085,6 +1087,9 @@ class Viewport(QOpenGLWidget):
         if self.region is None:
             return np.zeros((0, 7), dtype=np.float32)
         lo, hi = _bounds(self.region)
+        # A little larger than its blocks: faces in the same plane as block faces flicker
+        # (z-fighting where the box meets them).
+        lo, hi = lo - BODY_MARGIN, hi + BODY_MARGIN
         color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
         return box_faces(lo, hi, (color[0], color[1], color[2], self.body_alpha()))
 
@@ -1108,7 +1113,7 @@ class Viewport(QOpenGLWidget):
 
     def _pivot_size(self) -> float:
         """Half the pivot block's edge: about the same size on screen at any zoom."""
-        return 0.08 + self.camera.distance * 0.008
+        return 0.04 + self.camera.distance * 0.004
 
     def pivot_ground(self) -> float:
         """The height of the first surface below the pivot (a block top, else the floor
@@ -1116,9 +1121,19 @@ class Viewport(QOpenGLWidget):
         x, y, z = (float(v) for v in self.camera.pivot)
         bx, bz = math.floor(x), math.floor(z)
         level = self.document.level
+        fx, fz = (x - bx) * 16.0, (z - bz) * 16.0  # the pivot's spot inside its column
         for by in range(math.floor(y), max(level.min_y, math.floor(y) - 64) - 1, -1):
-            if by + 1 <= y and (bx, by, bz) in level.blocks:
-                return float(by + 1)
+            if (bx, by, bz) not in level.blocks:
+                continue
+            # The top of the block's shape under the pivot (dust, repeaters and signs are
+            # lower than a full block; a part beside the pivot does not count).
+            tops = [
+                box.hi[1]
+                for box in boxes_at(level, (bx, by, bz))
+                if box.lo[0] <= fx <= box.hi[0] and box.lo[2] <= fz <= box.hi[2]
+            ]
+            if tops and by + max(tops) / 16.0 <= y:
+                return by + max(tops) / 16.0
         return 1.0
 
     def _pivot_block(self) -> np.ndarray:

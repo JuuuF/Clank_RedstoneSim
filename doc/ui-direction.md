@@ -286,14 +286,16 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
    blocks counted as full cubes for face culling (now `ForeignBlock.full` decides).
 8. ☑ **Rails** are drawn one pixel too high (floating): flat floor elements (rails at
    y 1, dust at 0.25) are now extruded to lie on the floor (0–1 px, `assets._extrude`).
-9. ☐ **Camera pivot marker** smaller and less obvious ("only a little helper"; it need
-   not be neon); its shadow is wrong on non-full blocks (dust, repeaters, signs).
+9. ☑ **Camera pivot marker** smaller and less obvious ("only a little helper"; it need
+   not be neon); its shadow is wrong on non-full blocks (dust, repeaters, signs). Now
+   half the size, a soft off-white (`PIVOT_COLOR`), and its shadow lies on the top of
+   the block shape under the pivot (`Viewport.pivot_ground` uses the visual boxes).
 10. ☑ **60 fps** rendering while running, for a smooth feel (`viewport.FRAME_INTERVAL_MS`; ticks
     still run at the chosen rate, frames interpolate between them).
 11. ☐ **F3 signal labels:** a slider for the display range with a smooth fade-out (now
     every dust level in view is labeled); hovering a label highlights it; F jumps to it.
-12. ☐ **Selection side tint flickers** where it meets blocks (z-fighting): draw the
-    highlight box slightly larger than its contents.
+12. ☑ **Selection side tint flickers** where it meets blocks (z-fighting): draw the
+    highlight box slightly larger than its contents (`BODY_MARGIN` = 0.02 blocks).
 13. ☐ **Multiple selections:** Shift+drag adds another selection; **Alt+A** removes all.
 14. ☐ **Favourite block palettes** like the creative mode's saved hotbars, instead of
     the recent-blocks strip.
