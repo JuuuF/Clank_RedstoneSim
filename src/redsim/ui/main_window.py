@@ -89,6 +89,7 @@ FILE_FILTER = "Redstone simulator worlds (*.redsim.json *.json)"
 PLAY_INTERVAL_MS = 5
 RUN_BUDGET_SECONDS = 0.035
 PANEL_REFRESH_SECONDS = 0.1
+TIMELINE_EXTRA = 40  # pixels beyond the timeline's lines (room for a few more)
 #: Running at a set speed: the longest one call may simulate before a frame is drawn
 #: (a heavy tick then takes several calls).
 STEP_BUDGET_SECONDS = 0.008
@@ -155,6 +156,9 @@ class MainWindow(QMainWindow):
         central.setStretchFactor(0, 1)
         central.setStretchFactor(1, 0)
         self.splitter = central
+        # Until the owner drags the handle (then it is remembered): the transport row and
+        # every category line of the timeline visible.
+        central.setSizes([600, self.simulation.preferred_height() + TIMELINE_EXTRA])
         self.viewport.add_overlay(self.inventory)
         self.inventory.setVisible(self.viewport.mode == BUILD)
         self.setCentralWidget(central)
@@ -1617,6 +1621,9 @@ class MainWindow(QMainWindow):
         restored = self.restoreGeometry(QByteArray.fromBase64(geometry.encode()))
         if state:
             self.restoreState(QByteArray.fromBase64(state.encode()))
+        splitter = layout.get("timeline")
+        if splitter:  # the timeline's height (the handle between the view and the timeline)
+            self.splitter.restoreState(QByteArray.fromBase64(splitter.encode()))
         return restored
 
     def save_layout(self) -> None:
@@ -1624,6 +1631,7 @@ class MainWindow(QMainWindow):
             {
                 "geometry": bytes(self.saveGeometry().toBase64().data()).decode(),
                 "state": bytes(self.saveState().toBase64().data()).decode(),
+                "timeline": bytes(self.splitter.saveState().toBase64().data()).decode(),
             }
         )
 

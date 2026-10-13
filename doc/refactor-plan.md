@@ -76,4 +76,12 @@ a line to the log.**
 - Fixed: switching documents left the old view state (selection lock, paste preview
   with the old clipboard, drags, hover, highlights, an open block popup, timeline
   selections, a half-run tick); closing the window left its timers running.
+- Refactor: `ui/viewport.py` (2 075 lines) split into `viewport.py` (setup, GL, input,
+  camera; 909), `viewport_text.py` (2D overlays, ring, labels), `viewport_scene.py`
+  (guides, boxes, gizmos, highlights, pivot), `viewport_edit.py` (build target and
+  preview, selection drags, paste) and `view_common.py` (constants, helpers). The parts
+  are mixins of `Viewport`; their methods start with `view = cast("Viewport", self)`,
+  so they stay fully type-checked. Names other modules import from `viewport` are
+  re-exported. Also: the timeline opens tall enough for all its lines, and its height
+  is remembered with the window layout.
 

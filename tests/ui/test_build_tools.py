@@ -242,7 +242,7 @@ def test_window_layout_round_trips(app: Any) -> None:
     QtWidgets.QApplication.processEvents()
     window.document.dirty = False
     window.close()  # saves the layout
-    assert set(load_window_layout()) == {"geometry", "state"}
+    assert set(load_window_layout()) == {"geometry", "state", "timeline"}
     again = MainWindow()
     assert again.restore_layout()
     again.show()

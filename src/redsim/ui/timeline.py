@@ -1196,6 +1196,13 @@ class TimelineBar(QWidget):
         self.scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         layout.addWidget(self.scroller, 1)
 
+    def preferred_height(self) -> int:
+        """The transport row and all of the canvas (every line) without scrolling."""
+        layout = self.layout()
+        first = layout.itemAt(0) if layout is not None else None
+        transport = first.sizeHint().height() if first is not None else 40
+        return transport + self.canvas.height() + 4
+
     def _toggled(self, on: bool) -> None:
         self.play.setIcon(pixel_icons.pixel_icon("pause" if on else "play"))
         if on and self.reverse.isChecked():
