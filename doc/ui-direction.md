@@ -267,7 +267,9 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
    at ~60 fps while the window is active (scenery on), a running simulation or a
    selection; the cloud clock advances only while frames are drawn (at most 0.1 s per
    frame), so nothing jumps after tabbing back.
-3. ☐ **Diagnostics tab:** clicking a block or coordinates highlights it in the viewport.
+3. ☑ **Diagnostics tab:** clicking a block or coordinates highlights it in the viewport:
+   scheduled-tick rows, block-event rows and any trace line with `(x, y, z)` flash that
+   block gold for 3 s (`DiagnosticsPanel.highlight_requested` → `Viewport.flash`).
 4. ☑ **Signs** show their text: the front lines of signs from an opened world are kept
    in `extra["signs"]` (signs are foreign blocks without a block entity) and drawn over
    the sign within 16 blocks, fading out (`viewport._draw_sign_texts`). All 13 signs in

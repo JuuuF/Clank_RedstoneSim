@@ -422,3 +422,16 @@ def test_build_places_against_the_pointed_face_like_minecraft(app: object) -> No
     assert viewport.build_face is Direction.UP
     window.document.dirty = False
     window.close()
+
+
+def test_diagnostics_clicks_flash_the_block(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.panels import first_position
+
+    assert first_position("  set_block (3, 1, -2) old=air") == (3, 1, -2)
+    window = MainWindow()
+    window.diagnostics.highlight_requested.emit((1, 2, 3))
+    assert window.viewport.highlight is not None and window.viewport.highlight[0] == (1, 2, 3)
+    assert len(window.viewport._highlight_body()) > 0
+    window.document.dirty = False
+    window.close()

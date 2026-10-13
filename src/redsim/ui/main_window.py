@@ -250,6 +250,7 @@ class MainWindow(QMainWindow):
             inspector.page_requested.connect(self._turn_page)
             inspector.section_requested.connect(self._assign_section)
         self.viewport.hover_changed.connect(self._hover)
+        self.diagnostics.highlight_requested.connect(self.viewport.flash)
         self.viewport.place_requested.connect(self._place)
         self.viewport.line_requested.connect(self._place_line)
         self.viewport.rotate_requested.connect(self._rotate_block_at)

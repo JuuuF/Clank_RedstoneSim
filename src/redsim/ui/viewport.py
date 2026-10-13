@@ -100,6 +100,7 @@ GLIDE_SECONDS = 0.07
 PIVOT_COLOR = (0.92, 0.92, 0.88, 0.85)  # round 9: a quiet helper, not a neon marker
 #: The selection's fill: opacity, how far it breathes, and one breath in seconds.
 BODY_ALPHA = 0.2
+HIGHLIGHT_SECONDS = 3.0  # how long a flashed block (Diagnostics click) stays lit
 BODY_MARGIN = 0.02  # blocks the fill box stands out of its contents (no z-fighting)
 BODY_PULSE = 0.06
 PULSE_SECONDS = 1.8
@@ -275,6 +276,7 @@ class Viewport(QOpenGLWidget):
         self._last_shift = 0.0
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
         self.build_face = Direction.UP  # the face BUILD mode places against
+        self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
         self._red_meshes: dict[BlockState, np.ndarray] = {}  # blocked previews
         #: BUILD mode line drag: the start cell.
         self._line: Pos | None = None
@@ -655,12 +657,15 @@ class Viewport(QOpenGLWidget):
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
         renderer.upload_outline(self._outline_triangles())
-        renderer.upload_volume(np.vstack([self._selection_body(), self._pivot_shadow()]))
+        renderer.upload_volume(
+            np.vstack([self._selection_body(), self._highlight_body(), self._pivot_shadow()])
+        )
         # The selection breathes: keep repainting while there is one.
         # Frames at ~60 per second while anything moves: the breathing selection, a
         # running simulation (moving pistons between ticks), drifting clouds.
         animating = (
             self.region is not None
+            or self.highlight is not None
             or self.tick_fraction is not None
             or (self.preferences.scenery and self.window().isActiveWindow())
         )
@@ -1092,6 +1097,24 @@ class Viewport(QOpenGLWidget):
         lo, hi = lo - BODY_MARGIN, hi + BODY_MARGIN
         color = LOCKED_COLOR if self.region_locked else SELECTION_COLOR
         return box_faces(lo, hi, (color[0], color[1], color[2], self.body_alpha()))
+
+    def flash(self, pos: Pos) -> None:
+        """Highlight a block for a few seconds (a click in the Diagnostics tab)."""
+        self.highlight = (pos, time.monotonic())
+        self.update()
+
+    def _highlight_body(self) -> np.ndarray:
+        """The flashed block: a gold box that blinks and fades out."""
+        if self.highlight is None:
+            return np.zeros((0, 7), dtype=np.float32)
+        pos, since = self.highlight
+        age = time.monotonic() - since
+        if age > HIGHLIGHT_SECONDS:
+            self.highlight = None
+            return np.zeros((0, 7), dtype=np.float32)
+        alpha = 0.45 * (1 - age / HIGHLIGHT_SECONDS) * (0.6 + 0.4 * math.cos(age * 2 * math.pi))
+        lo = np.array(pos, dtype=float) - 0.04
+        return box_faces(lo, lo + 1.08, (1.0, 0.82, 0.25, alpha))
 
     def body_alpha(self, now: float | None = None) -> float:
         """The selection fill's opacity: BODY_ALPHA, breathing by ±BODY_PULSE."""

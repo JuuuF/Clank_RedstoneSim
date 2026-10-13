@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import importlib.metadata
+import re
 from typing import Any
 
 from PySide6.QtCore import QObject, QPoint, QRect, Qt, QTimer, Signal
@@ -638,8 +639,20 @@ def _placeholder[T: (QTableWidgetItem, QListWidgetItem)](item: T) -> T:
     return item
 
 
+_POSITION = re.compile(r"\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?")
+
+
+def first_position(text: str) -> Pos | None:
+    """The first block position written as ``(x, y, z)`` or ``x, y, z`` in a line."""
+    match = _POSITION.search(text)
+    return None if match is None else (int(match[1]), int(match[2]), int(match[3]))
+
+
 class DiagnosticsPanel(QTabWidget):
-    """Pending scheduled ticks, queued block events, and the last step's trace."""
+    """Pending scheduled ticks, queued block events, and the last step's trace. Clicking a
+    row or a trace line with coordinates asks for that block to be highlighted."""
+
+    highlight_requested = Signal(object)  # Pos
 
     def __init__(self) -> None:
         super().__init__()
@@ -660,6 +673,25 @@ class DiagnosticsPanel(QTabWidget):
         self.trace.setPlaceholderText("Step a tick (Right) to see what it did, update by update.")
         self.trace.setStyleSheet(f"font-family: {theme.MONO_FAMILY}; font-size: 11px;")
         self.addTab(self.trace, "Last step trace")
+        self.ticks.cellClicked.connect(self._tick_clicked)
+        self.events.itemClicked.connect(self._event_clicked)
+        self.trace.cursorPositionChanged.connect(self._trace_clicked)
+
+    def _tick_clicked(self, row: int, column: int) -> None:
+        item = self.ticks.item(row, 0)
+        pos = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+        if pos is not None:
+            self.highlight_requested.emit(tuple(pos))
+
+    def _event_clicked(self, item: QListWidgetItem) -> None:
+        pos = item.data(Qt.ItemDataRole.UserRole)
+        if pos is not None:
+            self.highlight_requested.emit(tuple(pos))
+
+    def _trace_clicked(self) -> None:
+        pos = first_position(self.trace.textCursor().block().text())
+        if pos is not None:
+            self.highlight_requested.emit(pos)
 
     def show_state(self, document: Document, last_steps: list[Any]) -> None:
         level = document.level
@@ -677,14 +709,19 @@ class DiagnosticsPanel(QTabWidget):
                 str(tick.sub_tick),
             ]
             for column, value in enumerate(values):
-                self.ticks.setItem(row, column, QTableWidgetItem(value))
+                item = QTableWidgetItem(value)
+                item.setData(Qt.ItemDataRole.UserRole, list(tick.pos))
+                item.setToolTip("Click: highlight it in the viewport")
+                self.ticks.setItem(row, column, item)
         if not rows:
             self.ticks.setRowCount(1)
             self.ticks.setSpan(0, 0, 1, self.ticks.columnCount())
             self.ticks.setItem(0, 0, _placeholder(QTableWidgetItem("No scheduled ticks pending.")))
         self.events.clear()
         for pos, block_id, b0, b1 in level.block_events:
-            self.events.addItem(f"{block_name(block_id)} at {pos}: ({b0}, {b1})")
+            entry = QListWidgetItem(f"{block_name(block_id)} at {pos}: ({b0}, {b1})")
+            entry.setData(Qt.ItemDataRole.UserRole, list(pos))
+            self.events.addItem(entry)
         if not level.block_events:
             empty = QListWidgetItem("No block events queued (pistons queue them).")
             self.events.addItem(_placeholder(empty))
