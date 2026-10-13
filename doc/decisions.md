@@ -408,6 +408,8 @@ Short records. Each one states the context, the decision, and its trade-offs.
 
 ## ADR-026
 
+**Power pulses: editor power locked to positions (sequences)**
+
 **Date:** 2026-10-13 · **Status:** accepted · **Context:** the owner wants to test piston
 sequences: power chosen positions at chosen ticks for chosen durations, locked to the
 coordinates (the blocks there may move), set up like keyframes in Blender's animation mode.
