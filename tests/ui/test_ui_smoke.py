@@ -568,8 +568,8 @@ def test_timeline_lines_expand_and_pulse_bars_move(app: object) -> None:
     assert kinds == ["category", "group", "block"]
     line = len(canvas.lines) - 1 if canvas.lines[-1].kind == "block" else power + 2
     top = canvas._tops[line] + 7
-    moved: list[tuple[int, int, int, int]] = []
-    canvas.pulse_changed.connect(lambda *a: moved.append(a))
+    moved: list[tuple[int, int, int, int, object]] = []
+    canvas.pulses_changed.connect(lambda changes: moved.extend(changes))
     start = canvas._x(3)  # inside the bar (ticks 2–5)
     press = QMouseEvent(QMouseEvent.Type.MouseButtonPress, QPointF(start, top), QPointF(start, top),
                         Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton,
@@ -584,7 +584,89 @@ def test_timeline_lines_expand_and_pulse_bars_move(app: object) -> None:
                           QPointF(to, top), Qt.MouseButton.LeftButton,
                           Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier)  # fmt: skip
     canvas.mouseReleaseEvent(release)
-    assert moved and moved[0][1:] == (6, 15, 3)  # moved 4 ticks later
+    assert moved and moved[0][1:4] == (6, 15, 3)  # moved 4 ticks later
     assert [(p.tick, p.ticks) for p in document.pulses()] == [(6, 3)]
+    document.dirty = False
+    window.close()
+
+
+def test_selected_pulses_move_together_switch_lines_and_delete(app: object) -> None:
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtGui import QKeyEvent, QMouseEvent
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    for z in (0, 1):
+        document.setblock((0, 1, z), blocks.parse_state("sticky_piston[facing=east]"))
+    document.add_pulse((0, 1, 0), 2, 15, 2)
+    document.add_pulse((0, 1, 0), 6, 15, 2)
+    document.add_pulse((0, 1, 1), 4, 15, 2)
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.resize(900, canvas.height())
+    canvas.view_start, canvas.view_span = 0, 20
+    canvas.expanded = {"power"}
+    window._changed()
+    lines = {line.pos: i for i, line in enumerate(canvas.lines) if line.kind == "block"}
+
+    def mouse(kind: object, x: float, y: float, buttons: object, mods: object = None) -> None:
+        button = Qt.MouseButton.LeftButton
+        event = QMouseEvent(kind, QPointF(x, y), QPointF(x, y), button, buttons,  # type: ignore[arg-type]
+                            mods or Qt.KeyboardModifier.NoModifier)  # fmt: skip
+        {QMouseEvent.Type.MouseButtonPress: canvas.mousePressEvent,
+         QMouseEvent.Type.MouseMove: canvas.mouseMoveEvent,
+         QMouseEvent.Type.MouseButtonRelease: canvas.mouseReleaseEvent}[kind](event)  # fmt: skip
+
+    top0 = canvas._tops[lines[(0, 1, 0)]] + 7
+    top1 = canvas._tops[lines[(0, 1, 1)]] + 7
+    left = Qt.MouseButton.LeftButton
+    # Select both pulses of the first line (Shift+click the second).
+    mouse(QMouseEvent.Type.MouseButtonPress, canvas._x(2.5), top0, left)
+    mouse(QMouseEvent.Type.MouseButtonRelease, canvas._x(2.5), top0, Qt.MouseButton.NoButton)
+    shift = Qt.KeyboardModifier.ShiftModifier
+    mouse(QMouseEvent.Type.MouseButtonPress, canvas._x(6.5), top0, left, shift)
+    mouse(QMouseEvent.Type.MouseButtonRelease, canvas._x(6.5), top0, Qt.MouseButton.NoButton, shift)
+    assert len(canvas.selected_pulses) == 2
+    # Drag them one tick later and down onto the second line: both move, both switch.
+    mouse(QMouseEvent.Type.MouseButtonPress, canvas._x(2.3), top0, left)
+    mouse(QMouseEvent.Type.MouseMove, canvas._x(3.3), top1, left)
+    mouse(QMouseEvent.Type.MouseButtonRelease, canvas._x(3.3), top1, Qt.MouseButton.NoButton)
+    assert sorted((p.tick, p.pos) for p in document.pulses()) == [
+        (3, (0, 1, 1)),
+        (4, (0, 1, 1)),
+        (7, (0, 1, 1)),
+    ]
+    # Del deletes the selected ones.
+    window._changed()
+    canvas.selected_pulses = {p.index for p in document.pulses() if p.tick in (3, 7)}
+    canvas.keyPressEvent(
+        QKeyEvent(QKeyEvent.Type.KeyPress, Qt.Key.Key_Delete, Qt.KeyboardModifier.NoModifier)
+    )
+    assert [(p.tick, p.pos) for p in document.pulses()] == [(4, (0, 1, 1))]
+    document.dirty = False
+    window.close()
+
+
+def test_hovered_coordinates_light_up_and_groups_color_the_view(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=east]"))
+    document.add_pulse((0, 1, 0), 1, 15, 50)
+    document.run_ticks(2)
+    window._changed()
+    document.lines.groups[0].color = "#00ff00"
+    body = window.viewport._power_body()
+    assert len(body) and abs(float(body[0, 4]) - 1.0) < 1e-6 and float(body[0, 3]) == 0.0
+    window.viewport.selection = (0, 1, 0)
+    window._changed()
+    window.inspector.position_hovered.emit((0, 1, 0))  # the inspector's title hovered
+    assert window.viewport.located == (0, 1, 0)
+    assert len(window.viewport._highlight_body()) > 0
+    window.inspector.position_hovered.emit(None)
+    assert window.viewport.located is None
     document.dirty = False
     window.close()

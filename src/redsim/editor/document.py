@@ -348,6 +348,24 @@ class Document:
         changed = replace(action, payload={"strength": strength, "ticks": ticks})
         self._replan_with({max(1, tick): [changed]}, {index: None}, "change a pulse")
 
+    def edit_pulses(self, changes: list[tuple[int, int, int, int, Pos]]) -> None:
+        """Change several pulses at once (index, tick, strength, ticks, position): moved
+        in time, made longer, or given to another position; one re-run, one undo step."""
+        additions: dict[int, list[Action]] = {}
+        removed: dict[int, None] = {}
+        for index, tick, strength, ticks, pos in changes:
+            action = self.history.inputs.get(index)
+            if action is None or action.kind != "power_pulse":
+                raise EditError("No such pulse.")
+            if not 1 <= strength <= 15 or ticks < 0:
+                raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
+            changed = replace(action, pos=pos, payload={"strength": strength, "ticks": ticks})
+            additions.setdefault(max(1, tick), []).append(changed)
+            removed[index] = None
+        if additions:
+            label = "change a pulse" if len(changes) == 1 else f"change {len(changes)} pulses"
+            self._replan_with(additions, removed, label)
+
     def _replan_with(
         self, additions: dict[int, list[Action]], removed: dict[int, None], label: str
     ) -> None:

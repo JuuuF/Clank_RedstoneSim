@@ -102,6 +102,7 @@ GLIDE_SECONDS = 0.07
 PIVOT_COLOR = (0.92, 0.92, 0.88, 0.85)  # round 9: a quiet helper, not a neon marker
 #: The selection's fill: opacity, how far it breathes, and one breath in seconds.
 BODY_ALPHA = 0.2
+LOCATE_COLOR = (1.0, 0.85, 0.2, 1.0)  # hovered coordinates
 HIGHLIGHT_SECONDS = 3.0  # how long a flashed block (Diagnostics click) stays lit
 BODY_MARGIN = 0.02  # blocks the fill box stands out of its contents (no z-fighting)
 BODY_PULSE = 0.06
@@ -290,6 +291,9 @@ class Viewport(QOpenGLWidget):
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
         self.build_face = Direction.UP  # the face BUILD mode places against
         self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
+        #: A block whose coordinates are hovered in a panel (timeline, inspector, …): it
+        #: lights up so its place is clear.
+        self.located: Pos | None = None
         self.hovered_label: Pos | None = None  # the F3 label under the cursor
         #: The Tab ring while Tab is held: (center, the mode pointed at or None).
         self.ring: tuple[QPoint, str | None] | None = None
@@ -703,6 +707,7 @@ class Viewport(QOpenGLWidget):
         animating = (
             self.region is not None
             or self.highlight is not None
+            or self.located is not None
             or self.tick_fraction is not None
             or (self.preferences.scenery and self.window().isActiveWindow())
         )
@@ -1092,6 +1097,9 @@ class Viewport(QOpenGLWidget):
         and the pivot block."""
         parts = [self._pivot_block()]
         width = self._edge_width()
+        if self.located is not None:  # hovered coordinates: a bright frame through blocks
+            lo = np.array(self.located, dtype=float) - 0.05
+            parts.append(thick_edges(lo, lo + 1.1, LOCATE_COLOR, width * 1.6))
         for extra in self.extra_regions:
             lo, hi = _bounds(extra)
             parts.append(thick_edges(lo, hi, EXTRA_SELECTION_COLOR, width))
@@ -1186,21 +1194,31 @@ class Viewport(QOpenGLWidget):
         return np.vstack([body, *extras])
 
     def _power_body(self) -> np.ndarray:
-        """Sequence power: positions powered right now glow red (in ANIMATE mode, and
-        faintly in the others); in ANIMATE mode every position of a pulse is marked."""
+        """Sequence power: positions powered right now glow in their timeline group's color
+        (in ANIMATE mode, and faintly in the others); in ANIMATE mode every position of a
+        pulse is marked."""
         level = self.document.level
         animate = self.mode == ANIMATE
         parts = []
+        lines = self.document.lines
         for pos, (strength, _) in level.forced_power.items():
             lo = np.array(pos, dtype=float) - 0.03
             alpha = (0.25 + 0.02 * strength) if animate else 0.15
-            parts.append(box_faces(lo, lo + 1.06, (1.0, 0.15, 0.15, alpha)))
+            red, green, blue, _ = _hex_color(lines.color_of(pos))
+            parts.append(box_faces(lo, lo + 1.06, (red, green, blue, alpha)))
         if animate:
             for pos in {pulse.pos for pulse in self.document.pulses()}:
                 if pos not in level.forced_power:
                     lo = np.array(pos, dtype=float) - 0.02
-                    parts.append(box_faces(lo, lo + 1.04, (1.0, 0.3, 0.3, 0.08)))
+                    red, green, blue, _ = _hex_color(lines.color_of(pos))
+                    parts.append(box_faces(lo, lo + 1.04, (red, green, blue, 0.08)))
         return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
+
+    def locate(self, pos: Pos | None) -> None:
+        """Light up ``pos`` while its coordinates are hovered elsewhere (None: stop)."""
+        if pos != self.located:
+            self.located = pos
+            self.update()
 
     def flash(self, pos: Pos) -> None:
         """Highlight a block for a few seconds (a click in the Diagnostics tab)."""
@@ -1208,7 +1226,19 @@ class Viewport(QOpenGLWidget):
         self.update()
 
     def _highlight_body(self) -> np.ndarray:
-        """The flashed block: a gold box that blinks and fades out."""
+        """The flashed block: a gold box that blinks and fades out; a located block (its
+        coordinates hovered): a gold box that breathes."""
+        parts = []
+        if self.located is not None:
+            lo = np.array(self.located, dtype=float) - 0.05
+            alpha = 0.3 + 0.12 * math.sin(time.monotonic() * 2 * math.pi)
+            parts.append(box_faces(lo, lo + 1.1, (*LOCATE_COLOR[:3], alpha)))
+        flashed = self._flash_body()
+        if len(flashed):
+            parts.append(flashed)
+        return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
+
+    def _flash_body(self) -> np.ndarray:
         if self.highlight is None:
             return np.zeros((0, 7), dtype=np.float32)
         pos, since = self.highlight

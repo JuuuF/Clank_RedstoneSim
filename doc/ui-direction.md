@@ -355,6 +355,14 @@ duration bars, the Tab ring.
    (drag to resize) and scrolls when its lines do not fit. Open: groups for the other
    categories' lines (they keep the order of their first edit).
 
+## Round 11 (2026-10-13)
+
+All done: powered positions glow in their timeline group's color; hovering coordinates
+anywhere (timeline lines, Sequence rows, inspector titles, Diagnostics) lights the block
+up in the view (`Viewport.locate`); pulses are selected on the timeline (click,
+Shift/Ctrl+click), deleted with Del, moved together, and dragged onto another line to
+power another block (`Document.edit_pulses`, one undo step).
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

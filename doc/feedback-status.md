@@ -37,6 +37,10 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   Open from it: groups for the other categories' lines; the timeline height is not
   remembered between sessions.
 
+- **Round 11**: group colors in the view, hover-to-locate for coordinates everywhere,
+  pulse selection with Del, moving selected pulses together, dragging pulses onto
+  another block's line.
+
 ## Implemented
 
 ### Project brief (milestones 0–7)

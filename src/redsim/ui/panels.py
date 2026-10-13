@@ -5,9 +5,10 @@ from __future__ import annotations
 import html
 import importlib.metadata
 import re
+from collections.abc import Callable
 from typing import Any
 
-from PySide6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, QPoint, QRect, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -354,6 +355,7 @@ class InspectorPanel(QWidget):
     hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
     plate_requested = Signal(object, int, int, int)  # Pos, mobs, others, ticks
     contents_requested = Signal(object, object, object, int)  # Pos, slot|None, item|None, n
+    position_hovered = Signal(object)  # Pos | None: the title (coordinates) is hovered
 
     def __init__(self) -> None:
         super().__init__()
@@ -369,6 +371,13 @@ class InspectorPanel(QWidget):
         title_row.addWidget(self.icon)
         self.title = QLabel(NO_SELECTION)
         self.title.setWordWrap(True)
+        self.title.setToolTip("Hover: the block lights up in the view")
+        for hover_target in (self.title, self.icon):
+            HoverWatch(
+                hover_target,
+                lambda: self.position_hovered.emit(self._pos),
+                lambda: self.position_hovered.emit(None),
+            )
         title_row.addWidget(self.title, 1)
         self.monitor = QPushButton("Monitor")
         self.monitor.setIcon(pixel_icons.pixel_icon("monitor"))
@@ -717,11 +726,31 @@ def first_position(text: str) -> Pos | None:
     return None if match is None else (int(match[1]), int(match[2]), int(match[3]))
 
 
+class HoverWatch(QObject):
+    """Calls ``on_enter`` when the mouse enters a widget and ``on_leave`` when it leaves
+    (panels light up the block whose coordinates are under the mouse)."""
+
+    def __init__(
+        self, widget: QWidget, on_enter: Callable[[], object], on_leave: Callable[[], object]
+    ) -> None:
+        super().__init__(widget)
+        self.on_enter, self.on_leave = on_enter, on_leave
+        widget.installEventFilter(self)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if event.type() == QEvent.Type.Enter:
+            self.on_enter()
+        elif event.type() == QEvent.Type.Leave:
+            self.on_leave()
+        return False
+
+
 class DiagnosticsPanel(QTabWidget):
     """Pending scheduled ticks, queued block events, and the last step's trace. Clicking a
     row or a trace line with coordinates asks for that block to be highlighted."""
 
     highlight_requested = Signal(object)  # Pos
+    position_hovered = Signal(object)  # Pos | None
 
     def __init__(self) -> None:
         super().__init__()
@@ -745,6 +774,29 @@ class DiagnosticsPanel(QTabWidget):
         self.ticks.cellClicked.connect(self._tick_clicked)
         self.events.itemClicked.connect(self._event_clicked)
         self.trace.cursorPositionChanged.connect(self._trace_clicked)
+        # Hovering a row or a trace line lights its block up in the view.
+        self.ticks.setMouseTracking(True)
+        self.ticks.cellEntered.connect(lambda row, _: self._hover_item(self.ticks.item(row, 0)))
+        self.events.setMouseTracking(True)
+        self.events.itemEntered.connect(self._hover_item)
+        self.trace.viewport().setMouseTracking(True)
+        self.trace.viewport().installEventFilter(self)
+        for widget in (self.ticks.viewport(), self.events.viewport()):
+            HoverWatch(widget, lambda: None, lambda: self.position_hovered.emit(None))
+
+    def _hover_item(self, item: Any) -> None:
+        pos = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
+        self.position_hovered.emit(tuple(pos) if pos is not None else None)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if watched is self.trace.viewport():
+            if event.type() == QEvent.Type.MouseMove:
+                point = event.position().toPoint()  # type: ignore[attr-defined]
+                line = self.trace.cursorForPosition(point).block().text()
+                self.position_hovered.emit(first_position(line))
+            elif event.type() == QEvent.Type.Leave:
+                self.position_hovered.emit(None)
+        return super().eventFilter(watched, event)
 
     def _tick_clicked(self, row: int, column: int) -> None:
         item = self.ticks.item(row, 0)

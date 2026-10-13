@@ -122,9 +122,10 @@ class TimelineCanvas(QWidget):
     merge_edits = Signal(object, object)  # step indices, target tick (None: earliest)
     delete_edits = Signal(object)  # step indices
     set_tick_zero = Signal()
-    pulse_changed = Signal(int, int, int, int)  # index, tick, strength, ticks
+    pulses_changed = Signal(object)  # [(index, tick, strength, ticks, pos)]
+    pulses_deleted = Signal(object)  # [index]
+    position_hovered = Signal(object)  # Pos | None: a line's block, to show in the view
     pulse_added = Signal(object, int)  # Pos, tick
-    pulse_deleted = Signal(int)  # index
     line_moved = Signal(object, int, int)  # Pos, group, row
     group_request = Signal(str, int)  # action, group ("toggle", "rename", "color", …)
     line_group_new = Signal(object)  # Pos: a new group holding this line
@@ -154,9 +155,14 @@ class TimelineCanvas(QWidget):
         self._tops: list[int] = []
         self._line_drag: tuple[Pos, float] | None = None  # a Powered line being reordered
         self._drop_y: float | None = None
-        #: A pulse bar being dragged: (pulse, "move" | "resize", press x); its preview.
-        self._pulse_drag: tuple[Pulse, str, float] | None = None
-        self._pulse_preview: tuple[int, int] | None = None  # (tick, ticks)
+        #: Selected pulses (their edit indices); Del deletes them, a drag moves them all.
+        self.selected_pulses: set[int] = set()
+        #: A drag of the selected pulses: (the pulse pressed, "move" | "resize", press
+        #: x, its line among the Powered lines), and the offset so far (ticks, lines).
+        self._pulse_drag: tuple[Pulse, str, float, int] | None = None
+        self._drag_offset: tuple[int, int] = (0, 0)
+        self._pulse_additive = False
+        self._hovered_pos: Pos | None = None
         self.selected: set[tuple[int, str]] = set()  # (tick, row)
         self.tracks: list[Track] = []
         self._scrubbing = False
@@ -204,6 +210,7 @@ class TimelineCanvas(QWidget):
         self.batches, self.tracks = batches, tracks
         self.pulse_spans = pulse_spans or []
         self.pulses = pulses or []
+        self.selected_pulses &= {pulse.index for pulse in self.pulses}
         self.events = events or []
         self.groups = groups or []
         self.names = names or {}
@@ -537,10 +544,32 @@ class TimelineCanvas(QWidget):
         left, right = self._x(tick), self._x(tick + ticks)
         return QRectF(left, top + 3, max(4.0, right - left), self.EDIT_ROW_HEIGHT - 6)
 
+    def _power_positions(self) -> list[Pos]:
+        """The positions of the shown Powered lines, top to bottom."""
+        return [
+            line.pos
+            for line in self.lines
+            if line.kind == "block" and line.row == "power" and line.pos is not None
+        ]
+
+    def _previewed(self, pulse: Pulse) -> tuple[int, int, Pos]:
+        """Where a pulse is shown: moved or stretched while the selection is dragged."""
+        tick, ticks, pos = pulse.tick, pulse.ticks, pulse.pos
+        if self._pulse_drag is None or pulse.index not in self.selected_pulses:
+            return tick, ticks, pos
+        mode = self._pulse_drag[1]
+        dt, dl = self._drag_offset
+        if mode == "resize":
+            return tick, max(0, ticks + dt), pos
+        if dl:
+            order = self._power_positions()
+            if pos in order:
+                pos = order[max(0, min(len(order) - 1, order.index(pos) + dl))]
+        return max(1, tick + dt), ticks, pos
+
     def _paint_block_lines(self, painter: QPainter) -> None:
         """Per-block lines: pulse bars (Powered, in the group's color, 0-ticks as thin
         marks) or the block's edits as small diamonds."""
-        drag = self._pulse_drag
         for line, top in zip(self.lines, self._tops, strict=True):
             if line.kind == "group":  # a faint summary of the group's pulses
                 members = set(self.groups[line.group or 0].members) if self.groups else set()
@@ -557,17 +586,18 @@ class TimelineCanvas(QWidget):
             y = top + self.EDIT_ROW_HEIGHT / 2
             if line.row == "power":
                 for pulse in self.pulses:
-                    if pulse.pos != line.pos:
+                    tick, ticks, pos = self._previewed(pulse)
+                    if pos != line.pos:
                         continue
-                    tick, ticks = pulse.tick, pulse.ticks
-                    if drag is not None and drag[0].index == pulse.index and self._pulse_preview:
-                        tick, ticks = self._pulse_preview
                     box = self._pulse_box(tick, ticks, top)
                     if box.right() < self.LABEL_WIDTH:
                         continue
                     fill = QColor(line.color)
                     fill.setAlpha(110 + 9 * pulse.strength)
-                    painter.setPen(QPen(fill.lighter(150), 1))
+                    selected = pulse.index in self.selected_pulses
+                    painter.setPen(
+                        QPen(QColor(255, 255, 255), 1.6) if selected else QPen(fill.lighter(150), 1)
+                    )
                     painter.setBrush(fill)
                     painter.drawRoundedRect(box, 2, 2)
                 continue
@@ -721,13 +751,36 @@ class TimelineCanvas(QWidget):
             pulse = hit[0]
             remove = menu.addAction(f"Delete this pulse (tick {pulse.tick}, {pulse.ticks} ticks)")
             remove.setIcon(pixel_icons.pixel_icon("delete"))
-            remove.triggered.connect(lambda: self.pulse_deleted.emit(pulse.index))
+            remove.triggered.connect(lambda: self.pulses_deleted.emit([pulse.index]))
+            if len(self.selected_pulses) > 1 and pulse.index in self.selected_pulses:
+                chosen = sorted(self.selected_pulses)
+                every = menu.addAction(f"Delete the {len(chosen)} selected pulses (Del)")
+                every.triggered.connect(lambda: self.pulses_deleted.emit(chosen))
             menu.exec(where)
             return True
         if left_button and hit is not None:
-            self._pulse_drag = (hit[0], hit[1], x)
-            self._pulse_preview = (hit[0].tick, hit[0].ticks)
+            pulse, mode = hit
+            additive = bool(
+                event.modifiers()
+                & (Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.ControlModifier)
+            )
+            self._pulse_additive = additive
+            if additive:
+                self.selected_pulses ^= {pulse.index}
+            elif pulse.index not in self.selected_pulses:
+                self.selected_pulses = {pulse.index}
+            self.selected = set()
+            if pulse.index in self.selected_pulses:
+                order = self._power_positions()
+                line_index = order.index(line.pos) if line.pos in order else 0
+                self._pulse_drag = (pulse, mode, x, line_index)
+                self._drag_offset = (0, 0)
+            self.setFocus()
+            self.update()
             return True
+        if left_button and self.selected_pulses:
+            self.selected_pulses = set()
+            self.update()
         return False
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
@@ -795,18 +848,35 @@ class TimelineCanvas(QWidget):
         )
         menu.exec(where)
 
+    def _hover_position(self, y: float) -> None:
+        """Tell which block's line is under the cursor (the view lights it up)."""
+        index = self._line_at(y)
+        pos = self.lines[index].pos if index is not None else None
+        if pos is None and y >= self._tracks_top():  # a monitor track
+            row = int((y - self._tracks_top()) // self.ROW_HEIGHT)
+            pos = self.tracks[row].pos if 0 <= row < len(self.tracks) else None
+        if pos != self._hovered_pos:
+            self._hovered_pos = pos
+            self.position_hovered.emit(pos)
+
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.position().x(), event.position().y()
+        self._hover_position(y)
         if self._pulse_drag is not None:
-            pulse, mode, start_x = self._pulse_drag
-            delta = self.tick_at(x) - self.tick_at(start_x)
-            if mode == "move":
-                self._pulse_preview = (max(1, pulse.tick + delta), pulse.ticks)
-            else:
-                self._pulse_preview = (pulse.tick, max(0, pulse.ticks + delta))
-            preview = self._pulse_preview
+            pulse, mode, start_x, start_line = self._pulse_drag
+            dt = self.tick_at(x) - self.tick_at(start_x)
+            dl = self._drag_offset[1]
+            index = self._line_at(y)
+            if mode == "move" and index is not None:
+                line = self.lines[index]
+                order = self._power_positions()
+                if line.kind == "block" and line.row == "power" and line.pos in order:
+                    dl = order.index(line.pos) - start_line
+            self._drag_offset = (dt, dl)
+            tick, ticks, pos = self._previewed(pulse)
+            where = " ".join(str(v) for v in pos)
             QToolTip.showText(
-                event.globalPosition().toPoint(), f"tick {preview[0]} · {preview[1]} ticks"
+                event.globalPosition().toPoint(), f"tick {tick} · {ticks} ticks · at {where}"
             )
             self.update()
             return
@@ -893,17 +963,28 @@ class TimelineCanvas(QWidget):
         return f"{track.label} {where} · tick {tick}: {shown}"
 
     def leaveEvent(self, event: object) -> None:
+        if self._hovered_pos is not None:
+            self._hovered_pos = None
+            self.position_hovered.emit(None)
         if self._hover_tick is not None:
             self._hover_tick = None
             self.update()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if self._pulse_drag is not None:
-            pulse = self._pulse_drag[0]
-            preview = self._pulse_preview
-            self._pulse_drag, self._pulse_preview = None, None
-            if preview is not None and preview != (pulse.tick, pulse.ticks):
-                self.pulse_changed.emit(pulse.index, preview[0], pulse.strength, preview[1])
+            pressed = self._pulse_drag[0]
+            changes = []
+            if self._drag_offset != (0, 0):
+                for pulse in self.pulses:
+                    if pulse.index in self.selected_pulses:
+                        tick, ticks, pos = self._previewed(pulse)
+                        if (tick, ticks, pos) != (pulse.tick, pulse.ticks, pulse.pos):
+                            changes.append((pulse.index, tick, pulse.strength, ticks, pos))
+            elif not self._pulse_additive:  # a plain click: just this pulse
+                self.selected_pulses = {pressed.index}
+            self._pulse_drag, self._drag_offset = None, (0, 0)
+            if changes:
+                self.pulses_changed.emit(changes)
             self.update()
             return
         if self._line_drag is not None:
@@ -941,7 +1022,7 @@ class TimelineCanvas(QWidget):
     def event(self, event: QEvent) -> bool:
         # Delete and M act on selected keyframes when the timeline has focus (before the
         # window's shortcuts see them).
-        if event.type() == QEvent.Type.ShortcutOverride and self.selected:
+        if event.type() == QEvent.Type.ShortcutOverride and (self.selected or self.selected_pulses):
             key = event.key()  # type: ignore[attr-defined]
             if key in (Qt.Key.Key_Delete, Qt.Key.Key_M, Qt.Key.Key_Backspace):
                 event.accept()
@@ -949,7 +1030,10 @@ class TimelineCanvas(QWidget):
         return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        if self.selected and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+        if self.selected_pulses and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            self.pulses_deleted.emit(sorted(self.selected_pulses))
+            self.selected_pulses = set()
+        elif self.selected and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
             self.delete_edits.emit(self.selected_indices())
             self.selected = set()
         elif self.selected and event.key() == Qt.Key.Key_M:

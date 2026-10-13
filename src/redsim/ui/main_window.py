@@ -263,6 +263,15 @@ class MainWindow(QMainWindow):
             inspector.section_requested.connect(self._assign_section)
         self.viewport.hover_changed.connect(self._hover)
         self.diagnostics.highlight_requested.connect(self.viewport.flash)
+        # Hovered coordinates anywhere light their block up in the view.
+        for source in (
+            self.diagnostics,
+            self.inspector,
+            self.block_popup.inspector,
+            self.sequence,
+            self.simulation.canvas,
+        ):
+            source.position_hovered.connect(self.viewport.locate)
         self.viewport.mode_requested.connect(self._mode_key)
         self.viewport.pulse_requested.connect(self._add_pulse)
         self.viewport.pulse_remove_requested.connect(self._remove_pulse)
@@ -276,10 +285,11 @@ class MainWindow(QMainWindow):
         )
         self.sequence.pulse_selected.connect(self._show_pulse)
         canvas = self.simulation.canvas
-        canvas.pulse_changed.connect(
-            lambda i, tick, strength, ticks: self._edit(
-                self.document.edit_pulse, i, tick, strength, ticks
-            )
+        canvas.pulses_changed.connect(
+            lambda changes: self._edit(self.document.edit_pulses, changes)
+        )
+        canvas.pulses_deleted.connect(
+            lambda indices: self._edit(self.document.delete_edits, indices)
         )
         canvas.pulse_added.connect(
             lambda pos, tick: self._edit(
@@ -290,7 +300,6 @@ class MainWindow(QMainWindow):
                 self.sequence.duration.value(),
             )
         )
-        canvas.pulse_deleted.connect(lambda i: self._edit(self.document.delete_edits, [i]))
         canvas.line_moved.connect(self._move_line)
         canvas.group_request.connect(self._group_request)
         canvas.line_group_new.connect(self._new_line_group)

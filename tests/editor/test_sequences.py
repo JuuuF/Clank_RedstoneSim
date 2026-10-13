@@ -122,3 +122,20 @@ def test_dragging_a_moving_piston_keeps_its_movement() -> None:
     assert all(doc.level.get_block_entity(p, create=False) is not None for p in moved)
     doc.run_ticks(4)
     assert all(doc.state_at(p).block is not blocks.MOVING_PISTON for p in moved)
+
+
+def test_pulses_move_together_and_change_their_position() -> None:
+    doc = piston_doc()
+    doc.setblock((0, 1, 2), P("sticky_piston[facing=east]"))
+    doc.add_pulse((0, 1, 0), tick=2, ticks=3)
+    doc.add_pulse((0, 1, 0), tick=8, ticks=2)
+    first, second = doc.pulses()
+    doc.edit_pulses(
+        [
+            (first.index, 4, 15, 3, (0, 1, 2)),  # later, and to the other piston
+            (second.index, 10, 15, 2, (0, 1, 2)),
+        ]
+    )
+    assert [(p.tick, p.pos) for p in doc.pulses()] == [(4, (0, 1, 2)), (10, (0, 1, 2))]
+    doc.undo()  # one undo step for both
+    assert [(p.tick, p.pos) for p in doc.pulses()] == [(2, (0, 1, 0)), (8, (0, 1, 0))]

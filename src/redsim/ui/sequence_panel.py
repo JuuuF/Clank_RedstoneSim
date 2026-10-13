@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 from redsim.core.pos import Pos
 from redsim.editor.document import Document, Pulse
 from redsim.ui import theme
+from redsim.ui.panels import HoverWatch
 
 EDIT_DELAY_MS = 450  # spin box changes are applied after this pause (one re-run)
 
@@ -33,6 +34,7 @@ class SequencePanel(QWidget):
     edit_requested = Signal(int, int, int, int)  # index, tick, strength, ticks
     delete_requested = Signal(int)  # index
     pulse_selected = Signal(object, int)  # Pos, tick
+    position_hovered = Signal(object)  # Pos | None: a row is hovered
 
     def __init__(self) -> None:
         super().__init__()
@@ -71,6 +73,9 @@ class SequencePanel(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.cellClicked.connect(self._clicked)
+        self.table.setMouseTracking(True)
+        self.table.cellEntered.connect(self._hovered)
+        HoverWatch(self.table.viewport(), lambda: None, lambda: self.position_hovered.emit(None))
         layout.addWidget(self.table, 1)
         self._shown: list[Pulse] = []
         self._pending: dict[int, tuple[int, int, int]] = {}
@@ -128,6 +133,10 @@ class SequencePanel(QWidget):
         pending, self._pending = self._pending, {}
         for index, (tick, strength, ticks) in pending.items():
             self.edit_requested.emit(index, tick, strength, ticks)
+
+    def _hovered(self, row: int, column: int) -> None:
+        pos = self._shown[row].pos if 0 <= row < len(self._shown) else None
+        self.position_hovered.emit(pos)
 
     def _clicked(self, row: int, column: int) -> None:
         if 0 <= row < len(self._shown):

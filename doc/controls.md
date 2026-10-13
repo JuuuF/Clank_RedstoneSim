@@ -84,8 +84,14 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   group tracks): click a group's arrow to fold it, right click it to rename, recolor,
   reorder, add or delete groups; drag a line's label up or down to reorder it or move it
   into another group (right click: "Move to group", "New group with this line…"). On a
-  line, drag a pulse bar to move it, drag its end to change its duration, double click
-  an empty spot to add a pulse there, right click a bar to delete it. Drag the handle
+  line, click a pulse bar to select it (Shift/Ctrl+click adds more), drag the selection
+  to move all selected pulses in time, or onto another line to give them to that block;
+  drag a bar's end to change the duration (of all selected); **Del** deletes the selected
+  pulses; double click an empty spot to add a pulse there; right click a bar to delete
+  it. Powered positions glow in their group's color in the view.
+- **Where is that block?** Hovering coordinates lights the block up in the view (a gold
+  frame, visible through blocks): timeline lines and monitor tracks, Sequence rows, the
+  inspector's title (also in the E popup), Diagnostics rows and trace lines. Drag the handle
   between the view and the timeline to make the timeline taller; it scrolls when needed.
 - Inspector: setting a piston base to *extended* also puts its head in front (if there
   is room), in the same edit.
