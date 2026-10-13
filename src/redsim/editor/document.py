@@ -13,7 +13,7 @@ a new branch (the old future is dropped). Section annotations are not part of th
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -23,12 +23,14 @@ from redsim.core.pos import Pos, offset
 from redsim.editor import sources
 from redsim.editor.annotations import Sections
 from redsim.editor.clipboard import Prefab, Region
+from redsim.editor.document_common import EDIT_ROWS, FLOOR_HALF_SIZE, Vary, edit_row
+from redsim.editor.document_history import EditBatch, EditError, HistoryOps, HistoryState
+from redsim.editor.document_sequences import Pulse, SequenceOps
 from redsim.editor.groups import Groups
 from redsim.editor.lines import Lines
-from redsim.editor.monitor import monitor_value
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
-from redsim.sim.engine import Action, ActionError, Engine, EngineSnapshot, StepInfo
+from redsim.sim.engine import Action, ActionError, Engine
 from redsim.sim.level import Level
 from redsim.sim.timeline import Plan, Timeline
 from redsim.world import blocks
@@ -36,79 +38,9 @@ from redsim.world.block import Block, BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
 from redsim.world.rotation import default_pivot2, rotated_box
 
-FLOOR_HALF_SIZE = 16
-
-
-class EditError(Exception):
-    """An edit that cannot be applied (message is shown to the user)."""
-
-
-#: Timeline rows for recorded edits (color-coded in the UI).
-EDIT_ROWS = ("build", "remove", "edit", "interact", "power")
-
-
-def edit_row(action: Action) -> str:
-    """Which timeline row an edit belongs to: placing blocks, removing them, changing
-    placed blocks (inspector, selections), or interacting like a player."""
-    kind = action.kind
-    if kind == "power_pulse":
-        return "power"
-    if kind in ("use", "lectern_page", "projectile_hit", "container_item"):
-        return "interact"
-    if kind == "break":
-        return "remove"
-    if kind in ("fill", "setblock", "set_block"):
-        if (action.state or "").split("[")[0] in ("minecraft:air", "air"):
-            return "remove"
-        return "build" if kind == "fill" or action.label.startswith("place") else "edit"
-    if kind in ("place", "clone", "stack_region"):
-        return "build"
-    return "edit"
-
-
-#: An editor choice applied to a block state before it is placed (turned, mirrored, …).
-Vary = Callable[[BlockState], BlockState] | None
-
-
-@dataclass(frozen=True)
-class HistoryState:
-    """Everything that defines the recorded history; undo and redo restore one."""
-
-    base: EngineSnapshot
-    plan: Plan
-    end_tick: int
-    tick: int  # where the user was
-    #: On the undo stack: the edit made after this state (what undoing reverts); on the
-    #: redo stack: the edit redoing re-applies.
-    label: str = ""
-    #: Ticks that edit moved tick 0 by ("Set tick 0 here"): markers move back on undo.
-    shift: int = 0
-
-
-@dataclass(frozen=True)
-class Pulse:
-    """One power pulse of a sequence: ``pos`` gets ``strength`` from ``tick`` for
-    ``ticks`` ticks (``index``: the recorded edit's step index)."""
-
-    index: int
-    tick: int
-    pos: Pos
-    strength: int
-    ticks: int
-
-
-@dataclass(frozen=True)
-class EditBatch:
-    """The edits of one row at one tick (one keyframe diamond)."""
-
-    tick: int
-    row: str
-    indices: tuple[int, ...]
-    labels: tuple[str, ...]
-
 
 @dataclass
-class Document:
+class Document(HistoryOps, SequenceOps):
     engine: Engine = field(default_factory=Engine)
     sections: Sections = field(default_factory=Sections)
     path: Path | None = None
@@ -311,84 +243,6 @@ class Document:
         self._apply(Action("plate_visitors", pos, payload=payload), "step on a plate")
 
     # ------------------------------------------------------------------ sequences
-    def pulses(self) -> list[Pulse]:
-        """The power pulses of the sequence (recorded ``power_pulse`` edits), by tick."""
-        out = []
-        for index, action in self.history.inputs.items():
-            if action.kind == "power_pulse":
-                payload = action.payload or {}
-                out.append(
-                    Pulse(
-                        index,
-                        self.edit_ticks.get(index, 0),
-                        action.pos,
-                        int(payload.get("strength", 15)),
-                        int(payload.get("ticks", 1)),
-                    )
-                )
-        return sorted(out, key=lambda p: (p.tick, p.index))
-
-    def add_pulse(self, pos: Pos, tick: int, strength: int = 15, ticks: int = 2) -> None:
-        """Power the position ``pos`` (whatever block is there then) with ``strength`` from
-        tick ``tick`` (≥ 1; tick 0 is the build) for ``ticks`` ticks; 0 ticks is a 0-tick
-        pulse: on and off again at the same moment between ticks. Later edits stay:
-        the history is re-run with the pulse in it (one undo step)."""
-        if not 1 <= strength <= 15 or ticks < 0:
-            raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
-        action = Action("power_pulse", pos, payload={"strength": strength, "ticks": ticks})
-        self._replan_with({max(1, tick): [replace(action, label="power pulse")]}, {}, "power pulse")
-
-    def edit_pulse(self, index: int, tick: int, strength: int, ticks: int) -> None:
-        """Change a pulse's start, strength or duration (re-runs the history)."""
-        action = self.history.inputs.get(index)
-        if action is None or action.kind != "power_pulse":
-            raise EditError("No such pulse.")
-        if not 1 <= strength <= 15 or ticks < 0:
-            raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
-        changed = replace(action, payload={"strength": strength, "ticks": ticks})
-        self._replan_with({max(1, tick): [changed]}, {index: None}, "change a pulse")
-
-    def edit_pulses(self, changes: list[tuple[int, int, int, int, Pos]]) -> None:
-        """Change several pulses at once (index, tick, strength, ticks, position): moved
-        in time, made longer, or given to another position; one re-run, one undo step."""
-        additions: dict[int, list[Action]] = {}
-        removed: dict[int, None] = {}
-        for index, tick, strength, ticks, pos in changes:
-            action = self.history.inputs.get(index)
-            if action is None or action.kind != "power_pulse":
-                raise EditError("No such pulse.")
-            if not 1 <= strength <= 15 or ticks < 0:
-                raise EditError("A pulse needs a strength of 1–15 and 0 or more ticks.")
-            changed = replace(action, pos=pos, payload={"strength": strength, "ticks": ticks})
-            additions.setdefault(max(1, tick), []).append(changed)
-            removed[index] = None
-        if additions:
-            label = "change a pulse" if len(changes) == 1 else f"change {len(changes)} pulses"
-            self._replan_with(additions, removed, label)
-
-    def _replan_with(
-        self, additions: dict[int, list[Action]], removed: dict[int, None], label: str
-    ) -> None:
-        """Rebuild the history with edits added (tick → actions) and some removed (by
-        index), keeping every other recorded edit at its tick."""
-        if not self.can_edit:
-            raise EditError("Finish the current tick first.")
-        history = self.history
-        before = self._history_state()
-        plan: Plan = {}
-        for index in sorted(history.inputs):
-            if index not in removed:
-                tick = self.edit_ticks.get(index, 0)
-                plan.setdefault(tick, []).append(history.inputs[index])
-        last = before.end_tick
-        for tick, actions in sorted(additions.items()):
-            plan.setdefault(tick, []).extend(actions)
-            for action in actions:
-                last = max(last, tick + int((action.payload or {}).get("ticks", 0)) + 1)
-        failures = self._rebuild(HistoryState(before.base, plan, last, before.tick))
-        self._undo.append(replace(before, label=label))
-        self._redo.clear()
-        self.notice = f"{label}." + (f" {len(failures)} edits failed." if failures else "")
 
     def set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
         """Set one slot of a barrel or hopper (``slot=None``: empty them all), as
@@ -570,231 +424,12 @@ class Document:
         self.revision += 1
 
     # ------------------------------------------------------------------ undo
-    def _history_state(self) -> HistoryState:
-        history = self.history
-        return HistoryState(history.base, history.plan(), self.end_tick, self.tick)
-
-    def undo(self) -> bool:
-        """Undo the last edit (or edit batch, history change): the history is rebuilt
-        without it, the simulation re-run, and the view returns to where it was made."""
-        return self.undo_to(1)
-
-    def undo_to(self, count: int) -> bool:
-        """Undo the last ``count`` steps at once (one re-run of the simulation)."""
-        if not self._undo or not self.can_edit or count < 1:
-            return False
-        current = state = self._history_state()
-        for _ in range(min(count, len(self._undo))):
-            previous = self._undo.pop()
-            self._redo.append(replace(state, label=previous.label, shift=previous.shift))
-            self._shift_markers(previous.shift)
-            state = previous
-        # Keep the simulated length: the history is re-run without the edits.
-        self._rebuild(replace(state, end_tick=max(state.end_tick, current.end_tick)))
-        return True
-
-    def redo(self) -> bool:
-        if not self._redo or not self.can_edit:
-            return False
-        state = self._redo.pop()
-        self._undo.append(replace(self._history_state(), label=state.label, shift=state.shift))
-        self._shift_markers(-state.shift)
-        self._rebuild(state)
-        return True
 
     # ------------------------------------------------------------------ markers
-    def set_marker(self, tick: int, name: str) -> None:
-        """Name a tick on the timeline (Blender's markers); an empty name removes it."""
-        if name:
-            self.markers[tick] = name
-        else:
-            self.markers.pop(tick, None)
-        self._changed(dirty=True)
-
-    def visible_markers(self) -> dict[int, str]:
-        return {tick: name for tick, name in sorted(self.markers.items()) if tick >= 0}
-
-    def _shift_markers(self, delta: int) -> None:
-        if delta:
-            self.markers = {tick + delta: name for tick, name in self.markers.items()}
-
-    @property
-    def undo_labels(self) -> list[str]:
-        """What each undo step reverts, the most recent first."""
-        return [state.label for state in reversed(self._undo)]
-
-    def _rebuild(self, state: HistoryState) -> list[tuple[int, Action, str]]:
-        """Re-create the history from a base and an edit plan, re-running the simulation."""
-        self.tick_steps, self.edit_ticks = {}, {}
-        for values in self.samples.values():
-            values.clear()
-        history = self.history
-        failures = history.rewrite(state.base, state.plan, state.end_tick, self._observe)
-        self.edit_ticks = {i: t - history.base_time for i, t in history.input_times.items()}
-        self.seek_tick(min(state.tick, self.end_tick))
-        self._changed()
-        return failures
 
     # ------------------------------------------------------------------ edit batches
-    def edit_batches(self) -> list[EditBatch]:
-        """The recorded edits grouped by tick and row (the timeline's keyframes)."""
-        grouped: dict[tuple[int, str], list[int]] = {}
-        for index in sorted(self.history.inputs):
-            action = self.history.inputs[index]
-            key = (self.edit_ticks.get(index, 0), edit_row(action))
-            grouped.setdefault(key, []).append(index)
-        return [
-            EditBatch(
-                tick,
-                row,
-                tuple(indices),
-                tuple(self.history.inputs[i].label or self.history.inputs[i].kind for i in indices),
-            )
-            for (tick, row), indices in sorted(grouped.items())
-        ]
-
-    def _replan(self, new_ticks: dict[int, int | None], label: str) -> int:
-        """Move recorded edits (index → new tick; None deletes) and rebuild the history.
-        Tick 0 folds edits into the build state. Returns how many edits failed."""
-        if not self.can_edit:
-            raise EditError("Finish the current tick first.")
-        history = self.history
-        before = self._history_state()
-        moved: list[tuple[int, int, Action]] = []
-        for index in sorted(history.inputs):
-            tick = new_ticks[index] if index in new_ticks else self.edit_ticks.get(index, 0)
-            if tick is None:
-                continue
-            moved.append((max(0, tick), index, history.inputs[index]))
-        plan: Plan = {}
-        for tick, _, action in sorted(moved, key=lambda m: (m[0], m[1])):
-            plan.setdefault(tick, []).append(action)
-        failures = self._rebuild(HistoryState(before.base, plan, before.end_tick, before.tick))
-        self._undo.append(replace(before, label=label))
-        self._redo.clear()
-        self.notice = f"{label}." + (
-            f" {len(failures)} edits could not be applied there and were dropped."
-            if failures
-            else ""
-        )
-        return len(failures)
-
-    def move_edits(self, indices: Iterable[int], delta: int) -> int:
-        """Shift recorded edits by ``delta`` ticks (to tick 0 or earlier: into the build)."""
-        new_ticks: dict[int, int | None] = {i: self.edit_ticks.get(i, 0) + delta for i in indices}
-        return self._replan(new_ticks, f"Moved {len(new_ticks)} edits by {delta:+d} ticks")
-
-    def merge_edits(self, indices: Iterable[int], tick: int | None = None) -> int:
-        """Gather recorded edits into one tick (default: the earliest of them), keeping
-        their order."""
-        chosen = list(indices)
-        if not chosen:
-            return 0
-        target = min(self.edit_ticks.get(i, 0) for i in chosen) if tick is None else tick
-        where = "the build (tick 0)" if target == 0 else f"tick {target}"
-        new_ticks: dict[int, int | None] = {i: target for i in chosen}
-        return self._replan(new_ticks, f"Merged {len(chosen)} edits into {where}")
-
-    def delete_edits(self, indices: Iterable[int]) -> int:
-        new_ticks: dict[int, int | None] = {i: None for i in indices}
-        return self._replan(new_ticks, f"Deleted {len(new_ticks)} edits")
-
-    def set_tick_zero(self) -> None:
-        """ "Set tick 0 here": the current state becomes the build (tick 0), e.g. after
-        running a few ticks so a new redstone block has updated its circuit. The history
-        before it goes; edits recorded later move along (their ticks shift) and the
-        simulated length is kept. One undo step."""
-        if not self.can_edit:
-            raise EditError("Finish the current tick first.")
-        history = self.history
-        if history.at_base:
-            self.notice = "This is already tick 0."
-            return
-        before = self._history_state()
-        here = self.tick
-        later: Plan = {}
-        for index in sorted(history.inputs):
-            tick = history.input_times[index] - history.base_time
-            if tick > here or (tick == here and index >= history.position):
-                later.setdefault(tick - here, []).append(history.inputs[index])
-        end = max(0, before.end_tick - here)
-        history.rebase()
-        self._rebuild(HistoryState(history.base, later, end, 0))
-        self._undo.append(replace(before, label=f"set tick {here} as tick 0", shift=here))
-        self._redo.clear()
-        self._shift_markers(-here)
-        self.notice = f"Tick {here} is now tick 0 (the build)."
 
     # ------------------------------------------------------------------ simulation
-    def step(self) -> StepInfo:
-        info = self.history.step()
-        self._changed(dirty=True)
-        return info
-
-    def run_tick(self) -> list[StepInfo]:
-        steps = self.history.run_tick() if self.can_edit else self.history.finish_tick()
-        self._changed(dirty=True)
-        return steps
-
-    def run_tick_until(self, deadline: float) -> tuple[list[StepInfo], bool]:
-        """Run the current tick until ``deadline`` (``time.perf_counter``); True once it
-        is complete. Views refresh only at the boundary (``revision``): a half-run tick
-        is never shown."""
-        steps, done = self.history.run_tick_until(deadline)
-        if done:
-            self._changed(dirty=True)
-        elif steps:
-            self.dirty = True
-        return steps, done
-
-    def run_ticks(self, count: int) -> None:
-        for _ in range(count):
-            self.history.run_tick()
-            self._observe()
-        self._changed(dirty=True)
-
-    def step_back(self) -> bool:
-        if not self.history.can_step_back():
-            return False
-        self.history.step_back()
-        self._changed()
-        return True
-
-    def tick_back(self) -> bool:
-        if not self.history.can_step_back():
-            return False
-        self.history.tick_back()
-        self._changed()
-        return True
-
-    def jump(self, where: str) -> bool:
-        """Blender-like jumps: ``"start"`` (tick 0) / ``"end"`` of the recorded history, or
-        the tick of the ``"previous"``/``"next"`` edit batch (after its edits). False if
-        already there."""
-        history = self.history
-        position = history.position
-        if where == "start":
-            target = history.start
-        elif where == "end":
-            target = history.end
-        else:
-            ticks = sorted(set(self.edit_ticks.values()))
-            if where == "previous":
-                earlier = [t for t in ticks if t < self.tick]
-                if earlier:
-                    return self.seek_tick(max(earlier))
-                target = history.start
-            else:
-                later = [t for t in ticks if t > self.tick]
-                return bool(later) and self.seek_tick(min(later))
-        if target == position:
-            return False
-        self.seek(target)
-        return True
-
-    def seek(self, step_index: int) -> None:
-        self.history.seek(step_index)
-        self._changed()
 
     # ------------------------------------------------------------------ files
     def save(self, path: Path | None = None) -> None:
@@ -863,32 +498,6 @@ class Document:
         return document
 
     # ------------------------------------------------------------------ timeline view
-    def _observe(self) -> None:
-        """Record where this tick boundary is in the history and sample monitored blocks."""
-        engine, history = self.engine, self.history
-        tick = self.tick
-        if engine.at_tick_boundary():
-            self.tick_steps[tick] = max(self.tick_steps.get(tick, -1), history.position)
-            for pos in self.monitors:
-                self.samples.setdefault(pos, {})[tick] = monitor_value(engine.level, pos)
-
-    def _forget_after(self, tick: int) -> None:
-        """An edit dropped the recorded future after ``tick``: drop what described it (and
-        stale step positions, which the edit changed)."""
-        self.tick_steps = {t: s for t, s in self.tick_steps.items() if t < tick}
-        actions = set(self.history.action_indices())
-        self.edit_ticks = {i: t for i, t in self.edit_ticks.items() if i in actions}
-        for values in self.samples.values():
-            for stale in [t for t in values if t > tick]:
-                del values[stale]
-
-    def seek_tick(self, tick: int) -> bool:
-        """Scrub to a tick boundary of the recorded history (after that moment's edits)."""
-        known = [t for t in self.tick_steps if t <= tick]
-        if not known:
-            return False
-        self.seek(self.tick_steps[max(known)])
-        return True
 
     def toggle_monitor(self, pos: Pos) -> bool:
         """Add or remove a block from the timeline monitor; returns whether it is monitored."""
@@ -906,3 +515,16 @@ class Document:
         self.revision += 1
         if dirty:
             self.dirty = True
+
+
+__all__ = [
+    "Document",
+    "EDIT_ROWS",
+    "EditBatch",
+    "EditError",
+    "FLOOR_HALF_SIZE",
+    "HistoryState",
+    "Pulse",
+    "Vary",
+    "edit_row",
+]

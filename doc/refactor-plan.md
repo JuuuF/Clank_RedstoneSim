@@ -41,7 +41,7 @@ a line to the log.**
    `ui/main_window.py` (1 600), `ui/panels.py` (1 400), `ui/timeline.py` (1 300) into
    focused modules (overlays, input handling, picking; window actions per area; one
    module per panel; timeline lines vs. transport), without behavior changes.
-7. [ ] **Refactor editor/document.py** (900 lines): history operations, sequences, world
+7. [x] **Refactor editor/document.py** (900 lines): history operations, sequences, world
    streaming and annotations in separate parts.
 8. [ ] **Memory and large worlds:** copy-on-write block maps for keyframes, measure a
    streamed world at view distance 12 for an hour of ticks.
@@ -107,4 +107,9 @@ a line to the log.**
   drags, menus) moved into the `LineArea` mixin in `timeline_lines.py`, constants into
   `timeline_common.py`; `timeline.py` keeps the canvas core and the transport bar (962).
   Item 6 done: the largest UI module is now `main_window.py` with 990 lines.
+- Refactor: `editor/document.py` (950 lines) → `document.py` (fields, creation, edits,
+  regions, world chunks, files; 530), `document_history.py` (`HistoryOps`: running,
+  seeking, undo/redo, edit batches, tick 0, markers, timeline view; with `EditError`,
+  `HistoryState`, `EditBatch`), `document_sequences.py` (`SequenceOps` and `Pulse`),
+  `document_common.py`; all old import paths still work.
 

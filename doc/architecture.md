@@ -221,6 +221,12 @@ with `execute if block`. Details: [[experiments/index]], [[implementation-notes]
 
 ## Editor layer (`redsim.editor`, no Qt)
 
+`Document` is split into mixins: `document_history.py` (`HistoryOps`: running, seeking,
+undo/redo, edit batches, tick 0, markers), `document_sequences.py` (`SequenceOps`: power
+pulses), constants in `document_common.py`; `document.py` keeps the fields, creation,
+edits, regions, world chunks and files. Mixin methods begin with
+`view = cast("Document", self)`.
+
 - `Document` owns the `Engine`, the `Sections` annotations, the file path, a revision counter
   (the UI updates the changed mesh chunks when it changes) and a snapshot-based undo/redo stack for edits.
 - Edits are engine actions and are only allowed between ticks, as in the game:
