@@ -714,6 +714,14 @@ class Engine:
                 count += 1
         for pos, state, entity_data, _ in entities:
             entity = level.get_block_entity(pos)
+            if entity is None and strict and entity_data and state.block is blocks.MOVING_PISTON:
+                # Editor tool (strict clones: drags, pastes), not vanilla: a moving piston
+                # keeps its movement. The game's /clone leaves a moving_piston without its
+                # block entity (an invisible "block 36" that never finishes).
+                from redsim.world.blocks.piston import PistonMovingBlockEntity
+
+                entity = PistonMovingBlockEntity(pos, state)
+                level.set_block_entity(entity)
             if entity_data is not None and entity is not None:
                 entity.load_json(entity_data)
                 if not state.is_air:  # BlockEntity.setChanged

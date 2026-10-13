@@ -102,3 +102,23 @@ def test_a_0_tick_pulse_is_on_and_off_at_the_same_moment() -> None:
     assert doc.state_at((0, 1, 0)).get(LIT)
     assert doc.seek_tick(6)
     assert not doc.state_at((0, 1, 0)).get(LIT)  # and goes off 4 ticks later
+
+
+def test_dragging_a_moving_piston_keeps_its_movement() -> None:
+    from redsim.editor.clipboard import Region
+
+    doc = Document.new_flat()
+    doc.setblock((0, 1, 0), P("sticky_piston[facing=east]"))
+    doc.setblock((1, 1, 0), P("stone"))
+    doc.run_ticks(1)
+    doc.setblock((-1, 1, 0), P("redstone_block"))
+    doc.run_ticks(1)  # the extension started: moving pistons at this tick boundary
+    moving = [p for p, s in doc.level.blocks.items() if s.block is blocks.MOVING_PISTON]
+    assert moving and doc.can_edit
+    low = min(moving)
+    high = max(moving)
+    doc.clone_region(Region(low, high), (0, 0, 3), "move")
+    moved = [(x, y, z + 3) for x, y, z in moving]
+    assert all(doc.level.get_block_entity(p, create=False) is not None for p in moved)
+    doc.run_ticks(4)
+    assert all(doc.state_at(p).block is not blocks.MOVING_PISTON for p in moved)

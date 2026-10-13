@@ -431,3 +431,10 @@ use it.
 undo. The UI: an ANIMATE mode (K, or the Tab ring), a Sequence tab, red marks on powered
 positions.
 
+**Addendum to ADR-019 (2026-10-13):** strict clones (the editor's drags, pastes and
+copies) keep a moving piston's movement: the moving_piston at the destination gets its
+block entity back from the copied data. The game's `/clone` leaves a moving_piston without
+a block entity (an invisible "block 36" that never finishes), which made dragged pistons
+saved mid-movement disappear in the editor. Plain `/clone` commands (game comparisons)
+keep the vanilla behavior.
+
