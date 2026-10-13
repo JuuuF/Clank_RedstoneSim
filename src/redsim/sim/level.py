@@ -113,6 +113,10 @@ class Level:
         #: Entities standing on pressure plates (not simulated as entities): pos → (mobs,
         #: other entities, last game time they are there).
         self.plate_visitors: dict[Pos, tuple[int, int, int]] = {}
+        #: Power given to positions by the editor's sequences (not a game mechanic: like an
+        #: invisible redstone block next to the block, from every side): pos → (strength,
+        #: last game time it is on). Locked to the position, whatever block is there.
+        self.forced_power: dict[Pos, tuple[int, int]] = {}
         #: Plates whose visitors step on them in this tick's entity phase (in order).
         self.entity_queue: list[Pos] = []
         self.tickers: list[TickerWrapper] = []
@@ -395,7 +399,15 @@ class Level:
         return self.get_direct_signal(pos, direction) if state.is_signal_source() else 0
 
     def get_signal(self, pos: Pos, direction: Direction) -> int:
-        """``SignalGetter.getSignal`` (L65)."""
+        """``SignalGetter.getSignal`` (L65). Editor power (``forced_power``) at the position
+        asking (``pos`` moved against ``direction``) arrives from every side."""
+        if self.forced_power:
+            forced = self.forced_power.get(offset(pos, direction.opposite))
+            if forced is not None:
+                return max(forced[0], self._get_signal(pos, direction))
+        return self._get_signal(pos, direction)
+
+    def _get_signal(self, pos: Pos, direction: Direction) -> int:
         state = self.get_block_state(pos)
         signal = state.get_signal(self, pos, direction)
         if state.is_redstone_conductor(self, pos):
@@ -444,6 +456,25 @@ class Level:
             accepted=accepted,
         )
         return accepted
+
+    def force_power(self, pos: Pos, strength: int, until: int) -> None:
+        """Editor power at ``pos`` (strength 0: off) until game time ``until``; the block
+        there gets a neighbor update, as from a redstone block placed or removed next to
+        it."""
+        from redsim.world import blocks
+
+        if strength > 0:
+            self.forced_power[pos] = (strength, until)
+        elif self.forced_power.pop(pos, None) is None:
+            return
+        self.trace.emit(tr.NOTE, pos, text=f"sequence power {strength} (until game time {until})")
+        self.neighbor_changed(pos, blocks.REDSTONE_BLOCK)
+
+    def release_forced_power(self) -> None:
+        """Editor power whose time is over goes off (between ticks, in order of start)."""
+        for pos, (_, until) in list(self.forced_power.items()):
+            if until <= self.game_time:
+                self.force_power(pos, 0, until)
 
     def plate_visitors_at(self, pos: Pos) -> tuple[int, int]:
         """(mobs, other entities) standing on the plate at ``pos`` now."""
@@ -546,6 +577,11 @@ class Level:
         self.trace.game_time = self.game_time
         self.block_ticks.shift_time(delta)
         self.torch_toggles = [(pos, time + delta) for pos, time in self.torch_toggles]
+        self.forced_power = {p: (s, until + delta) for p, (s, until) in self.forced_power.items()}
+        self.plate_visitors = {
+            p: (mobs, others, until + delta)
+            for p, (mobs, others, until) in self.plate_visitors.items()
+        }
         entities = {id(be): be for be in self.block_entities.values()}
         for wrapper in [*self.tickers, *self.pending_tickers]:
             if wrapper.ticker is not None:
@@ -595,6 +631,7 @@ class Level:
         other.block_events = dict(self.block_events)
         other.projectile_hits = list(self.projectile_hits)
         other.plate_visitors = dict(self.plate_visitors)
+        other.forced_power = dict(self.forced_power)
         other.entity_queue = list(self.entity_queue)
         other.ticking_block_entities = self.ticking_block_entities
         other.handling_tick = self.handling_tick

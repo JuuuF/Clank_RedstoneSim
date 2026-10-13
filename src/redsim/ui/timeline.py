@@ -63,8 +63,15 @@ ROW_COLORS = {
     "remove": QColor(235, 85, 70),
     "edit": QColor(95, 150, 255),
     "interact": QColor(240, 196, 60),
+    "power": QColor(255, 70, 70),
 }
-ROW_TITLES = {"build": "Placed", "remove": "Removed", "edit": "Changed", "interact": "Used"}
+ROW_TITLES = {
+    "build": "Placed",
+    "remove": "Removed",
+    "edit": "Changed",
+    "interact": "Used",
+    "power": "Powered",
+}
 PLAYHEAD = QColor(theme.ACCENT)
 SIGNAL = QColor(theme.ACCENT)
 

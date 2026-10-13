@@ -43,13 +43,15 @@ class EditError(Exception):
 
 
 #: Timeline rows for recorded edits (color-coded in the UI).
-EDIT_ROWS = ("build", "remove", "edit", "interact")
+EDIT_ROWS = ("build", "remove", "edit", "interact", "power")
 
 
 def edit_row(action: Action) -> str:
     """Which timeline row an edit belongs to: placing blocks, removing them, changing
     placed blocks (inspector, selections), or interacting like a player."""
     kind = action.kind
+    if kind == "power_pulse":
+        return "power"
     if kind in ("use", "lectern_page", "projectile_hit", "container_item"):
         return "interact"
     if kind == "break":
@@ -80,6 +82,18 @@ class HistoryState:
     label: str = ""
     #: Ticks that edit moved tick 0 by ("Set tick 0 here"): markers move back on undo.
     shift: int = 0
+
+
+@dataclass(frozen=True)
+class Pulse:
+    """One power pulse of a sequence: ``pos`` gets ``strength`` from ``tick`` for
+    ``ticks`` ticks (``index``: the recorded edit's step index)."""
+
+    index: int
+    tick: int
+    pos: Pos
+    strength: int
+    ticks: int
 
 
 @dataclass(frozen=True)
@@ -292,6 +306,67 @@ class Document:
             raise EditError(f"No pressure plate at {pos}.")
         payload = {"mobs": mobs, "others": others, "ticks": ticks}
         self._apply(Action("plate_visitors", pos, payload=payload), "step on a plate")
+
+    # ------------------------------------------------------------------ sequences
+    def pulses(self) -> list[Pulse]:
+        """The power pulses of the sequence (recorded ``power_pulse`` edits), by tick."""
+        out = []
+        for index, action in self.history.inputs.items():
+            if action.kind == "power_pulse":
+                payload = action.payload or {}
+                out.append(
+                    Pulse(
+                        index,
+                        self.edit_ticks.get(index, 0),
+                        action.pos,
+                        int(payload.get("strength", 15)),
+                        int(payload.get("ticks", 1)),
+                    )
+                )
+        return sorted(out, key=lambda p: (p.tick, p.index))
+
+    def add_pulse(self, pos: Pos, tick: int, strength: int = 15, ticks: int = 2) -> None:
+        """Power the position ``pos`` (whatever block is there then) with ``strength`` from
+        tick ``tick`` (≥ 1; tick 0 is the build) for ``ticks`` ticks. Later edits stay:
+        the history is re-run with the pulse in it (one undo step)."""
+        if not 1 <= strength <= 15 or ticks < 1:
+            raise EditError("A pulse needs a strength of 1–15 and at least one tick.")
+        action = Action("power_pulse", pos, payload={"strength": strength, "ticks": ticks})
+        self._replan_with({max(1, tick): [replace(action, label="power pulse")]}, {}, "power pulse")
+
+    def edit_pulse(self, index: int, tick: int, strength: int, ticks: int) -> None:
+        """Change a pulse's start, strength or duration (re-runs the history)."""
+        action = self.history.inputs.get(index)
+        if action is None or action.kind != "power_pulse":
+            raise EditError("No such pulse.")
+        if not 1 <= strength <= 15 or ticks < 1:
+            raise EditError("A pulse needs a strength of 1–15 and at least one tick.")
+        changed = replace(action, payload={"strength": strength, "ticks": ticks})
+        self._replan_with({max(1, tick): [changed]}, {index: None}, "change a pulse")
+
+    def _replan_with(
+        self, additions: dict[int, list[Action]], removed: dict[int, None], label: str
+    ) -> None:
+        """Rebuild the history with edits added (tick → actions) and some removed (by
+        index), keeping every other recorded edit at its tick."""
+        if not self.can_edit:
+            raise EditError("Finish the current tick first.")
+        history = self.history
+        before = self._history_state()
+        plan: Plan = {}
+        for index in sorted(history.inputs):
+            if index not in removed:
+                tick = self.edit_ticks.get(index, 0)
+                plan.setdefault(tick, []).append(history.inputs[index])
+        last = before.end_tick
+        for tick, actions in sorted(additions.items()):
+            plan.setdefault(tick, []).extend(actions)
+            for action in actions:
+                last = max(last, tick + int((action.payload or {}).get("ticks", 0)) + 1)
+        failures = self._rebuild(HistoryState(before.base, plan, last, before.tick))
+        self._undo.append(replace(before, label=label))
+        self._redo.clear()
+        self.notice = f"{label}." + (f" {len(failures)} edits failed." if failures else "")
 
     def set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
         """Set one slot of a barrel or hopper (``slot=None``: empty them all), as

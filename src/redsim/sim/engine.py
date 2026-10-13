@@ -48,6 +48,7 @@ ActionKind = Literal[
     "stack_region",
     "projectile_hit",
     "plate_visitors",
+    "power_pulse",
 ]
 
 #: ``GameRules.MAX_BLOCK_MODIFICATIONS`` default: the largest /fill or /clone volume.
@@ -189,6 +190,8 @@ class Engine:
         if self.phase is Phase.BETWEEN_TICKS:
             info = self._begin_step("tick_start", None, {})
             try:
+                # Editor power that has run out goes off first, still between ticks.
+                level.release_forced_power()
                 level.handling_tick = True
                 level.game_time += 1  # ServerLevel.tickTime
                 level.trace.game_time = level.game_time
@@ -365,6 +368,12 @@ class Engine:
                 self._container_item(action.pos, action.payload)
             elif action.kind == "lectern_page":
                 self._lectern_page(action.pos, int(action.payload["page"]))
+            elif action.kind == "power_pulse":
+                # Editor power at the position for ``ticks`` ticks (sequences, not vanilla).
+                payload = action.payload
+                level.force_power(
+                    action.pos, int(payload["strength"]), level.game_time + int(payload["ticks"])
+                )
             elif action.kind == "plate_visitors":
                 # Entities step on the plate from the next tick on, for ``ticks`` ticks.
                 payload = action.payload
