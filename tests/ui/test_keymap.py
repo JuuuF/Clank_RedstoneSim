@@ -141,7 +141,7 @@ def test_hotkey_sections_cover_every_action() -> None:
     assert {spec.title for spec in ACTIONS} <= titles
     assert all(title != "Other" for title, _, _ in sections)  # everything has a home
     modes = {mode for _, mode, _ in sections if mode}
-    assert modes == {"normal", "build", "select", "paste"}
+    assert modes == {"normal", "build", "select", "animate", "paste"}
 
 
 def test_old_keymap_files_are_cleaned_up(tmp_path: Path) -> None:

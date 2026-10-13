@@ -66,8 +66,9 @@ from redsim.ui.panels import (
     SectionsPanel,
 )
 from redsim.ui.preferences import load_window_layout, save_window_layout
+from redsim.ui.sequence_panel import SequencePanel
 from redsim.ui.timeline import TimelineBar
-from redsim.ui.viewport import BUILD, MODE_COLORS, NORMAL, SELECT, Viewport
+from redsim.ui.viewport import ANIMATE, BUILD, MODE_COLORS, NORMAL, SELECT, Viewport
 from redsim.ui.world_picker import (
     MINECRAFT,
     SIMULATION,
@@ -160,6 +161,7 @@ class MainWindow(QMainWindow):
         self.sections = SectionsPanel(self.document)
         self.contraptions = ContraptionsPanel()
         self.hotkeys = HotkeysPanel(self.keymap)
+        self.sequence = SequencePanel()
         self.tabs = QTabWidget()
         self.tabs.setDocumentMode(True)  # flat tabs, no frame (Blender-like)
         self.tabs.addTab(self.inspector, "Inspector")
@@ -170,6 +172,7 @@ class MainWindow(QMainWindow):
         circuit.addTab(self.contraptions.group_page, "Groups")
         circuit.addTab(self.contraptions.prefab_page, "Prefabs")
         self.tabs.addTab(circuit, "Circuit")
+        self.tabs.addTab(self.sequence, "Sequence")
         self.tabs.addTab(self.diagnostics, "Diagnostics")
         self.tabs.addTab(self.hotkeys, "Hotkeys")
         self.side_dock = self._dock("Properties", self.tabs, Qt.DockWidgetArea.RightDockWidgetArea)
@@ -256,6 +259,18 @@ class MainWindow(QMainWindow):
             inspector.section_requested.connect(self._assign_section)
         self.viewport.hover_changed.connect(self._hover)
         self.diagnostics.highlight_requested.connect(self.viewport.flash)
+        self.viewport.mode_requested.connect(self._mode_key)
+        self.viewport.pulse_requested.connect(self._add_pulse)
+        self.viewport.pulse_remove_requested.connect(self._remove_pulse)
+        self.sequence.edit_requested.connect(
+            lambda i, tick, strength, ticks: self._edit(
+                self.document.edit_pulse, i, tick, strength, ticks
+            )
+        )
+        self.sequence.delete_requested.connect(
+            lambda i: self._edit(self.document.delete_edits, [i])
+        )
+        self.sequence.pulse_selected.connect(self._show_pulse)
         self.viewport.place_requested.connect(self._place)
         self.viewport.line_requested.connect(self._place_line)
         self.viewport.rotate_requested.connect(self._rotate_block_at)
@@ -334,7 +349,12 @@ class MainWindow(QMainWindow):
         ).setIcon(pixel_icons.pixel_icon("rotate_back"))
         mode_menu = bar.addMenu("&Mode")
         group = QActionGroup(self)
-        for mode, text in ((NORMAL, "&Normal"), (BUILD, "&Build"), (SELECT, "&Select")):
+        for mode, text in (
+            (NORMAL, "&Normal"),
+            (BUILD, "&Build"),
+            (SELECT, "&Select"),
+            (ANIMATE, "&Animate"),
+        ):
             action = self._action(mode_menu, text, lambda _=False, m=mode: self._mode_key(m))
             self._actions[f"mode.{mode}"] = action
             self._apply_shortcuts(f"mode.{mode}")
@@ -382,7 +402,7 @@ class MainWindow(QMainWindow):
         toolbar = self.addToolBar("Tools")
         toolbar.setObjectName("Tools toolbar")
         toolbar.setMovable(False)
-        for mode in (NORMAL, BUILD, SELECT):
+        for mode in (NORMAL, BUILD, SELECT, ANIMATE):
             self._mode_actions[mode].setIcon(pixel_icons.pixel_icon(mode))
             toolbar.addAction(self._mode_actions[mode])
             button = toolbar.widgetForAction(self._mode_actions[mode])
@@ -607,6 +627,35 @@ class MainWindow(QMainWindow):
         setattr(self.viewport, attribute, on)
         self.viewport.update()
 
+    def _add_pulse(self, pos: Pos) -> None:
+        """ANIMATE click: power the position from the current tick (tick 1 at the build)."""
+        tick = max(1, self.document.tick)
+        strength, ticks = self.sequence.strength.value(), self.sequence.duration.value()
+        self._edit(self.document.add_pulse, pos, tick, strength, ticks)
+        self.viewport.flash(pos)
+        where = " ".join(str(v) for v in pos)
+        start = "" if self.document.tick else " (tick 0 is the build: from tick 1)"
+        self._message(
+            f"Pulse at {where}: strength {strength} for {ticks} ticks from tick {tick}{start}."
+        )
+        self.tabs.setCurrentWidget(self.sequence)
+
+    def _remove_pulse(self, pos: Pos) -> None:
+        """ANIMATE right click: remove the pulses at the position running at this tick."""
+        found = self.sequence.pulse_at(self.document.pulses(), pos, self.document.tick)
+        if not found:
+            self._message("No pulse there at this tick.", error=True)
+            return
+        self._edit(self.document.delete_edits, [p.index for p in found])
+
+    def _show_pulse(self, pos: Pos, tick: int) -> None:
+        """A pulse clicked in the Sequence tab: go to its tick and flash its position."""
+        self.simulation.stop()
+        self._finish_tick()
+        self.document.seek_tick(tick)
+        self.viewport.flash(pos)
+        self._changed()
+
     def _open_block_popup(self) -> None:
         """The inspector of the block under the cursor (else the selected one) as a popup
         beside the cursor."""
@@ -665,6 +714,7 @@ class MainWindow(QMainWindow):
         self._panels_refreshed = now
         self.inspector.show_block(self.document, self.viewport.selection)
         self.block_popup.refresh(self.document)
+        self.sequence.show_document(self.document)
         self.simulation.show_status(self.document)
         self.sections.refresh()
         self.contraptions.show_document(self.document)

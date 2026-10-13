@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 KEY, HOLD, MOUSE = "key", "hold", "mouse"
-MODES = ("normal", "build", "select", "paste")  # "paste": while a paste preview is shown
+MODES = ("normal", "build", "select", "animate", "paste")  # "paste": while a paste preview is shown
 MODIFIERS = ("Ctrl", "Shift", "Alt", "Meta")
 BUTTONS = ("Left", "Right", "Middle")
 GESTURES = ("Click", "Drag")
@@ -100,6 +100,17 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("mode.normal", "Normal mode: inspect, use, run (again: clear selection)", ("Esc",)),
     ActionSpec("mode.build", "Build mode: place and break blocks", ("B",)),
     ActionSpec("mode.select", "Select mode: boxes, copy, paste", ("V",)),
+    ActionSpec("mode.animate", "Animate mode: power pulses at chosen ticks (sequences)", ("K",)),
+    ActionSpec("mode.ring", "Hold for the mode ring; point at a mode and let go", ("Tab",), HOLD),
+    ActionSpec(
+        "animate.pulse",
+        "ANIMATE: power the block's position from this tick",
+        ("Left Click",),
+        MOUSE,
+    ),
+    ActionSpec(
+        "animate.remove", "ANIMATE: remove the pulses there at this tick", ("Right Click",), MOUSE
+    ),
     ActionSpec("camera.orbit", "Orbit around the pivot", ("Middle Drag", "Alt+Left Drag"), MOUSE),
     ActionSpec(
         "camera.pan",
@@ -470,7 +481,8 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
             "camera.focus",
         ),
     ),
-    ("Modes", None, ("mode.normal", "mode.build", "mode.select")),
+    ("Modes", None, ("mode.normal", "mode.build", "mode.select", "mode.animate", "mode.ring")),
+    ("ANIMATE mode: sequences", "animate", ("animate.pulse", "animate.remove", "pick")),
     (
         "NORMAL mode: inspect and use",
         "normal",

@@ -405,3 +405,27 @@ Short records. Each one states the context, the decision, and its trade-offs.
 - **Also:** where the game has a sprite for the exact thing (the hotbar, its selection
   frame, the clouds), the jar's sprite is used at runtime instead of pixel art, with a
   painted fallback without the jar (ADR-023: assets are never committed).
+
+## ADR-026
+
+**Date:** 2026-10-13 · **Status:** accepted · **Context:** the owner wants to test piston
+sequences: power chosen positions at chosen ticks for chosen durations, locked to the
+coordinates (the blocks there may move), set up like keyframes in Blender's animation mode.
+
+**Decision:** a *power pulse* edit (`Action("power_pulse")`, payload strength and ticks)
+gives a position editor power (`Level.forced_power`): every signal query asked *by* that
+position (`Level.get_signal` with the receiver at the position) sees at least that
+strength, from every side, like an invisible redstone block next to it on all sides.
+It does not strongly power the block (a powered stone does not power dust next to it).
+Switching on happens between ticks when the edit applies; switching off happens between
+ticks too, at the start of the tick step after the duration (before `handling_tick` is
+set). Both send one neighbor update to the block at the position (source: redstone
+block). Pulses are recorded edits in the timeline's new "Powered" row; adding or changing
+one re-runs the history from tick 0 with the plan (`Document.add_pulse`, `edit_pulse`),
+so later edits stay. This is an editor tool, not a game mechanic; game comparisons do not
+use it.
+
+**Consequences:** sequences replay deterministically, survive saving (mid-pulse too) and
+undo. The UI: an ANIMATE mode (K, or the Tab ring), a Sequence tab, red marks on powered
+positions.
+

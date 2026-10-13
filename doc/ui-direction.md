@@ -322,6 +322,16 @@ Owner requests, in their words where short; status per item (☐ open, ☑ done)
     `favourite_blocks.json`); right click stores the chosen block, Alt+1–9 picks (the
     keymap ids stay `recent.N` so saved keymaps keep working).
 
+## Sequences and the mode ring (2026-10-13)
+
+Request: test piston sequences: step through time and have certain positions receive
+redstone power at chosen times, locked to the coordinates (blocks may move), in a
+Blender-like "animate" mode: click blocks at a time to power them for a duration, and
+manage how long they stay powered; hold Tab for a ring to switch modes (normal, select,
+build, animate). Status: done ([[controls]] "Sequences", [[decisions]] ADR-026): ANIMATE
+mode (K or the ring), the Sequence tab, pulses in the timeline's "Powered" row with
+duration bars, the Tab ring.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

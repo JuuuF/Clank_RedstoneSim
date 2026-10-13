@@ -30,6 +30,7 @@ from PySide6.QtGui import (
     QMouseEvent,
     QNativeGestureEvent,
     QPainter,
+    QPen,
     QWheelEvent,
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
@@ -110,7 +111,11 @@ LOCKED_COLOR = (1.0, 0.62, 0.15, 1.0)
 EXTRA_SELECTION_COLOR = (0.35, 0.65, 0.95, 0.8)  # further selections (Shift+drag): calmer
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
-NORMAL, BUILD, SELECT = "normal", "build", "select"
+NORMAL, BUILD, SELECT, ANIMATE = "normal", "build", "select", "animate"
+#: The Tab ring: the modes around the cursor, clockwise from the top.
+RING_MODES = (NORMAL, BUILD, SELECT, ANIMATE)
+RING_RADIUS = 70  # pixels from the center to a mode's label
+RING_DEAD_ZONE = 18  # pixels: closer to the center chooses nothing
 INFO_LABEL_LIMIT = 300
 INFO_COLORS = {
     "wire": QColor(170, 20, 20, 210),
@@ -122,6 +127,7 @@ MODE_COLORS = {
     NORMAL: QColor(60, 100, 160),
     BUILD: QColor(50, 140, 60),
     SELECT: QColor(200, 115, 25),
+    ANIMATE: QColor(185, 45, 60),
 }
 #: Short verbs for the mode badge.
 CLICK_VERBS = {
@@ -136,6 +142,8 @@ CLICK_VERBS = {
     "select.copy_drag": "copy",
     "select.stack": "stack",
     "select.extend": "extend",
+    "animate.pulse": "power from this tick",
+    "animate.remove": "remove pulse",
     "pick": "pick",
 }
 
@@ -220,6 +228,9 @@ class Viewport(QOpenGLWidget):
     gizmo_hover_changed = Signal(object)  # Hotspot | None
     paste_requested = Signal(object)  # Pos (minimum corner)
     mode_changed = Signal(str)
+    mode_requested = Signal(str)  # the Tab ring chose a mode
+    pulse_requested = Signal(object)  # Pos (ANIMATE: left click)
+    pulse_remove_requested = Signal(object)  # Pos (ANIMATE: right click)
     search_requested = Signal()  # Shift pressed twice (like Rider's search everywhere)
 
     def __init__(
@@ -280,6 +291,8 @@ class Viewport(QOpenGLWidget):
         self.build_face = Direction.UP  # the face BUILD mode places against
         self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
         self.hovered_label: Pos | None = None  # the F3 label under the cursor
+        #: The Tab ring while Tab is held: (center, the mode pointed at or None).
+        self.ring: tuple[QPoint, str | None] | None = None
         #: Further selections (Shift+drag adds one; the active one is ``region``).
         self.extra_regions: list[Region] = []
         self._moving_shown = False  # the moving-piston mesh holds something
@@ -673,7 +686,14 @@ class Viewport(QOpenGLWidget):
         renderer.upload_overlay(self._overlay_triangles())
         renderer.upload_outline(self._outline_triangles())
         renderer.upload_volume(
-            np.vstack([self._selection_body(), self._highlight_body(), self._pivot_shadow()])
+            np.vstack(
+                [
+                    self._selection_body(),
+                    self._highlight_body(),
+                    self._power_body(),
+                    self._pivot_shadow(),
+                ]
+            )
         )
         # The selection breathes: keep repainting while there is one.
         # Frames at ~60 per second while anything moves: the breathing selection, a
@@ -762,6 +782,7 @@ class Viewport(QOpenGLWidget):
             tag_top = top - line - 14
             painter.fillRect(8, tag_top, theme.text_width(tag) + 16, line + 8, QColor(0, 0, 0, 150))
             theme.draw_text(painter, 16, tag_top + 5, tag, theme.GOLD)
+        self._draw_ring(painter)
         painter.end()
 
     def info_labels(self, max_distance: float | None = None) -> list[tuple[np.ndarray, str, str]]:
@@ -1162,6 +1183,23 @@ class Viewport(QOpenGLWidget):
         body = box_faces(lo, hi, (color[0], color[1], color[2], self.body_alpha()))
         return np.vstack([body, *extras])
 
+    def _power_body(self) -> np.ndarray:
+        """Sequence power: positions powered right now glow red (in ANIMATE mode, and
+        faintly in the others); in ANIMATE mode every position of a pulse is marked."""
+        level = self.document.level
+        animate = self.mode == ANIMATE
+        parts = []
+        for pos, (strength, _) in level.forced_power.items():
+            lo = np.array(pos, dtype=float) - 0.03
+            alpha = (0.25 + 0.02 * strength) if animate else 0.15
+            parts.append(box_faces(lo, lo + 1.06, (1.0, 0.15, 0.15, alpha)))
+        if animate:
+            for pos in {pulse.pos for pulse in self.document.pulses()}:
+                if pos not in level.forced_power:
+                    lo = np.array(pos, dtype=float) - 0.02
+                    parts.append(box_faces(lo, lo + 1.04, (1.0, 0.3, 0.3, 0.08)))
+        return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
+
     def flash(self, pos: Pos) -> None:
         """Highlight a block for a few seconds (a click in the Diagnostics tab)."""
         self.highlight = (pos, time.monotonic())
@@ -1271,6 +1309,12 @@ class Viewport(QOpenGLWidget):
         if event.key() == Qt.Key.Key_Shift:
             self._track_shift(True)
         action = self._held_actions.get(event.key())
+        if action == "mode.ring":
+            if not event.isAutoRepeat() and self.ring is None:
+                center = self._last_mouse or QPoint(self.width() // 2, self.height() // 2)
+                self.ring = (center, None)
+                self.update()
+            return
         if action is not None and not event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier:
             self._held.add(action)
             return
@@ -1280,10 +1324,63 @@ class Viewport(QOpenGLWidget):
         if event.key() == Qt.Key.Key_Shift:
             self._track_shift(False)
         action = self._held_actions.get(event.key())
+        if action == "mode.ring":
+            if not event.isAutoRepeat() and self.ring is not None:
+                chosen = self.ring[1]
+                self.ring = None
+                self.update()
+                if chosen is not None:
+                    self.mode_requested.emit(chosen)
+            return
         if action is not None and not event.isAutoRepeat():
             self._held.discard(action)
             return
         super().keyReleaseEvent(event)
+
+    def focusNextPrevChild(self, next: bool) -> bool:  # noqa: A002 - Qt's name
+        """Tab is the mode ring here, not focus navigation."""
+        return False
+
+    def ring_mode_at(self, point: QPoint) -> str | None:
+        """The mode of the Tab ring in the direction of ``point`` (None near the center)."""
+        if self.ring is None:
+            return None
+        center = self.ring[0]
+        dx, dy = point.x() - center.x(), point.y() - center.y()
+        if math.hypot(dx, dy) < RING_DEAD_ZONE:
+            return None
+        angle = math.degrees(math.atan2(dx, -dy)) % 360  # 0 = up, clockwise
+        return RING_MODES[int(((angle + 45) % 360) // 90)]
+
+    def _draw_ring(self, painter: QPainter) -> None:
+        """The Tab ring: the modes around the cursor, the pointed one highlighted."""
+        if self.ring is None:
+            return
+        center, chosen = self.ring
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setPen(QPen(QColor(255, 255, 255, 90), 2))
+        painter.setBrush(QColor(20, 20, 24, 150))
+        painter.drawEllipse(center, RING_RADIUS + 30, RING_RADIUS + 30)
+        painter.setBrush(QColor(255, 255, 255, 60))
+        painter.drawEllipse(center, RING_DEAD_ZONE, RING_DEAD_ZONE)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        line = theme.line_height(2)
+        for index, mode in enumerate(RING_MODES):
+            angle = math.radians(index * 90)
+            x = center.x() + RING_RADIUS * math.sin(angle)
+            y = center.y() - RING_RADIUS * math.cos(angle)
+            text = mode.upper()
+            width = theme.text_width(text) + 16
+            box = QRect(int(x - width / 2), int(y - line / 2 - 4), width, line + 8)
+            color = MODE_COLORS[mode]
+            painter.fillRect(box, color if mode == chosen else QColor(40, 40, 46, 220))
+            if mode == chosen:
+                painter.setPen(QPen(QColor(255, 255, 255), 2))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawRect(box.adjusted(-1, -1, 0, 0))
+            elif mode == self.mode:
+                painter.fillRect(box.left(), box.bottom() - 2, box.width(), 3, color)
+            theme.draw_text(painter, box.left() + 8, box.top() + 4, text, "#ffffff")
 
     def focusOutEvent(self, event: QFocusEvent) -> None:
         self._held.clear()
@@ -1353,6 +1450,12 @@ class Viewport(QOpenGLWidget):
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         point = event.position().toPoint()
         self._last_mouse = point
+        if self.ring is not None:
+            chosen = self.ring_mode_at(point)
+            if chosen != self.ring[1]:
+                self.ring = (self.ring[0], chosen)
+                self.update()
+            return
         self._track_shift(bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier))
         self._update_hover(point)
         if self.paste_preview is not None:
@@ -1459,6 +1562,15 @@ class Viewport(QOpenGLWidget):
 
     def _click(self, action: str) -> None:
         hit = self.hover
+        if action in ("animate.pulse", "animate.remove"):
+            if hit is not None:
+                signal = (
+                    self.pulse_requested
+                    if action == "animate.pulse"
+                    else (self.pulse_remove_requested)
+                )
+                signal.emit(hit.pos)
+            return
         if action == "normal.inspect":
             self.selection = hit.pos if hit else None
             self.select_requested.emit(self.selection)

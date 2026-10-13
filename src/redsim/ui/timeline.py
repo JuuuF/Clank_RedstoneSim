@@ -108,6 +108,7 @@ class TimelineCanvas(QWidget):
         self.end = 0
         self.current = 0
         self.batches: list[EditBatch] = []
+        self.pulse_spans: list[tuple[int, int]] = []  # sequence pulses: (start, ticks)
         self.selected: set[tuple[int, str]] = set()  # (tick, row)
         self.tracks: list[Track] = []
         self._scrubbing = False
@@ -139,6 +140,7 @@ class TimelineCanvas(QWidget):
         current: int,
         batches: list[EditBatch],
         tracks: list[Track],
+        pulse_spans: list[tuple[int, int]] | None = None,
     ) -> None:
         if self._glide_rate is not None:  # carry on from where the playhead is shown
             now = time.monotonic()
@@ -147,6 +149,7 @@ class TimelineCanvas(QWidget):
             self._glide_base = (min(max(shown, current - gap), current + gap), now)
         self.start, self.end, self.current = start, end, current
         self.batches, self.tracks = batches, tracks
+        self.pulse_spans = pulse_spans or []
         present = {(b.tick, b.row) for b in batches}
         self.selected &= present
         self._resize_to_tracks()
@@ -344,6 +347,15 @@ class TimelineCanvas(QWidget):
             line = self._row_top(row)
             painter.drawLine(self.LABEL_WIDTH, line, self.width(), line)
         shift = self._drag_delta if self._dragging_edits else 0
+        # Sequence pulses: how long each stays on, as a bar on the Powered row.
+        power_y = self._row_top(EDIT_ROWS.index("power")) + self.EDIT_ROW_HEIGHT / 2
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(255, 70, 70, 110))
+        for start, length in self.pulse_spans:
+            left = max(float(self.LABEL_WIDTH), self._x(start))
+            right = self._x(start + length)
+            if right > left:
+                painter.drawRoundedRect(QRectF(left, power_y - 3, right - left, 6), 2, 2)
         for batch in self.batches:
             key = (batch.tick, batch.row)
             selected = key in self.selected
@@ -748,4 +760,5 @@ class TimelineBar(QWidget):
             for pos in document.monitors
         ]
         self.canvas.set_markers(document.visible_markers())
-        self.canvas.set_data(0, end, tick, document.edit_batches(), tracks)
+        spans = [(pulse.tick, pulse.ticks) for pulse in document.pulses()]
+        self.canvas.set_data(0, end, tick, document.edit_batches(), tracks, spans)

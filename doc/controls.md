@@ -61,8 +61,20 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 |---|---|---|---|---|
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
 | **BUILD** | B | place the block on the build layer | remove the block under the cursor (Ctrl: use it) | a straight line on the build layer |
+| **ANIMATE** | K | power the block's position from the current tick (Sequence tab: strength, duration) | remove the pulses there running at this tick | — |
 | **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
 
+- **Mode ring: hold Tab**, point towards a mode (NORMAL up, BUILD right, SELECT down,
+  ANIMATE left) and let go; letting go in the middle changes nothing.
+- **Sequences (ANIMATE mode):** scrub to a tick and click a block: its *position* gets
+  power (strength and duration from the Sequence tab) from that tick on, whatever block
+  is there then (a piston that moves away no longer gets it, a block moving in does).
+  Clicking at tick 0 starts the pulse at tick 1 (tick 0 is the build). Right click
+  removes the pulses at that position running at the current tick. The Sequence tab
+  lists every pulse with editable tick, strength and duration (× removes; a click on a
+  row jumps to its tick and flashes the position); every change re-runs the history from
+  tick 0, keeping all other edits. Powered positions glow red; the timeline's "Powered"
+  row shows each pulse with a bar for its duration.
 - Middle click picks the block type under the cursor in every mode.
 - **Block popup: E** over a block (any mode) opens its inspector next to the cursor:
   the same controls as the Inspector tab (state, contents, signal source, pressure-plate

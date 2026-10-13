@@ -502,3 +502,38 @@ def test_world_picker_lists_saves_and_recent_worlds(app: object, tmp_path: objec
     assert picker.chosen[1].name == "showcase.redsim.json"
     saves = WorldPicker(None, MINECRAFT)  # lists whatever saves exist (maybe none)
     assert saves.kind == MINECRAFT
+
+
+def test_tab_ring_switches_modes_and_animate_clicks_add_pulses(app: object) -> None:
+    from PySide6.QtCore import QPoint
+
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.viewport import ANIMATE, BUILD
+
+    window = MainWindow()
+    viewport = window.viewport
+    assert window.keymap.bindings("mode.ring") == ("Tab",)
+    viewport.ring = (QPoint(100, 100), None)
+    assert viewport.ring_mode_at(QPoint(100, 30)) == "normal"  # up
+    assert viewport.ring_mode_at(QPoint(170, 100)) == BUILD  # right
+    assert viewport.ring_mode_at(QPoint(100, 170)) == "select"  # down
+    assert viewport.ring_mode_at(QPoint(30, 100)) == ANIMATE  # left
+    assert viewport.ring_mode_at(QPoint(104, 102)) is None  # the center: nothing
+    viewport.ring = None
+    viewport.mode_requested.emit(ANIMATE)  # what letting go of Tab on ANIMATE does
+    assert viewport.mode == ANIMATE
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("sticky_piston[facing=east]"))
+    window.sequence.duration.setValue(3)
+    viewport.hover = Hit((0, 1, 0), Direction.UP, 4.0)
+    viewport._click("animate.pulse")  # at tick 0: the pulse starts at tick 1
+    pulses = document.pulses()
+    assert [(p.tick, p.pos, p.ticks) for p in pulses] == [(1, (0, 1, 0), 3)]
+    window.sequence.show_document(document)
+    assert window.sequence.table.rowCount() == 1
+    document.seek_tick(document.end_tick)
+    document.seek_tick(2)
+    viewport._click("animate.remove")  # running at tick 2: removed
+    assert document.pulses() == []
+    document.dirty = False
+    window.close()

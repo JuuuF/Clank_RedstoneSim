@@ -27,6 +27,9 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   saves, simulation worlds with thumbnails, search, Browse… (`ui/world_picker.py`,
   `recent_worlds.json`, `thumbnails/` in the config folder).
 
+- **Sequences**: ANIMATE mode, power pulses locked to positions with strength and
+  duration, Sequence tab, Tab mode ring (ADR-026).
+
 ## Implemented
 
 ### Project brief (milestones 0–7)
