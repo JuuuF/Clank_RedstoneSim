@@ -30,6 +30,13 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Sequences**: ANIMATE mode, power pulses locked to positions with strength and
   duration, Sequence tab, Tab mode ring (ADR-026).
 
+- **Round 10** ([[ui-direction]]): 0-tick pulses; short piston arm while moving (no
+  head out of the base's back); the inspector extends a piston with its head; long
+  property button lists wrap; the timeline's per-block lines with Ableton-like colored
+  groups for pulses, draggable and resizable pulse bars, a resizable, scrolling timeline.
+  Open from it: groups for the other categories' lines; the timeline height is not
+  remembered between sessions.
+
 ## Implemented
 
 ### Project brief (milestones 0–7)
