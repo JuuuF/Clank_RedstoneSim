@@ -31,7 +31,7 @@ a line to the log.**
    Cython on `core/`, `sim/neighbor_updater.py`, `sim/level.py`, `sim/ticks.py`, with
    the pure-Python modules as the fallback when no compiler is available; measure;
    keep only if the gain is real and tests pass both ways. Document how to build.
-4. [ ] **Bug hunt, engine and editor:** more fuzzing (new seeds against the game),
+4. [x] **Bug hunt, engine and editor:** more fuzzing (new seeds against the game),
    property tests for save/load round trips, history rewrite and replay determinism,
    undo/redo with sequences, clone/move edge cases, streaming worlds.
 5. [ ] **Bug hunt, UI:** every action on an empty document and on a busy one without a
@@ -70,4 +70,7 @@ a line to the log.**
   seeds found nothing. Probed overlapping moves and copies, containers and scheduled
   ticks in moves: all as the game's /clone does (a moved block's old tick stays and is
   skipped on air, as in the game).
+- Bug hunt (UI): `tests/ui/test_every_action.py` triggers all 75 window actions in all
+  four modes on an empty and on the busy showcase document (dialogs cancelled, desktop
+  calls stubbed): no exceptions.
 
