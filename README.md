@@ -10,7 +10,7 @@ torch, wire, repeater, comparator, pistons with slime/honey, observers, rails, t
 blocks, hoppers, barrels, lecterns, note blocks, copper bulbs, droppers, dispensers,
 chests, pressure plates), with a 3D editor (rewind/replay, copy/paste, prefabs, the game's
 own textures) that can also open Minecraft Java saves and stream their chunks around the
-camera. Behavior is verified tick by tick against the real game (46 named scenarios and 40
+camera. Behavior is verified tick by tick against the real game (46 named scenarios and 60
 random circuits). Details and next steps: [`doc/project-state.md`](doc/project-state.md).
 
 ## Quick start

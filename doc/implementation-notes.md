@@ -28,7 +28,16 @@ ruff format src tests tools               # format (line length 100)
 mypy src tools                            # types
 python -m tools.gameserver.run            # all game comparisons (sandboxed 26.3 server)
 python -m tools.gameserver.run and_gate   # selected scenarios
+python -m tools.gameserver.run fuzz_61    # a new random circuit (seed 61) against the game
+python -m tools.bench                     # speed numbers (compare before/after a change)
+python -m tools.build_compiled            # optional compiled build (about 2× faster)
+REDSIM_PURE=1 python -m pytest            # force plain Python when a build exists
 ```
+
+Large modules are split into mixins (`viewport_*`, `window_*`, `timeline_lines`,
+`document_history`, `document_sequences`): their methods start with
+`view = cast("<Class>", self)` and use `view`, which keeps them fully type-checked
+without mypy exceptions. Prefer adding new behavior to the matching mixin module.
 
 `python -m tools.gameserver.run` needs `PYTHONPATH=src` unless the package is installed.
 

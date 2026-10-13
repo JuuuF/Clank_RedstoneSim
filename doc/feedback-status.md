@@ -12,7 +12,7 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O2 | **Diagnostics**: "why did this block change?" and a signal view | owner priority list 2026-10-12 (after missing blocks and world loading); brief M3/M6 | Done: trace per step, Diagnostics tab, clicking flashes the block, F3 labels. Open: a clickable cause chain per block (from `sim/trace.py` records), a signal-strength heat view in the viewport. |
 | O3 | **Several selections** | round 9 #13 | Done: Shift+drag adds boxes, Del clears all, Alt+A removes all. Open: copy, move, rotate and flip several boxes at once (they act on the active box). |
 | O4 | **Sign text** | round 9 #4 | Done: text of signs from opened worlds is drawn over them. Open: text on the sign's face itself (now a label above it), and entering text for signs placed in the editor. |
-| O5 | **Smooth 60 fps with big contraptions** | round 9 (follow-up) | Done: moving-piston mesh, heavy ticks in parts, faster engine paths. Open: very heavy contraptions still cannot reach 20 ticks/s (pure Python engine); the owner's own frame-rate check on the desktop. |
+| O5 | **Smooth 60 fps with big contraptions** | round 9 (follow-up) | Done: moving-piston mesh, heavy ticks in parts, faster engine paths, and (2026-10-14) an optional compiled build: 2–3× faster ticks than before the night. Open: the owner's own check on the desktop. |
 | O6 | **Generic signal-strength source** that maps to a real block, hot-swappable | round 1 (Analog signal sources) | Done for barrel, lectern and cake. Open: hopper, composter and chest as source kinds (chests and hoppers exist as blocks; composters do not). |
 | O7 | **Mechanics left** (brief "later extensions") | brief; project-state | Open: dispense effects (shooting, placing, fluids), detector rails (need minecarts), daylight sensors, composters, furnaces and other containers, water streams; entities stay out of scope. |
 | O8 | **Abstract (black-box) group models** | brief M7 | Deferred on purpose (ADR-016): groups expose ports but always simulate their blocks. |
@@ -20,7 +20,7 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O10 | **Final look**: "a technical version of Minecraft", panels | round 1 (Looks) | Largely answered by the game's textures, the theme and the polish pass; the owner has not yet reviewed the result as a whole. |
 | O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
 
-| O12 | **Small loose ends** | rounds 9–12 | Select World screen: a stray "r" in the focused search box, the game's dirt-and-stone look, thumbnails for worlds saved before the screen existed; timeline height not remembered; groups only for Powered lines; 0-tick behavior not checked against the real game. |
+| O12 | **Small loose ends** | rounds 9–12 | Select World screen: a stray "r" in the focused search box, the game's dirt-and-stone look, thumbnails for worlds saved before the screen existed; groups only for Powered lines; 0-tick behavior not checked against the real game. (The timeline height is remembered since 2026-10-14.) |
 
 ## Done after the list was compiled
 
@@ -46,6 +46,10 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Round 12**: 0-tick pulses act inside a tick (pistons spit their block); sequences
   and all recorded edits are saved with the file (they were lost on reopening); the
   hover highlight clears below the last list row and is more subtle.
+
+- **2026-10-14 (night):** pulses can be muted (bypassed); timeline lines named by
+  position with the current block; refactor, stability and speed pass
+  ([[refactor-plan]]).
 
 ## Implemented
 

@@ -10,6 +10,43 @@ Branch: `refactor/stability-pass`; verified steps are fast-forwarded to `main` a
 whoever picks this up reads this page, continues with the first unchecked item, and adds
 a line to the log.**
 
+## Summary for the owner (2026-10-14 morning)
+
+All items are done; everything is on `main` and pushed. Tests: 475 pass, as plain Python
+and on the compiled build; the 46 named game scenarios match in both; 20 new random
+circuits against the real game match (60 in all now).
+
+**Speed.** Engine ticks per second on this machine, before → after the night:
+
+| Benchmark (`python -m tools.bench`) | before | plain Python now | compiled |
+|---|---|---|---|
+| 168 sticky pistons on observer clocks | 24.6 | 30.2 | **50.3** |
+| 8 dust lines toggled every tick (update storms) | 8.2 | 13.0 | **25.0** |
+
+The compiled build is optional: `python -m tools.build_compiled` (needs mypy, already in
+the environment, and gcc). It is used only while it matches the sources exactly, so it
+can never run stale code; `REDSIM_PURE=1` switches it off. Rebuild after pulling or
+editing to keep the speed.
+
+**Stability.** Randomized history tests (replay, save/open, undo/redo), every window
+action in every mode on an empty and a busy document, more game fuzzing. Fixed: switching
+documents left old view state (selection lock, paste preview, drags, highlights, the block
+popup, timeline selections, a half-run tick); closing the window left timers running; the
+timeline opened too short (now sized to its lines, and its height is remembered).
+
+**Structure.** The four big UI modules and the document are split into focused modules
+(no behavior change): viewport (5 parts), main window (6), panels (6), timeline (3),
+document (4). Largest module now: `main_window.py`, 990 lines.
+
+**Your requests from the night.** Pulses can be muted (0 key, the Sequence tab's On
+checkbox, right-click menus per pulse/line/group/all); timeline lines show their position
+with the block there at the current tick.
+
+**One incident.** A shell `cp` that asks before overwriting skipped a backup step: your
+working `examples/showcase.redsim.json` was replaced for a moment and restored from a
+copy made at 21:29 (only changes between 21:29 and 21:42 could be missing; it is still
+your version, uncommitted, as before).
+
 ## Rules for the pass
 
 - Behavior must not change: the whole test suite (including the 86 game recordings) and
@@ -51,7 +88,7 @@ a line to the log.**
 9b. [x] **Owner request (2026-10-14): bypass animation keyframes.** Mute pulses without
    deleting them (per pulse, per line, per group, and all at once), like muting in
    Blender/Ableton; muted pulses stay in the timeline, greyed out, and are skipped.
-9. [ ] **Docs:** architecture and implementation notes updated to the new structure;
+9. [x] **Docs:** architecture and implementation notes updated to the new structure;
    project-state and feedback-status refreshed; a summary for the owner.
 
 ## Log
@@ -123,4 +160,7 @@ a line to the log.**
   menus per pulse, selection, line, group and all; grey dashed bars; muted-only positions
   get no ANIMATE marker. 9a done: lines are named by position, with the block there at
   the current tick dim behind it ("empty" when moved away).
+- Item 9: docs refreshed (README, doc/README, project-state, implementation-notes,
+  feedback-status, architecture); summary for the owner at the top of this page. The
+  hourly nudge was removed after this.
 
