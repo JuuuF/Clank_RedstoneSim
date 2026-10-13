@@ -58,3 +58,26 @@ def test_sign_text_is_read_from_every_message_form() -> None:
     }
     texts = {(1, 2, 3): "minecraft:oak_sign[rotation=0]", (4, 5, 6): "minecraft:oak_sign"}
     assert sign_texts(entities, texts) == {"1,2,3": ["Hello", "ab", "", "x"]}
+
+
+@pytest.mark.skipif(not SAVE.exists(), reason="the example save is not supplied")
+def test_an_opened_world_saves_back_into_a_copy(tmp_path: Path) -> None:
+    from redsim.mcworld.importer import open_world, read_save
+    from redsim.mcworld.writer import save_world_copy
+
+    opened = open_world(SAVE, radius=2)
+    doc = opened.document
+    assert opened.info.player_pos is not None
+    x, y, z = (int(v) for v in opened.info.player_pos)
+    doc.setblock((x, y + 3, z), blocks.REDSTONE_BLOCK.default_state)
+    wire = next(p for p, s in doc.level.blocks.items() if s.is_(blocks.REDSTONE_WIRE))
+    doc.break_block(wire)
+    report = save_world_copy(doc, tmp_path / "copy")
+    assert report.blocks >= 2 and report.outside == 0
+    copy = open_world(tmp_path / "copy", radius=2).document.level
+    assert copy.blocks.get((x, y + 3, z)) is blocks.REDSTONE_BLOCK.default_state
+    assert wire not in copy.blocks
+    assert all(copy.blocks.get(p) is s for p, s in doc.level.blocks.items())
+    assert read_save(tmp_path / "copy").name == "copy"
+    with pytest.raises(ValueError):  # never over an existing folder
+        save_world_copy(doc, tmp_path / "copy")

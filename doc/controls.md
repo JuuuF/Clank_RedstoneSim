@@ -306,3 +306,11 @@ affected.
 ## Related
 
 [[ui-direction]] · [[architecture]] · [[tour]] · [[decisions]] ADR-018
+
+## Minecraft worlds
+
+File → Open Minecraft world… opens a Java 26.x save around the player; chunks load
+around the camera (Preferences → Minecraft worlds). File → Save as Minecraft world…
+writes the current state into a copy of the save next to the original (it asks for the
+copy's name; the original stays untouched); open the copy in the game.
+

@@ -92,5 +92,16 @@ the moment of writing are stored the way the game stores them (`block_ticks`,
    (`Level.take_touched`) instead of diffing all blocks per frame, and the timeline keeps
    fewer periodic keyframes for large levels (6 M block entries in all).
    Left for this phase: the index and "go to the builds", the on-disk cache.
-4. Write back (copy first), with a round-trip test: import → export → import is
+4. **Write-back, first version (2026-10-13):** File → Save as Minecraft world… writes
+   the document into a **copy** of the save (`mcworld/writer.py`, default name
+   "<save> (redsim)", also its `LevelName`; the original is never touched): changed
+   blocks of loaded chunks go into their sections (palette in 26.x's forms: a string
+   list, or a compound list with bare ids as `{"": id}`), block entities are written from
+   the document (keys the game stored and the simulator does not model are kept), changed
+   chunks are relit by the game (`isLightOn` 0, light arrays and heightmaps dropped), and
+   region files are rewritten. A round trip (open, edit, save, reopen) is tested. Not
+   yet: blocks outside loaded chunks (reported), pending scheduled ticks of the
+   document, sections the save lacks, writing into the original save, and a check in
+   the real game.
+5. Write back (copy first), with a round-trip test: import → export → import is
    identical, and untouched chunks are byte-identical.

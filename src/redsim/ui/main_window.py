@@ -42,6 +42,7 @@ from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.editor.placement import PlaceRequest
 from redsim.mcworld.importer import open_world, stream_chunks
+from redsim.mcworld.writer import save_world_copy
 from redsim.ui import pixel_icons, theme
 from redsim.ui.block_popup import BlockPopup
 from redsim.ui.block_search import BlockSearch
@@ -307,6 +308,7 @@ class MainWindow(QMainWindow):
         self._action(file_menu, "&New", self._new, "file.new")
         self._action(file_menu, "&Open…", self._open, "file.open")
         self._action(file_menu, "Open Minecraft world…", self._open_minecraft_world)
+        self._action(file_menu, "Save as Minecraft world…", self._save_minecraft_world)
         self._action(file_menu, "&Save", self._save, "file.save")
         self._action(file_menu, "Save &as…", self._save_as, "file.save_as")
         file_menu.addSeparator()
@@ -1403,6 +1405,44 @@ class MainWindow(QMainWindow):
         radius = self.viewport.preferences.world_view_distance
         if stream_chunks(document, center, radius, STREAM_BUDGET_S):
             self.viewport.update()
+
+    def _save_minecraft_world(self) -> None:
+        """Write the document into a copy of the Minecraft save it was opened from."""
+        stream = self.document.world
+        if stream is None:
+            self._message(
+                "Only a world opened with File → Open Minecraft world… can be saved back.",
+                error=True,
+            )
+            return
+        source = stream.info.path
+        name, ok = QInputDialog.getText(
+            self,
+            "Save as Minecraft world",
+            f"Name of the copy (a new folder next to '{source.name}'; the original stays "
+            "untouched):",
+            text=f"{source.name} (redsim)",
+        )
+        if not ok or not name.strip():
+            return
+        self._finish_tick()
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            report = save_world_copy(self.document, source.parent / name.strip())
+        except (OSError, ValueError) as exc:
+            QMessageBox.critical(self, "Cannot save the world", str(exc))
+            return
+        finally:
+            QApplication.restoreOverrideCursor()
+        note = (
+            f" {report.outside} changed blocks outside the loaded chunks were left out."
+            if (report.outside)
+            else ""
+        )
+        self._message(
+            f"Saved the world '{report.target.name}': {report.blocks} changed blocks in "
+            f"{report.chunks} chunks.{note}"
+        )
 
     def open_path(self, path: Path) -> None:
         try:
