@@ -43,7 +43,7 @@ a line to the log.**
    module per panel; timeline lines vs. transport), without behavior changes.
 7. [x] **Refactor editor/document.py** (900 lines): history operations, sequences, world
    streaming and annotations in separate parts.
-8. [ ] **Memory and large worlds:** copy-on-write block maps for keyframes, measure a
+8. [x] **Memory and large worlds:** copy-on-write block maps for keyframes, measure a
    streamed world at view distance 12 for an hour of ticks.
 9a. [ ] **Owner request (2026-10-14): timeline labels of animated blocks.** Lines name the
    block at the position, which changes when pistons move blocks: show what is there at
@@ -112,4 +112,10 @@ a line to the log.**
   seeking, undo/redo, edit batches, tick 0, markers, timeline view; with `EditError`,
   `HistoryState`, `EditBatch`), `document_sequences.py` (`SequenceOps` and `Pulse`),
   `document_common.py`; all old import paths still work.
+- Memory (item 8), measured: the example save streamed to view distance 12 (489 chunks,
+  173 488 blocks) opens in 4.7 s at 130 MB; 1 500 ticks later 30 keyframes are kept (cap
+  34 from the 6 M block budget) and the process peaks at 504 MB, so keyframes cost
+  ~12 MB each and the total stays bounded. Copy-on-write keyframes were not built: the
+  compiled `Level` needs `blocks` to be a real `dict`, and streamed chunks must reach
+  every stored level; the cap is enough for now (noted in project-state as an option).
 

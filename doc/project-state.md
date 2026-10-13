@@ -188,9 +188,10 @@ tests the Mac support themselves. Status and what is left:
 4. **Owner review** of rounds 7–8, the polish pass, the popup and Mac support on real
    hardware.
 5. **Editing comfort:** a "compare two ticks" view (blocks that differ highlighted).
-6. **Scale:** the engine is pure Python; profile large streamed worlds while running.
-   Keyframes are full level copies (fewer are kept for large levels); a copy-on-write
-   block map would make them cheap.
+6. **Scale:** with the compiled build the engine is about 2× faster; keyframes are full
+   level copies (a streamed world at view distance 12: ~12 MB each, at most 34 kept,
+   about 500 MB in all). Delta keyframes against the base would make them cheap; they
+   must keep `Level.blocks` a real dict (compiled code) and receive streamed chunks.
 
 ## How to resume
 
