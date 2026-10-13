@@ -358,10 +358,27 @@ class Viewport(QOpenGLWidget):
         self.update()
 
     def set_document(self, document: Document) -> None:
+        """Show another document: nothing of the old one's view state stays (selections,
+        a paste preview, drags, hover, highlights)."""
+        if self.paste_preview is not None:
+            self.cancel_paste()
         self.document = document
         self.selection = None
         self.region = None
+        self.region_locked = False
         self.extra_regions = []
+        self.hover = None
+        self.highlight = None
+        self.located = None
+        self.hovered_label = None
+        self.ring = None
+        self._move = None
+        self._resize = None
+        self._stack = None
+        self._line = None
+        self._ghost = None
+        self._press = None
+        self._drag_action = None
         self._mesh_revision = -1  # the diff against the old world drops what is gone
         self._cover_foreign_textures()
         self.update()

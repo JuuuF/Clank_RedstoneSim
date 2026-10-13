@@ -34,7 +34,7 @@ a line to the log.**
 4. [x] **Bug hunt, engine and editor:** more fuzzing (new seeds against the game),
    property tests for save/load round trips, history rewrite and replay determinism,
    undo/redo with sequences, clone/move edge cases, streaming worlds.
-5. [ ] **Bug hunt, UI:** every action on an empty document and on a busy one without a
+5. [x] **Bug hunt, UI:** every action on an empty document and on a busy one without a
    crash (an automated "click everything" smoke test), signal handlers that can raise,
    stale state after opening another document, timers after closing.
 6. [ ] **Refactor the big UI modules:** `ui/viewport.py` (2 000 lines),
@@ -73,4 +73,7 @@ a line to the log.**
 - Bug hunt (UI): `tests/ui/test_every_action.py` triggers all 75 window actions in all
   four modes on an empty and on the busy showcase document (dialogs cancelled, desktop
   calls stubbed): no exceptions.
+- Fixed: switching documents left the old view state (selection lock, paste preview
+  with the old clipboard, drags, hover, highlights, an open block popup, timeline
+  selections, a half-run tick); closing the window left its timers running.
 

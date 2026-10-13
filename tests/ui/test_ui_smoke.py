@@ -688,3 +688,39 @@ def test_leaving_the_last_sequence_row_stops_the_highlight(app: object) -> None:
     assert window.viewport.located is None
     window.document.dirty = False
     window.close()
+
+
+def test_opening_another_document_leaves_nothing_of_the_old_view(app: object) -> None:
+    from redsim.editor.clipboard import Region
+    from redsim.editor.document import Document
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    viewport = window.viewport
+    window.document.setblock((0, 1, 0), blocks.STONE.default_state)
+    viewport.region, viewport.region_locked = Region((0, 1, 0), (0, 1, 0)), True
+    viewport.extra_regions = [Region((2, 1, 0), (2, 1, 0))]
+    viewport.locate((0, 1, 0))
+    viewport.flash((0, 1, 0))
+    viewport.hover = Hit((0, 1, 0), Direction.UP, 4.0)
+    window._open_block_popup()
+    window.simulation.canvas.selected_pulses = {3}
+    window._set_document(Document.new_flat())
+    assert viewport.region is None and not viewport.region_locked and not viewport.extra_regions
+    assert viewport.located is None and viewport.highlight is None and viewport.hover is None
+    assert not window.block_popup.isVisible()
+    assert not window.simulation.canvas.selected_pulses
+    window.document.dirty = False
+    window.close()
+
+
+def test_closing_the_window_stops_its_timers(app: object) -> None:
+    from PySide6.QtCore import QTimer
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.show()
+    window.document.dirty = False
+    window.close()
+    assert not [t for t in window.findChildren(QTimer) if t.isActive()]

@@ -1457,8 +1457,13 @@ class MainWindow(QMainWindow):
 
     def _set_document(self, document: Document) -> None:
         self.simulation.stop()
+        self.block_popup.close()
         self.document = document
         self.last_steps = []
+        self._tick_steps = []
+        self._rotation_pivot = None
+        canvas = self.simulation.canvas
+        canvas.selected, canvas.selected_pulses = set(), set()
         self.viewport.set_document(document)
         self.sections.set_document(document)
         self._apply_saved_camera()
@@ -1639,6 +1644,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._confirm_discard(closing=True):
             self.save_layout()
+            self.simulation.stop()
+            self.block_popup.close()
+            for timer in self.findChildren(QTimer):  # nothing ticks for a closed window
+                timer.stop()
             self.viewport.release_gl()  # while the GL context still exists
             event.accept()
         else:
