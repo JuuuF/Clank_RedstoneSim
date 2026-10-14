@@ -107,6 +107,10 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   tick.
 - **Signal heat view** (View menu, **Alt+H**): powered blocks glow by signal strength,
   dark red at 1 to yellow at 15 (wire as a thin layer).
+- **Signs** (inventory → Special): placed like a player places them (standing when
+  pointing at the ground, turned to face you; on a wall when pointing at one). Their
+  text is typed in the inspector (front and back, four lines each; Enter applies it, one
+  undo step) and drawn on the board like in the game.
 - Inspector: setting a piston base to *extended* also puts its head in front (if there
   is room), in the same edit.
 - Middle click picks the block type under the cursor in every mode.

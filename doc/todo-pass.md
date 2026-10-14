@@ -16,7 +16,7 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
 2. [x] **O3 several selections:** copy, move, rotate and flip every box at once.
 3. [x] **O2 diagnostics:** a clickable cause chain per block ("why did this change?") from
    the trace; a signal-strength heat view in the viewport.
-4. [ ] **O4 sign text:** text drawn on the sign's face; entering text for signs placed in
+4. [x] **O4 sign text:** text drawn on the sign's face; entering text for signs placed in
    the editor.
 5. [ ] **O1 worlds:** unloading far chunks; re-attaching the stream when a document saved
    from a world is reopened; an on-disk chunk cache; an index of the save's builds with
@@ -52,3 +52,11 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
   "Why?" sub-tab for the selected block (click: show the block, double click: go to the
   tick). Signal heat view: `editor/heat.py`, View menu / Alt+H, vectorized boxes cached
   per step.
+- O4 done: standing and wall signs of all 12 woods are simulated blocks now
+  (`world/blocks/sign.py`: survival rules, placement like a player's, `forceSolidOn`,
+  `SignBlockEntity` with front/back text that keeps a world's formatting unless edited),
+  game-verified (EXP-048: popping, blocking pistons, staying on pushed blocks). Text is
+  typed in the inspector (`sign_text` action, one undo step, replayed and saved) and
+  drawn on the boards in perspective (`ui/sign_text.py`), not through blocks, only on
+  sides facing the camera. Older documents' `extra["signs"]` text moves into the signs;
+  hanging signs stay foreign (their text from worlds is still drawn).

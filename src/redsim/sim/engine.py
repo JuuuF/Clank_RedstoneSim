@@ -43,6 +43,7 @@ ActionKind = Literal[
     "clone",
     "clone_region",
     "container_item",
+    "sign_text",
     "lectern_page",
     "transform_region",
     "transform_regions",
@@ -78,6 +79,8 @@ class Action:
       reading the live source region (``payload``: ``begin``, ``end``, ``mode`` =
       normal/force/move, optional ``strict``); scheduled ticks inside the region are
       copied. Used to drag selections.
+    * ``sign_text``: a player writing on a sign (``payload``: ``side`` front/back,
+      ``lines``): ``SignBlockEntity.updateSignText`` (new text, ``setChanged``).
     * ``container_item``: ``/item replace block <pos> container.<slot> with <item> <count>``
       (``payload``: ``slot``, ``item`` or None for empty, ``count``): ``Container.setItem``.
     * ``transform_region``: editor tool, not vanilla: rotate (``quarter_turns`` clockwise
@@ -384,6 +387,14 @@ class Engine:
                 nbt = action.payload.get("nbt") if action.payload else None
                 if not self._setblock_command(action.pos, action.state, nbt):
                     info.detail["info"] = "setblock: no change"
+            elif action.kind == "sign_text":
+                from redsim.world.blocks.sign import SignBlockEntity
+
+                entity = level.get_block_entity(action.pos)
+                if not isinstance(entity, SignBlockEntity):
+                    raise ActionError(f"no sign at {action.pos}")
+                payload = action.payload
+                entity.set_text(level, str(payload.get("side", "front")), list(payload["lines"]))
             elif action.kind == "container_item":
                 self._container_item(action.pos, action.payload)
             elif action.kind == "lectern_page":

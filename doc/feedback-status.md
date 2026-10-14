@@ -9,7 +9,6 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | # | Request | From | What is missing |
 |---|---|---|---|
 | O1 | **Open Minecraft worlds**, load around the camera, own cache, write back | round 8 #18 | Done: reading saves, opening, streaming chunks around the camera. Open: an index of the save's builds with "go to the builds"; the on-disk cache (keyed by save and seed, chunk timestamps); unloading far chunks; re-attaching the stream when a `.redsim.json` saved from a world is reopened. Write-back to a **copy** of the save exists (File → Save as Minecraft world…, 2026-10-13); open: pending ticks, blocks outside loaded chunks, a check that the game opens the copy. |
-| O4 | **Sign text** | round 9 #4 | Done: text of signs from opened worlds is drawn over them. Open: text on the sign's face itself (now a label above it), and entering text for signs placed in the editor. |
 | O5 | **Smooth 60 fps with big contraptions** | round 9 (follow-up) | Done: moving-piston mesh, heavy ticks in parts, faster engine paths, and (2026-10-14) an optional compiled build: 2–3× faster ticks than before the night. Open: the owner's own check on the desktop. |
 | O6 | **Generic signal-strength source** that maps to a real block, hot-swappable | round 1 (Analog signal sources) | Done for barrel, lectern and cake. Open: hopper, composter and chest as source kinds (chests and hoppers exist as blocks; composters do not). |
 | O7 | **Mechanics left** (brief "later extensions") | brief; project-state | Open: dispense effects (shooting, placing, fluids), detector rails (need minecarts), daylight sensors, composters, furnaces and other containers, water streams; entities stay out of scope. |
@@ -44,6 +43,11 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Round 12**: 0-tick pulses act inside a tick (pistons spit their block); sequences
   and all recorded edits are saved with the file (they were lost on reopening); the
   hover highlight clears below the last list row and is more subtle.
+
+- **Signs** (O4, 2026-10-14): text drawn on the sign's board (front and back, in
+  perspective); standing and wall signs are real blocks now (placing, popping, text typed
+  in the inspector as an edit; game-verified EXP-048). Hanging signs stay foreign blocks
+  (their text from opened worlds is drawn too).
 
 - **Diagnostics** (O2, 2026-10-14): Diagnostics → Why? shows a block's chain of causes
   back across ticks; a signal heat view (Alt+H).

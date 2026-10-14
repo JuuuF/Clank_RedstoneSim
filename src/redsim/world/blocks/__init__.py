@@ -28,6 +28,7 @@ from redsim.world.blocks.pressure_plate import (
 )
 from redsim.world.blocks.rail import PoweredRailBlock, RailBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
+from redsim.world.blocks.sign import WOODS, StandingSignBlock, WallSignBlock
 from redsim.world.blocks.simple import (
     AirBlock,
     GrassBlock,
@@ -154,6 +155,9 @@ PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
 PISTON_HEAD = register(PistonHeadBlock())
 MOVING_PISTON = register(MovingPistonBlock())
+SIGNS = tuple(register(StandingSignBlock(wood)) for wood in WOODS)
+WALL_SIGNS = tuple(register(WallSignBlock(wood)) for wood in WOODS)
+OAK_SIGN, OAK_WALL_SIGN = SIGNS[0], WALL_SIGNS[0]
 
 __all__ = [
     "AIR",
@@ -177,6 +181,10 @@ __all__ = [
     "HEAVY_WEIGHTED_PRESSURE_PLATE",
     "LIGHT_WEIGHTED_PRESSURE_PLATE",
     "NOTE_BLOCK",
+    "OAK_SIGN",
+    "OAK_WALL_SIGN",
+    "SIGNS",
+    "WALL_SIGNS",
     "OAK_PRESSURE_PLATE",
     "PRESSURE_PLATES",
     "STONE_PRESSURE_PLATE",

@@ -36,6 +36,7 @@ from redsim.sim.timeline import Plan, Timeline
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
+from redsim.world.blocks.sign import SignBlock, adopt_signs
 from redsim.world.rotation import default_pivot2, rotated_box, transformed_boxes
 
 
@@ -424,6 +425,11 @@ class Document(HistoryOps, SequenceOps):
         if self.clipboard is not None:
             self.clipboard = self.clipboard.mirrored(axis)
 
+    def set_sign_text(self, pos: Pos, side: str, lines: list[str]) -> None:
+        """Write on a sign (``side``: "front" or "back"), as a player would."""
+        payload = {"side": side, "lines": list(lines)}
+        self._apply(Action("sign_text", pos, payload=payload), f"write on the sign ({side})")
+
     def fill(self, region: Region, state: BlockState) -> None:
         """``/fill`` in replace mode (used to delete a region with air)."""
         action = Action("fill", region.low, repr(state), payload={"to": list(region.high)})
@@ -522,6 +528,8 @@ class Document(HistoryOps, SequenceOps):
     @staticmethod
     def open(path: Path) -> Document:
         engine, extra = save_io.load(path)
+        old_signs = extra.get("signs") or {}
+        adopt_signs(engine.level, old_signs)
         raw_sections = extra.pop("sections", None)
         sections = Sections.from_json(raw_sections) if raw_sections is not None else Sections()
         groups = Groups.from_json(extra.pop("groups", []))
@@ -546,10 +554,19 @@ class Document(HistoryOps, SequenceOps):
             lines=lines,
             row_lines=row_lines,
         )
+        signs = {  # sign text kept as document data: only for signs not simulated now
+            key: lines for key, lines in old_signs.items() if not _is_sign(engine.level, key)
+        }
+        if signs:
+            extra["signs"] = signs
+        else:
+            extra.pop("signs", None)
         if isinstance(history, dict) and history.get("plan"):
             # Re-run the recorded edits from the saved build (the file's own state is
             # the result at the saved tick, recomputed here).
-            base = save_io.engine_from_json(history["base"]).snapshot()
+            base_engine = save_io.engine_from_json(history["base"])
+            adopt_signs(base_engine.level, old_signs)
+            base = base_engine.snapshot()
             plan: Plan = {
                 int(tick): [Action.from_json(a) for a in actions]
                 for tick, actions in history["plan"].items()
@@ -590,3 +607,9 @@ __all__ = [
     "Vary",
     "edit_row",
 ]
+
+
+def _is_sign(level: Level, key: str) -> bool:
+    x, y, z = (int(v) for v in key.split(","))
+    state = level.blocks.get((x, y, z))
+    return state is not None and isinstance(state.block, SignBlock)

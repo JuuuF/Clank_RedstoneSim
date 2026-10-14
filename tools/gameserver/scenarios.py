@@ -354,6 +354,54 @@ PISTON_POPS_COMPONENTS = Scenario(
     inputs={0: [((0, 1, 1), RB)]},
 )
 
+SIGNS = Scenario(
+    name="signs",
+    description=(
+        "Signs: standing and wall signs on pushed stones stay (moving blocks and piston "
+        "heads count as solid), a sign in front of a piston stops it (block entity: not "
+        "pushable), and signs pop when their support is removed."
+    ),
+    size=(6, 8),
+    setup=[
+        ((1, 1, 1), "minecraft:piston[facing=east]"),
+        ((2, 1, 1), "minecraft:stone"),
+        ((2, 2, 1), "minecraft:oak_sign[rotation=4]"),
+        ((1, 1, 3), "minecraft:piston[facing=east]"),
+        ((2, 1, 3), "minecraft:spruce_sign[rotation=8]"),
+        ((1, 1, 5), "minecraft:piston[facing=east]"),
+        ((2, 1, 5), "minecraft:stone"),
+        ((2, 1, 6), "minecraft:birch_wall_sign[facing=south]"),
+        ((4, 1, 3), "minecraft:stone"),
+        ((4, 2, 3), "minecraft:oak_sign[rotation=12]"),
+        ((4, 1, 5), "minecraft:stone"),
+        ((4, 1, 6), "minecraft:oak_wall_sign[facing=south]"),
+        ((5, 1, 5), "minecraft:oak_wall_sign[facing=east]"),
+    ],
+    watch=[
+        (2, 1, 1),
+        (3, 1, 1),
+        (2, 2, 1),
+        (3, 2, 1),
+        (1, 1, 3),
+        (2, 1, 3),
+        (1, 1, 5),
+        (2, 1, 5),
+        (3, 1, 5),
+        (2, 1, 6),
+        (4, 1, 3),
+        (4, 2, 3),
+        (4, 1, 5),
+        (4, 1, 6),
+        (5, 1, 5),
+    ],  # fmt: skip
+    ticks=6,
+    inputs={
+        0: [((0, 1, 1), RB), ((0, 1, 3), RB), ((0, 1, 5), RB)],
+        2: [((4, 1, 3), AIR)],
+        3: [((4, 1, 5), AIR)],
+    },
+)
+
 CLONE_INVERTER = Scenario(
     name="clone_inverter",
     description=(
@@ -1109,6 +1157,7 @@ ALL = [
     PISTON_DOOR,
     SLIME_BRANCH_PUSH,
     PISTON_POPS_COMPONENTS,
+    SIGNS,
     CLONE_INVERTER,
     FILL_REMOVES_LINE,
     CLONE_MOVE_RUNNING,

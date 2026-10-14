@@ -21,8 +21,17 @@ from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.ui import theme
 from redsim.ui.debug_screen import block_lines
+from redsim.ui.geometry import pick
 from redsim.ui.names import block_name
 from redsim.ui.preferences import INT_RANGES
+from redsim.ui.sign_text import (
+    board_image,
+    boards,
+    draw_board,
+    facing_camera,
+    sign_lines,
+    text_color,
+)
 from redsim.ui.view_common import (
     BUILD,
     CLICK_VERBS,
@@ -38,6 +47,7 @@ from redsim.ui.view_common import (
     SIGN_TEXT_DISTANCE,
     _elide,
 )
+from redsim.world.blocks.sign import SignBlockEntity
 from redsim.world.properties import POWER
 
 if TYPE_CHECKING:
@@ -165,45 +175,46 @@ class TextOverlays:
                 theme.draw_text(painter, left + 3, top + 2, text, "#e0e0e0")
 
     def _draw_sign_texts(self, painter: QPainter) -> None:
-        """The text of signs from an opened world (``extra["signs"]``) over the sign,
-        fading out with the distance (signs are drawn by an entity renderer in the game)."""
+        """Sign text on the signs' boards (``ui/sign_text.py``): both sides, in
+        perspective, within ``SIGN_TEXT_DISTANCE`` (fading out), not through blocks."""
         view = cast("Viewport", self)
-        signs = view.document.extra.get("signs")
-        if not signs:
+        document = view.document
+        level = document.level
+        positions = {
+            pos
+            for pos, entity in level.block_entities.items()
+            if isinstance(entity, SignBlockEntity)
+        }
+        for key in document.extra.get("signs") or {}:
+            x, y, z = (int(v) for v in key.split(","))
+            positions.add((x, y, z))
+        if not positions:
             return
         width, height = max(view.width(), 1), max(view.height(), 1)
         mvp = view.camera.projection_matrix(width / height) @ view.camera.view_matrix()
-        eye = view.camera.position
-        line = theme.line_height(2)
-        level = view.document.level
-        shown: list[tuple[float, float, float, list[str]]] = []
-        for key, lines in signs.items():
-            x, y, z = (int(v) for v in key.split(","))
-            state = level.blocks.get((x, y, z))
-            if state is None or not state.block.id.endswith("_sign"):
+        eye = np.asarray(view.camera.position, dtype=float)
+        for pos in positions:
+            state = level.blocks.get(pos)
+            if state is None:
                 continue
-            standing = "wall" not in state.block.id and "hanging" not in state.block.id
-            point = np.array([x + 0.5, y + (0.85 if standing else 0.5), z + 0.5])
-            distance = float(np.linalg.norm(point - eye))
-            if distance > SIGN_TEXT_DISTANCE:
-                continue
-            clip = mvp @ np.array([*point, 1.0])
-            if clip[3] <= 0.05:
-                continue
-            sx = (clip[0] / clip[3] + 1) / 2 * width
-            sy = (1 - clip[1] / clip[3]) / 2 * height
-            if 0 <= sx <= width and 0 <= sy <= height:
-                shown.append((distance, sx, sy, [text for text in lines if text]))
-        for distance, sx, sy, lines in sorted(shown, reverse=True):  # nearest on top
-            fade = min(1.0, (SIGN_TEXT_DISTANCE - distance) / 4.0)
-            box_width = max(theme.text_width(text) for text in lines) + 10
-            box_height = len(lines) * line + 6
-            left, top = int(sx - box_width / 2), int(sy - box_height / 2)
-            painter.setOpacity(fade)
-            painter.fillRect(left, top, box_width, box_height, QColor(40, 28, 16, 200))
-            for index, text in enumerate(lines):
-                tx = int(sx - theme.text_width(text) / 2)
-                theme.draw_text(painter, tx, top + 3 + index * line, text, "#f4ead2")
+            for board in boards(pos, state):
+                distance = float(np.linalg.norm(board.center - eye))
+                if distance > SIGN_TEXT_DISTANCE or not facing_camera(board, eye):
+                    continue
+                lines, dye, glowing = sign_lines(document, pos, board.side)
+                if not any(lines):
+                    continue
+                ray = board.center - eye
+                hit = pick(level, eye, ray / max(distance, 1e-6), distance)
+                if hit is not None and hit.pos != pos and hit.distance < distance - 0.05:
+                    continue  # another block is in front
+                image = board_image(
+                    tuple(lines), board.width, board.height, text_color(dye, glowing).name()
+                )
+                if image is None:
+                    continue
+                painter.setOpacity(min(1.0, (SIGN_TEXT_DISTANCE - distance) / 4.0))
+                draw_board(painter, image, board, mvp, width, height)
         painter.setOpacity(1.0)
 
     def _draw_info_labels(self, painter: QPainter) -> None:

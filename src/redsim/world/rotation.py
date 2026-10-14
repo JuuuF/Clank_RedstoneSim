@@ -43,6 +43,8 @@ def rotate_state(state: BlockState, quarter_turns: int) -> BlockState:
         value = state.get(prop)
         if isinstance(value, Direction):
             state = state.with_(prop, rotate_direction(value, turns))
+        elif prop.name == "rotation":  # standing signs: Rotation.rotate(rotation, 16)
+            state = state.with_(prop, (value + 4 * turns) % 16)
     return state
 
 
@@ -67,6 +69,11 @@ def mirror_state(state: BlockState, axis: str) -> BlockState:
         value = state.get(prop)
         if isinstance(value, Direction) and value.axis is flipped.axis:
             state = state.with_(prop, value.opposite)
+        elif prop.name == "rotation":  # standing signs: Mirror.mirror(rotation, 16)
+            corrected = value - 16 if value > 8 else value
+            state = state.with_(
+                prop, (16 - corrected) % 16 if axis == "x" else (24 - corrected) % 16
+            )
     return state
 
 

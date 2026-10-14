@@ -112,13 +112,17 @@ def foreign_ids(texts: Iterable[str]) -> Counter[str]:
 
 
 def sign_texts(entities: dict[Pos, Any], texts: dict[Pos, str]) -> dict[str, list[str]]:
-    """The front text of every sign among ``entities`` ("x,y,z" → its 4 lines). Signs are
-    not simulated (foreign blocks without a block entity), so their text is kept as
-    document data for the viewport (``extra["signs"]``)."""
+    """The front text of every sign among ``entities`` that the simulator keeps as a
+    foreign block (hanging signs: no block entity), "x,y,z" → its 4 lines, kept as
+    document data for the viewport (``extra["signs"]``). Standing and wall signs are
+    simulated; their text is in their block entity."""
+    from redsim.world import blocks
+
     out: dict[str, list[str]] = {}
     for pos, data in entities.items():
-        if not texts.get(pos, "").split("[", 1)[0].endswith("_sign"):
-            continue
+        block_id = texts.get(pos, "").split("[", 1)[0]
+        if not block_id.endswith("_sign") or block_id in blocks.REGISTRY:
+            continue  # simulated signs keep their text in their block entity
         front = data.get("front_text") or {}
         messages = front.get("messages") or [data.get(f"Text{i}", "") for i in range(1, 5)]
         lines = [_plain_text(message) for message in messages]

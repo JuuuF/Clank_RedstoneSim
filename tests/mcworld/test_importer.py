@@ -17,8 +17,8 @@ def test_foreign_blocks_keep_their_state_and_survive_saving(tmp_path: Path) -> N
     text = "minecraft:note_block[instrument=harp,note=3,powered=false]"
     state = blocks.parse_state(text)
     assert repr(state) == text and blocks.parse_state(repr(state)) is state
-    sign = blocks.parse_state("minecraft:oak_sign[rotation=4,waterlogged=false]")
-    assert not sign.block.full  # signs are not full cubes: not solid, not conducting
+    sign = blocks.parse_state("minecraft:oak_hanging_sign[attached=false,rotation=4]")
+    assert not sign.block.full  # hanging signs are not full cubes: not solid, not conducting
     doc = Document.new_flat()
     doc.level.blocks[(0, 1, 0)] = state
     doc.save(tmp_path / "foreign.redsim.json")
@@ -56,7 +56,9 @@ def test_sign_text_is_read_from_every_message_form() -> None:
         (1, 2, 3): {"front_text": {"messages": ['"Hello"', '{"text":"a","extra":["b"]}', "", "x"]}},
         (4, 5, 6): {"front_text": {"messages": ["", "", "", ""]}},  # empty: not kept
     }
-    texts = {(1, 2, 3): "minecraft:oak_sign[rotation=0]", (4, 5, 6): "minecraft:oak_sign"}
+    # Hanging signs are kept as foreign blocks: their text is document data. (Standing and
+    # wall signs read the same forms into their block entity: tests/sim/test_signs.py.)
+    texts = {(1, 2, 3): "minecraft:oak_hanging_sign", (4, 5, 6): "minecraft:oak_hanging_sign"}
     assert sign_texts(entities, texts) == {"1,2,3": ["Hello", "ab", "", "x"]}
 
 

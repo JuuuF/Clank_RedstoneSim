@@ -38,6 +38,7 @@ from redsim.world.blocks.lectern import LecternBlock
 from redsim.world.blocks.observer import ObserverBlock
 from redsim.world.blocks.piston import PistonBaseBlock
 from redsim.world.blocks.rail import BaseRailBlock
+from redsim.world.blocks.sign import ROTATION, StandingSignBlock, WallSignBlock, rotation_segment
 from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
 from redsim.world.properties import ATTACH_FACE, FACING, FACING_HOPPER, HORIZONTAL_FACING
 
@@ -129,6 +130,8 @@ def placement_state(
             if candidate is not None and candidate.can_survive(level, pos):
                 return candidate
         return None
+    if isinstance(block, StandingSignBlock | WallSignBlock):
+        return _sign_state(block, request, directions, level, pos)
     if isinstance(block, BaseRailBlock):
         # BaseRailBlock.getStateForPlacement: east-west when looking east or west.
         looking = horizontal_direction(request.yaw)
@@ -173,4 +176,38 @@ def _wall_torch_state(directions: list[Direction], level: Level, pos: Pos) -> Bl
             state = wall.default_state.with_(HORIZONTAL_FACING, direction.opposite)
             if state.can_survive(level, pos):
                 return state
+    return None
+
+
+def _sign_state(
+    block: StandingSignBlock | WallSignBlock,
+    request: PlaceRequest,
+    directions: list[Direction],
+    level: Level,
+    pos: Pos,
+) -> BlockState | None:
+    """``StandingAndWallBlockItem.getPlacementState`` for signs (attachment down): the
+    standing sign when looking down first (``StandingSignBlock.getStateForPlacement``:
+    the rotation faces the player), else the wall sign against the nearest wall
+    (``WallSignBlock.getStateForPlacement``)."""
+    wood = block.wood
+    standing = blocks.get(f"minecraft:{wood}_sign")
+    wall = blocks.get(f"minecraft:{wood}_wall_sign")
+    wall_state = None  # WallSignBlock.getStateForPlacement: the first wall that holds it
+    for direction in directions:
+        if direction.axis.is_horizontal:
+            state = wall.default_state.with_(HORIZONTAL_FACING, direction.opposite)
+            if state.can_survive(level, pos):
+                wall_state = state
+                break
+    for direction in directions:
+        if direction is Direction.UP:
+            continue
+        candidate = (
+            standing.default_state.with_(ROTATION, rotation_segment(request.yaw + 180.0))
+            if direction is Direction.DOWN
+            else wall_state
+        )
+        if candidate is not None and candidate.can_survive(level, pos):
+            return candidate
     return None

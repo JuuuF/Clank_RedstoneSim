@@ -1,5 +1,6 @@
 """The Inspector tab (and the E block popup): the chosen block's state, signal source,
-projectile hits, pressure-plate visitors, container contents, section and monitor."""
+projectile hits, pressure-plate visitors, container contents, sign text, section and
+monitor."""
 
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QSpinBox,
     QVBoxLayout,
@@ -37,7 +39,12 @@ from redsim.ui.panel_widgets import (
 from redsim.world import blocks
 from redsim.world.block import BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
+from redsim.world.blocks.sign import LINES, SignBlockEntity
 from redsim.world.properties import Property
+
+#: Characters per sign line the fields take (the game limits a line by its width: 90
+#: font pixels, about 15 wide letters).
+SIGN_LINE_LENGTH = 50
 
 
 class InspectorPanel(QWidget):
@@ -52,6 +59,7 @@ class InspectorPanel(QWidget):
     hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
     plate_requested = Signal(object, int, int, int)  # Pos, mobs, others, ticks
     contents_requested = Signal(object, object, object, int)  # Pos, slot|None, item|None, n
+    sign_requested = Signal(object, str, list)  # Pos, "front" | "back", the 4 lines
     position_hovered = Signal(object)  # Pos | None: the title (coordinates) is hovered
 
     def __init__(self) -> None:
@@ -225,6 +233,25 @@ class InspectorPanel(QWidget):
         )
         contents_layout.addRow("", self.empty_all)
         layout.addWidget(self.contents_box)
+        self.sign_box = QWidget()  # signs: their text, front and back
+        sign_layout = QFormLayout(self.sign_box)
+        sign_layout.setContentsMargins(0, 6, 0, 0)
+        self.sign_lines: dict[str, list[QLineEdit]] = {}
+        for side, title in (("front", "Front"), ("back", "Back")):
+            edits = []
+            for index in range(LINES):
+                edit = QLineEdit()
+                edit.setMaxLength(SIGN_LINE_LENGTH)
+                edit.setPlaceholderText(f"line {index + 1}")
+                edit.setToolTip(
+                    "Text on the sign, as a player writes it (Enter or leaving the field "
+                    "applies it; one undo step)"
+                )
+                edit.editingFinished.connect(lambda s=side: self._write_sign(s))
+                sign_layout.addRow(title if index == 0 else "", edit)
+                edits.append(edit)
+            self.sign_lines[side] = edits
+        layout.addWidget(self.sign_box)
         self.section_row = QWidget()  # hidden while nothing is selected
         section_row = QHBoxLayout(self.section_row)
         section_row.setContentsMargins(0, 0, 0, 0)
@@ -240,10 +267,12 @@ class InspectorPanel(QWidget):
     # ------------------------------------------------------------------ display
     def show_block(self, document: Document | None, pos: Pos | None) -> None:
         self._pos = pos
+        self._document = document
         self.source_box.setVisible(False)
         self.target_box.setVisible(False)
         self.plate_box.setVisible(False)
         self.contents_box.setVisible(False)
+        self.sign_box.setVisible(False)
         if document is None or pos is None:
             self.monitor.setVisible(False)
             self._rebuild(None)
@@ -296,6 +325,13 @@ class InspectorPanel(QWidget):
                 else f"empty ({be.SIZE} slots)"
             )
             self.contents_grid.set_items(be.items)
+        if isinstance(be, SignBlockEntity):
+            self.sign_box.setVisible(True)
+            self.sign_box.setEnabled(editable)
+            for side, edits in self.sign_lines.items():
+                for edit, text in zip(edits, be.lines(side), strict=True):
+                    if not edit.hasFocus() and edit.text() != text:
+                        edit.setText(text)
         kind = sources.kind_of(state)
         if kind is not None:
             self.source_box.setVisible(True)
@@ -319,6 +355,15 @@ class InspectorPanel(QWidget):
         if current is not None:
             self.section_box.setCurrentText(current.name)
         self.section_box.blockSignals(False)
+
+    def _write_sign(self, side: str) -> None:
+        """A sign's line edited: write the side's text (only when it changed)."""
+        if self._pos is None or self._document is None:
+            return
+        be = self._document.level.get_block_entity(self._pos, create=False)
+        lines = [edit.text() for edit in self.sign_lines[side]]
+        if isinstance(be, SignBlockEntity) and be.lines(side) != lines:
+            self.sign_requested.emit(self._pos, side, lines)
 
     def _rebuild(self, state: BlockState | None) -> None:
         while self.form.rowCount():

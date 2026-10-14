@@ -852,3 +852,22 @@ def test_why_tab_and_heat_view(app: object) -> None:
     assert document.tick == 0
     document.dirty = False
     window.close()
+
+
+def test_sign_text_typed_in_the_inspector(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+    from redsim.world.blocks.sign import SignBlockEntity
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("oak_sign"))
+    window._select((0, 1, 0))
+    inspector = window.inspector
+    assert inspector.sign_box.isVisibleTo(inspector)
+    inspector.sign_lines["front"][0].setText("Hello")
+    inspector.sign_lines["front"][0].editingFinished.emit()
+    entity = document.level.get_block_entity((0, 1, 0))
+    assert isinstance(entity, SignBlockEntity) and entity.front[0] == "Hello"
+    window.viewport.update()  # the text is drawn on the board (no crash)
+    document.dirty = False
+    window.close()

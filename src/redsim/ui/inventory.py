@@ -114,7 +114,10 @@ INVENTORY = Folder(
                 "minecraft:smooth_stone_slab",
             ),
         ),
-        Folder("Special", ("minecraft:glass", "minecraft:glowstone", "minecraft:bedrock")),
+        Folder(
+            "Special",
+            ("minecraft:glass", "minecraft:glowstone", "minecraft:bedrock", "minecraft:oak_sign"),
+        ),
     ),
 )
 

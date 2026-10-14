@@ -211,6 +211,9 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
             inspector.hit_requested.connect(self._projectile_hit)
             inspector.plate_requested.connect(self._plate_visitors)
             inspector.contents_requested.connect(self._set_container_slot)
+            inspector.sign_requested.connect(
+                lambda pos, side, lines: self._edit(self.document.set_sign_text, pos, side, lines)
+            )
             inspector.apply_requested.connect(self._apply_state)
             inspector.source_requested.connect(self._set_source)
             inspector.page_requested.connect(self._turn_page)

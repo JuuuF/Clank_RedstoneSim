@@ -15,6 +15,7 @@ import numpy as np
 from redsim.core.direction import Direction
 from redsim.world.block import BlockState
 from redsim.world.blocks.redstone_wire import PROPERTY_BY_DIRECTION
+from redsim.world.blocks.sign import ROTATION, SignBlock, WallSignBlock
 from redsim.world.properties import (
     ATTACH_FACE,
     BITES,
@@ -236,7 +237,27 @@ def block_boxes(state: BlockState) -> list[Box]:
     if block_id == "minecraft:lectern":
         model = _lectern(state.get(HAS_BOOK), state.get(POWERED))
         return face_horizontally(model, state.get(HORIZONTAL_FACING))
+    if isinstance(state.block, SignBlock):
+        return _sign(state)
     return full(UNKNOWN)
+
+
+SIGN_WOOD = rgb(0.62, 0.47, 0.30)
+_SIGN_FACINGS = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.EAST)
+
+
+def _sign(state: BlockState) -> list[Box]:
+    """A sign's board (and post), as in the game's sign models; a standing sign turns to
+    the nearest quarter (its text is drawn at the exact angle, ``ui/sign_text.py``)."""
+    if isinstance(state.block, WallSignBlock):  # north-facing: against the south wall
+        board = [Box((0, 4.33, 14.33), (16, 12.33, 15.67), SIGN_WOOD)]
+        return face_horizontally(board, state.get(HORIZONTAL_FACING))
+    model = [
+        Box((7.33, 0, 7.33), (8.67, 9.33, 8.67), SIGN_WOOD),
+        Box((0, 9.33, 7.33), (16, 17.33, 8.67), SIGN_WOOD),
+    ]
+    facing = _SIGN_FACINGS[round(state.get(ROTATION) / 4) % 4]
+    return face_horizontally(model, facing)
 
 
 BARREL_WOOD = rgb(0.52, 0.38, 0.22)
