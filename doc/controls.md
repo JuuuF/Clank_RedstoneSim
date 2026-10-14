@@ -222,7 +222,9 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 
 The camera orbits a pivot point, drawn as an orange cross and ring on top of everything.
 Zooming, wheel layer steps and focusing (F) glide smoothly instead of jumping; the build
-and paste layer follow the new height at once.
+and paste layer follow the new height at once. Resizing the 3D view (the window or the
+panels beside or below it) keeps the scale: a narrower or lower view shows less at that
+side, a bigger one more.
 
 | Input | Effect |
 |---|---|

@@ -1041,3 +1041,28 @@ def test_double_chest_contents_show_both_halves(app: object) -> None:
     assert grid.first == 0 and 27 in grid.dimmed and 0 not in grid.dimmed
     document.dirty = False
     window.close()
+
+
+def test_resizing_the_viewport_crops_the_view(app: object) -> None:
+    """A block keeps its size on screen when the viewport gets narrower or lower: the view
+    loses some of its edge instead of squeezing more in."""
+    from redsim.ui.camera import Camera
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1000, 700)
+    window.show()
+    QtWidgets.QApplication.processEvents()
+    viewport = window.viewport
+    viewport.camera = Camera(pivot=np.array([0.0, 0.0, 0.0]), distance=10.0, pitch=20.0)
+    a, b = np.array([0.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0])
+    sizes = []
+    for width, height in ((600, 400), (600, 200), (300, 400)):
+        viewport.setFixedSize(width, height)
+        QtWidgets.QApplication.processEvents()
+        assert (viewport.width(), viewport.height()) == (width, height)
+        sizes.append(float(np.linalg.norm(viewport._screen_vector(a, b))))
+    assert sizes[1] == pytest.approx(sizes[0], rel=1e-6)
+    assert sizes[2] == pytest.approx(sizes[0], rel=1e-6)
+    window.document.dirty = False
+    window.close()

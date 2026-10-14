@@ -113,9 +113,10 @@ class Camera:
         return m
 
     def projection_matrix(
-        self, aspect: float, near: float = 0.05, far: float = 1000.0
+        self, aspect: float, near: float = 0.05, far: float = 1000.0, lens: float = 1.0
     ) -> np.ndarray:
-        f = 1.0 / math.tan(math.radians(self.fov) / 2)
+        """``lens`` > 1 narrows the field of view by that factor (the viewport's ``lens``)."""
+        f = lens / math.tan(math.radians(self.fov) / 2)
         m = np.zeros((4, 4))
         m[0, 0] = f / aspect
         m[1, 1] = f
@@ -125,10 +126,11 @@ class Camera:
         return m
 
     def ray_through(
-        self, ndc_x: float, ndc_y: float, aspect: float
+        self, ndc_x: float, ndc_y: float, aspect: float, lens: float = 1.0
     ) -> tuple[np.ndarray, np.ndarray]:
         """World-space ray (origin, direction) through normalized device coordinates."""
-        inverse = np.linalg.inv(self.projection_matrix(aspect) @ self.view_matrix())
+        projection = self.projection_matrix(aspect, lens=lens)
+        inverse = np.linalg.inv(projection @ self.view_matrix())
         near = inverse @ np.array([ndc_x, ndc_y, -1.0, 1.0])
         far = inverse @ np.array([ndc_x, ndc_y, 1.0, 1.0])
         near, far = near[:3] / near[3], far[:3] / far[3]

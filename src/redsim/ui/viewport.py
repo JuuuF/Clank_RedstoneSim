@@ -61,6 +61,7 @@ from redsim.ui.view_common import (
     BUILD,
     DOUBLE_SHIFT_SECONDS,
     DRAG_THRESHOLD,
+    FOV_SCREEN_SHARE,
     FRAME_INTERVAL_MS,
     GLIDE_SECONDS,
     GRID_ALPHA,
@@ -398,6 +399,16 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         ]
         return min(tops) if tops else None
 
+    @property
+    def lens(self) -> float:
+        """How much the camera's field of view narrows for this viewport's height (see
+        ``FOV_SCREEN_SHARE``): resizing crops or widens the view, it never rescales it."""
+        screen = self.screen()
+        reference = screen.availableGeometry().height() if screen is not None else 0
+        if reference <= 0:
+            return 1.0
+        return reference * FOV_SCREEN_SHARE / max(self.height(), 1)
+
     def resizeGL(self, width: int, height: int) -> None:
         # The same mouse position now casts a different ray: retarget the previews.
         self._update_build_ghost()
@@ -467,7 +478,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         ratio = self.devicePixelRatioF()
         width, height = int(self.width() * ratio), int(self.height() * ratio)
         aspect = max(width, 1) / max(height, 1)
-        mvp = self.camera.projection_matrix(aspect) @ self.camera.view_matrix()
+        mvp = self.camera.projection_matrix(aspect, lens=self.lens) @ self.camera.view_matrix()
         prefs = self.preferences
         renderer.draw(
             mvp,
@@ -696,7 +707,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         elif action == "camera.pan":
             # The world follows the mouse: blocks per pixel at the pivot's distance.
             scale = 2 * camera.distance * math.tan(math.radians(camera.fov) / 2)
-            scale /= max(self.height(), 1)
+            scale /= max(self.height(), 1) * self.lens
             before = np.asarray(camera.pivot, dtype=float)
             camera.pan(dy * scale, -dx * scale)
             self._shift_glide(np.asarray(camera.pivot, dtype=float) - before)
@@ -769,12 +780,15 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         width, height = max(self.width(), 1), max(self.height(), 1)
         ndc_x = 2.0 * point.x() / width - 1.0
         ndc_y = 1.0 - 2.0 * point.y() / height
-        return self.camera.ray_through(ndc_x, ndc_y, width / height)
+        return self.camera.ray_through(ndc_x, ndc_y, width / height, self.lens)
 
     def _screen_vector(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """On-screen vector (pixels) from world point ``a`` to ``b``."""
         width, height = max(self.width(), 1), max(self.height(), 1)
-        mvp = self.camera.projection_matrix(width / height) @ self.camera.view_matrix()
+        mvp = (
+            self.camera.projection_matrix(width / height, lens=self.lens)
+            @ self.camera.view_matrix()
+        )
         points = []
         for world in (a, b):
             clip = mvp @ np.array([*world, 1.0])

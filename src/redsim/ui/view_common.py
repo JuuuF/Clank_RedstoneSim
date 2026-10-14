@@ -40,6 +40,12 @@ SIGN_TEXT_DISTANCE = 16.0  # blocks: sign text shows (and fades out) within this
 ORBIT_DEGREES_PER_PIXEL = 0.3
 
 
+#: The camera's field of view fits a viewport this share of the screen's height. The view
+#: keeps its scale when the viewport is resized: a narrower or a lower viewport shows less
+#: at that side instead of squeezing more in (owner, 2026-10-14).
+FOV_SCREEN_SHARE = 0.7
+
+
 #: Trackpad scrolling: pixels of finger travel per zoom notch and per block up/down.
 TRACKPAD_PIXELS_PER_NOTCH = 40.0
 

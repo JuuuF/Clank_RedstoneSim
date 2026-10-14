@@ -198,7 +198,10 @@ class TextOverlays:
         if not positions:
             return
         width, height = max(view.width(), 1), max(view.height(), 1)
-        mvp = view.camera.projection_matrix(width / height) @ view.camera.view_matrix()
+        mvp = (
+            view.camera.projection_matrix(width / height, lens=view.lens)
+            @ view.camera.view_matrix()
+        )
         eye = np.asarray(view.camera.position, dtype=float)
         for pos in positions:
             state = level.blocks.get(pos)
@@ -233,7 +236,10 @@ class TextOverlays:
         if not pinned:
             return
         width, height = max(view.width(), 1), max(view.height(), 1)
-        mvp = view.camera.projection_matrix(width / height) @ view.camera.view_matrix()
+        mvp = (
+            view.camera.projection_matrix(width / height, lens=view.lens)
+            @ view.camera.view_matrix()
+        )
         eye = np.asarray(view.camera.position, dtype=float)
         line = theme.line_height(2)
         for pos, keys in pinned.items():
@@ -275,7 +281,10 @@ class TextOverlays:
     def _draw_info_labels(self, painter: QPainter) -> None:
         view = cast("Viewport", self)
         width, height = max(view.width(), 1), max(view.height(), 1)
-        mvp = view.camera.projection_matrix(width / height) @ view.camera.view_matrix()
+        mvp = (
+            view.camera.projection_matrix(width / height, lens=view.lens)
+            @ view.camera.view_matrix()
+        )
         line = theme.line_height(2)
         rects: list[tuple[QRect, Pos]] = []
         for point, text, kind, pos, alpha in view._labels():

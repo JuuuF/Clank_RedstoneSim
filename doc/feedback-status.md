@@ -33,6 +33,9 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Block popup** (2026-10-14): values pin to the block as a live tag in the view; the
   popup no longer grabs keys and clicks, so the timeline works while it is open; double
   chests show both halves, the other half greyed ([[controls]]).
+- **Viewport resizing** (2026-10-14, owner: a lower viewport showed more, not less): the
+  view keeps its scale in both directions; the 70° field of view fits a viewport 0.7 of
+  the screen's height (`FOV_SCREEN_SHARE`, `Viewport.lens`).
 
 - Save as Minecraft world (a copy of the save), 2026-10-13 ([[world-import]] phase 4).
 - **Select World screen** like the game's (owner: the file dialog was slow): Minecraft
