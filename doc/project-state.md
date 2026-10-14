@@ -126,14 +126,16 @@ page is the summary to start from.*
 
 ## Verification status
 
-- `python -m pytest`: **475 tests pass** (2026-10-14; also on the compiled build), including
+- `python -m pytest`: **522 tests pass** (2026-10-14, after the open-list pass; also on the
+  compiled build), including
   the JDK oracle, the 107 game-recording replays (47 named recordings, 60 random),
   randomized history checks (replay, save/open, undo/redo), every window action in every
   mode, save round trips, history rewriting,
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
   directory (`tests/conftest.py`).
-- Real-game comparisons (`python -m tools.gameserver.run`): 46 of 46 named scenarios match
+- Real-game comparisons (`python -m tools.gameserver.run`): 48 of 48 named scenarios match (signs and
+  composters added 2026-10-14); 46 of them
   in one fresh full run (2026-10-11); the 40 random circuits were re-recorded after hoppers
   joined the palette and all match. The harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay, the hopper 7-tick

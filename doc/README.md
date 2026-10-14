@@ -20,8 +20,9 @@ To click through the simulator: [[tour]].
   wire, repeater, comparator, barrel, lectern, cake, pistons, slime and honey, observers,
   rails (plain, powered, activator), target blocks, hoppers, note blocks, copper bulbs,
   droppers, dispensers, chests (double, trapped) and pressure plates ([[mechanics/index]]).
-- 475 tests pass. A sandboxed 26.3 server confirms 46 of 46 named scenarios and 60 random
-  circuits tick for tick, including container contents and hopper cooldowns.
+- 522 tests pass. A sandboxed 26.3 server confirms 48 of 48 named scenarios and 60 random
+  circuits tick for tick, including container contents and hopper cooldowns, and opens
+  the simulator's written world copies and structure files correctly.
 - The 3D editor (`redsim`): eight rounds of owner feedback are in ([[ui-direction]]): tick
   0 as the build state with keyframe rows (ADR-022), the game's own block models and
   textures read from the supplied jar (ADR-023), a dark Minecraft-meets-Blender look with
