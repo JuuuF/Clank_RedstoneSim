@@ -21,6 +21,10 @@ from typing import Any
 import numpy as np
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, Qt, QTimer, Signal
 from PySide6.QtGui import (
+    QDragEnterEvent,
+    QDragLeaveEvent,
+    QDragMoveEvent,
+    QDropEvent,
     QFocusEvent,
     QImage,
     QKeyEvent,
@@ -48,6 +52,7 @@ from redsim.ui.geometry import (
 from redsim.ui.gizmos import Hotspot
 from redsim.ui.keymap import HOLD, Keymap
 from redsim.ui.pacing import RateMeter
+from redsim.ui.panel_circuit import PREFAB_MIME
 from redsim.ui.preferences import Preferences
 from redsim.ui.renderer import CLOUD_TEXTURE, GROUND_TEXTURE, Renderer
 from redsim.ui.selection_tools import (
@@ -101,6 +106,8 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
     #: dropped): ``floating`` / ``pending_stack``; Enter places it.
     floating_changed = Signal()
     message_requested = Signal(str)  # a short note for the status bar
+    #: A prefab dragged in from the Prefabs list (its name): the window starts its paste.
+    prefab_dragged = Signal(str)
     transform_requested = Signal(int, object)  # quarter turns, mirror axis | None
     gizmo_hover_changed = Signal(object)  # Hotspot | None
     paste_requested = Signal(object)  # Pos (minimum corner)
@@ -145,6 +152,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         self.floating: Floating | None = None  # the blocks' pending move/turn/flip/copy
         self.pending_stack: _StackDrag | None = None  # copies waiting for Enter
         self._floating_mesh: tuple[Any, np.ndarray] | None = None
+        self._hidden_cache: tuple[Any, frozenset[Pos]] | None = None
         self._replaced_mesh: tuple[Any, np.ndarray] | None = None
         self._overlays: list[QWidget] = []  # widgets drawn over the bottom (add_overlay)
         #: BUILD: how the block to place is varied (R, H, Shift+H, round 8): quarter turns
@@ -218,6 +226,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         self._last_frame = time.monotonic()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
+        self.setAcceptDrops(True)  # prefabs dragged from the Prefabs list
         self.setMinimumSize(320, 240)
         #: Smooth camera (Blender-like view transitions): wheel zoom, layer steps and focus
         #: glide to their target pivot and distance instead of jumping.
@@ -446,6 +455,16 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             ]:
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
+        hidden = self._hidden_blocks()
+        if hidden != self.world_mesh.hidden:
+            # A pending move shows its blocks only where they go (owner, 2026-10-14).
+            chunks = self.world_mesh.chunks
+            for key in self.world_mesh.hide(self.document.level, hidden):
+                mesh = chunks.get(key)
+                if mesh is None:
+                    renderer.remove_chunk(key)
+                else:
+                    renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
         partial = self.tick_fraction() if self.tick_fraction is not None else 1.0
         world = self.world_mesh
         if (world.has_moving or self._moving_shown) and at_boundary:
@@ -686,6 +705,41 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         elif drag_action == "build.line":
             self._end_line()
         self.update()
+
+    # ------------------------------------------------------------------ dropped prefabs
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        """A prefab dragged in from the list: its paste preview follows the cursor."""
+        data = event.mimeData()
+        if not data.hasFormat(PREFAB_MIME):
+            event.ignore()
+            return
+        event.acceptProposedAction()
+        self._last_mouse = event.position().toPoint()
+        self.prefab_dragged.emit(bytes(data.data(PREFAB_MIME).data()).decode())
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:
+        if self.paste_preview is None:
+            event.ignore()
+            return
+        event.acceptProposedAction()
+        self._last_mouse = event.position().toPoint()
+        self._update_paste_ghost()
+
+    def dragLeaveEvent(self, event: QDragLeaveEvent) -> None:
+        if self.paste_preview is not None:
+            self.cancel_paste()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        """Dropped: placed where the preview was, as a group."""
+        self._last_mouse = event.position().toPoint()
+        target = self.paste_target()
+        if self.paste_preview is None or target is None:
+            event.ignore()
+            return
+        event.acceptProposedAction()
+        self.cancel_paste()
+        self.paste_requested.emit(target)
+        self.setFocus()
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         if self.preferences.trackpad_navigation and _from_trackpad(event):

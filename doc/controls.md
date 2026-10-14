@@ -186,8 +186,10 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
      on the blocks inside. Moving, copying, turning, flipping and stacking are first a
      **pending preview**: the blocks pulse where they would go (a white box around them),
      blocks they would overwrite are marked red, and the hint bar says how many. Keep
-     changing it (drag again, R, H, the wheel while dragging lifts it); **Enter places**
-     it as one edit and one undo step, **Esc cancels** it. Esc on a confirmed selection
+     changing it (drag again, R, H, the wheel while dragging lifts it); while a move is
+     pending, the blocks are shown only at their new place (a copy leaves them). **Enter
+     places** it as one edit and one undo step, **Esc cancels** it. Undo and redo take
+     the selection boxes along with the blocks. Esc on a confirmed selection
      goes back to editing its boxes.
 - **Gizmos (Blender-like):** while the selection is edited, each face has a slim resize
   arrow, colored by axis (X red, Y green, Z blue; yellow under the cursor): drag it to move
@@ -208,6 +210,11 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   `/clone … replace force` (the copy may overlap the original). The selection follows the
   moved or copied blocks. Moves, turns and flips made before one Enter add up
   (`editor/floating.py`) and are placed by a single edit.
+- **Prefabs:** Circuit → Prefabs shows a small picture of each prefab (the inventory's
+  isometric view). Drag one into the 3D view to place it (the preview follows the
+  cursor until you drop it), or double-click it / press Paste to paste it like Ctrl+V.
+  A placed prefab (or imported schematic) becomes a group named after it, with its
+  outline (Circuit → Groups).
 - **Paste (Trackmania-style):** Ctrl+C copies the box; Ctrl+V shows the clipboard as a
   ghost centered under the cursor on the camera's working layer (the pivot's height, shown
   in the badge). Shift+wheel moves the layer up or down (the wheel zooms while pasting), so

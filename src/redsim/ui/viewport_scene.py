@@ -451,6 +451,19 @@ class SceneGeometry:
         vertices[:, :3] += np.array(ghost[1], dtype=np.float32)
         renderer.upload_ghost(vertices)
 
+    def _hidden_blocks(self) -> frozenset[Pos]:
+        """The blocks a pending move takes away from where they are (a copy leaves them)."""
+        view = cast("Viewport", self)
+        floating = view.floating
+        if floating is None or floating.copy or not floating.changed:
+            return frozenset()
+        key = (floating.regions, id(view.document.level), view.document.revision)
+        if view._hidden_cache is None or view._hidden_cache[0] != key:
+            blocks_ = view.document.level.blocks
+            cells = frozenset(pos for pos in floating.cells() if pos in blocks_)
+            view._hidden_cache = (key, cells)
+        return view._hidden_cache[1]
+
     def _floating_key(self) -> tuple[Any, ...] | None:
         """What the pending blocks' preview depends on, apart from its shift."""
         view = cast("Viewport", self)

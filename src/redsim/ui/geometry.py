@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -312,11 +312,18 @@ class Mesher:
         self._models[state] = model
         return model
 
-    def build(self, level: Level, positions: Iterable[Pos], moving: bool = True) -> Mesh:
+    def build(
+        self,
+        level: Level,
+        positions: Iterable[Pos],
+        moving: bool = True,
+        hidden: frozenset[Pos] = frozenset(),
+    ) -> Mesh:
         """Mesh of the blocks at ``positions`` (faces against full neighbors are culled).
         With ``moving=False`` moving pistons are left out and listed in ``Mesh.moving``
-        (the viewport draws them apart, every frame)."""
-        states = level.blocks
+        (the viewport draws them apart, every frame). ``hidden`` blocks are left out as if
+        they were air (a pending move shows them at their new place only)."""
+        states: Any = _Without(level.blocks, hidden) if hidden else level.blocks
         models = self._models
         is_full = self._is_full
         o_ids: list[int] = []
@@ -560,6 +567,17 @@ def ghost_mesh(
     return rows
 
 
+class _Without:
+    """A block map lookup that leaves some positions out (``Mesher.build(hidden=…)``)."""
+
+    def __init__(self, states: dict[Pos, BlockState], hidden: frozenset[Pos]) -> None:
+        self.states = states
+        self.hidden = hidden
+
+    def get(self, pos: Pos, default: Any = None) -> Any:
+        return default if pos in self.hidden else self.states.get(pos, default)
+
+
 class ChunkedMesh:
     """Per-chunk meshes of one world, rebuilt only where something changed.
 
@@ -578,8 +596,11 @@ class ChunkedMesh:
         self._level: Level | None = None  # the level ``_known`` follows
         self._members: dict[ChunkKey, set[Pos]] = {}
         self._moving: dict[ChunkKey, list[Pos]] = {}  # moving pistons per chunk
+        #: Blocks left out of the meshes (the source of a pending move, see ``hide``).
+        self.hidden: frozenset[Pos] = frozenset()
 
     def reset(self) -> None:
+        self.hidden = frozenset()
         self.chunks.clear()
         self._known = {}
         self._level = None
@@ -631,6 +652,25 @@ class ChunkedMesh:
                 dirty.add(key)
                 for dx, dy, dz in _STEPS:
                     dirty.add(chunk_of((x + dx, y + dy, z + dz)))
+        self._rebuild(level, dirty)
+        return dirty
+
+    def hide(self, level: Level, hidden: frozenset[Pos]) -> set[ChunkKey]:
+        """Leave ``hidden`` blocks out (and show the ones no longer hidden); returns the
+        chunks made again."""
+        if hidden == self.hidden:
+            return set()
+        changed = hidden ^ self.hidden
+        self.hidden = hidden
+        dirty: set[ChunkKey] = set()
+        for x, y, z in changed:
+            dirty.add(chunk_of((x, y, z)))
+            for dx, dy, dz in _STEPS:
+                dirty.add(chunk_of((x + dx, y + dy, z + dz)))
+        self._rebuild(level, dirty)
+        return dirty
+
+    def _rebuild(self, level: Level, dirty: set[ChunkKey]) -> None:
         for key in dirty:
             positions = self._members.get(key)
             if not positions:
@@ -638,13 +678,12 @@ class ChunkedMesh:
                 self.chunks.pop(key, None)
                 self._moving.pop(key, None)
                 continue
-            mesh = self.mesher.build(level, positions, moving=False)
+            mesh = self.mesher.build(level, positions, moving=False, hidden=self.hidden)
             self.chunks[key] = mesh
             if mesh.moving:
                 self._moving[key] = mesh.moving
             else:
                 self._moving.pop(key, None)
-        return dirty
 
 
 def _triangles(lo: np.ndarray, hi: np.ndarray, direction: Direction, color: Color) -> np.ndarray:

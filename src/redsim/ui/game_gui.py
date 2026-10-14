@@ -152,7 +152,13 @@ class GameButton(QPushButton):
 
     def sizeHint(self) -> QSize:
         hint = super().sizeHint()
-        return QSize(hint.width(), max(hint.height(), 20 * SCALE))
+        width = hint.width()
+        if available() and theme.PixelFont.load() is not None:  # the pixel text, padded
+            width = max(width, theme.text_width(self.text(), SCALE) + 12 * SCALE)
+        return QSize(width, max(hint.height(), 20 * SCALE))
+
+    def minimumSizeHint(self) -> QSize:
+        return self.sizeHint()
 
     def paintEvent(self, event: QPaintEvent) -> None:
         if not available():

@@ -222,6 +222,7 @@ class RegionActions:
         else:
             moved = list(floating.boxes())
             viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
+            view.document.note_selection(floating.regions, moved)
             verb = "Copied" if floating.copy else "Placed"
             view._message(f"{verb} the blocks (no block updates).")
         view._changed()
@@ -235,8 +236,10 @@ class RegionActions:
 
     def _stack_region(self, region: Region, step: Pos, count: int) -> None:
         view = cast("MainWindow", self)
+        before = view.viewport.all_regions()
         try:
             view.viewport.region = view.document.stack_region(region, step, count)
+            view.document.note_selection(before, view.viewport.all_regions())
         except EditError as exc:
             view._message(str(exc), error=True)
         else:
@@ -275,6 +278,8 @@ class RegionActions:
         """Circuit → Prefabs → Paste: the prefab follows the cursor; a click places it as
         a group (Ctrl+V places more copies, each its own group)."""
         view = cast("MainWindow", self)
+        if name not in view.document.prefabs:
+            return
         view.document.clipboard = view.document.prefabs[name]
         view._paste_group = name
         view.viewport.begin_paste(view.document.clipboard)

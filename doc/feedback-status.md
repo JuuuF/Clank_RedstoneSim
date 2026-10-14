@@ -46,7 +46,9 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   Exit tutorial brings back the world from before; the Files lesson's save and open steps
   are real steps; the Lessons menu and button in the game look; a glint when a step is
   done ([[tutorial]]). A pasted prefab (or imported schematic) becomes a group named after
-  it; Circuit → Prefabs → Paste starts the paste at once.
+  it; Circuit → Prefabs → Paste starts the paste at once. Prefabs show a small
+  isometric picture and can be dragged into the view. A pending move hides the blocks
+  at their old place; undo and redo of a selection move take the boxes along.
 - **Viewport resizing** (2026-10-14, owner: a lower viewport showed more, not less): the
   view keeps its scale in both directions; the 70° field of view fits a viewport 0.7 of
   the screen's height (`FOV_SCREEN_SHARE`, `Viewport.lens`).

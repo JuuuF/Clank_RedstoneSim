@@ -269,3 +269,124 @@ def item_pixmap(item_id: str, size: int = 32) -> QPixmap:
     painter.fillRect(size // 4, size // 4, size // 2, size // 2, QColor("#8e8f96"))
     painter.end()
     return pixmap
+
+
+#: Prefab previews made so far, by their blocks (rendering takes a moment).
+_PREFAB_PREVIEWS: dict[Any, QPixmap] = {}
+#: Larger prefabs are drawn from their outermost blocks only (the hidden inside costs time).
+PREVIEW_MAX_BLOCKS = 3000
+
+
+def prefab_pixmap(prefab: Any, size: int = 64) -> QPixmap:
+    """A prefab in the isometric view of the inventory icons (textured with the game's
+    assets, else the colored box models), scaled to fit ``size``."""
+    states = {
+        (dx, dy, dz): blocks.parse_state(text)
+        for dx, dy, dz, text, _ in prefab.blocks
+        if not text.startswith("minecraft:air")
+    }
+    key = (size, tuple(sorted((pos, repr(state)) for pos, state in states.items())))
+    cached = _PREFAB_PREVIEWS.get(key)
+    if cached is not None:
+        return cached
+    pixmap = _render_prefab(states, size)
+    if len(_PREFAB_PREVIEWS) > 200:
+        _PREFAB_PREVIEWS.clear()
+    _PREFAB_PREVIEWS[key] = pixmap
+    return pixmap
+
+
+_VISIBLE = {Direction.UP: (0, 1, 0), Direction.EAST: (1, 0, 0), Direction.SOUTH: (0, 0, 1)}
+
+
+def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) -> QPixmap:
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    if not states:
+        return pixmap
+    if len(states) > PREVIEW_MAX_BLOCKS:  # keep the blocks with an open side towards the view
+        states = {
+            pos: state
+            for pos, state in states.items()
+            if any(
+                (pos[0] + s[0], pos[1] + s[1], pos[2] + s[2]) not in states
+                for s in _VISIBLE.values()
+            )
+        }
+    assets = Assets.find()
+    from redsim.ui.geometry import tint_color
+
+    full = {pos for pos, state in states.items() if state.is_collision_shape_full_block()}
+    #: Depth, corners, the quad (None: a colored box face), its tint or shade, box color.
+    faces: list[tuple[float, list[tuple[float, float, float]], Any, Any, Any]] = []
+    for (bx, by, bz), state in states.items():
+        if assets is not None:
+            quads = assets.block_quads(state)
+            tint = tint_color(state, 0)
+            for quad in quads:
+                step = _VISIBLE.get(quad.facing)
+                if step is None:
+                    continue
+                if quad.cull is not None and (bx + step[0], by + step[1], bz + step[2]) in full:
+                    continue
+                corners = [(x + bx, y + by, z + bz) for x, y, z in quad.corners]
+                depth = sum(c[0] + c[1] + c[2] for c in corners) / 4
+                faces.append((depth, corners, quad, tint, None))
+        else:
+            for box in block_boxes(state):
+                for corners, shade in _faces(box):
+                    moved = [(x + bx, y + by, z + bz) for x, y, z in corners]
+                    depth = sum(c[0] + c[1] + c[2] for c in moved) / 4
+                    faces.append((depth, moved, None, shade, box.color))
+    points = [_project(*c) for _, corners, *_ in faces for c in corners]
+    if not points:
+        return pixmap
+    left = min(p.x() for p in points)
+    right = max(p.x() for p in points)
+    top = min(p.y() for p in points)
+    bottom = max(p.y() for p in points)
+    scale = size * 0.94 / max(right - left, bottom - top, 1e-6)
+    base = (
+        QTransform()
+        .translate(size / 2, size / 2)
+        .scale(scale, scale)
+        .translate(-(left + right) / 2, -(top + bottom) / 2)
+    )
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+    shades = {Direction.UP: 1.0, Direction.EAST: 0.78, Direction.SOUTH: 0.6}
+    for _, corners, quad, extra, color in sorted(faces, key=lambda face: face[0]):
+        target = QPolygonF([_project(*corner) for corner in corners])
+        if quad is None:  # a colored box face
+            r, g, b, a = color
+            painter.setTransform(base)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(
+                QColor.fromRgbF(min(1.0, r * extra), min(1.0, g * extra), min(1.0, b * extra), a)
+            )
+            painter.drawPolygon(target)
+            continue
+        image = _texture_image(quad.texture)
+        if image is None:
+            continue
+        if quad.tint >= 0:
+            image = _tinted(image, extra)
+        source = QPolygonF([QPointF(u * image.width(), v * image.height()) for u, v in quad.uvs])
+        mapping = QTransform()
+        if not QTransform.quadToQuad(source, target, mapping):
+            continue
+        painter.save()
+        painter.setTransform(mapping * base)
+        clip = QPainterPath()
+        clip.addPolygon(source)
+        painter.setClipPath(clip)
+        painter.drawImage(0, 0, image)
+        painter.restore()
+        shade = shades[quad.facing] if quad.shade else 1.0
+        if shade < 1.0:
+            painter.setTransform(base)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(0, 0, 0, int(255 * (1 - shade))))
+            painter.drawPolygon(target)
+    painter.end()
+    return pixmap

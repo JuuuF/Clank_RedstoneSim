@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from redsim.editor.document_common import edit_row
 from redsim.editor.monitor import monitor_value
@@ -39,8 +39,17 @@ class HistoryOps:
         current = state = view._history_state()
         for _ in range(min(count, len(view._undo))):
             previous = view._undo.pop()
-            view._redo.append(replace(state, label=previous.label, shift=previous.shift))
+            view._redo.append(
+                replace(
+                    state,
+                    label=previous.label,
+                    shift=previous.shift,
+                    selection=previous.selection,
+                )
+            )
             view._shift_markers(previous.shift)
+            if previous.selection is not None:
+                view.restored_selection = previous.selection[0]
             state = previous
         # Keep the simulated length: the history is re-run without the edits.
         view._rebuild(replace(state, end_tick=max(state.end_tick, current.end_tick)))
@@ -51,8 +60,17 @@ class HistoryOps:
         if not view._redo or not view.can_edit:
             return False
         state = view._redo.pop()
-        view._undo.append(replace(view._history_state(), label=state.label, shift=state.shift))
+        view._undo.append(
+            replace(
+                view._history_state(),
+                label=state.label,
+                shift=state.shift,
+                selection=state.selection,
+            )
+        )
         view._shift_markers(-state.shift)
+        if state.selection is not None:
+            view.restored_selection = state.selection[1]
         view._rebuild(state)
         return True
 
@@ -73,6 +91,12 @@ class HistoryOps:
         view = cast("Document", self)
         if delta:
             view.markers = {tick + delta: name for tick, name in view.markers.items()}
+
+    def note_selection(self, before: Iterable[Any], after: Iterable[Any]) -> None:
+        """Remember the selection boxes around the last edit (see ``HistoryState``)."""
+        view = cast("Document", self)
+        if view._undo:
+            view._undo[-1] = replace(view._undo[-1], selection=(tuple(before), tuple(after)))
 
     @property
     def undo_labels(self) -> list[str]:
@@ -314,6 +338,9 @@ class HistoryState:
     label: str = ""
     #: Ticks that edit moved tick 0 by ("Set tick 0 here"): markers move back on undo.
     shift: int = 0
+    #: The editor's selection boxes before and after that edit (a move, turn or stack of
+    #: the selection), so undo and redo take the selection along with the blocks.
+    selection: tuple[tuple[Any, ...], tuple[Any, ...]] | None = None
 
 
 @dataclass(frozen=True)

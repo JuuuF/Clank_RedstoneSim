@@ -17,7 +17,7 @@ from functools import cache
 from typing import Any
 
 from PySide6.QtCore import QPoint, QRect, Qt, QTimer, QVariantAnimation, Signal
-from PySide6.QtGui import QColor, QImage, QPainter, QPaintEvent, QPolygon
+from PySide6.QtGui import QColor, QImage, QPainter, QPaintEvent, QPen, QPolygon
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -52,6 +52,7 @@ DONE_MS = 1100
 #: The success glint: how long it plays, and the size of one glint texture tile.
 GLINT_MS = 1000
 GLINT_TILE = 96
+GLINT_COLOR = QColor(150, 60, 255)
 #: The Lessons menu, drawn like the game's tooltips (near-black, purple frame).
 MENU_STYLE = (
     "QMenu { background: rgba(16, 0, 16, 240); color: #ffffff; border: 2px solid #28007f;"
@@ -76,13 +77,31 @@ _TOKEN = re.compile(r"\{(key|cap):([^}]+)\}")
 
 @cache
 def _glint_image() -> QImage | None:
-    """The game's item glint texture, darkened so its sum stays a shimmer."""
+    """The game's item glint texture as purple streaks: its brightness becomes the
+    opacity (on the light card, adding it like the game's shader would only wash out)."""
     data = Assets.find()
-    raw = (
-        data.file_bytes("assets/minecraft/textures/misc/enchanted_glint_item.png") if data else None
-    )
+    path = "assets/minecraft/textures/misc/enchanted_glint_item.png"
+    raw = data.file_bytes(path) if data else None
     image = QImage.fromData(raw) if raw else QImage()
-    return None if image.isNull() else image.convertToFormat(QImage.Format.Format_ARGB32)
+    if image.isNull():
+        return None
+    image = image.convertToFormat(QImage.Format.Format_ARGB32)
+    out = QImage(image.size(), QImage.Format.Format_ARGB32)
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            light = max(color.red(), color.green(), color.blue()) * color.alphaF()
+            out.setPixelColor(
+                x,
+                y,
+                QColor(
+                    GLINT_COLOR.red(),
+                    GLINT_COLOR.green(),
+                    GLINT_COLOR.blue(),
+                    min(170, round(max(0.0, light - 110) * 1.5)),
+                ),
+            )
+    return out
 
 
 def progress_path() -> Any:
@@ -168,7 +187,6 @@ class TutorialCard(QWidget):
             action = menu.addAction(f"{index + 1}. {lesson.title}")
             action.triggered.connect(lambda _=False, i=index: self.go(i))
         self.lessons.setMenu(menu)
-        self.lessons.setMinimumWidth(96)
         buttons.addWidget(self.lessons)
         buttons.addStretch(1)
         self.back = self._button("Back", self._back)
@@ -304,18 +322,25 @@ class TutorialCard(QWidget):
         painter.end()
 
     def _paint_glint(self, painter: QPainter, rect: QRect) -> None:
-        """The enchantment glint (``misc/enchanted_glint_item``, added like the game's
-        glint shader), sliding diagonally and fading in and out, over a quick white
-        flash at the start."""
+        """The enchantment glint (``misc/enchanted_glint_item``) sliding diagonally and
+        fading in and out, after a quick purple glow around the card."""
         t = self.glint
-        flash = max(0.0, 1.0 - t * 5.0) * 0.55
-        if flash:
-            painter.fillRect(rect, QColor(255, 255, 255, round(255 * flash)))
         strength = math.sin(math.pi * t)
+        glow = max(0.0, 1.0 - t * 2.5)  # a purple glow around the card, fading out first
+        if glow:
+            painter.fillRect(rect, QColor(200, 150, 255, round(90 * glow)))
+            pen = QPen(
+                QColor(
+                    GLINT_COLOR.red(), GLINT_COLOR.green(), GLINT_COLOR.blue(), round(255 * glow)
+                )
+            )
+            pen.setWidth(4)
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(rect.adjusted(1, 1, -2, -2))
         painter.save()
         painter.setClipRect(rect)
-        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Plus)
-        painter.setOpacity(min(1.0, 1.3 * strength))
+        painter.setOpacity(0.85 * strength)
         image = _glint_image()
         if image is not None:
             size = GLINT_TILE

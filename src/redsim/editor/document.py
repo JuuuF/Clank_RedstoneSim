@@ -72,6 +72,9 @@ class Document(HistoryOps, SequenceOps):
     #: The Minecraft save this document streams chunks from (``mcworld.stream.WorldStream``;
     #: not saved).
     world: Any = None
+    #: Selection boxes an undo or redo took back (``HistoryState.selection``); the editor
+    #: shows them and clears this (not saved).
+    restored_selection: Any = None
     _undo: list[HistoryState] = field(default_factory=list)
     _redo: list[HistoryState] = field(default_factory=list)
     _batch_depth: int = 0

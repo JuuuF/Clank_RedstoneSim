@@ -840,8 +840,12 @@ def test_several_selections_move_and_turn_together(app: object) -> None:
     assert document.state_at((0, 1, 0)).is_air
     window._copy()
     assert document.clipboard is not None and document.clipboard.size == (4, 1, 1)
-    document.undo()  # one undo step for the whole move
+    window._undo()  # one undo step for the whole move; the boxes go back with the blocks
     assert document.state_at((0, 1, 0)).block is blocks.REDSTONE_BLOCK
+    assert viewport.extra_regions == [Region((0, 1, 0), (0, 1, 0))]
+    assert viewport.region == Region((3, 1, 0), (3, 1, 0))
+    window._redo()
+    assert viewport.region == Region((3, 1, 2), (3, 1, 2))
     document.dirty = False
     window.close()
 
@@ -864,6 +868,22 @@ def test_a_pending_move_cancels_and_shows_what_it_would_replace(app: object) -> 
     assert len(viewport._replaced_body()) == 36  # one red box
     ghost = viewport._floating_ghost()
     assert ghost is not None and ghost[1] == (2, 0, 0) and len(ghost[0])
+    assert viewport._hidden_blocks() == frozenset({(0, 1, 0)})  # not shown twice
+    from redsim.ui.geometry import chunk_of
+
+    level, meshes = document.level, viewport.world_mesh
+    meshes.update(level)
+    key = chunk_of((0, 1, 0))
+
+    def faces() -> int:
+        mesh = meshes.chunks[key]
+        return len(mesh.opaque) + len(mesh.solid)
+
+    shown = faces()
+    meshes.hide(level, viewport._hidden_blocks())
+    assert faces() < shown  # the redstone block is left out
+    meshes.hide(level, frozenset())
+    assert faces() == shown
     window._mode_key(NORMAL)  # Esc: cancelled, nothing changed
     assert viewport.floating is None and viewport.region_confirmed
     assert document.state_at((2, 1, 0)).block is blocks.GLASS
@@ -1058,6 +1078,44 @@ def test_a_pasted_prefab_becomes_a_group(app: object) -> None:
     window._copy()  # a plain copy pastes as blocks only
     window._paste_at((0, 1, 9))
     assert len(groups) == 2
+    document.dirty = False
+    window.close()
+
+
+def test_a_prefab_dragged_into_the_view_is_placed(app: object) -> None:
+    from PySide6.QtCore import QByteArray, QMimeData, QPointF
+    from PySide6.QtGui import QDragEnterEvent, QDropEvent
+
+    from redsim.ui.camera import Camera
+    from redsim.ui.icons import prefab_pixmap
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.panel_circuit import PREFAB_MIME
+
+    window = MainWindow()
+    window.resize(1000, 700)
+    window.show()
+    document, viewport = window.document, window.viewport
+    document.setblock((0, 1, 0), blocks.parse_state("repeater[facing=east]"))
+    document.setblock((1, 1, 0), blocks.parse_state("redstone_lamp"))
+    document.save_prefab("pair", Region((0, 1, 0), (1, 1, 0)))
+    window._changed()
+    preview = prefab_pixmap(document.prefabs["pair"], 56)
+    assert not preview.toImage().isNull() and preview.toImage().pixelColor(28, 28).alpha() > 0
+    item = window.contraptions.prefab_list.item(0)
+    assert item is not None and not item.icon().isNull()  # the list shows the preview
+    viewport.camera = Camera(pivot=np.array([4.0, 1.2, 8.0]), distance=10.0, pitch=89.0)
+    data = QMimeData()
+    data.setData(PREFAB_MIME, QByteArray(b"pair"))
+    center = QPointF(viewport.width() / 2, viewport.height() / 2)
+    no_buttons = Qt.MouseButton.NoButton
+    plain = Qt.KeyboardModifier.NoModifier
+    enter = QDragEnterEvent(center.toPoint(), Qt.DropAction.CopyAction, data, no_buttons, plain)
+    viewport.dragEnterEvent(enter)
+    assert viewport.paste_preview is not None
+    viewport.dropEvent(QDropEvent(center, Qt.DropAction.CopyAction, data, no_buttons, plain))
+    assert viewport.paste_preview is None
+    group = document.groups.groups["pair"]
+    assert document.state_at(group.region.low).is_(blocks.REPEATER)
     document.dirty = False
     window.close()
 

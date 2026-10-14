@@ -281,6 +281,7 @@ class MainWindow(
         self.viewport.region_changed.connect(self._region_changed)
         self.viewport.floating_changed.connect(self._floating_changed)
         self.viewport.message_requested.connect(self._message)
+        self.viewport.prefab_dragged.connect(self._load_prefab)
         self.viewport.transform_requested.connect(self._gizmo_transform)
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
@@ -730,6 +731,11 @@ class MainWindow(
     # ------------------------------------------------------------------ refresh
     def _changed(self, running: bool = False) -> None:
         """Refresh views after any change; while running, panels refresh at a lower rate."""
+        restored, self.document.restored_selection = self.document.restored_selection, None
+        if restored:  # an undo or redo of a selection move: the boxes follow the blocks
+            viewport = self.viewport
+            viewport.floating, viewport.pending_stack = None, None
+            viewport.extra_regions, viewport.region = list(restored[:-1]), restored[-1]
         self.viewport.overlay_text = self._overlay_text(self.play_timer.isActive())
         self.viewport.refresh()
         now = time.monotonic()

@@ -108,6 +108,10 @@ class TutorialActions:
             elsewhere = "" if view.in_tutorial_world() else " · another world is open"
             bar.set_state(lesson + elsewhere, shown)
             bar.place(view.viewport)
+            if shown and card is not None and bar.geometry().intersects(card.geometry()):
+                # A narrow view: the bar goes left of the card (or below it).
+                x = card.x() - bar.width() - 8
+                bar.move(x, bar.y()) if x >= 8 else bar.move(8, card.y() + card.height() + 8)
 
     def _tutorial_step(self, step: Step) -> None:
         """A step started: move the camera to its station, if it names one (back in the

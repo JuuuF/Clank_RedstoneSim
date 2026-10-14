@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QObject, Qt, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtCore import QByteArray, QMimeData, QObject, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QDrag, QIcon
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QColorDialog,
     QHBoxLayout,
     QInputDialog,
@@ -20,6 +21,7 @@ from PySide6.QtWidgets import (
 
 from redsim.editor.document import Document
 from redsim.ui import theme
+from redsim.ui.icons import prefab_pixmap
 from redsim.ui.names import block_name
 from redsim.ui.panel_widgets import _placeholder, _swatch
 
@@ -96,6 +98,37 @@ class SectionsPanel(QWidget):
             self.refresh()
 
 
+#: Drag and drop of a prefab from the list into the 3D view: the mime type and the size of
+#: the previews in the list.
+PREFAB_MIME = "application/x-redsim-prefab"
+PREVIEW_SIZE = 56
+
+
+class PrefabList(QListWidget):
+    """The prefab library: a preview of each prefab; drag one into the 3D view to place
+    it (owner, 2026-10-14)."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setIconSize(QSize(PREVIEW_SIZE, PREVIEW_SIZE))
+        self.setDragEnabled(True)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+        self.setSpacing(2)
+
+    def startDrag(self, supported: Qt.DropAction) -> None:  # noqa: N802 - Qt override
+        item = self.currentItem()
+        if item is None or not item.flags() & Qt.ItemFlag.ItemIsEnabled:
+            return
+        data = QMimeData()
+        data.setData(PREFAB_MIME, QByteArray(item.text().encode()))
+        drag = QDrag(self)
+        drag.setMimeData(data)
+        icon = item.icon()
+        if not icon.isNull():
+            drag.setPixmap(icon.pixmap(PREVIEW_SIZE, PREVIEW_SIZE))
+        drag.exec(Qt.DropAction.CopyAction)
+
+
 class ContraptionsPanel(QObject):
     """Prefab library and groups with exposed ports: two pages (``prefab_page``,
     ``group_page``) that the window shows as tabs next to the sections."""
@@ -115,9 +148,10 @@ class ContraptionsPanel(QObject):
         super().__init__()
         self.prefab_page = prefab_page = QWidget()
         prefab_layout = QVBoxLayout(prefab_page)
-        self.prefab_list = QListWidget()
+        self.prefab_list = PrefabList()
         self.prefab_list.setToolTip(
-            "Double-click a prefab to paste it: it follows the cursor, a click places it as a group"
+            "Drag a prefab into the view to place it, or double-click it: it follows the "
+            "cursor and a click places it as a group"
         )
         self.prefab_list.itemDoubleClicked.connect(lambda _: self._with_prefab(self.load_prefab))
         prefab_layout.addWidget(self.prefab_list)
@@ -203,7 +237,10 @@ class ContraptionsPanel(QObject):
         selected = current_prefab.text() if current_prefab else None
         self.prefab_list.clear()
         for name in sorted(document.prefabs):
-            self.prefab_list.addItem(name)
+            item = QListWidgetItem(QIcon(prefab_pixmap(document.prefabs[name], PREVIEW_SIZE)), name)
+            sx, sy, sz = document.prefabs[name].size
+            item.setToolTip(f"{name}: {sx}×{sy}×{sz} · drag it into the view to place it")
+            self.prefab_list.addItem(item)
             if name == selected:
                 self.prefab_list.setCurrentRow(self.prefab_list.count() - 1)
         if not document.prefabs:
