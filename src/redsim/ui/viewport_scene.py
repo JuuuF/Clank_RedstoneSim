@@ -13,6 +13,7 @@ from PySide6.QtCore import QPoint
 
 from redsim.core.pos import Pos
 from redsim.editor.clipboard import Region
+from redsim.editor.heat import signal_heat
 from redsim.ui.geometry import (
     block_outline,
     box_lines,
@@ -20,7 +21,7 @@ from redsim.ui.geometry import (
     solid_box,
     thick_edges,
 )
-from redsim.ui.gizmos import Hotspot, box_faces, pick_hotspot, selection_gizmos
+from redsim.ui.gizmos import Hotspot, box_faces, many_box_faces, pick_hotspot, selection_gizmos
 from redsim.ui.renderer import Renderer
 from redsim.ui.selection_tools import (
     shifted,
@@ -32,6 +33,8 @@ from redsim.ui.view_common import (
     BODY_PULSE,
     BUILD,
     EXTRA_SELECTION_COLOR,
+    HEAT_HIGH,
+    HEAT_LOW,
     HIGHLIGHT_SECONDS,
     LOCATE_COLOR,
     LOCKED_COLOR,
@@ -45,6 +48,7 @@ from redsim.ui.view_common import (
     _hex_color,
     _layer_grid,
 )
+from redsim.world import ids
 
 if TYPE_CHECKING:
     from redsim.ui.viewport import Viewport
@@ -240,6 +244,37 @@ class SceneGeometry:
                     red, green, blue, _ = _hex_color(lines.color_of(pos))
                     parts.append(box_faces(lo, lo + 1.04, (red, green, blue, 0.08)))
         return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
+
+    def _heat_body(self) -> np.ndarray:
+        """The signal heat view (View menu): powered blocks glow from dark red (1) to
+        yellow (15); wire as a thin layer. Computed again only after a step or an edit."""
+        view = cast("Viewport", self)
+        if not view.show_heat:
+            return np.zeros((0, 7), dtype=np.float32)
+        document = view.document
+        level = document.level
+        key = (id(level), document.engine.step_index, document.revision)
+        if view._heat_cache is not None and view._heat_cache[0] == key:
+            return view._heat_cache[1]
+        heat = signal_heat(level)
+        if heat:
+            positions = np.array(list(heat), dtype=float)
+            strength = np.array(list(heat.values()), dtype=float)
+            flat = np.array(
+                [level.blocks[pos].block.id == ids.REDSTONE_WIRE for pos in heat], dtype=bool
+            )
+            lows = positions - 0.03
+            highs = positions + 1.03
+            highs[flat, 1] = positions[flat, 1] + 0.12
+            t = ((strength - 1) / 14)[:, None]
+            colors = np.hstack(
+                [HEAT_LOW + (HEAT_HIGH - HEAT_LOW) * t, (0.28 + 0.02 * strength)[:, None]]
+            )
+            body = many_box_faces(lows, highs, colors)
+        else:
+            body = np.zeros((0, 7), dtype=np.float32)
+        view._heat_cache = (key, body)
+        return body
 
     def locate(self, pos: Pos | None) -> None:
         """Light up ``pos`` while its coordinates are hovered elsewhere (None: stop)."""

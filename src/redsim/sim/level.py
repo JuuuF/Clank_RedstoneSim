@@ -164,24 +164,35 @@ class Level:
 
     # =================================================================== setBlock
     def set_block(self, pos: Pos, state: BlockState, flags: int, limit: int = 512) -> bool:
-        """``Level.setBlock`` (Level.java L216)."""
+        """``Level.setBlock`` (Level.java L216). In the trace, the change is the cause of
+        the updates it sends (for "why did this change?")."""
         if not self.is_in_valid_bounds(pos):
             return False
-        old_state = self._chunk_set_block_state(pos, state, flags)
-        if old_state is None:
+        current = self.blocks.get(pos, self.air)
+        if current is state:
             return False
-        new_state = self.get_block_state(pos)
-        if new_state is state:
-            if flags & UpdateFlags.NEIGHBORS:
-                self.update_neighbors_at(pos, old_state.block)
-                if state.has_analog_output_signal():
-                    self.update_neighbour_for_output_signal(pos, state.block)
-            if not flags & UpdateFlags.KNOWN_SHAPE and limit > 0:
-                neighbour_flags = flags & -34
-                old_state.update_indirect_neighbour_shapes(self, pos, neighbour_flags, limit - 1)
-                state.update_neighbour_shapes(self, pos, neighbour_flags, limit - 1)
-                state.update_indirect_neighbour_shapes(self, pos, neighbour_flags, limit - 1)
-        return True
+        trace = self.trace
+        trace.push(trace.emit(tr.SET_BLOCK, pos, old=repr(current), new=repr(state), flags=flags))
+        try:
+            old_state = self._chunk_set_block_state(pos, state, flags)
+            if old_state is None:
+                return False
+            new_state = self.get_block_state(pos)
+            if new_state is state:
+                if flags & UpdateFlags.NEIGHBORS:
+                    self.update_neighbors_at(pos, old_state.block)
+                    if state.has_analog_output_signal():
+                        self.update_neighbour_for_output_signal(pos, state.block)
+                if not flags & UpdateFlags.KNOWN_SHAPE and limit > 0:
+                    neighbour_flags = flags & -34
+                    old_state.update_indirect_neighbour_shapes(
+                        self, pos, neighbour_flags, limit - 1
+                    )
+                    state.update_neighbour_shapes(self, pos, neighbour_flags, limit - 1)
+                    state.update_indirect_neighbour_shapes(self, pos, neighbour_flags, limit - 1)
+            return True
+        finally:
+            trace.pop()
 
     def _chunk_set_block_state(self, pos: Pos, state: BlockState, flags: int) -> BlockState | None:
         """``LevelChunk.setBlockState`` (LevelChunk.java L269) minus lighting/heightmaps."""
@@ -193,7 +204,6 @@ class Level:
         else:
             self.blocks[pos] = state
         self.touched.add(pos)
-        self.trace.emit(tr.SET_BLOCK, pos, old=repr(old_state), new=repr(state), flags=flags)
 
         block_changed = old_state.block is not state.block
         moved_by_piston = bool(flags & UpdateFlags.MOVE_BY_PISTON)
@@ -471,8 +481,14 @@ class Level:
             self.forced_power[pos] = (strength, until)
         elif self.forced_power.pop(pos, None) is None:
             return
-        self.trace.emit(tr.NOTE, pos, text=f"sequence power {strength} (until game time {until})")
-        self.neighbor_changed(pos, blocks.REDSTONE_BLOCK)
+        note = self.trace.emit(
+            tr.NOTE, pos, text=f"sequence power {strength} (until game time {until})"
+        )
+        self.trace.push(note)  # the update's cause, for "why did this change?"
+        try:
+            self.neighbor_changed(pos, blocks.REDSTONE_BLOCK)
+        finally:
+            self.trace.pop()
 
     def release_forced_power(self) -> None:
         """Editor power whose time is over goes off (between ticks, in order of start)."""

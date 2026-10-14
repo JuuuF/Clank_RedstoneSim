@@ -209,6 +209,7 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec(
         "view.xray", "X-ray: cycle off / building blocks / everything see-through", ("Alt+Z",)
     ),
+    ActionSpec("view.heat", "Signal heat view: powered blocks glow by strength", ("Alt+H",)),
     ActionSpec("help.controls", "Show the controls", ("F1",)),
     *(_inventory(slot) for slot in range(1, 10)),
     *(_recent(slot) for slot in range(1, 10)),
@@ -546,7 +547,7 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         ),
     ),
     ("Pasting", "paste", ("paste.layer", "paste.zoom")),
-    ("View", None, ("view.info", "view.xray")),
+    ("View", None, ("view.info", "view.xray", "view.heat")),
     (
         "Edit and file",
         None,

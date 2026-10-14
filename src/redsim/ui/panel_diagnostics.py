@@ -1,5 +1,7 @@
-"""The Diagnostics tab: pending scheduled ticks, queued block events and the last step's
-trace; clicking or hovering a block's row or coordinates shows it in the view."""
+"""The Diagnostics tab: why the selected block last changed (its chain of causes, back
+across ticks to the action that started it), pending scheduled ticks, queued block events
+and the last step's trace; clicking or hovering a block's row or coordinates shows it in
+the view, a double click on a cause goes to its tick."""
 
 from __future__ import annotations
 
@@ -7,6 +9,7 @@ import re
 from typing import Any
 
 from PySide6.QtCore import QEvent, QObject, QPoint, Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QHeaderView,
     QListWidget,
@@ -20,6 +23,7 @@ from PySide6.QtWidgets import (
 from redsim.core.pos import Pos
 from redsim.editor.document import Document
 from redsim.sim import trace as tr
+from redsim.sim.causes import why
 from redsim.ui import theme
 from redsim.ui.names import block_name
 from redsim.ui.panel_widgets import HoverWatch, _placeholder
@@ -39,10 +43,23 @@ class DiagnosticsPanel(QTabWidget):
 
     highlight_requested = Signal(object)  # Pos
     position_hovered = Signal(object)  # Pos | None
+    tick_requested = Signal(object, int)  # Pos | None, tick: go there (a cause's tick)
 
     def __init__(self) -> None:
         super().__init__()
         self.setProperty("subtabs", True)  # second-level tabs (theme)
+        self.why = QListWidget()
+        self.why.setWordWrap(True)
+        self.why.setToolTip(
+            "Why the selected block last changed, newest first: each line was caused by the "
+            "one below it.\nClick: show the block · double click: go to that tick"
+        )
+        self.addTab(self.why, "Why?")
+        self.why.itemClicked.connect(self._event_clicked)
+        self.why.itemDoubleClicked.connect(self._cause_double_clicked)
+        self.why.setMouseTracking(True)
+        self.why.itemEntered.connect(self._hover_item)
+        HoverWatch(self.why.viewport(), lambda: None, self._unhover, self._why_moved)
         self.ticks = QTableWidget(0, 5)
         self.ticks.setHorizontalHeaderLabels(["At tick", "Block", "Pos", "Priority", "Sub-tick"])
         self.ticks.verticalHeader().setVisible(False)
@@ -79,6 +96,16 @@ class DiagnosticsPanel(QTabWidget):
         if self.ticks.rowAt(point.y()) < 0:  # below the last row
             self._unhover()
 
+    def _why_moved(self, point: QPoint) -> None:
+        if self.why.itemAt(point) is None:
+            self._unhover()
+
+    def _cause_double_clicked(self, item: QListWidgetItem) -> None:
+        tick = item.data(Qt.ItemDataRole.UserRole + 1)
+        if tick is not None:
+            pos = item.data(Qt.ItemDataRole.UserRole)
+            self.tick_requested.emit(tuple(pos) if pos is not None else None, int(tick))
+
     def _events_moved(self, point: QPoint) -> None:
         if self.events.itemAt(point) is None:
             self._unhover()
@@ -113,7 +140,39 @@ class DiagnosticsPanel(QTabWidget):
         if pos is not None:
             self.highlight_requested.emit(pos)
 
-    def show_state(self, document: Document, last_steps: list[Any]) -> None:
+    def show_why(self, document: Document, pos: Pos | None) -> None:
+        """The chain of causes of the selected block's last change."""
+        self.why.clear()
+        if pos is None:
+            hint = "Select a block (click it, or E over it) to see why it last changed."
+            self.why.addItem(_placeholder(QListWidgetItem(hint)))
+            return
+        name = block_name(document.state_at(pos).block.id)
+        where = " ".join(str(v) for v in pos)
+        causes = why(document.level.trace, pos, block_name)
+        if not causes:
+            text = (
+                f"{name} at {where} has not changed since the build (tick 0), or it changed "
+                "too long ago to be in the kept trace."
+            )
+            self.why.addItem(_placeholder(QListWidgetItem(text)))
+            return
+        header = QListWidgetItem(f"Why {name} at {where} changed at tick {causes[0].tick}:")
+        header.setForeground(QColor(theme.GOLD))
+        self.why.addItem(header)
+        for depth, cause in enumerate(causes):
+            at = " ".join(str(v) for v in cause.pos) if cause.pos is not None else "—"
+            arrow = "" if depth == 0 else "← "
+            entry = QListWidgetItem(f"{arrow}tick {cause.tick} · {at} · {cause.text}")
+            if cause.pos is not None:
+                entry.setData(Qt.ItemDataRole.UserRole, list(cause.pos))
+            entry.setData(Qt.ItemDataRole.UserRole + 1, cause.tick)
+            self.why.addItem(entry)
+
+    def show_state(
+        self, document: Document, last_steps: list[Any], selected: Pos | None = None
+    ) -> None:
+        self.show_why(document, selected)
         level = document.level
         collected = list(level.block_ticks.to_run)
         pending = level.block_ticks.pending()

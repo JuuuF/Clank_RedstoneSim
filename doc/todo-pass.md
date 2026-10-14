@@ -14,7 +14,7 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
    its dirt-and-stone look, thumbnails for simulation worlds without one; colored groups
    for every category's timeline lines (not only Powered).
 2. [x] **O3 several selections:** copy, move, rotate and flip every box at once.
-3. [ ] **O2 diagnostics:** a clickable cause chain per block ("why did this change?") from
+3. [x] **O2 diagnostics:** a clickable cause chain per block ("why did this change?") from
    the trace; a signal-strength heat view in the viewport.
 4. [ ] **O4 sign text:** text drawn on the sign's face; entering text for signs placed in
    the editor.
@@ -43,3 +43,12 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
   (`Prefab.capture_many`). Dragging shows every box's ghost and target. Note: turning a
   non-square group of boxes can land on cells between them (as a single turned box lands
   on its neighbors).
+- O2 done: `sim/causes.py` builds a block's chain of causes from the trace (parents within
+  a step; scheduled ticks and block events continue at the record that scheduled or
+  queued them; neighbor updates from a block changed earlier in the step continue at
+  that change). For that, `Level.set_block` now makes its `set_block` record the cause
+  of the updates it sends, and sequence power's `note` is the cause of its update (trace
+  structure only; engine unchanged, 31.1/13.1 ticks/s as before). Diagnostics has a
+  "Why?" sub-tab for the selected block (click: show the block, double click: go to the
+  tick). Signal heat view: `editor/heat.py`, View menu / Alt+H, vectorized boxes cached
+  per step.

@@ -125,6 +125,9 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         #: Blender-like X-ray (building blocks see-through) and the block-info overlay.
         self.xray = 0  # 0 off, 1 building blocks see-through, 2 everything see-through
         self.show_info = False
+        #: The signal heat view (View menu) and its triangles for the step shown.
+        self.show_heat = False
+        self._heat_cache: tuple[tuple[int, int, int], np.ndarray] | None = None
         #: F3 debug screen: the left column comes from the main window (it knows the rates).
         self.debug_left: list[str] = []
         #: SELECT mode: the face handle under the cursor, and drags in progress.
@@ -435,6 +438,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
                     self._selection_body(),
                     self._highlight_body(),
                     self._power_body(),
+                    self._heat_body(),
                     self._pivot_shadow(),
                 ]
             )

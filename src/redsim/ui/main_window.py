@@ -217,6 +217,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
             inspector.section_requested.connect(self._assign_section)
         self.viewport.hover_changed.connect(self._hover)
         self.diagnostics.highlight_requested.connect(self.viewport.flash)
+        self.diagnostics.tick_requested.connect(self._go_to_cause)
         # Hovered coordinates anywhere light their block up in the view.
         for source in (
             self.diagnostics,
@@ -478,6 +479,17 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         )
         info.setCheckable(True)
         info.setToolTip(SPECS["view.info"].title)
+        heat = self._action(
+            view_menu,
+            "Signal heat view",
+            lambda on: self._set_view_flag("show_heat", on),
+            "view.heat",
+        )
+        heat.setCheckable(True)
+        heat.setToolTip(
+            "Powered blocks glow by signal strength: dark red at 1, yellow at 15 (sources "
+            "with their output, other blocks with the strongest signal they receive)."
+        )
         textures = self._action(view_menu, "Game textures", self._toggle_textures)
         self._textures_action = textures
         textures.setCheckable(True)
@@ -682,7 +694,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         self.sections.refresh()
         self.contraptions.show_document(self.document)
         if self.tabs.currentWidget() is self.diagnostics:
-            self.diagnostics.show_state(self.document, self.last_steps)
+            self.diagnostics.show_state(self.document, self.last_steps, self.viewport.selection)
         name = self.document.path.name if self.document.path else "untitled"
         self.setWindowTitle(
             f"Redstone Simulator (Java 26.3) — {name}{' *' if self.document.dirty else ''}"

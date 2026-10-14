@@ -39,6 +39,7 @@ src/redsim/
 │   ├── neighbor_updater.py CollectingNeighborUpdater port
 │   ├── ticks.py           LevelTicks port (ScheduledTick, TickPriority)
 │   ├── trace.py           causal trace records (capped, stable ids)
+│   ├── causes.py          "why did this change?": a block's chain of causes from the trace
 │   ├── engine.py          tick phases as steps, actions, snapshots
 │   └── timeline.py        history: keyframes + action log, rewind/replay
 ├── io/save.py             JSON save/load of the complete engine state (mid-tick safe)
@@ -202,7 +203,17 @@ request and block-event request with its causal parent ([[decisions]] ADR-003).
 game_time, step, pos, detail)`. Engine steps are roots. A neighbor or shape update records
 the cause that queued it, because the collecting updater may run it later than it was
 requested. Kinds: `step`, `neighbor_update`, `shape_update`, `set_block`, `schedule_tick`,
-`block_event_queued`, `block_entity`, `note`.
+`block_event_queued`, `block_entity`, `note`. A `set_block` record is the cause of the
+updates its `setBlock` sends; editor power (sequence pulses) has a `note` as the cause of
+its update.
+
+`sim/causes.py` reads a block's last change back to its origin (Diagnostics → Why?):
+parent links within a step; a scheduled tick or block event continues at the record that
+scheduled or queued it (an earlier step or tick); a neighbor update from a block that
+changed earlier in the same step (wire sets its power, then updates around it) continues
+at that change. The chain ends at an action (edit, lever, pulse) or where the kept trace
+ends. `editor/heat.py` computes the signal heat view (sources with their output, blocks
+around them and around powered conductors with the strongest signal they receive).
 
 ## Verification architecture
 

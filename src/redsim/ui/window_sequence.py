@@ -94,6 +94,16 @@ class SequenceActions:
             lines.remove_group(index)
         view._lines_changed()
 
+    def _go_to_cause(self, pos: Pos | None, tick: int) -> None:
+        """A cause double-clicked in Diagnostics → Why?: go to its tick, show its block."""
+        view = cast("MainWindow", self)
+        view.simulation.stop()
+        view._finish_tick()
+        view.document.seek_tick(tick)
+        if pos is not None:
+            view.viewport.flash(pos)
+        view._changed()
+
     def _show_pulse(self, pos: Pos, tick: int) -> None:
         """A pulse clicked in the Sequence tab: go to its tick and flash its position."""
         view = cast("MainWindow", self)

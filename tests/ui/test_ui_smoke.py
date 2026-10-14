@@ -828,3 +828,27 @@ def test_several_selections_move_and_turn_together(app: object) -> None:
     assert document.clipboard is not None and document.clipboard.size == (4, 1, 1)
     document.dirty = False
     window.close()
+
+
+def test_why_tab_and_heat_view(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("lever[face=floor,facing=east]"))
+    document.setblock((1, 1, 0), blocks.parse_state("redstone_lamp"))
+    document.run_ticks(1)
+    document.use((0, 1, 0))
+    document.run_ticks(1)
+    window.tabs.setCurrentWidget(window.diagnostics)
+    window._select((1, 1, 0))
+    why = window.diagnostics.why
+    texts = [why.item(i).text() for i in range(why.count())]
+    assert texts[0].startswith("Why Redstone Lamp at 1 1 0 changed at tick 1")
+    assert any("Lever: powered false → true" in t for t in texts)
+    window.viewport.show_heat = True
+    assert len(window.viewport._heat_body()) > 0
+    window._go_to_cause((0, 1, 0), 0)
+    assert document.tick == 0
+    document.dirty = False
+    window.close()

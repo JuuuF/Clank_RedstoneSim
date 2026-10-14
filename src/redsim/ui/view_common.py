@@ -76,6 +76,9 @@ BODY_ALPHA = 0.2
 
 
 LOCATE_COLOR = (1.0, 0.9, 0.55, 0.55)  # hovered coordinates: a soft frame
+#: The signal heat view's colors at strength 1 and 15 (RGB; in between: linear).
+HEAT_LOW = np.array([0.45, 0.04, 0.04])
+HEAT_HIGH = np.array([1.0, 0.92, 0.25])
 
 
 HIGHLIGHT_SECONDS = 3.0  # how long a flashed block (Diagnostics click) stays lit

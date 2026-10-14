@@ -146,6 +146,36 @@ def box_faces(lo: np.ndarray, hi: np.ndarray, color: Color) -> np.ndarray:
     return _tri(rows, color)
 
 
+#: Corner indices (bit 0: x, bit 1: y, bit 2: z of the high corner) of a box's 12
+#: triangles, in ``box_faces``' order.
+_BOX_CORNERS = np.array(
+    [
+        c
+        for quad in (
+            (2, 6, 7, 3),
+            (0, 1, 5, 4),
+            (0, 2, 3, 1),
+            (4, 5, 7, 6),
+            (0, 4, 6, 2),
+            (1, 3, 7, 5),
+        )  # fmt: skip
+        for c in (quad[0], quad[1], quad[2], quad[0], quad[2], quad[3])
+    ]
+)
+
+
+def many_box_faces(lows: np.ndarray, highs: np.ndarray, colors: np.ndarray) -> np.ndarray:
+    """``box_faces`` for many boxes at once: (n, 3) corners and (n, 4) colors → (36 n, 7)."""
+    if not len(lows):
+        return np.zeros((0, 7), dtype=np.float32)
+    bits = np.array([[(c >> 0) & 1, (c >> 1) & 1, (c >> 2) & 1] for c in _BOX_CORNERS])
+    points = lows[:, None, :] + bits[None, :, :] * (highs - lows)[:, None, :]
+    rows = np.concatenate(
+        [points, np.broadcast_to(colors[:, None, :], (len(lows), len(bits), 4))], axis=2
+    )
+    return rows.reshape(-1, 7).astype(np.float32)
+
+
 def selection_gizmos(
     region: Region,
     unit: float,

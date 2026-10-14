@@ -101,6 +101,12 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   frame, visible through blocks): timeline lines and monitor tracks, Sequence rows, the
   inspector's title (also in the E popup), Diagnostics rows and trace lines. Drag the handle
   between the view and the timeline to make the timeline taller; it scrolls when needed.
+- **Why did this change?** Diagnostics → **Why?** shows the selected block's last change
+  and its causes, newest first, back across ticks to the action that started it (a
+  lever, a pulse, an edit). Click a line to show its block, double click to go to its
+  tick.
+- **Signal heat view** (View menu, **Alt+H**): powered blocks glow by signal strength,
+  dark red at 1 to yellow at 15 (wire as a thin layer).
 - Inspector: setting a piston base to *extended* also puts its head in front (if there
   is room), in the same edit.
 - Middle click picks the block type under the cursor in every mode.
