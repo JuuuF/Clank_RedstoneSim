@@ -453,6 +453,12 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
                 button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             if keymap_id in ("edit.rotate_back", "edit.flip_depth", "edit.paste"):
                 toolbar.addSeparator()
+        region_menu.addSeparator()
+        self._action(region_menu, "Import schematic…", self._import_schematic).setToolTip(
+            "A Litematica, Sponge/WorldEdit or structure file into the clipboard, shown "
+            "at the cursor to paste"
+        )
+        self._action(region_menu, "Export selection as schematic…", self._export_schematic)
         view_menu = bar.addMenu("&View")
         for attribute, text, tip in (
             (

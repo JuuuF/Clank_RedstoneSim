@@ -17,6 +17,8 @@ from redsim.core.pos import Pos
 from redsim.editor.clipboard import Prefab, Region, bounding_box
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
+from redsim.io.schematics import FILE_FILTER as SCHEMATIC_FILTER
+from redsim.io.schematics import read_schematic, write_schematic
 from redsim.ui.names import block_name
 from redsim.ui.viewport import BUILD
 from redsim.world import blocks
@@ -230,26 +232,88 @@ class RegionActions:
         view._changed()
 
     def _import_prefab(self) -> None:
+        """A prefab from a file: the simulator's JSON or a schematic (Litematica,
+        Sponge/WorldEdit, structure file)."""
         view = cast("MainWindow", self)
-        path, _ = QFileDialog.getOpenFileName(view, "Import prefab", "", "Prefabs (*.json)")
-        if path:
-            try:
-                prefab = Prefab.from_json(json.loads(Path(path).read_text()))
-            except (OSError, ValueError, KeyError) as exc:
-                QMessageBox.critical(view, "Cannot import prefab", str(exc))
-                return
-            view.document.prefabs[prefab.name] = prefab
-            view._changed()
-
-    def _export_prefab(self, name: str) -> None:
-        view = cast("MainWindow", self)
-        path, _ = QFileDialog.getSaveFileName(
-            view, "Export prefab", f"{name}.prefab.json", "Prefabs (*.json)"
+        path, _ = QFileDialog.getOpenFileName(
+            view, "Import prefab", "", f"Prefabs (*.json);;{SCHEMATIC_FILTER}"
         )
         if path:
-            Path(path).write_text(
-                json.dumps(view.document.prefabs[name].to_json(), indent=1) + "\n"
-            )
+            prefab = view._read_prefab_file(Path(path))
+            if prefab is not None:
+                view.document.prefabs[prefab.name] = prefab
+                view._changed()
+
+    def _read_prefab_file(self, path: Path) -> Prefab | None:
+        view = cast("MainWindow", self)
+        try:
+            if path.suffix.lower() == ".json":
+                return Prefab.from_json(json.loads(path.read_text()))
+            return read_schematic(path)
+        except (OSError, ValueError, KeyError, IndexError, EOFError) as exc:
+            QMessageBox.critical(view, "Cannot read the file", f"{path.name}: {exc}")
+            return None
+
+    def _export_prefab(self, name: str) -> None:
+        """A prefab to a file: the simulator's JSON or a schematic (by the file type)."""
+        view = cast("MainWindow", self)
+        path, _ = QFileDialog.getSaveFileName(
+            view, "Export prefab", f"{name}.prefab.json", f"Prefabs (*.json);;{SCHEMATIC_FILTER}"
+        )
+        if path:
+            view._write_prefab_file(Path(path), view.document.prefabs[name])
+
+    def _write_prefab_file(self, path: Path, prefab: Prefab) -> None:
+        view = cast("MainWindow", self)
+        try:
+            if path.suffix.lower() == ".json":
+                path.write_text(json.dumps(prefab.to_json(), indent=1) + "\n")
+            else:
+                write_schematic(path, prefab)
+        except (OSError, ValueError) as exc:
+            QMessageBox.critical(view, "Cannot write the file", str(exc))
+            return
+        view._message(f"Wrote {prefab.non_air_count} blocks to {path.name}.")
+
+    def _import_schematic(self) -> None:
+        """Region → Import schematic…: into the clipboard, shown at the cursor to paste."""
+        view = cast("MainWindow", self)
+        path, _ = QFileDialog.getOpenFileName(view, "Import schematic", "", SCHEMATIC_FILTER)
+        if not path:
+            return
+        prefab = view._read_prefab_file(Path(path))
+        if prefab is None:
+            return
+        view.document.clipboard = prefab
+        view.viewport.begin_paste(prefab)
+        size = "×".join(str(v) for v in prefab.size)
+        view._message(
+            f"{prefab.name} ({size}, {prefab.non_air_count} blocks) is in the clipboard: left "
+            "click places it · R rotates · right click or Esc cancels."
+        )
+
+    def _export_schematic(self) -> None:
+        """Region → Export selection as schematic…: every selection box (the cells
+        between several boxes are left out)."""
+        view = cast("MainWindow", self)
+        if view._region() is None:
+            return
+        regions = view.viewport.all_regions()
+        level = view.document.level
+        prefab = (
+            Prefab.capture_many(level, regions, "selection")
+            if len(regions) > 1
+            else Prefab.capture(level, regions[0], "selection")
+        )
+        path, _ = QFileDialog.getSaveFileName(
+            view, "Export selection as schematic", "selection.litematic", SCHEMATIC_FILTER
+        )
+        if path:
+            target = Path(path)
+            if not target.suffix:
+                target = target.with_suffix(".litematic")
+            prefab.name = target.name.split(".")[0]
+            view._write_prefab_file(target, prefab)
 
     def _create_group(self) -> None:
         view = cast("MainWindow", self)

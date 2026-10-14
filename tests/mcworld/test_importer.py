@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from redsim.editor.document import Document
-from redsim.mcworld.importer import _state
+from redsim.mcworld.importer import state_from_text as _state
 from redsim.world import blocks
 
 SAVE = Path(__file__).resolve().parents[2] / "data" / "minecraft_saves" / "Redstone"

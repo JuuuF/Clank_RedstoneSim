@@ -361,6 +361,16 @@ affected.
 
 [[ui-direction]] · [[architecture]] · [[tour]] · [[decisions]] ADR-018
 
+## Schematics
+
+**Region → Import schematic…** reads a Litematica (`.litematic`), Sponge/WorldEdit
+(`.schem`, versions 1–3) or structure-block (`.nbt`) file into the clipboard and shows it
+at the cursor to paste (left click places, R rotates). **Region → Export selection as
+schematic…** writes every selection box in the format of the file name's type (the cells
+between several boxes are left out: "structure void" in `.nbt`, air in the others). The
+Circuit tab's prefab Import/Export take the same files. Blocks the simulator does not
+model come in as foreign blocks; entities and pending ticks are not part of it.
+
 ## Minecraft worlds
 
 **Ctrl+O** (File → Open…) and File → Open Minecraft world… show the **Select World**

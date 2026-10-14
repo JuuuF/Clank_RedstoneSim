@@ -150,7 +150,7 @@ def _plain_text(message: Any) -> str:
 
 def block_states(texts: dict[Pos, str]) -> dict[Pos, Any]:
     """Block states for save texts."""
-    return {pos: _state(text) for pos, text in texts.items()}
+    return {pos: state_from_text(text) for pos, text in texts.items()}
 
 
 def open_world(path: Path, radius: int = 4, center: tuple[int, int] | None = None) -> OpenedWorld:
@@ -243,7 +243,7 @@ def stream_chunks(document: Any, center: tuple[int, int], radius: int, budget: f
         if time.perf_counter() >= deadline:
             break
     if load.blocks:
-        document.add_world_blocks(block_states(load.blocks), _plain(load.block_entities))
+        document.add_world_blocks(block_states(load.blocks), plain_nbt(load.block_entities))
         document.extra.setdefault("signs", {}).update(sign_texts(load.block_entities, load.blocks))
     return len(load.chunks)
 
@@ -256,12 +256,12 @@ def add_block_entities(level: Any, entities: dict[Pos, Any], only: Container[Pos
             continue
         entity = state.block.new_block_entity(pos, state)
         if entity is not None:
-            entity.load_json(_plain(data))
+            entity.load_json(plain_nbt(data))
             level.set_block_entity(entity)
 
 
 @cache
-def _state(text: str) -> Any:
+def state_from_text(text: str) -> Any:
     """A block state from save text. Properties the simulator does not model for a known
     block (e.g. ``waterlogged``) are dropped; anything unreadable becomes foreign."""
     from redsim.world import blocks
@@ -280,12 +280,12 @@ def _state(text: str) -> Any:
         return foreign_block(name, props).default_state
 
 
-def _plain(value: Any) -> Any:
+def plain_nbt(value: Any) -> Any:
     """NBT values as plain JSON-like Python (what ``BlockEntity.load_json`` reads)."""
     if isinstance(value, dict):
-        return {k: _plain(v) for k, v in value.items()}
+        return {k: plain_nbt(v) for k, v in value.items()}
     if isinstance(value, list):
-        return [_plain(v) for v in value]
+        return [plain_nbt(v) for v in value]
     if isinstance(value, bool):
         return value
     if isinstance(value, int):

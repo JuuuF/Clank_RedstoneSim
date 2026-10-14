@@ -21,7 +21,7 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
 5. [x] **O1 worlds:** unloading far chunks; re-attaching the stream when a document saved
    from a world is reopened; an on-disk chunk cache; an index of the save's builds with
    "go to"; pending ticks in the written copy.
-6. [ ] **O9 schematics:** import/export of Sponge `.schem` and vanilla structure `.nbt`.
+6. [x] **O9 schematics:** import/export of Litematica, Sponge `.schem` and vanilla structure `.nbt`.
 7. [ ] **O6/O7 mechanics:** composter (block and source kind), hopper and chest as source
    kinds, daylight sensor; verified in game like the other blocks.
 
@@ -66,3 +66,11 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
   check of a written copy (`tools/gameserver/check_world_copy.py`: blocks, sign text,
   a pending tick; all match). Left as later (documented in world-import): writing into
   the original save, unloading far chunks, an on-disk chunk cache.
+- O9 done: `io/schematics.py` reads and writes Litematica (tight bit packing, several
+  regions, negative sizes), Sponge v1–3 (varint data) and structure files (palette,
+  structure void), with block entities in the game's layout; Region menu Import/Export
+  and the prefab library use them. Found on the way: 26.3 writes block states in NBT as
+  `{id, properties}` (no longer `Name`/`Properties`, which the game reads only through
+  its data fixer for older data versions): structure files with the old keys placed
+  nothing. Checked in game with `tools/gameserver/check_structure.py` (all 18 cells,
+  chest contents, sign text). Litematica and WorldEdit themselves were not run (mods).

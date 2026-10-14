@@ -50,7 +50,7 @@ class WriteReport:
 
 def save_world_copy(document: Any, target: Path) -> WriteReport:
     """Copy the document's save to ``target`` and write the document's blocks into it."""
-    from redsim.mcworld.importer import _state
+    from redsim.mcworld.importer import state_from_text
 
     stream = document.world
     if stream is None:
@@ -65,7 +65,7 @@ def save_world_copy(document: Any, target: Path) -> WriteReport:
     def same(original: str, state: Any) -> bool:
         if state is None:
             return original in AIR
-        return original not in AIR and _state(original) is state
+        return original not in AIR and state_from_text(original) is state
 
     for pos, state in level.blocks.items():
         x, y, z = pos
@@ -210,7 +210,7 @@ def _apply(
         if (pos[0] >> 4, pos[2] >> 4) != (cx, cz):
             continue
         entry = dict(old.get(pos, {}))
-        entry.update(_nbt(entity.to_json()))
+        entry.update(typed_nbt(entity.to_json()))
         entry.update(
             {
                 "id": f"minecraft:{entity.type_id}",
@@ -227,12 +227,12 @@ def _apply(
     return written
 
 
-def _nbt(value: Any, key: str = "") -> Any:
+def typed_nbt(value: Any, key: str = "") -> Any:
     """Plain JSON-like data (``BlockEntity.to_json``) as typed NBT, like the game writes."""
     if isinstance(value, dict):
-        return {k: _nbt(v, k) for k, v in value.items()}
+        return {k: typed_nbt(v, k) for k, v in value.items()}
     if isinstance(value, list):
-        items = [_nbt(v) for v in value]
+        items = [typed_nbt(v) for v in value]
         element = nbt.tag_of(items[0]) if items else nbt.END
         return nbt.NbtList(items, element)
     if isinstance(value, bool):

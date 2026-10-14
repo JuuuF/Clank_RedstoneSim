@@ -13,7 +13,6 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O6 | **Generic signal-strength source** that maps to a real block, hot-swappable | round 1 (Analog signal sources) | Done for barrel, lectern and cake. Open: hopper, composter and chest as source kinds (chests and hoppers exist as blocks; composters do not). |
 | O7 | **Mechanics left** (brief "later extensions") | brief; project-state | Open: dispense effects (shooting, placing, fluids), detector rails (need minecarts), daylight sensors, composters, furnaces and other containers, water streams; entities stay out of scope. |
 | O8 | **Abstract (black-box) group models** | brief M7 | Deferred on purpose (ADR-016): groups expose ports but always simulate their blocks. |
-| O9 | **Schematic import/export** | brief M7 ("deferred until the core is stable") | Not started; the core is stable now, so it could follow. |
 | O10 | **Final look**: "a technical version of Minecraft", panels | round 1 (Looks) | Largely answered by the game's textures, the theme and the polish pass; the owner has not yet reviewed the result as a whole. |
 | O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
 
@@ -43,6 +42,11 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Round 12**: 0-tick pulses act inside a tick (pistons spit their block); sequences
   and all recorded edits are saved with the file (they were lost on reopening); the
   hover highlight clears below the last list row and is more subtle.
+
+- **Schematics** (O9, 2026-10-14): Litematica, Sponge/WorldEdit and structure files,
+  imported into the clipboard and exported from selections (`io/schematics.py`);
+  structure files checked in the real game with `/place template`
+  (`tools/gameserver/check_structure.py`).
 
 - **Signs** (O4, 2026-10-14): text drawn on the sign's board (front and back, in
   perspective); standing and wall signs are real blocks now (placing, popping, text typed
