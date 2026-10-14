@@ -803,3 +803,28 @@ def test_pulses_mute_from_the_timeline_and_the_sequence_tab(app: object) -> None
     assert line.title == "0 1 0" and line.detail == "Sticky Piston"
     document.dirty = False
     window.close()
+
+
+def test_several_selections_move_and_turn_together(app: object) -> None:
+    from redsim.editor.clipboard import Region
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document, viewport = window.document, window.viewport
+    document.setblock((0, 1, 0), blocks.parse_state("redstone_block"))
+    document.setblock((3, 1, 0), blocks.parse_state("glass"))
+    viewport.extra_regions = [Region((0, 1, 0), (0, 1, 0))]
+    viewport.region = Region((3, 1, 0), (3, 1, 0))
+    window._move_region(viewport.region, (0, 0, 2), False)  # a drag of the active box
+    assert viewport.extra_regions == [Region((0, 1, 2), (0, 1, 2))]
+    assert viewport.region == Region((3, 1, 2), (3, 1, 2))
+    assert document.state_at((0, 1, 2)).block is blocks.REDSTONE_BLOCK
+    assert document.state_at((0, 1, 0)).is_air
+    window._transform(quarter_turns=1)
+    window._transform(quarter_turns=-1)  # back around the same pivot
+    assert viewport.extra_regions == [Region((0, 1, 2), (0, 1, 2))]
+    assert document.state_at((3, 1, 2)).block is blocks.GLASS
+    window._copy()
+    assert document.clipboard is not None and document.clipboard.size == (4, 1, 1)
+    document.dirty = False
+    window.close()

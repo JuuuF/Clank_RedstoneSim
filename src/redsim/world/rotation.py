@@ -116,6 +116,39 @@ def rotated_box(
     )
 
 
+def transformed_boxes(
+    boxes: list[tuple[Pos, Pos]],
+    offset: Pos,
+    quarter_turns: int,
+    mirror: str | None,
+    pivot2: tuple[int, int],
+) -> list[tuple[Pos, Pos]]:
+    """Where boxes (normalized low/high corners) land when mirrored within their bounding
+    box (``"x"``/``"z"``), turned around ``pivot2`` and shifted by ``offset``."""
+    low = tuple(min(box[0][i] for box in boxes) for i in range(3))
+    high = tuple(max(box[1][i] for box in boxes) for i in range(3))
+    placed = []
+    for lo, hi in boxes:
+        if mirror == "x":
+            lo, hi = (
+                (low[0] + high[0] - hi[0], lo[1], lo[2]),
+                (low[0] + high[0] - lo[0], hi[1], hi[2]),
+            )
+        elif mirror == "z":
+            lo, hi = (
+                (lo[0], lo[1], low[2] + high[2] - hi[2]),
+                (hi[0], hi[1], low[2] + high[2] - lo[2]),
+            )
+        a, b = rotated_box(lo, hi, quarter_turns, pivot2)
+        placed.append(
+            (
+                (a[0] + offset[0], a[1] + offset[1], a[2] + offset[2]),
+                (b[0] + offset[0], b[1] + offset[1], b[2] + offset[2]),
+            )
+        )
+    return placed
+
+
 #: Property values that swap when a block is turned upside down (by serialized text).
 _UPSIDE_DOWN = {"top": "bottom", "bottom": "top", "floor": "ceiling", "ceiling": "floor"}
 

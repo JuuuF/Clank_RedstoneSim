@@ -253,8 +253,8 @@ class EditTools:
                 view._resize = (handle, region, start, axis)
             return  # rotate/flip gizmos act on click, not drag
         grab = view._grab_point(region, origin, direction, block)
-        if region is not None and grab is not None:
-            ghost = view._region_ghost(region)
+        if region is not None and grab is not None:  # every selection moves along
+            ghost = view._region_ghost(*view.all_regions())
             view._move = _MoveDrag(region, copy, float(grab[1]), grab, ghost)
             view._ghost = (ghost, (0, 0, 0))
             return
@@ -377,10 +377,15 @@ class EditTools:
             view.region = Region.from_corners(view._region_anchor, view.hover.pos)
             view.update()
 
-    def _region_ghost(self, region: Region) -> np.ndarray:
+    def _region_ghost(self, *regions: Region) -> np.ndarray:
         view = cast("Viewport", self)
         level = view.document.level
-        states = {pos: level.blocks[pos] for pos in region.positions() if pos in level.blocks}
+        states = {
+            pos: level.blocks[pos]
+            for region in regions
+            for pos in region.positions()
+            if pos in level.blocks
+        }
         return ghost_mesh(states, mesher=view.world_mesh.mesher)
 
     def begin_paste(self, prefab: Prefab) -> None:

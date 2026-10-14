@@ -113,8 +113,12 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - Esc in NORMAL clears the inspector selection and every selection box.
 - **Several selections:** in SELECT mode, **Shift+drag** away from the face handles keeps
   the current box and draws another one (Shift+drag on a face handle still stacks copies).
-  **Del** clears all boxes at once; **Alt+A** removes all selections. Copy, move and
-  rotate act on the active (bright) box.
+  **Del** clears all boxes at once; **Alt+A** removes all selections. Dragging (move,
+  Ctrl+drag copy), **R**/Shift+R, **H**/Shift+H and the gizmos act on every box together
+  (turned and flipped around the middle of the box around them all; one undo step), and
+  **Ctrl+C** copies all boxes into one clipboard (the cells between them are left out,
+  so pasting leaves them as they are). Stacking (Shift+drag on a face handle) and locking
+  (Enter) act on the active (bright) box.
 - In BUILD, **right click** removes the block under the cursor; **Del** only ever clears the
   selection box. **Q** / Shift+Q turn the block under the cursor; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.

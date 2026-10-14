@@ -31,6 +31,8 @@ def edit_row(action: Action) -> str:
         return "build" if kind == "fill" or action.label.startswith("place") else "edit"
     if kind in ("place", "clone", "stack_region"):
         return "build"
+    if kind == "transform_regions" and (action.payload or {}).get("copy"):
+        return "build"
     return "edit"
 
 

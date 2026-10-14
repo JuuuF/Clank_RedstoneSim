@@ -292,6 +292,13 @@ Short records. Each one states the context, the decision, and its trade-offs.
   again, so turning back, or four times, returns exactly to the start.
 - **Verification:** unit tests and source reading (state rules); the placement passes are
   the game-verified strict `/clone` ones (EXP-026).
+- **Addendum (2026-10-14, several selections):** `transform_regions` generalizes it to
+  several boxes moved together: every cell of the boxes is captured once (in z/y/x order
+  over their bounding box), the sources are cleared unless copying, and the blocks are
+  mirrored within the bounding box, turned around its middle and shifted; ticks go along
+  (copied ticks sort after the existing ones, like `copyAreaFrom`). Moving boxes one by
+  one would let a box land on another's source before that one is read. A single box
+  still drags with the game's `/clone … strict move` and turns through the same code.
 
 ## ADR-020
 

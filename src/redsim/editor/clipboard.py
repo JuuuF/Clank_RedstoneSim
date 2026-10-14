@@ -55,6 +55,13 @@ class Region:
         return all(self.low[i] <= pos[i] <= self.high[i] for i in range(3))
 
 
+def bounding_box(regions: list[Region]) -> tuple[Pos, Pos]:
+    """The smallest box around all ``regions``: (low, high)."""
+    low = tuple(min(r.low[i] for r in regions) for i in range(3))
+    high = tuple(max(r.high[i] for r in regions) for i in range(3))
+    return low, high  # type: ignore[return-value]
+
+
 @dataclass
 class Prefab:
     name: str
@@ -71,6 +78,20 @@ class Prefab:
             low = region.low
             entries.append((pos[0] - low[0], pos[1] - low[1], pos[2] - low[2], repr(state), data))
         return Prefab(name, region.size, entries)
+
+    @staticmethod
+    def capture_many(level: Level, regions: list[Region], name: str = "clipboard") -> Prefab:
+        """Several boxes as one prefab the size of their bounding box: only the boxes'
+        cells are stored, so pasting leaves the cells between them as they are."""
+        low, high = bounding_box(regions)
+        whole = Prefab.capture(level, Region(low, high), name)
+        kept = [
+            entry
+            for entry in whole.blocks
+            if any(r.contains((low[0] + entry[0], low[1] + entry[1], low[2] + entry[2]))
+                   for r in regions)
+        ]  # fmt: skip
+        return Prefab(name, whole.size, kept)
 
     @property
     def non_air_count(self) -> int:

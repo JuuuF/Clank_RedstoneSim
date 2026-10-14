@@ -22,7 +22,7 @@ from typing import Any
 from redsim.core.pos import Pos, offset
 from redsim.editor import sources
 from redsim.editor.annotations import Sections
-from redsim.editor.clipboard import Prefab, Region
+from redsim.editor.clipboard import Prefab, Region, bounding_box
 from redsim.editor.document_common import EDIT_ROWS, FLOOR_HALF_SIZE, Vary, edit_row
 from redsim.editor.document_history import EditBatch, EditError, HistoryOps, HistoryState
 from redsim.editor.document_sequences import Pulse, SequenceOps
@@ -36,7 +36,7 @@ from redsim.sim.timeline import Plan, Timeline
 from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 from redsim.world.blocks.container import ContainerBlockEntity, slot_limit
-from redsim.world.rotation import default_pivot2, rotated_box
+from redsim.world.rotation import default_pivot2, rotated_box, transformed_boxes
 
 
 @dataclass
@@ -294,9 +294,13 @@ class Document(HistoryOps, SequenceOps):
         self._apply(Action("setblock", pos, repr(state)), f"set {state.block.name}")
 
     # ------------------------------------------------------------------ regions
-    def copy(self, region: Region) -> Prefab:
-        """Capture a region into the clipboard (air included, block-entity data kept)."""
-        self.clipboard = Prefab.capture(self.engine.level, region)
+    def copy(self, region: Region | list[Region]) -> Prefab:
+        """Capture a region (or several: only their cells) into the clipboard (air
+        included, block-entity data kept)."""
+        if isinstance(region, list):
+            self.clipboard = Prefab.capture_many(self.engine.level, region)
+        else:
+            self.clipboard = Prefab.capture(self.engine.level, region)
         return self.clipboard
 
     def paste(self, origin: Pos, prefab: Prefab | None = None) -> None:
@@ -351,6 +355,47 @@ class Document(HistoryOps, SequenceOps):
         self._apply(Action("transform_region", region.low, payload=payload), label)
         low, high = rotated_box(region.low, region.high, quarter_turns, pivot)
         return Region(low, high)
+
+    def transform_regions(
+        self,
+        regions: list[Region],
+        quarter_turns: int = 0,
+        mirror: str | None = None,
+        pivot2: tuple[int, int] | None = None,
+        offset: Pos = (0, 0, 0),
+        copy: bool = False,
+    ) -> list[Region]:
+        """Several selections at once: mirrored within their bounding box, turned around
+        ``pivot2`` (default: the bounding box's center), shifted by ``offset``; copied
+        instead of moved with ``copy``. No block updates, pending ticks come along; one
+        undo step. Returns the boxes at their new places (same order)."""
+        if not regions:
+            raise EditError("Nothing selected.")
+        if not quarter_turns % 4 and mirror is None and offset == (0, 0, 0):
+            raise EditError("The selection did not move.")
+        low, high = bounding_box(regions)
+        pivot = pivot2 if pivot2 is not None else default_pivot2(low, high)
+        payload = {
+            "boxes": [[list(r.low), list(r.high)] for r in regions],
+            "offset": list(offset),
+            "quarter_turns": quarter_turns,
+            "mirror": mirror,
+            "pivot2": list(pivot),
+            "copy": copy,
+        }
+        if quarter_turns % 4:
+            what = f"rotate {quarter_turns * 90}°"
+        elif mirror is not None:
+            what = f"flip {mirror}"
+        else:
+            what = "copy" if copy else "move"
+        label = f"{what} {len(regions)} selections"
+        self._apply(Action("transform_regions", regions[0].low, payload=payload), label)
+        boxes = [(r.low, r.high) for r in regions]
+        return [
+            Region(a, b)
+            for a, b in transformed_boxes(boxes, offset, quarter_turns % 4, mirror, pivot)
+        ]
 
     def stack_region(self, region: Region, step: Pos, count: int) -> Region:
         """``count`` copies of a selection, each ``step`` further (no block updates). One

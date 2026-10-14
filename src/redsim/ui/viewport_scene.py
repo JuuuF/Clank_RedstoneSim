@@ -127,9 +127,10 @@ class SceneGeometry:
             parts.append(thick_edges(lo, hi, color, width))
             if view._gizmos_shown():
                 parts.append(view._gizmos()[0])
-        if view._move is not None:
-            lo, hi = _bounds(shifted(view._move.region, view._move.offset_pos))
-            parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
+        if view._move is not None:  # where every selection would go
+            for region in view.all_regions():
+                lo, hi = _bounds(shifted(region, view._move.offset_pos))
+                parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
         if view._stack is not None and view._stack.count:
             far = shifted(view._stack.region, view._stack.offset(view._stack.count))
             lo = np.minimum(_bounds(view._stack.region)[0], _bounds(far)[0])

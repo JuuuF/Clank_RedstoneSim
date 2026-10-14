@@ -13,7 +13,7 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
 1. [x] **O12 loose ends:** the Select World screen's stray character in the search box,
    its dirt-and-stone look, thumbnails for simulation worlds without one; colored groups
    for every category's timeline lines (not only Powered).
-2. [ ] **O3 several selections:** copy, move, rotate and flip every box at once.
+2. [x] **O3 several selections:** copy, move, rotate and flip every box at once.
 3. [ ] **O2 diagnostics:** a clickable cause chain per block ("why did this change?") from
    the trace; a signal-strength heat view in the viewport.
 4. [ ] **O4 sign text:** text drawn on the sign's face; entering text for signs placed in
@@ -35,3 +35,11 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
   without the jar); a world without a thumbnail gets one 1.5 s after it is opened; every
   timeline category has its own colored groups (`Document.lines_of(row)`, saved as
   `extra["row_line_groups"]`; Powered stays in `extra["line_groups"]`).
+- O3 done: a new editor action `transform_regions` (engine `_transform_regions`: captures
+  every cell of the boxes once, clears them unless copying, places them mirrored within
+  the bounding box, turned around its middle and shifted, pending ticks along) moves,
+  copies, turns and flips several selections as one undo step; the single-box turn now
+  uses the same code. Ctrl+C with several boxes copies one sparse prefab
+  (`Prefab.capture_many`). Dragging shows every box's ghost and target. Note: turning a
+  non-square group of boxes can land on cells between them (as a single turned box lands
+  on its neighbors).

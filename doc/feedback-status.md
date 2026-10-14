@@ -10,7 +10,6 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 |---|---|---|---|
 | O1 | **Open Minecraft worlds**, load around the camera, own cache, write back | round 8 #18 | Done: reading saves, opening, streaming chunks around the camera. Open: an index of the save's builds with "go to the builds"; the on-disk cache (keyed by save and seed, chunk timestamps); unloading far chunks; re-attaching the stream when a `.redsim.json` saved from a world is reopened. Write-back to a **copy** of the save exists (File → Save as Minecraft world…, 2026-10-13); open: pending ticks, blocks outside loaded chunks, a check that the game opens the copy. |
 | O2 | **Diagnostics**: "why did this block change?" and a signal view | owner priority list 2026-10-12 (after missing blocks and world loading); brief M3/M6 | Done: trace per step, Diagnostics tab, clicking flashes the block, F3 labels. Open: a clickable cause chain per block (from `sim/trace.py` records), a signal-strength heat view in the viewport. |
-| O3 | **Several selections** | round 9 #13 | Done: Shift+drag adds boxes, Del clears all, Alt+A removes all. Open: copy, move, rotate and flip several boxes at once (they act on the active box). |
 | O4 | **Sign text** | round 9 #4 | Done: text of signs from opened worlds is drawn over them. Open: text on the sign's face itself (now a label above it), and entering text for signs placed in the editor. |
 | O5 | **Smooth 60 fps with big contraptions** | round 9 (follow-up) | Done: moving-piston mesh, heavy ticks in parts, faster engine paths, and (2026-10-14) an optional compiled build: 2–3× faster ticks than before the night. Open: the owner's own check on the desktop. |
 | O6 | **Generic signal-strength source** that maps to a real block, hot-swappable | round 1 (Analog signal sources) | Done for barrel, lectern and cake. Open: hopper, composter and chest as source kinds (chests and hoppers exist as blocks; composters do not). |
@@ -46,6 +45,9 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Round 12**: 0-tick pulses act inside a tick (pistons spit their block); sequences
   and all recorded edits are saved with the file (they were lost on reopening); the
   hover highlight clears below the last list row and is more subtle.
+
+- **Several selections act together** (O3, 2026-10-14): move, copy, rotate, flip and
+  Ctrl+C work on every box at once (`transform_regions` editor action, one undo step).
 
 - **2026-10-14 (night):** pulses can be muted (bypassed); timeline lines named by
   position with the current block; refactor, stability and speed pass

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.core.pos import Pos
-from redsim.editor.clipboard import Prefab, Region
+from redsim.editor.clipboard import Prefab, Region, bounding_box
 from redsim.editor.document import Document, EditError
 from redsim.editor.groups import Group, Port
 from redsim.ui.names import block_name
@@ -46,9 +46,14 @@ class RegionActions:
     def _copy(self) -> None:
         view = cast("MainWindow", self)
         region = view._region()
-        if region is not None:
-            prefab = view.document.copy(region)
-            view._message(f"Copied {prefab.non_air_count} blocks (with air: {len(prefab.blocks)}).")
+        if region is None:
+            return
+        regions = view.viewport.all_regions()
+        prefab = view.document.copy(regions if len(regions) > 1 else region)
+        boxes = f" from {len(regions)} boxes" if len(regions) > 1 else ""
+        view._message(
+            f"Copied {prefab.non_air_count} blocks{boxes} (with air: {len(prefab.blocks)})."
+        )
 
     def _paste(self) -> None:
         """Ctrl+V: preview the clipboard at the cursor; a left click places it."""
@@ -64,17 +69,27 @@ class RegionActions:
         view._edit(view.document.paste, origin)
 
     def _move_region(self, region: Region, by: Pos, copy: bool) -> None:
-        """A dragged selection: ``/clone … replace move`` (or ``force`` for a copy)."""
+        """A dragged selection: ``/clone … replace move`` (or ``force`` for a copy); with
+        several selections, all of them move (or are copied) together."""
         view = cast("MainWindow", self)
         view.document.notice = ""
+        viewport = view.viewport
+        regions = viewport.all_regions()
+        verb = "Copied" if copy else "Moved"
         try:
-            moved = view.document.clone_region(region, by, "force" if copy else "move")
+            if len(regions) > 1:
+                moved = view.document.transform_regions(regions, offset=by, copy=copy)
+                viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
+                what = f"the {len(regions)} selections"
+            else:
+                viewport.region = view.document.clone_region(
+                    region, by, "force" if copy else "move"
+                )
+                what = "the selection"
         except EditError as exc:
             view._message(str(exc), error=True)
         else:
-            view.viewport.region = moved
-            verb = "Copied" if copy else "Moved"
-            view._message(f"{verb} the selection by {by[0]}, {by[1]}, {by[2]}.")
+            view._message(f"{verb} {what} by {by[0]}, {by[1]}, {by[2]}.")
         view._changed()
 
     def _rotate(self, quarter_turns: int) -> None:
@@ -120,25 +135,33 @@ class RegionActions:
             view._message("Nothing to flip: select a box (V) first.")
 
     def _transform(self, quarter_turns: int = 0, mirror: str | None = None) -> None:
+        """Rotate or flip the selection in place; several selections turn together around
+        the middle of the box around them all."""
         view = cast("MainWindow", self)
-        region = view.viewport.region
-        if region is None:
+        viewport = view.viewport
+        if viewport.region is None:
             return
-        # Keep turning around the same pivot while the same selection is turned again, so
-        # R then Shift+R (or R four times) returns exactly to the start.
+        regions = viewport.all_regions()
+        # Keep turning around the same pivot while the same selections are turned again,
+        # so R then Shift+R (or R four times) returns exactly to the start.
         last = view._rotation_pivot
-        pivot = last[1] if last is not None and last[0] == region else None
+        pivot = last[1] if last is not None and last[0] == tuple(regions) else None
         if pivot is None:
-            pivot = default_pivot2(region.low, region.high)
+            pivot = default_pivot2(*bounding_box(regions))
         try:
-            moved = view.document.transform_region(region, quarter_turns, mirror, pivot)
-            view.viewport.region = moved
-            view._rotation_pivot = (moved, pivot)
+            if len(regions) > 1:
+                moved = view.document.transform_regions(regions, quarter_turns, mirror, pivot)
+                viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
+            else:
+                moved = [view.document.transform_region(regions[0], quarter_turns, mirror, pivot)]
+                viewport.region = moved[0]
+            view._rotation_pivot = (tuple(moved), pivot)
         except EditError as exc:
             view._message(str(exc), error=True)
         else:
             what = f"rotated {quarter_turns * 90}°" if quarter_turns else "flipped"
-            view._message(f"Selection {what} in place (no block updates).")
+            subject = f"{len(regions)} selections" if len(regions) > 1 else "Selection"
+            view._message(f"{subject} {what} in place (no block updates).")
         view._changed()
 
     def _gizmo_transform(self, quarter_turns: int, mirror: str | None) -> None:

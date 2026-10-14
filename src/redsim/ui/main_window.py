@@ -151,7 +151,8 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         self._world_timer = QTimer(self)  # chunks of an opened world load around the camera
         self._world_timer.timeout.connect(self._stream_world)
         self._world_timer.start(STREAM_INTERVAL_MS)
-        self._rotation_pivot: tuple[Region, tuple[int, int]] | None = None
+        #: The selections last turned (as they are now) and the pivot they turned around.
+        self._rotation_pivot: tuple[tuple[Region, ...], tuple[int, int]] | None = None
         self.tick_rate = RateMeter()
         self._panels_refreshed = 0.0
         self._actions: dict[str, QAction] = {}
