@@ -42,6 +42,17 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Hundreds of blocks, observer arrows, F from far away** (2026-10-14): the game's
+  ordinary blocks come from a table generated from ``Blocks.java``
+  (``tools/extract_block_table.py`` → ``world/blocks/catalog_data.py``, classes in
+  ``world/blocks/catalog.py``): about 580 more blocks (full cubes, pillars, facing
+  blocks, slabs, stairs with corners, leaves with their distance, carpets, every wood's
+  buttons, plates and signs, the new poplar wood), with the game's conductor rule, push
+  reaction and destroy time; the inventory gets the game's Building, Colored and Natural
+  tabs. Observers show their arrow on all four sides; F (and pointing) reaches as far as
+  the camera is zoomed out; the observer light stays visible far away; the "An empty
+  world" box is gone. Still foreign (drawn, inert): doors, trapdoors, fence gates, fences,
+  walls, panes, falling blocks, TNT, plants and the other blocks with logic of their own.
 - **Why? for quasi-connected pistons, dropped prefabs as selections, glint, ground**
   (2026-10-14): Why? names where an extending piston's power comes from (pistons note it
   in the trace when they decide to extend) and follows that block's causes; a prefab

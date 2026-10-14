@@ -106,6 +106,10 @@ def placement_state(
     engine applies the ``place`` action (wire connections, lamp ``lit``, repeater ``locked``).
     """
     directions = nearest_looking_directions(request)
+    own = getattr(block, "player_placement", None)
+    if own is not None:  # the game's ordinary blocks (``world/blocks/catalog.py``)
+        state: BlockState | None = own(request, level, pos)
+        return state
     if isinstance(block, FaceAttachedBlock):
         for direction in directions:
             if direction.axis.is_horizontal:

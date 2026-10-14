@@ -66,9 +66,12 @@ OBSERVER_LIGHT = (1.0, 0.16, 0.08)
 OBSERVER_FADE_SECONDS = 0.45
 
 
-def _observer_lights(pos: Pos, facing: Direction, strength: float) -> list[np.ndarray]:
+def _observer_lights(
+    pos: Pos, facing: Direction, strength: float, lift: float = 1.0
+) -> list[np.ndarray]:
     """A small bright square with a faint halo on the observer's output face, and a
-    smaller one on its top when it faces sideways."""
+    smaller one on its top when it faces sideways. ``lift`` scales how far they stand off
+    the face (more from far away, where the depth buffer cannot tell 0.008 blocks apart)."""
     center = np.array(pos, dtype=float) + 0.5
     lights = [(facing.opposite, 0.16, 0.30), (Direction.UP, 0.12, 0.24)]
     if not facing.axis.is_horizontal:
@@ -77,10 +80,10 @@ def _observer_lights(pos: Pos, facing: Direction, strength: float) -> list[np.nd
     for side, core, halo in lights:
         normal = np.array(side.step, dtype=float)
         face = center + normal * 0.5
-        for half, lift, alpha in ((halo, 0.004, 0.22), (core, 0.008, 0.9)):
+        for half, gap, alpha in ((halo, 0.004, 0.22), (core, 0.008, 0.9)):
             extent = np.where(normal != 0, 0.0, half)
-            lo = face - extent + np.minimum(normal, 0) * lift
-            hi = face + extent + np.maximum(normal, 0) * lift
+            lo = face - extent + np.minimum(normal, 0) * gap * lift
+            hi = face + extent + np.maximum(normal, 0) * gap * lift
             parts.append(box_faces(lo, hi, (*OBSERVER_LIGHT, alpha * strength)))
     return parts
 
@@ -383,7 +386,9 @@ class SceneGeometry:
                 if strength <= 0:
                     del glow[pos]
                     continue
-            parts.extend(_observer_lights(pos, facing, strength))
+            eye = np.asarray(view.camera.position, dtype=float)
+            distance = float(np.linalg.norm(np.array(pos, dtype=float) + 0.5 - eye))
+            parts.extend(_observer_lights(pos, facing, strength, max(1.0, distance / 20.0)))
         return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
 
     def locate(self, pos: Pos | None) -> None:

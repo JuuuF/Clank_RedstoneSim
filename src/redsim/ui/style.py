@@ -209,7 +209,7 @@ def block_boxes(state: BlockState) -> list[Box]:
         return attach(
             _lever(state.get(POWERED)), state.get(ATTACH_FACE), state.get(HORIZONTAL_FACING)
         )
-    if block_id in ("minecraft:stone_button", "minecraft:oak_button"):
+    if block_id.endswith("_button"):
         color = rgb(0.55, 0.55, 0.55) if "stone" in block_id else rgb(0.66, 0.52, 0.32)
         depth = 1 if state.get(POWERED) else 2
         model = [Box((5, 0, 6), (11, depth, 10), color)]
@@ -254,6 +254,14 @@ def block_boxes(state: BlockState) -> list[Box]:
         return _chest(state)
     if block_id.endswith("copper_bulb"):
         return full(LAMP_ON if state.get(LIT) else rgb(0.62, 0.42, 0.30))
+    own = getattr(state.block, "pixel_boxes", None)
+    if own is not None:  # the game's ordinary blocks: their shape in their map color
+        packed = int(getattr(state.block, "map_color", 0) or 0x9A9A9A)
+        see_through = bool(getattr(state.block, "see_through", False))
+        shade = rgb(((packed >> 16) & 255) / 255, ((packed >> 8) & 255) / 255, (packed & 255) / 255)
+        if see_through:
+            shade = (shade[0], shade[1], shade[2], 0.45)
+        return [Box(tuple(lo), tuple(hi), shade, see_through) for lo, hi in own(state)]
     return full(UNKNOWN)
 
 

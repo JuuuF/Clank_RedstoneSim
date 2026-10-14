@@ -84,8 +84,6 @@ class TextOverlays:
                     8, top, theme.text_width(text) + 12, line + 4, QColor(0, 0, 0, 110)
                 )
                 theme.draw_text(painter, 14, top + 3, text, "#ffffff")
-        if not view.show_info and view.paste_preview is None:
-            view._draw_welcome(painter)
         # Mode badge (bottom left) with what the mode works on (the hint bar below the
         # window lists the keys).
         pasting = view.paste_preview is not None
@@ -328,45 +326,6 @@ class TextOverlays:
             if rect.contains(point):
                 return pos
         return None
-
-    def welcome_lines(self) -> list[str]:
-        """How to start, while the world is only its floor (nothing above y=0)."""
-        view = cast("Viewport", self)
-        if any(pos[1] > 0 for pos in view.document.level.blocks):
-            return []
-
-        def key(action: str) -> str:
-            bindings = view.keymap.bindings(action)
-            return bindings[0] if bindings else "?"
-
-        build = f"Press {key('mode.build')} to build" if view.mode != BUILD else "Building"
-        return [
-            f"{build}: pick a block with 1-9, the hotbar or {key('search.blocks')}",
-            f"{key('camera.orbit')} orbits · the wheel moves the camera up and down",
-            f"{key('help.controls')} lists every key",
-        ]
-
-    def _draw_welcome(self, painter: QPainter) -> None:
-        view = cast("Viewport", self)
-        lines = view.welcome_lines()
-        if not lines:
-            return
-        line = theme.line_height(2) + 6
-        top = view.height() // 4
-        title = "An empty world"
-        width = max(theme.text_width(text) for text in [title, *lines]) + 40
-        height = (len(lines) + 1) * line + 30
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(16, 16, 20, 170))
-        painter.drawRoundedRect((view.width() - width) // 2, top - 14, width, height, 6, 6)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        theme.draw_text(
-            painter, (view.width() - theme.text_width(title)) // 2, top, title, theme.GOLD
-        )
-        for index, text in enumerate(lines, start=1):
-            x = (view.width() - theme.text_width(text)) // 2
-            theme.draw_text(painter, x, top + index * line + 6, text, "#ffffff")
 
     def ring_mode_at(self, point: QPoint) -> str | None:
         """The mode of the Tab ring in the direction of ``point`` (None near the center)."""

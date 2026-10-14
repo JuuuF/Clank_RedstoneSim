@@ -24,10 +24,12 @@ Port of the relevant parts of the client's model pipeline (paths relative to
 
 from __future__ import annotations
 
+import copy
 import json
 import math
 import os
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -286,6 +288,24 @@ def _state_props(state: BlockState) -> dict[str, str]:
     return state.properties_dict()
 
 
+def _observer_arrows(model: dict[str, Any]) -> dict[str, Any]:
+    """The observer shows its arrow on all four sides around its facing (owner,
+    2026-10-14): the game draws it only on two (``#top``, pointing towards the output);
+    its other two sides (``#side``) get the same texture, turned so the arrow points
+    towards the output too (west face: u runs north → south; east face: south → north)."""
+    elements = copy.deepcopy(model["elements"])
+    faces = elements[0]["faces"]
+    faces["west"] = {**faces["west"], "texture": "#top", "rotation": 90}
+    faces["east"] = {**faces["east"], "texture": "#top", "rotation": 270}
+    return {**model, "elements": elements}
+
+
+#: Models the simulator draws differently from the game (by resolved model name).
+MODEL_PATCHES: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
+    "minecraft:block/observer": _observer_arrows,
+}
+
+
 class Assets:
     """Read-only access to the client jar's block assets, with caches."""
 
@@ -355,6 +375,9 @@ class Assets:
             resolved["textures"][key] = value
         if "elements" in data:
             resolved["elements"] = data["elements"]
+        patch = MODEL_PATCHES.get(name)
+        if patch is not None:
+            resolved = patch(resolved)
         self._models[name] = resolved
         return resolved
 

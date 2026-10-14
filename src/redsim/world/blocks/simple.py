@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from redsim.core.compiled import mypyc_attr
 from redsim.core.pos import Pos
 from redsim.world.block import Block, BlockState, Conductor, PushReaction
-from redsim.world.properties import SLAB_TYPE, SNOWY
+from redsim.world.properties import SLAB_TYPE, SNOWY, WATERLOGGED
 from redsim.world.shape import EMPTY, Shape, box, column
 
 if TYPE_CHECKING:
@@ -64,13 +64,16 @@ class HoneyBlock(SimpleBlock):
 
 
 class SlabBlock(Block):
-    """``SlabBlock``: bottom/top half or double; only the double slab is a full block."""
+    """``SlabBlock``: bottom/top half or double; only the double slab is a full block.
+    ``waterlogged`` is kept for the game's state text (water is not simulated)."""
 
-    properties = (SLAB_TYPE,)
+    properties = (SLAB_TYPE, WATERLOGGED)
 
-    def __init__(self, block_id: str) -> None:
-        super().__init__(block_id, destroy_speed=2.0)
-        self.register_default_state(self.default_state.with_(SLAB_TYPE, "bottom"))
+    def __init__(self, block_id: str, destroy_speed: float = 2.0) -> None:
+        super().__init__(block_id, destroy_speed=destroy_speed)
+        self.register_default_state(
+            self.default_state.with_(SLAB_TYPE, "bottom").with_(WATERLOGGED, False)
+        )
 
     def get_shape(self, state: BlockState) -> Shape:
         slab_type = state.get(SLAB_TYPE)

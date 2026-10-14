@@ -136,7 +136,9 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   - A **double chest** shows all 54 slots, as the game does; the other half's slots are
     greyed out (hover tells where they are) and only this half's slots can be edited.
 - The badge in the bottom-left corner shows the mode and what it works on; the hint bar below lists the keys.
-- Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
+- Choosing a block (inventory, number keys, middle-click pick) switches to BUILD. Besides
+  the redstone folders, the inventory has the game's own Building, Colored and Natural
+  tabs (in pages of nine, in the game's order); the search finds every block.
 - Esc in NORMAL clears the inspector selection and every selection box.
 - **Several selections:** in SELECT mode, **Shift+drag** keeps the current box and draws
   another one (while the selection is edited, before Enter). Dragging from inside any box

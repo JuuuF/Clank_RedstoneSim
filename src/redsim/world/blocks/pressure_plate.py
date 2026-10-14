@@ -35,7 +35,7 @@ MOBS_ONLY = frozenset(
 )
 WOODS = (
     "oak", "spruce", "birch", "jungle", "acacia", "cherry", "dark_oak", "pale_oak",
-    "mangrove", "bamboo", "crimson", "warped",
+    "mangrove", "bamboo", "crimson", "warped", "poplar",
 )  # fmt: skip
 PLATE_IDS = (
     "minecraft:stone_pressure_plate",

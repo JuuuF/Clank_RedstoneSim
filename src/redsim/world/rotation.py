@@ -45,6 +45,9 @@ def rotate_state(state: BlockState, quarter_turns: int) -> BlockState:
             state = state.with_(prop, rotate_direction(value, turns))
         elif prop.name == "rotation":  # standing signs: Rotation.rotate(rotation, 16)
             state = state.with_(prop, (value + 4 * turns) % 16)
+        elif prop.name == "axis" and turns % 2 and value in ("x", "z"):
+            # RotatedPillarBlock.rotateState: a quarter turn swaps x and z.
+            state = state.with_(prop, "z" if value == "x" else "x")
     return state
 
 
@@ -65,6 +68,11 @@ def mirror_state(state: BlockState, axis: str) -> BlockState:
     if state.block.id == "minecraft:redstone_wire":
         a, b = PROPERTY_BY_DIRECTION[flipped], PROPERTY_BY_DIRECTION[flipped.opposite]
         return state.with_(a, state.get(b)).with_(b, state.get(a))
+    own = getattr(state.block, "mirrored", None)  # StairBlock.mirror
+    if own is not None:
+        mirrored = own(state, axis)
+        if mirrored is not None:
+            return mirrored
     for prop in state.block.properties:
         value = state.get(prop)
         if isinstance(value, Direction) and value.axis is flipped.axis:

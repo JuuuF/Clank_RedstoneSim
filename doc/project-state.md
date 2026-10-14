@@ -122,6 +122,7 @@ page is the summary to start from.*
 | pressure plates (stone, polished blackstone, 12 woods, light/heavy weighted) | `pressure_plate.py` | press/release timing, weights, "visitors" instead of entities | EXP-046 |
 | composter (levels 0–8, a signal source kind) | `composter.py` | level timing, comparator, player/hopper emptying, pistons | EXP-049 |
 | standing and wall signs (12 woods, + block entity with front/back text) | `sign.py` | placement, popping, blocking pistons, text edits, saving, rotation | EXP-048 |
+| the game's ordinary blocks (~580: full cubes, pillars, facing blocks, slabs, stairs, leaves, carpets, all wood/stone buttons, poplar plates and signs) | `catalog.py` + generated `catalog_data.py` | settings from `Blocks.java` (conductor rule, push reaction, destroy time, see-through); stair corners and mirroring, leaves distance (ticked), carpets breaking | `tests/world/test_catalog.py` (not yet checked in the game) |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status

@@ -61,6 +61,7 @@ DELAY = integer("delay", 1, 4)
 BITES = integer("bites", 0, 6)
 OPEN = boolean("open")
 SNOWY = boolean("snowy")
+WATERLOGGED = boolean("waterlogged")  # water itself is not simulated
 HAS_BOOK = boolean("has_book")
 ENABLED = boolean("enabled")
 #: ``BlockStateProperties.FACING`` (L53) declares N, E, S, W, U, D (not ordinal order).

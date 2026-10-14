@@ -38,7 +38,9 @@ def test_example_world_opens_around_the_player() -> None:
     level = opened.document.level
     assert len(opened.stream.loaded) > 0 and opened.stream.skipped() > 0
     assert any(state.is_(blocks.REDSTONE_WIRE) for state in level.blocks.values())
-    assert "minecraft:quartz_stairs" in opened.foreign  # not simulated: kept as text
+    stairs = blocks.get("minecraft:quartz_stairs")  # simulated since the block catalog
+    assert "minecraft:quartz_stairs" not in opened.foreign
+    assert any(state.block is stairs for state in level.blocks.values())
     assert any(state.is_(blocks.NOTE_BLOCK) for state in level.blocks.values())  # simulated
     assert opened.document.extra["minecraft_world"]["name"] == "Redstone"
     opened.document.run_ticks(5)  # it simulates

@@ -37,7 +37,7 @@ ROTATION = integer("rotation", 0, 15)
 WATERLOGGED = boolean("waterlogged")
 WOODS = (
     "oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "pale_oak", "mangrove",
-    "cherry", "bamboo", "crimson", "warped",
+    "cherry", "bamboo", "crimson", "warped", "poplar",
 )  # fmt: skip
 LINES = 4
 _STANDING_SHAPE = column(8, 0, 16)

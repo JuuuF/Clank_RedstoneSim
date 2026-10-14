@@ -9,6 +9,7 @@ from __future__ import annotations
 from redsim.world.block import Block, BlockState, PushReaction
 from redsim.world.blocks.attached import ButtonBlock, LeverBlock
 from redsim.world.blocks.cake import CakeBlock
+from redsim.world.blocks.catalog import catalog_blocks
 from redsim.world.blocks.chest import ChestBlock, TrappedChestBlock
 from redsim.world.blocks.comparator import ComparatorBlock
 from redsim.world.blocks.composter import ComposterBlock
@@ -158,8 +159,17 @@ PISTON_HEAD = register(PistonHeadBlock())
 MOVING_PISTON = register(MovingPistonBlock())
 COMPOSTER = register(ComposterBlock())
 SIGNS = tuple(register(StandingSignBlock(wood)) for wood in WOODS)
+#: Buttons of every wood and stone (``woodenButton``: 30 ticks, stone ones 20).
+BUTTONS = tuple(
+    register(ButtonBlock(f"minecraft:{kind}_button", 20 if "stone" in kind else 30))
+    for kind in (*WOODS, "polished_blackstone")
+    if f"minecraft:{kind}_button" not in REGISTRY
+)
 WALL_SIGNS = tuple(register(WallSignBlock(wood)) for wood in WOODS)
 OAK_SIGN, OAK_WALL_SIGN = SIGNS[0], WALL_SIGNS[0]
+
+# --- the game's ordinary blocks, from the generated table (``catalog.py``) ---------------
+CATALOG = tuple(register(block) for block in catalog_blocks(set(REGISTRY)))
 
 __all__ = [
     "AIR",

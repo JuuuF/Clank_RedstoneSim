@@ -75,6 +75,7 @@ from redsim.ui.view_common import (
     MOVING_KEY,
     NORMAL,
     ORBIT_DEGREES_PER_PIXEL,
+    PICK_REACH,
     PULSE_SECONDS,
     SELECT,
     TRACKPAD_PIXELS_PER_BLOCK,
@@ -877,9 +878,12 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         return points[1] - points[0]
 
     def _pick_at(self, point: QPoint) -> Hit | None:
+        """The block under the cursor, as far as the view reaches: at least the fixed reach,
+        and well past the pivot however far out the camera is (F from far away)."""
         origin, direction = self._ray(point)
         self._hover_direction = direction
-        return pick(self.document.level, origin, direction)
+        reach = max(PICK_REACH, 2.0 * self.camera.distance + PICK_REACH)
+        return pick(self.document.level, origin, direction, reach)
 
     def _update_hover(self, point: QPoint) -> None:
         label = self.label_at(point) if self.show_info else None

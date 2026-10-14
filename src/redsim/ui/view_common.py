@@ -40,6 +40,11 @@ SIGN_TEXT_DISTANCE = 16.0  # blocks: sign text shows (and fades out) within this
 ORBIT_DEGREES_PER_PIXEL = 0.3
 
 
+#: Blocks the cursor reaches beyond twice the camera's distance to the pivot (pointing,
+#: F to focus): the old fixed 96 blocks left far-out views unable to point at anything.
+PICK_REACH = 96.0
+
+
 #: The camera's field of view fits a viewport this share of the screen's height. The view
 #: keeps its scale when the viewport is resized: a narrower or a lower viewport shows less
 #: at that side instead of squeezing more in (owner, 2026-10-14).

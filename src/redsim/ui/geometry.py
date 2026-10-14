@@ -198,16 +198,42 @@ TRANSLUCENT_BLOCKS = frozenset({"minecraft:slime_block", "minecraft:honey_block"
 GRASS_TINT = (0.569, 0.741, 0.349)  # plains grass color (#91BD59)
 
 
+def _rgb(packed: int) -> tuple[float, float, float]:
+    return (((packed >> 16) & 255) / 255, ((packed >> 8) & 255) / 255, (packed & 255) / 255)
+
+
+#: ``BlockColors``: leaves tinted by the plains foliage color (#77AB2F); spruce and birch
+#: leaves have constant colors (``FoliageColor.FOLIAGE_EVERGREEN``, ``FOLIAGE_BIRCH``).
+FOLIAGE_TINTS: dict[str, tuple[float, float, float]] = {
+    **{
+        f"minecraft:{kind}": _rgb(0x77AB2F)
+        for kind in (
+            "oak_leaves",
+            "jungle_leaves",
+            "acacia_leaves",
+            "dark_oak_leaves",
+            "mangrove_leaves",
+            "vine",
+        )
+    },  # fmt: skip
+    "minecraft:spruce_leaves": _rgb(0x619961),
+    "minecraft:birch_leaves": _rgb(0x80A755),
+}
+
+
 def tint_color(state: BlockState, index: int) -> tuple[float, float, float]:
-    """``BlockColors`` for the in-scope blocks: redstone dust by power, grass green."""
+    """``BlockColors`` for the in-scope blocks: redstone dust by power, grass and leaves
+    green."""
     if index < 0:
         return (1.0, 1.0, 1.0)
     if state.block.id == "minecraft:redstone_wire":
         red, green, blue, _ = wire_color(int(state.get(POWER)))
         return (red, green, blue)
-    if state.block.id == "minecraft:grass_block":
+    block_id = state.block.id
+    if block_id == "minecraft:grass_block":
         return GRASS_TINT
-    return (1.0, 1.0, 1.0)
+    tint = FOLIAGE_TINTS.get(block_id)
+    return tint if tint is not None else (1.0, 1.0, 1.0)
 
 
 class Mesher:

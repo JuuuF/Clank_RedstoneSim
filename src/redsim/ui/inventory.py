@@ -49,6 +49,32 @@ class Folder:
     children: tuple[Folder | str, ...] = field(default_factory=tuple)  # str: block id
 
 
+PAGE = 9  # entries per folder: one per number key
+
+
+def paged(title: str, block_ids: list[str]) -> Folder:
+    """A folder of many blocks in pages of nine (folders of folders as needed, each
+    named after its first block), keeping their order."""
+    entries: list[Folder | str] = list(block_ids)
+    while len(entries) > PAGE:
+        pages = [entries[i : i + PAGE] for i in range(0, len(entries), PAGE)]
+        entries = [Folder(_first_name(page), tuple(page)) for page in pages]
+    return Folder(title, tuple(entries))
+
+
+def _first_name(entries: list[Folder | str]) -> str:
+    first = entries[0]
+    return first.title if isinstance(first, Folder) else block_name(first)
+
+
+def creative_tab(title: str) -> Folder:
+    """One of the game's creative tabs (Building, Colored, Natural): its blocks the
+    simulator has, in the game's order (``catalog_data.CREATIVE_TABS``)."""
+    from redsim.world.blocks.catalog_data import CREATIVE_TABS
+
+    return paged(title, [b for b in CREATIVE_TABS[title] if b in blocks.REGISTRY])
+
+
 INVENTORY = Folder(
     "Inventory",
     (
@@ -105,18 +131,9 @@ INVENTORY = Folder(
             ),
         ),
         Folder("Rails", ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail")),
-        Folder(
-            "Building",
-            (
-                "minecraft:stone",
-                "minecraft:smooth_stone",
-                "minecraft:cobblestone",
-                "minecraft:oak_planks",
-                "minecraft:white_wool",
-                "minecraft:white_concrete",
-                "minecraft:smooth_stone_slab",
-            ),
-        ),
+        creative_tab("Building"),
+        creative_tab("Colored"),
+        creative_tab("Natural"),
         Folder(
             "Special",
             ("minecraft:glass", "minecraft:glowstone", "minecraft:bedrock", "minecraft:oak_sign"),

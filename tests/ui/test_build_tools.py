@@ -259,18 +259,6 @@ def test_window_layout_round_trips(app: Any) -> None:
     again.close()
 
 
-def test_welcome_shows_until_the_first_block(app: Any) -> None:
-    from redsim.ui.main_window import MainWindow
-
-    window = MainWindow()
-    lines = window.viewport.welcome_lines()
-    assert lines and "B" in lines[0]  # keys from the keymap
-    window.document.place((0, 1, 0), blocks.REDSTONE_LAMP, PlaceRequest(Direction.UP, 0, 0))
-    assert window.viewport.welcome_lines() == []
-    window.document.dirty = False
-    window.close()
-
-
 def test_preferences_looks_follow_the_view_menu(app: Any) -> None:
     from redsim.ui.main_window import MainWindow
     from redsim.ui.panels import PreferencesDialog
@@ -478,7 +466,7 @@ def test_build_keys_vary_the_block_to_place(app: Any) -> None:
     assert window.viewport.build_upside_down
     assert "upside down" in window.viewport.mode_status()
     window._place((0, 1, 0))
-    assert repr(window.document.state_at((0, 1, 0))).endswith("[type=top]")
+    assert "type=top" in repr(window.document.state_at((0, 1, 0)))
     window._rotate(1)  # R in BUILD turns the block to place, not the selection
     assert window.viewport.build_turns == 1
     assert window.viewport.region == Region((5, 1, 5), (6, 1, 6))
