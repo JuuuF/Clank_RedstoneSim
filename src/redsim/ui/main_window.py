@@ -31,7 +31,6 @@ from PySide6.QtWidgets import (
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.editor import pins, sources
-from redsim.editor.clipboard import Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.placement import PlaceRequest
 from redsim.ui import pixel_icons, theme
@@ -154,8 +153,6 @@ class MainWindow(
         self._world_timer = QTimer(self)  # chunks of an opened world load around the camera
         self._world_timer.timeout.connect(self._stream_world)
         self._world_timer.start(STREAM_INTERVAL_MS)
-        #: The selections last turned (as they are now) and the pivot they turned around.
-        self._rotation_pivot: tuple[tuple[Region, ...], tuple[int, int]] | None = None
         self.tick_rate = RateMeter()
         self._panels_refreshed = 0.0
         self._actions: dict[str, QAction] = {}
@@ -282,8 +279,8 @@ class MainWindow(
         self.viewport.pick_requested.connect(self._pick)
         self.viewport.select_requested.connect(self._select)
         self.viewport.region_changed.connect(self._region_changed)
-        self.viewport.region_move_requested.connect(self._move_region)
-        self.viewport.region_stack_requested.connect(self._stack_region)
+        self.viewport.floating_changed.connect(self._floating_changed)
+        self.viewport.message_requested.connect(self._message)
         self.viewport.transform_requested.connect(self._gizmo_transform)
         self.viewport.paste_requested.connect(self._paste_at)
         self.viewport.mode_changed.connect(self._mode_changed)
@@ -444,11 +441,11 @@ class MainWindow(
             ("Copy", "Copy", "copy", self._copy, "edit.copy"),
             ("Paste", "Paste", "paste", self._paste, "edit.paste"),
             ("Delete", "Delete", "delete", self._delete_region, "edit.delete"),
-            ("Lock", "Lock", "lock", self._toggle_lock, "select.lock"),
+            ("Confirm", "Confirm", "lock", self._confirm, "select.lock"),
         ):
             action = self._action(region_menu, text, slot, keymap_id)
             action.setIcon(pixel_icons.pixel_icon(icon))
-            if keymap_id == "select.lock":  # pressed while the selection is locked
+            if keymap_id == "select.lock":  # pressed while the selection is confirmed
                 action.setCheckable(True)
                 self._lock_action = action
             action.setIconText(short or text)
@@ -575,10 +572,13 @@ class MainWindow(
         if mode == NORMAL and self.block_popup.isVisible():
             self.block_popup.close()  # Esc closes the block popup first
             return
-        if mode == NORMAL and self.viewport.region_locked:
-            self.viewport.region_locked = False
+        if mode == NORMAL and self.viewport.cancel_pending():
+            self._message("Cancelled: the blocks stay where they were.")
+            return
+        if mode == NORMAL and self.viewport.region_confirmed:
+            self.viewport.region_confirmed = False
             self.viewport.update()
-            self._message("Selection unlocked.")
+            self._message("Editing the selection's boxes again (Enter confirms).")
             return
         if mode == NORMAL and self.viewport.paste_preview is not None:
             self.viewport.cancel_paste()
@@ -766,9 +766,9 @@ class MainWindow(
 
     def _update_hints(self) -> None:
         viewport = self.viewport
-        locked = viewport.region_locked and viewport.region is not None
-        if self._lock_action.isChecked() != locked:
-            self._lock_action.setChecked(locked)
+        confirmed = viewport.region_confirmed and viewport.region is not None
+        if self._lock_action.isChecked() != confirmed:
+            self._lock_action.setChecked(confirmed)
         has_region = viewport.region is not None
         transformable = has_region or viewport.paste_preview is not None
         usable = {
@@ -789,7 +789,8 @@ class MainWindow(
         context = Context(
             mode=viewport.mode,
             has_region=viewport.region is not None,
-            locked=viewport.region_locked,
+            confirmed=viewport.region_confirmed,
+            pending=viewport.floating is not None or viewport.pending_stack is not None,
             pasting=viewport.paste_preview is not None,
             shift=viewport._shift,
             gizmo=spot.kind if spot is not None else None,
@@ -817,7 +818,7 @@ class MainWindow(
             f"{camera.pitch:.0f} · facing {facing} · distance {camera.distance:.1f}"
         )
         return world_lines(
-            self.document, rates, view, viewport.mode, viewport.region, viewport.region_locked
+            self.document, rates, view, viewport.mode, viewport.region, viewport.region_confirmed
         )
 
     def _set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
@@ -993,7 +994,6 @@ class MainWindow(
         self.document = document
         self.last_steps = []
         self._tick_steps = []
-        self._rotation_pivot = None
         canvas = self.simulation.canvas
         canvas.selected, canvas.selected_pulses = set(), set()
         self.viewport.set_document(document)

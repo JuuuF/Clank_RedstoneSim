@@ -5,6 +5,7 @@ the paste preview. Edits leave as signals; the main window applies them."""
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -14,6 +15,7 @@ from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.editor import sources
 from redsim.editor.clipboard import Prefab, Region
+from redsim.editor.floating import Floating
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.ui.geometry import (
     Hit,
@@ -28,6 +30,7 @@ from redsim.ui.selection_tools import (
     paste_origin,
     plane_point,
     resized,
+    shifted,
     steps_along,
 )
 from redsim.ui.view_common import BLOCKED_TINT, BUILD, GHOST_SHRINK, MAX_LINE, _bounds, _ghost_key
@@ -238,44 +241,58 @@ class EditTools:
         return ", ".join(parts)
 
     def _begin_select_drag(self, start: QPoint, copy: bool) -> None:
-        """A left drag in SELECT mode: resize from a handle, move/copy from inside the box,
-        otherwise draw a new box."""
+        """A left drag in SELECT mode. While the selection is edited (before Enter): from a
+        face handle it resizes the box, from inside a box it moves that box, elsewhere it
+        draws a new box. Once confirmed (Enter): from inside, the blocks move (Ctrl: a
+        copy) as a preview that the next Enter places."""
         view = cast("Viewport", self)
         origin, direction = view._ray(start)
         block = pick(view.document.level, origin, direction)
         region = view.region
         spot = view._gizmo_at(start)
-        if region is not None and not copy and spot is not None:
-            if spot.kind == "resize":  # gizmos are drawn on top, so they win over blocks
+        if spot is not None:  # gizmos are drawn on top, so they win over blocks
+            if spot.kind == "resize" and region is not None and not view.region_confirmed:
                 handle = spot.data
                 center = face_center(region, handle)
                 axis = view._screen_vector(center, center + handle.normal)
                 view._resize = (handle, region, start, axis)
             return  # rotate/flip gizmos act on click, not drag
-        grab = view._grab_point(region, origin, direction, block)
-        if region is not None and grab is not None:  # every selection moves along
-            ghost = view._region_ghost(*view.all_regions())
-            view._move = _MoveDrag(region, copy, float(grab[1]), grab, ghost)
-            view._ghost = (ghost, (0, 0, 0))
+        if view.region_confirmed:
+            if view.pending_stack is not None:
+                view.message_requested.emit(
+                    "Enter places the stacked copies first (Esc cancels them)."
+                )
+                return
+            floating = view.floating or Floating(tuple(view.all_regions()))
+            grab = _grab_any(floating.boxes(), origin, direction, block)
+            if grab is None:
+                return  # a confirmed selection keeps its boxes
+            if copy:
+                floating = replace(floating, copy=True)
+            view._move = _MoveDrag(float(grab[1][1]), grab[1], floating=floating)
             return
-        if copy or view.region_locked:
-            return  # copy-drags start inside the selection; a locked one cannot be replaced
+        grab = _grab_any(tuple(view.all_regions()), origin, direction, block)
+        if grab is not None:  # move the box itself (no blocks): it becomes the active one
+            view.activate_region(grab[0])
+            assert view.region is not None
+            view._move = _MoveDrag(float(grab[1][1]), grab[1], outline=view.region)
+            return
+        if copy:
+            view.message_requested.emit(
+                "Press Enter to confirm the selection first: then Ctrl+drag copies its blocks."
+            )
+            return
         view._region_anchor = block.pos if block else None
         view._extend_box()
 
-    @staticmethod
-    def _grab_point(
-        region: Region | None, origin: np.ndarray, direction: np.ndarray, block: Hit | None
-    ) -> np.ndarray | None:
-        """Where a drag grabs the selection: a block inside it, else anywhere the ray meets
-        the box itself (selections usually contain air)."""
-        if region is None:
-            return None
-        if block is not None and region.contains(block.pos):
-            return origin + direction * block.distance
-        lo, hi = _bounds(region)
-        hit = ray_box(origin, direction, lo, hi)
-        return None if hit is None else origin + direction * hit[0]
+    def activate_region(self, index: int) -> None:
+        """Make the ``index``-th box of ``all_regions`` the active one (the last)."""
+        view = cast("Viewport", self)
+        regions = view.all_regions()
+        if index == len(regions) - 1:
+            return
+        chosen = regions.pop(index)
+        view.extra_regions, view.region = regions, chosen
 
     def _continue_select_drag(self) -> None:
         view = cast("Viewport", self)
@@ -292,28 +309,46 @@ class EditTools:
             hit = plane_point(origin, direction, view._move.plane_y)
             if hit is not None:
                 view._move.dx, view._move.dz = horizontal_offset(view._move.grab, hit)
-                view._ghost = (view._move.ghost, view._move.offset_pos)
-                view.update()
+                view._apply_move()
         else:
             view._extend_box()
+
+    def _apply_move(self) -> None:
+        """Show the dragged box (editing) or blocks (confirmed) at the drag's offset."""
+        view = cast("Viewport", self)
+        move = view._move
+        if move is None:
+            return
+        if move.floating is not None:
+            view.floating = move.floating.moved(move.offset_pos)
+        elif move.outline is not None:
+            view.region = shifted(move.outline, move.offset_pos)
+        view.update()
 
     def _end_select_drag(self) -> None:
         view = cast("Viewport", self)
         move, view._move = view._move, None
         resize, view._resize = view._resize, None
-        view._ghost = None
-        if move is not None:
-            if move.offset_pos != (0, 0, 0):
-                view.region_move_requested.emit(move.region, move.offset_pos, move.copy)
-        elif resize is not None or view._region_anchor is not None:
+        if move is not None and move.floating is not None:
+            floating = view.floating
+            if floating is not None and not floating.changed:
+                view.floating = None  # dropped where it was: nothing to place
+            view.floating_changed.emit()
+        elif move is not None or resize is not None or view._region_anchor is not None:
             view.region_changed.emit(view.region)
 
     def _begin_extra_box(self, start: QPoint) -> None:
         """Keep the current selection and draw another one (Shift+drag off the handles)."""
         view = cast("Viewport", self)
+        if view.region_confirmed:
+            view.message_requested.emit(
+                "The selection is confirmed: Esc goes back to editing its boxes."
+            )
+            view._drag_action = ""
+            return
         if view.region is not None:
             view.extra_regions.append(view.region)
-        view.region, view.region_locked = None, False
+        view.region = None
         origin, direction = view._ray(start)
         block = pick(view.document.level, origin, direction)
         view._region_anchor = block.pos if block else None
@@ -321,12 +356,24 @@ class EditTools:
         view._extend_box()
 
     def clear_selections(self) -> None:
-        """Remove every selection (Alt+A; Esc in NORMAL mode)."""
+        """Remove every selection (Alt+A; Esc in NORMAL mode) and what was pending."""
         view = cast("Viewport", self)
         view.extra_regions = []
-        view.region, view.region_locked = None, False
+        view.region, view.region_confirmed = None, False
+        view.floating = None
+        view.pending_stack = None
         view.region_changed.emit(None)
         view.update()
+
+    def cancel_pending(self) -> bool:
+        """Esc: drop a pending move, turn, flip, copy or stack; whether there was one."""
+        view = cast("Viewport", self)
+        if view.floating is None and view.pending_stack is None:
+            return False
+        view.floating = None
+        view.pending_stack = None
+        view.update()
+        return True
 
     def all_regions(self) -> list[Region]:
         """Every selection, the active one last."""
@@ -334,19 +381,22 @@ class EditTools:
         return [*view.extra_regions, *([view.region] if view.region is not None else [])]
 
     def _begin_stack(self, start: QPoint) -> None:
-        """Shift+drag on a face handle: repeat the selection along that face's normal."""
+        """Shift+drag on a face handle of a confirmed selection: copies along that face's
+        normal (placed by Enter); elsewhere, or while editing: one more selection."""
         view = cast("Viewport", self)
         region = view.region
-        if region is None:
+        spot = view._gizmo_at(start)
+        if region is None or spot is None or spot.kind != "resize" or not view.region_confirmed:
             view._begin_extra_box(start)
             return
-        spot = view._gizmo_at(start)
-        if spot is None or spot.kind != "resize":
-            view._begin_extra_box(start)  # Shift+drag elsewhere: one more selection
+        if view.floating is not None:
+            view.message_requested.emit("Enter places the moved blocks first (Esc cancels).")
+            view._drag_action = ""
             return
         handle = spot.data
         center = face_center(region, handle)
         axis = view._screen_vector(center, center + handle.normal)
+        view.pending_stack = None
         view._stack = _StackDrag(region, handle, start, axis, view._region_ghost(region))
 
     def _continue_stack(self) -> None:
@@ -358,18 +408,15 @@ class EditTools:
         count = max(0, round(steps_along(drag, stack.axis) / stack.length))
         if count != stack.count:
             stack.count = count
-            copies = [stack.ghost.copy() for _ in range(count)]
-            for i, vertices in enumerate(copies, start=1):
-                vertices[:, :3] += np.array(stack.offset(i), dtype=np.float32)
-            view._ghost = (np.vstack(copies), (0, 0, 0)) if copies else None
             view.update()
 
     def _end_stack(self) -> None:
         view = cast("Viewport", self)
         stack, view._stack = view._stack, None
-        view._ghost = None
         if stack is not None and stack.count:
-            view.region_stack_requested.emit(stack.region, stack.offset(1), stack.count)
+            view.pending_stack = stack
+            view.floating_changed.emit()
+        view.update()
 
     def _extend_box(self) -> None:
         view = cast("Viewport", self)
@@ -445,21 +492,52 @@ class EditTools:
 
 
 class _MoveDrag:
-    """A selection being dragged to a new place (or copied there)."""
+    """A drag from inside the selection: its box (``outline``, while editing) or its
+    blocks (``floating``, once confirmed) follow the cursor on the grabbed height; the
+    wheel lifts them."""
 
     def __init__(
-        self, region: Region, copy: bool, plane_y: float, grab: np.ndarray, ghost: np.ndarray
+        self,
+        plane_y: float,
+        grab: np.ndarray,
+        floating: Floating | None = None,
+        outline: Region | None = None,
     ) -> None:
-        self.region = region
-        self.copy = copy
         self.plane_y = plane_y
         self.grab = grab
-        self.ghost = ghost
+        self.floating = floating
+        self.outline = outline
         self.dx = self.dz = self.lift = 0
 
     @property
     def offset_pos(self) -> Pos:
         return (self.dx, self.lift, self.dz)
+
+
+def _grab_any(
+    boxes: tuple[Region, ...] | list[Region],
+    origin: np.ndarray,
+    direction: np.ndarray,
+    block: Hit | None,
+) -> tuple[int, np.ndarray] | None:
+    """Which box a drag grabs (its index) and where: the nearest box the ray meets, or a
+    block inside one (selections usually contain air). Later boxes win ties (the active
+    one is last)."""
+    best: tuple[float, int] | None = None
+    for index, region in enumerate(boxes):
+        if block is not None and region.contains(block.pos):
+            distance = block.distance
+        else:
+            lo, hi = _bounds(region)
+            hit = ray_box(origin, direction, lo, hi)
+            if hit is None:
+                continue
+            distance = hit[0]
+        if best is None or distance <= best[0]:
+            best = (distance, index)
+    if best is None:
+        return None
+    return best[1], origin + direction * best[0]
 
 
 class _StackDrag:
@@ -475,7 +553,18 @@ class _StackDrag:
         self.ghost = ghost
         self.length = region.size[handle.axis]
         self.count = 0
+        self._copies: tuple[int, np.ndarray] | None = None
 
     def offset(self, copies: int) -> Pos:
         step = self.handle.normal * self.length * copies
         return (int(step[0]), int(step[1]), int(step[2]))
+
+    def copies(self) -> np.ndarray:
+        """The preview of every copy (made again only when the count changes)."""
+        if self._copies is None or self._copies[0] != self.count:
+            parts = [self.ghost.copy() for _ in range(self.count)]
+            for i, vertices in enumerate(parts, start=1):
+                vertices[:, :3] += np.array(self.offset(i), dtype=np.float32)
+            stacked = np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
+            self._copies = (self.count, stacked)
+        return self._copies[1]

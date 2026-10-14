@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 import time
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from PySide6.QtCore import QPoint
@@ -19,6 +19,8 @@ from redsim.ui.geometry import (
     block_outline,
     box_lines,
     boxes_at,
+    ghost_mesh,
+    many_box_lines,
     solid_box,
     thick_edges,
 )
@@ -39,8 +41,10 @@ from redsim.ui.view_common import (
     HIGHLIGHT_SECONDS,
     LOCATE_COLOR,
     LOCKED_COLOR,
+    PENDING_PULSE_SECONDS,
     PIVOT_COLOR,
     PULSE_SECONDS,
+    REPLACED_COLOR,
     SELECT,
     SELECTION_COLOR,
     TARGET_COLOR,
@@ -91,18 +95,25 @@ class SceneGeometry:
         sections = view.document.sections.sections.values() if view.show_sections else ()
         groups = view.document.groups.groups.values() if view.show_groups else ()
         for section in sections:
-            color = _hex_color(section.color)
-            for pos in section.positions:
-                parts.append(box_lines(pos, (pos[0] + 1, pos[1] + 1, pos[2] + 1), color, 0.01))
-        for group in groups:
-            low, high = group.region.low, group.region.high
-            parts.append(
-                box_lines(low, (high[0] + 1, high[1] + 1, high[2] + 1), (1, 1, 1, 1), 0.03)
+            if section.positions:
+                cells = np.array(list(section.positions), dtype=np.float32)
+                parts.append(many_box_lines(cells, cells + 1, _hex_color(section.color), 0.01))
+        shown = list(groups)
+        if shown:
+            lows = np.array([group.region.low for group in shown], dtype=np.float32)
+            highs = np.array([group.region.high for group in shown], dtype=np.float32) + 1
+            parts.append(many_box_lines(lows, highs, (1.0, 1.0, 1.0, 1.0), 0.03))
+        ports = [port for group in shown for port in group.ports]
+        if ports:
+            cells = np.array([port.pos for port in ports], dtype=np.float32)
+            colors = np.array(
+                [
+                    (0.2, 0.5, 1.0, 1.0) if port.role == "input" else (1.0, 0.5, 0.1, 1.0)
+                    for port in ports
+                ],
+                dtype=np.float32,
             )
-            for port in group.ports:
-                color = (0.2, 0.5, 1.0, 1.0) if port.role == "input" else (1.0, 0.5, 0.1, 1.0)
-                p = port.pos
-                parts.append(box_lines(p, (p[0] + 1, p[1] + 1, p[2] + 1), color, 0.05))
+            parts.append(many_box_lines(cells, cells + 1, colors, 0.05))
         paste_box = view.paste_region()
         if paste_box is not None:
             parts.extend(view._paste_guides(paste_box))
@@ -154,18 +165,19 @@ class SceneGeometry:
             parts.append(thick_edges(lo, hi, EXTRA_SELECTION_COLOR, width))
         if view.region is not None:
             lo, hi = _bounds(view.region)
-            color = LOCKED_COLOR if view.region_locked else SELECTION_COLOR
+            color = LOCKED_COLOR if view.region_confirmed else SELECTION_COLOR
             parts.append(thick_edges(lo, hi, color, width))
             if view._gizmos_shown():
                 parts.append(view._gizmos()[0])
-        if view._move is not None:  # where every selection would go
-            for region in view.all_regions():
-                lo, hi = _bounds(shifted(region, view._move.offset_pos))
+        if view.floating is not None:  # where the blocks would go
+            for box in view.floating.boxes():
+                lo, hi = _bounds(box)
                 parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
-        if view._stack is not None and view._stack.count:
-            far = shifted(view._stack.region, view._stack.offset(view._stack.count))
-            lo = np.minimum(_bounds(view._stack.region)[0], _bounds(far)[0])
-            hi = np.maximum(_bounds(view._stack.region)[1], _bounds(far)[1])
+        stack = view._stack or view.pending_stack
+        if stack is not None and stack.count:
+            far = shifted(stack.region, stack.offset(stack.count))
+            lo = np.minimum(_bounds(stack.region)[0], _bounds(far)[0])
+            hi = np.maximum(_bounds(stack.region)[1], _bounds(far)[1])
             parts.append(thick_edges(lo, hi, TARGET_COLOR, width))
         paste_box = view.paste_region()
         if paste_box is not None:
@@ -180,12 +192,23 @@ class SceneGeometry:
         view = cast("Viewport", self)
         return min(0.2, max(0.035, 0.006 * view.camera.distance))
 
+    def gizmo_region(self) -> Region | None:
+        """The box the gizmos sit on: the active selection, where its blocks are shown
+        (a pending move or turn carries them along)."""
+        view = cast("Viewport", self)
+        if view.region is None:
+            return None
+        if view.floating is not None:
+            return view.floating.boxes()[-1]
+        return view.region
+
     def gizmo_unit(self) -> float:
         """Gizmo scale: grows with the distance to the selection, so it stays usable."""
         view = cast("Viewport", self)
-        if view.region is None:
+        region = view.gizmo_region()
+        if region is None:
             return 0.1
-        lo, hi = _bounds(view.region)
+        lo, hi = _bounds(region)
         distance = float(np.linalg.norm((lo + hi) / 2 - view.camera.position))
         return min(0.6, max(0.07, 0.017 * distance))
 
@@ -197,18 +220,40 @@ class SceneGeometry:
             and view.mode == SELECT
             and not busy
             and view.paste_preview is None
+            and view.pending_stack is None
         )
 
     def _gizmos(self) -> tuple[np.ndarray, list[Hotspot]]:
-        """Gizmo triangles and hot spots for the current selection (cached)."""
+        """Gizmo triangles and hot spots for the current selection (cached). While the
+        selection is edited: resize arrows and the turn ring (for its boxes); once
+        confirmed: the ring, flip arrows and, with Shift, stacking chevrons."""
         view = cast("Viewport", self)
-        assert view.region is not None
+        region = view.gizmo_region()
+        assert region is not None
         unit = view.gizmo_unit()
-        key = (view.region, round(unit, 3), round(view.camera.yaw), view._shift, view.gizmo_hover)
+        confirmed = view.region_confirmed
+        stacking = confirmed and view._shift and view.floating is None
+        handles = not confirmed or stacking
+        key = (
+            region,
+            round(unit, 3),
+            round(view.camera.yaw),
+            stacking,
+            handles,
+            confirmed,
+            view.gizmo_hover,
+        )
         if view._gizmo_cache is None or view._gizmo_cache[0] != key:
             shells: list[np.ndarray] = []
             built = selection_gizmos(
-                view.region, unit, view.camera.yaw, view._shift, view.gizmo_hover, shells
+                region,
+                unit,
+                view.camera.yaw,
+                stacking,
+                view.gizmo_hover,
+                shells,
+                handles=handles,
+                flips=confirmed,
             )
             outline = np.vstack(shells) if shells else np.zeros((0, 7), dtype=np.float32)
             view._gizmo_cache = (key, built)
@@ -246,7 +291,7 @@ class SceneGeometry:
         # A little larger than its blocks: faces in the same plane as block faces flicker
         # (z-fighting where the box meets them).
         lo, hi = lo - BODY_MARGIN, hi + BODY_MARGIN
-        color = LOCKED_COLOR if view.region_locked else SELECTION_COLOR
+        color = LOCKED_COLOR if view.region_confirmed else SELECTION_COLOR
         body = box_faces(lo, hi, (color[0], color[1], color[2], view.body_alpha()))
         return np.vstack([body, *extras])
 
@@ -388,7 +433,13 @@ class SceneGeometry:
 
     def _upload_ghost(self, renderer: Renderer) -> None:
         view = cast("Viewport", self)
-        ghost = view._ghost or view._build_ghost
+        stack = view._stack or view.pending_stack
+        ghost = (
+            view._ghost
+            or ((stack.copies(), (0, 0, 0)) if stack is not None else None)
+            or view._floating_ghost()
+            or view._build_ghost
+        )
         key = _ghost_key(ghost)
         if key == view._ghost_uploaded:
             return
@@ -399,6 +450,68 @@ class SceneGeometry:
         vertices = ghost[0].copy()
         vertices[:, :3] += np.array(ghost[1], dtype=np.float32)
         renderer.upload_ghost(vertices)
+
+    def _floating_key(self) -> tuple[Any, ...] | None:
+        """What the pending blocks' preview depends on, apart from its shift."""
+        view = cast("Viewport", self)
+        floating = view.floating
+        if floating is None:
+            return None
+        document = view.document
+        level = document.level
+        return (
+            floating.regions,
+            floating.linear,
+            id(level),
+            document.engine.step_index,
+            document.revision,
+        )
+
+    def _floating_ghost(self) -> tuple[np.ndarray, Pos] | None:
+        """The blocks of a pending move/turn/flip/copy where they would go: made once per
+        turn or flip (and after an edit or a step); a move only shifts it."""
+        view = cast("Viewport", self)
+        floating = view.floating
+        key = view._floating_key()
+        if floating is None or key is None:
+            return None
+        if view._floating_mesh is None or view._floating_mesh[0] != key:
+            states = floating.preview(view.document.level)
+            vertices = ghost_mesh(states, mesher=view.world_mesh.mesher)
+            view._floating_mesh = (key, vertices)
+        return view._floating_mesh[1], floating.shift
+
+    def _replaced_body(self) -> np.ndarray:
+        """Blocks a pending move would overwrite: a red box around each."""
+        view = cast("Viewport", self)
+        floating = view.floating
+        if floating is None:
+            return np.zeros((0, 7), dtype=np.float32)
+        key = (view._floating_key(), floating.shift, floating.copy)
+        if view._replaced_mesh is None or view._replaced_mesh[0] != key:
+            cells = floating.replaced(view.document.level) if floating.changed else []
+            if cells:
+                lows = np.array(cells, dtype=np.float32) - 0.03
+                colors = np.tile(np.array(REPLACED_COLOR, dtype=np.float32), (len(cells), 1))
+                body = many_box_faces(lows, lows + 1.06, colors)
+            else:
+                body = np.zeros((0, 7), dtype=np.float32)
+            view._replaced_mesh = (key, body)
+        return view._replaced_mesh[1]
+
+    def ghost_alpha(self) -> float:
+        """Pending blocks and the paste preview pulse, so they never pass for real ones."""
+        view = cast("Viewport", self)
+        pending = (
+            view.floating is not None
+            or view.pending_stack is not None
+            or view._stack is not None
+            or view.paste_preview is not None
+        )
+        if not pending:
+            return 1.0
+        t = time.monotonic()
+        return 0.95 + 0.4 * math.sin(2 * math.pi * t / PENDING_PULSE_SECONDS)
 
     def _pivot_size(self) -> float:
         """Half the pivot block's edge: about the same size on screen at any zoom."""

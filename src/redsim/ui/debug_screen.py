@@ -28,7 +28,7 @@ def world_lines(
     camera: str,
     mode: str,
     region: Region | None,
-    locked: bool,
+    confirmed: bool,
 ) -> list[str]:
     engine, history, level = document.engine, document.history, document.level
     lines = [
@@ -44,7 +44,7 @@ def world_lines(
     ]
     if region is not None:
         x, y, z = region.size
-        state = " (locked)" if locked else ""
+        state = " (confirmed)" if confirmed else ""
         lines.append(f"Selection: {x}×{y}×{z} = {x * y * z} blocks{state}")
     return lines
 

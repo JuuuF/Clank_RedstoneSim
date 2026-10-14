@@ -14,15 +14,15 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.core.pos import Pos
-from redsim.editor.clipboard import Prefab, Region, bounding_box
+from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
+from redsim.editor.floating import Floating
 from redsim.editor.groups import Group, Port
 from redsim.io.schematics import FILE_FILTER as SCHEMATIC_FILTER
 from redsim.io.schematics import read_schematic, write_schematic
 from redsim.ui.names import block_name
 from redsim.ui.viewport import BUILD
 from redsim.world import blocks
-from redsim.world.rotation import default_pivot2
 
 if TYPE_CHECKING:
     from redsim.ui.main_window import MainWindow
@@ -70,30 +70,6 @@ class RegionActions:
         view = cast("MainWindow", self)
         view._edit(view.document.paste, origin)
 
-    def _move_region(self, region: Region, by: Pos, copy: bool) -> None:
-        """A dragged selection: ``/clone … replace move`` (or ``force`` for a copy); with
-        several selections, all of them move (or are copied) together."""
-        view = cast("MainWindow", self)
-        view.document.notice = ""
-        viewport = view.viewport
-        regions = viewport.all_regions()
-        verb = "Copied" if copy else "Moved"
-        try:
-            if len(regions) > 1:
-                moved = view.document.transform_regions(regions, offset=by, copy=copy)
-                viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
-                what = f"the {len(regions)} selections"
-            else:
-                viewport.region = view.document.clone_region(
-                    region, by, "force" if copy else "move"
-                )
-                what = "the selection"
-        except EditError as exc:
-            view._message(str(exc), error=True)
-        else:
-            view._message(f"{verb} {what} by {by[0]}, {by[1]}, {by[2]}.")
-        view._changed()
-
     def _rotate(self, quarter_turns: int) -> None:
         """R / Shift+R: the paste preview if one is shown, else the selection in place,
         else the clipboard."""
@@ -137,33 +113,101 @@ class RegionActions:
             view._message("Nothing to flip: select a box (V) first.")
 
     def _transform(self, quarter_turns: int = 0, mirror: str | None = None) -> None:
-        """Rotate or flip the selection in place; several selections turn together around
-        the middle of the box around them all."""
+        """Turn or flip the selection: while it is edited, its boxes (no blocks); once
+        confirmed, its blocks, as a preview that Enter places. Several selections turn
+        together around the middle of the box around them all."""
         view = cast("MainWindow", self)
         viewport = view.viewport
         if viewport.region is None:
             return
-        regions = viewport.all_regions()
-        # Keep turning around the same pivot while the same selections are turned again,
-        # so R then Shift+R (or R four times) returns exactly to the start.
-        last = view._rotation_pivot
-        pivot = last[1] if last is not None and last[0] == tuple(regions) else None
-        if pivot is None:
-            pivot = default_pivot2(*bounding_box(regions))
+        turns = quarter_turns % 4
+        what = {1: "turned clockwise", 2: "turned around", 3: "turned counter-clockwise"}.get(
+            turns, "flipped"
+        )
+        if not viewport.region_confirmed:
+            boxes = Floating(tuple(viewport.all_regions()))
+            boxes = boxes.turned(quarter_turns) if quarter_turns else boxes.flipped(mirror or "x")
+            moved = list(boxes.boxes())
+            viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
+            view._message(
+                f"Selection box {what}. Enter confirms the selection: then "
+                f"{view.keymap.describe('edit.rotate')} turns its blocks."
+            )
+            viewport.update()
+            return
+        if viewport.pending_stack is not None:
+            view._message("Enter places the stacked copies first (Esc cancels them).")
+            return
+        floating = viewport.floating or Floating(tuple(viewport.all_regions()))
+        floating = (
+            floating.turned(quarter_turns) if quarter_turns else floating.flipped(mirror or "x")
+        )
+        viewport.floating = floating if floating.changed or floating.copy else None
+        viewport.update()
+        view._floating_changed()
+
+    def _floating_changed(self) -> None:
+        """A pending move, turn, flip, copy or stack was made, changed or dropped."""
+        view = cast("MainWindow", self)
+        viewport = view.viewport
+        enter = view.keymap.describe("select.lock")
+        if viewport.pending_stack is not None:
+            count = viewport.pending_stack.count
+            view._message(f"{count} stacked copies: {enter} places them, Esc cancels.")
+        elif viewport.floating is not None:
+            floating = viewport.floating
+            replaced = len(floating.replaced(view.document.level)) if floating.changed else 0
+            warning = f" It would replace {replaced} blocks (red)." if replaced else ""
+            verb = "Copy" if floating.copy else "Preview"
+            view._message(f"{verb}: {enter} places the blocks, Esc cancels.{warning}")
+
+    def _confirm(self) -> None:
+        """Enter, like GIMP: place what is pending; otherwise confirm the selection (its
+        boxes are fixed, and moving, turning, flipping and stacking act on its blocks), or
+        go back to editing its boxes."""
+        view = cast("MainWindow", self)
+        viewport = view.viewport
+        if viewport.floating is not None:
+            view._place_floating()
+            return
+        if viewport.pending_stack is not None:
+            stack, viewport.pending_stack = viewport.pending_stack, None
+            view._stack_region(stack.region, stack.offset(1), stack.count)
+            return
+        if viewport.region is None:
+            view._message("Nothing to confirm: select a box first (V).")
+            return
+        viewport.region_confirmed = not viewport.region_confirmed
+        viewport.update()
+        if viewport.region_confirmed:
+            view._message(
+                "Selection confirmed: drag its blocks (Ctrl: a copy), turn or flip them, "
+                f"Shift+drag an arrow to stack; {view.keymap.describe('select.lock')} "
+                "places. Esc edits the boxes again."
+            )
+        else:
+            view._message("Editing the selection's boxes again.")
+
+    def _place_floating(self) -> None:
+        """Enter on a pending move/turn/flip/copy: one edit, one undo step."""
+        view = cast("MainWindow", self)
+        viewport = view.viewport
+        floating, viewport.floating = viewport.floating, None
+        if floating is None or not floating.changed:
+            viewport.update()
+            return
+        turns, mirror, pivot, offset = floating.action()
         try:
-            if len(regions) > 1:
-                moved = view.document.transform_regions(regions, quarter_turns, mirror, pivot)
-                viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
-            else:
-                moved = [view.document.transform_region(regions[0], quarter_turns, mirror, pivot)]
-                viewport.region = moved[0]
-            view._rotation_pivot = (tuple(moved), pivot)
+            view.document.transform_regions(
+                list(floating.regions), turns, mirror, pivot, offset, copy=floating.copy
+            )
         except EditError as exc:
             view._message(str(exc), error=True)
         else:
-            what = f"rotated {quarter_turns * 90}°" if quarter_turns else "flipped"
-            subject = f"{len(regions)} selections" if len(regions) > 1 else "Selection"
-            view._message(f"{subject} {what} in place (no block updates).")
+            moved = list(floating.boxes())
+            viewport.extra_regions, viewport.region = moved[:-1], moved[-1]
+            verb = "Copied" if floating.copy else "Placed"
+            view._message(f"{verb} the blocks (no block updates).")
         view._changed()
 
     def _gizmo_transform(self, quarter_turns: int, mirror: str | None) -> None:
@@ -172,19 +216,6 @@ class RegionActions:
             view._transform(mirror=mirror)
         else:
             view._rotate(quarter_turns)
-
-    def _toggle_lock(self) -> None:
-        """Enter (like GIMP): lock the selection so clicks cannot replace it; rotate, flip,
-        move and stack keep working on it."""
-        view = cast("MainWindow", self)
-        viewport = view.viewport
-        if viewport.region is None:
-            view._message("Nothing to lock: select a box first (V).")
-            return
-        viewport.region_locked = not viewport.region_locked
-        viewport.update()
-        state = "locked (Enter or Esc unlocks)" if viewport.region_locked else "unlocked"
-        view._message(f"Selection {state}.")
 
     def _stack_region(self, region: Region, step: Pos, count: int) -> None:
         view = cast("MainWindow", self)
@@ -201,6 +232,9 @@ class RegionActions:
         single blocks)."""
         view = cast("MainWindow", self)
         if view._region() is None and not view.viewport.extra_regions:
+            return
+        if view.viewport.floating is not None or view.viewport.pending_stack is not None:
+            view._message("Enter places the pending blocks first (Esc cancels them).")
             return
         with view.document.batch():
             for region in view.viewport.all_regions():

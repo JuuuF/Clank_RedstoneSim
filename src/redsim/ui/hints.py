@@ -22,7 +22,8 @@ from redsim.ui.keymap import Keymap, display_token
 class Context:
     mode: str
     has_region: bool = False
-    locked: bool = False
+    confirmed: bool = False  # Enter confirmed the selection: tools act on its blocks
+    pending: bool = False  # moved/turned/flipped/stacked blocks wait for Enter
     pasting: bool = False
     shift: bool = False
     gizmo: str | None = None  # "resize" | "rotate" | "flip" under the cursor
@@ -57,9 +58,9 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
             ("Right Click / Esc", "cancel"),
         ]
     if context.gizmo == "resize":
-        if context.shift:
-            return [("Shift+Drag", "stack copies along this axis"), ("release Shift", "resize")]
-        return [("Drag", "move this face"), ("Shift+Drag", "stack copies")]
+        if context.confirmed:
+            return [("Shift+Drag", "stack copies along this axis")]
+        return [("Drag", "move this face of the box")]
     if context.gizmo == "rotate":
         return [("Click", "rotate 90° this way"), (key("edit.rotate"), "rotate clockwise")]
     if context.gizmo == "flip":
@@ -89,20 +90,38 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
                 (key("edit.paste"), "paste"),
                 (key("mode.normal"), "normal mode"),
             ]
+        if context.pending:
+            return [
+                (key("select.lock"), "place the blocks"),
+                (key("mode.normal"), "cancel"),
+                ("Drag inside", "move further"),
+                (key("edit.rotate"), "rotate"),
+                (key("edit.flip"), "flip"),
+                ("Wheel while dragging", "up/down"),
+            ]
+        if context.confirmed:
+            if context.shift:
+                return [("Shift+Drag an arrow", "stack copies")]
+            return [
+                ("Drag inside", "move the blocks"),
+                ("Ctrl+Drag", "copy them"),
+                (key("edit.rotate"), "rotate"),
+                (key("edit.flip"), "flip"),
+                ("Shift+Drag an arrow", "stack"),
+                (key("edit.copy"), "copy"),
+                (key("edit.delete"), "delete"),
+                (key("mode.normal"), "edit the boxes"),
+            ]
         if context.shift:
-            return [("Shift+Drag an arrow", "stack copies"), ("Shift+Click", "extend the box")]
-        hints = [
-            ("Drag inside", "move"),
-            ("Ctrl+Drag", "copy"),
+            return [("Shift+Drag", "add another box"), ("Shift+Click", "extend the box")]
+        return [
+            ("Drag inside", "move the box"),
             ("Drag an arrow", "resize"),
-            (key("edit.rotate"), "rotate"),
-            (key("edit.flip"), "flip"),
+            ("Shift+Drag", "add a box"),
+            (key("select.lock"), "confirm: act on the blocks"),
             (key("edit.copy"), "copy"),
             (key("edit.delete"), "delete"),
         ]
-        lock = "unlock" if context.locked else "lock"
-        hints.append((key("select.lock"), lock))
-        return hints
     return [
         ("Left Click", "inspect"),
         ("Right Click", "use"),

@@ -56,11 +56,12 @@ This list is generated from `src/redsim/tutorial/lessons.py` (default keys shown
 ### 5. Select, copy and paste
 
 1. **SELECT mode**: Press **V** for **SELECT** mode.
-2. **Draw a box**: Drag across the inverter (the lever, the block with the torch and the lamp) to put a box around it. Drag a face's arrow to resize the box.
-3. **Copy it**: Hold Ctrl and drag from inside the box to drop a copy beside it. (Or **Ctrl+C**, then **Ctrl+V** and a click to place.)
-4. **Turn and flip**: Press **R** to turn the box's contents, **H** to flip them. Levers, torches and dust turn with them.
-5. **Several boxes**: Hold Shift and drag somewhere else to draw a second box: moving, copying, turning and flipping act on all boxes together.
-6. **Delete**: Press **Del** to clear the boxes (it fills them with air).
+2. **Draw a box**: Drag across the inverter (the lever, the block with the torch and the lamp) to put a box around it. Drag a face's arrow to resize the box, or drag from inside it to move the box itself.
+3. **Confirm it**: Press **Enter** to confirm the selection (it turns orange): now the tools act on the blocks inside it. **Esc** goes back to editing the box.
+4. **Copy it**: Hold Ctrl and drag from inside the box: a pulsing copy follows the mouse (blocks it would replace turn red). Press **Enter** to place it. (Or **Ctrl+C**, then **Ctrl+V** and a click to place.)
+5. **Turn and flip**: Press **R** to turn the box's contents, **H** to flip them, then **Enter** to place them (**Esc** cancels). Levers, torches and dust turn with them.
+6. **Several boxes**: Press **Esc** to edit the boxes again, then hold Shift and drag somewhere else to draw a second box: once confirmed, moving, copying, turning and flipping act on all boxes together.
+7. **Delete**: Press **Del** to clear the boxes (it fills them with air).
 
 ### 6. Sequences and the timeline
 

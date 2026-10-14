@@ -314,6 +314,7 @@ class Renderer:
         fog: tuple[float, float] = (80.0, 220.0),
         horizon: float = -1.0,
         scenery: bool = True,
+        ghost_alpha: float = 1.0,
     ) -> None:
         """Draw everything. ``xray`` 1: full building blocks become see-through (no depth
         writes) while circuit parts stay opaque; 2: circuit parts are see-through too."""
@@ -436,8 +437,11 @@ class Renderer:
             gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             gl.glDepthMask(GL_FALSE)
             for stream in translucent:
+                if stream is self.ghost:  # pending blocks pulse (``ghost_alpha``)
+                    self.program.setUniformValue1f(alpha, ghost_alpha)
                 stream.vao.bind()
                 gl.glDrawArrays(GL_TRIANGLES, 0, stream.count)
+                self.program.setUniformValue1f(alpha, 1.0)
             gl.glDepthMask(GL_TRUE)
             gl.glDisable(GL_BLEND)
         program.setUniformValue1f(fog_amount, 0.0)  # overlays are never fogged

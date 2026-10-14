@@ -12,7 +12,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 ## Window layout
 
 - **Top:** menus, then the tool bar: modes (Normal, Build, Select) and the selection tools
-  (rotate, flip, copy, paste, delete, lock).
+  (rotate, flip, copy, paste, delete, confirm).
 - **Middle:** the 3D view. On the right, one **Properties** panel with tabs: Inspector,
   Circuit (sections, groups and prefabs), Diagnostics, Hotkeys.
 - **Timeline** (like Blender's): transport buttons (start, previous edit, tick back, play
@@ -62,7 +62,7 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 | **NORMAL** | Esc | inspect the block | use it (lever, button, repeater, comparator, …) | — |
 | **BUILD** | B | place the block on the build layer | remove the block under the cursor (Ctrl: use it) | a straight line on the build layer |
 | **ANIMATE** | K | power the block's position from the current tick (Sequence tab: strength, duration) | remove the pulses there running at this tick | — |
-| **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside the box: move it (Ctrl: copy) |
+| **SELECT** | V | select one block (Shift+click: extend the box) | — | draw a box; from a face handle: resize; from inside a box: move the box (once confirmed with Enter: its blocks, Ctrl: a copy) |
 
 - **Mode ring: hold Tab**, point towards a mode (NORMAL up, BUILD right, SELECT down,
   ANIMATE left) and let go; letting go in the middle changes nothing.
@@ -135,14 +135,15 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - The badge in the bottom-left corner shows the mode and what it works on; the hint bar below lists the keys.
 - Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and every selection box.
-- **Several selections:** in SELECT mode, **Shift+drag** away from the face handles keeps
-  the current box and draws another one (Shift+drag on a face handle still stacks copies).
-  **Del** clears all boxes at once; **Alt+A** removes all selections. Dragging (move,
-  Ctrl+drag copy), **R**/Shift+R, **H**/Shift+H and the gizmos act on every box together
-  (turned and flipped around the middle of the box around them all; one undo step), and
-  **Ctrl+C** copies all boxes into one clipboard (the cells between them are left out,
-  so pasting leaves them as they are). Stacking (Shift+drag on a face handle) and locking
-  (Enter) act on the active (bright) box.
+- **Several selections:** in SELECT mode, **Shift+drag** keeps the current box and draws
+  another one (while the selection is edited, before Enter). Dragging from inside any box
+  moves that box and makes it the active (bright) one; a click inside a dim box makes it
+  active too. **Del** clears all boxes at once; **Alt+A** removes all selections. Once
+  confirmed, dragging (move, Ctrl+drag copy), **R**/Shift+R, **H**/Shift+H and the gizmos
+  act on the blocks of every box together (turned and flipped around the middle of the
+  box around them all; one undo step), and **Ctrl+C** copies all boxes into one clipboard
+  (the cells between them are left out, so pasting leaves them as they are). Stacking
+  (Shift+drag on a face arrow) acts on the active box.
 - In BUILD, **right click** removes the block under the cursor; **Del** only ever clears the
   selection box. **Q** / Shift+Q turn the block under the cursor; blocks facing up or down
   (pistons, observers, hoppers) step through all their facings.
@@ -176,27 +177,37 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 
 ## Selections (SELECT mode, Axiom-style)
 
-- **Draw:** click a block, Shift+click another to extend, or drag across blocks. Dragging
-  anywhere inside the box (blocks or air) moves it instead.
-- **Gizmos (Blender-like):** each face has a slim resize arrow, colored by axis (X red,
-  Y green, Z blue; yellow under the cursor): drag it to move that face. Holding **Shift**
-  turns the arrows into white chevrons: drag one outwards to stack copies. A ring around
-  the selection carries two arrowheads on the side facing you: click to rotate clockwise
-  or counter-clockwise. Two double-headed arrows across the top face flip the selection on
-  X or Z. Gizmos are drawn through blocks and win over blocks under the mouse, so a face
-  below the ground can be grabbed too. The selection also has a very faint body, so it is
-  clear which blocks are inside.
-- **Lock (Enter, like GIMP):** a locked selection (orange) cannot be replaced or extended by
-  clicks; moving, rotating, flipping and stacking still work. Enter or Esc unlocks.
+- **Two stages, like GIMP** (owner, 2026-10-14):
+  1. **Edit the selection** (cyan): click a block, Shift+click another to extend, or drag
+     across blocks. Drag a face arrow to resize, drag from inside a box (blocks or air) to
+     move the box itself, Shift+drag to add another box, R / H to turn or mirror the
+     boxes. No block changes.
+  2. **Enter confirms it** (orange): clicks can no longer replace it, and the tools act
+     on the blocks inside. Moving, copying, turning, flipping and stacking are first a
+     **pending preview**: the blocks pulse where they would go (a white box around them),
+     blocks they would overwrite are marked red, and the hint bar says how many. Keep
+     changing it (drag again, R, H, the wheel while dragging lifts it); **Enter places**
+     it as one edit and one undo step, **Esc cancels** it. Esc on a confirmed selection
+     goes back to editing its boxes.
+- **Gizmos (Blender-like):** while the selection is edited, each face has a slim resize
+  arrow, colored by axis (X red, Y green, Z blue; yellow under the cursor): drag it to move
+  that face. Once confirmed, holding **Shift** shows white chevrons there: drag one outwards
+  to stack copies. A ring around the selection carries two arrowheads on the side facing
+  you: click to rotate clockwise or counter-clockwise. Once confirmed, two double-headed
+  arrows across the top face flip the blocks on X or Z. Gizmos are drawn through blocks
+  and win over blocks under the mouse, so a face below the ground can be grabbed too. The
+  selection also has a very faint body, so it is clear which blocks are inside.
 - **What the other outlines are:** colored single-block outlines are *sections* (Sections
   panel; e.g. blue inputs, green outputs, orange processing), white boxes are *groups*
   (Circuit → Groups). Both are annotations; hide them under View.
-- **Move:** drag from a block inside the box. A translucent ghost and a white box show the
-  target; the wheel lifts or lowers it while dragging. Releasing runs
+- **Move:** (confirmed) drag from inside the box. The pulsing preview and a white box show
+  the target; the wheel lifts or lowers it while dragging. Enter places it like
   `/clone <box> <target> replace move`: one undoable edit, and pending scheduled ticks move
   along (game-verified, [[experiments/index]] EXP-023).
-- **Copy:** Ctrl+drag from inside the box: `/clone … replace force` (the copy may overlap
-  the original). The selection follows the moved or copied blocks.
+- **Copy:** (confirmed) Ctrl+drag from inside the box, then Enter: like
+  `/clone … replace force` (the copy may overlap the original). The selection follows the
+  moved or copied blocks. Moves, turns and flips made before one Enter add up
+  (`editor/floating.py`) and are placed by a single edit.
 - **Paste (Trackmania-style):** Ctrl+C copies the box; Ctrl+V shows the clipboard as a
   ghost centered under the cursor on the camera's working layer (the pivot's height, shown
   in the badge). Shift+wheel moves the layer up or down (the wheel zooms while pasting), so
@@ -205,14 +216,14 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - **No block updates:** pasting, moving, copying and stacking are editor operations and
   cause no block updates (`/clone … strict`), so budded components stay budded
   ([[decisions]] ADR-019). Pending scheduled ticks inside a moved selection come along.
-- **Rotate:** R turns the selection 90° clockwise (seen from above), Shift+R
-  counter-clockwise, in place: blocks inside turn too (repeaters, comparators, wire
+- **Rotate:** (confirmed) R turns the selection's blocks 90° clockwise (seen from above),
+  Shift+R counter-clockwise, as a preview until Enter: blocks inside turn too (repeaters, comparators, wire
   connections, levers, …). R then Shift+R, or R four times, returns exactly to the start.
   While pasting, R and Shift+R turn the paste preview instead.
 - **Flip:** H mirrors the selection left/right as seen from the camera, Shift+H front/back
   (facings and wire sides mirror too).
-- **Stack:** Shift+drag a face handle outwards: copies appear along that axis (ghosts), one
-  more for each selection length dragged; release to place them. The selection then
+- **Stack:** (confirmed) Shift+drag a face arrow outwards: copies appear along that axis
+  (pulsing), one more for each selection length dragged; Enter places them. The selection then
   covers all copies, so a row can be stacked again into a grid.
 - The **Selection toolbar** (top) has rotate, flip, copy, paste and delete buttons.
 - Rotate, flip and stack cause no block updates either, and each is one undo step.
@@ -254,6 +265,7 @@ reason the old Shift+T rewind was disliked).
 | Edit → Undo History | the latest 25 steps, newest first; choosing one undoes it and everything after it in one re-run (redo brings them back one by one) |
 | Ctrl+Space, /, Shift Shift | quick block search |
 | Ctrl+C / Ctrl+V | copy the selection box / paste preview at the cursor (click places) |
+| Enter | SELECT: confirm the selection (tools act on its blocks); place pending moved, turned or stacked blocks |
 | Q / Shift+Q | rotate the block under the cursor clockwise / counter-clockwise (`/setblock`, undoable) |
 | R / Shift+R | rotate the selection (or the paste preview) 90° clockwise / counter-clockwise |
 | H / Shift+H | flip the selection left/right / front/back (as seen from the camera) |

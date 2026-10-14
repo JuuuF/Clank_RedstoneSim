@@ -42,6 +42,7 @@ class Snapshot:
     pitch: float = 0.0
     distance: float = 20.0
     pasting: bool = False
+    confirmed: bool = False  # the selection is confirmed (Enter)
     heat: bool = False
     xray: int = 0
     info: bool = False
@@ -460,24 +461,35 @@ LESSONS: tuple[Lesson, ...] = (
             Step(
                 "Draw a box",
                 "Drag across the inverter (the lever, the block with the torch and the "
-                "lamp) to put a box around it. Drag a face's arrow to resize the box.",
+                "lamp) to put a box around it. Drag a face's arrow to resize the box, or "
+                "drag from inside it to move the box itself.",
                 _boxed_inverter,
             ),
             Step(
+                "Confirm it",
+                "Press {key:select.lock} to confirm the selection (it turns orange): now "
+                "the tools act on the blocks inside it. {key:mode.normal} goes back to "
+                "editing the box.",
+                _flag("confirmed"),
+            ),
+            Step(
                 "Copy it",
-                "Hold Ctrl and drag from inside the box to drop a copy beside it. (Or "
-                "{key:edit.copy}, then {key:edit.paste} and a click to place.)",
+                "Hold Ctrl and drag from inside the box: a pulsing copy follows the mouse "
+                "(blocks it would replace turn red). Press {key:select.lock} to place it. "
+                "(Or {key:edit.copy}, then {key:edit.paste} and a click to place.)",
                 _copied,
             ),
             Step(
                 "Turn and flip",
                 "Press {key:edit.rotate} to turn the box's contents, {key:edit.flip} to flip "
-                "them. Levers, torches and dust turn with them.",
+                "them, then {key:select.lock} to place them ({key:mode.normal} cancels). "
+                "Levers, torches and dust turn with them.",
                 _transformed,
             ),
             Step(
                 "Several boxes",
-                "Hold Shift and drag somewhere else to draw a second box: moving, copying, "
+                "Press {key:mode.normal} to edit the boxes again, then hold Shift and drag "
+                "somewhere else to draw a second box: once confirmed, moving, copying, "
                 "turning and flipping act on all boxes together.",
                 _two_boxes,
             ),

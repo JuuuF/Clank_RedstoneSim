@@ -36,6 +36,7 @@ from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document
+from redsim.editor.floating import Floating
 from redsim.ui.atlas import Atlas
 from redsim.ui.camera import MAX_DISTANCE, MIN_DISTANCE, Camera
 from redsim.ui.geometry import (
@@ -79,7 +80,7 @@ from redsim.ui.view_common import (
     _modifier_names,
     game_textures,
 )
-from redsim.ui.viewport_edit import EditTools, _MoveDrag, _StackDrag
+from redsim.ui.viewport_edit import EditTools, _grab_any, _MoveDrag, _StackDrag
 from redsim.ui.viewport_scene import SceneGeometry
 from redsim.ui.viewport_text import LabelRange, TextOverlays
 from redsim.world import blocks
@@ -96,8 +97,10 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
     pick_requested = Signal(object)  # Pos
     select_requested = Signal(object)  # Pos | None (inspector selection)
     region_changed = Signal(object)  # Region | None
-    region_move_requested = Signal(object, object, bool)  # Region, offset, copy
-    region_stack_requested = Signal(object, object, int)  # Region, step, count
+    #: A move, turn, flip, copy or stack of the confirmed selection is now pending (or was
+    #: dropped): ``floating`` / ``pending_stack``; Enter places it.
+    floating_changed = Signal()
+    message_requested = Signal(str)  # a short note for the status bar
     transform_requested = Signal(int, object)  # quarter turns, mirror axis | None
     gizmo_hover_changed = Signal(object)  # Hotspot | None
     paste_requested = Signal(object)  # Pos (minimum corner)
@@ -136,7 +139,13 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         self.debug_left: list[str] = []
         #: SELECT mode: the face handle under the cursor, and drags in progress.
         self.gizmo_hover: Hotspot | None = None
-        self.region_locked = False  # Enter: clicks can no longer replace the selection
+        #: Enter confirms the selection (like GIMP): its boxes are fixed, and drags, turns
+        #: and flips then act on its blocks, as a preview until the next Enter.
+        self.region_confirmed = False
+        self.floating: Floating | None = None  # the blocks' pending move/turn/flip/copy
+        self.pending_stack: _StackDrag | None = None  # copies waiting for Enter
+        self._floating_mesh: tuple[Any, np.ndarray] | None = None
+        self._replaced_mesh: tuple[Any, np.ndarray] | None = None
         self._overlays: list[QWidget] = []  # widgets drawn over the bottom (add_overlay)
         #: BUILD: how the block to place is varied (R, H, Shift+H, round 8): quarter turns
         #: clockwise, mirrored axes, upside down (top slabs, pistons facing down, …).
@@ -244,8 +253,10 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         self.document = document
         self.selection = None
         self.region = None
-        self.region_locked = False
+        self.region_confirmed = False
         self.extra_regions = []
+        self.floating = None
+        self.pending_stack = None
         self.hover = None
         self.highlight = None
         self.located = None
@@ -450,6 +461,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             np.vstack(
                 [
                     self._selection_body(),
+                    self._replaced_body(),
                     self._highlight_body(),
                     self._power_body(),
                     self._heat_body(),
@@ -492,6 +504,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             fog=(40.0 + self.camera.distance, 160.0 + 2 * self.camera.distance),
             horizon=self._horizon_ndc(mvp) if prefs.scenery else -1.0,
             scenery=prefs.scenery,
+            ghost_alpha=self.ghost_alpha(),
         )
         self.frame_rate.record(time.monotonic())
         self._draw_overlays()
@@ -684,8 +697,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             return
         if self._move is not None:  # while dragging a selection, the wheel lifts it
             self._move.lift += 1 if steps > 0 else -1
-            self._ghost = (self._move.ghost, self._move.offset_pos)
-            self.update()
+            self._apply_move()
             return
         modifiers = _modifier_names(event.modifiers())
         mode = "paste" if self.paste_preview is not None else self.mode
@@ -739,8 +751,11 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         if action == "normal.inspect":
             self.selection = hit.pos if hit else None
             self.select_requested.emit(self.selection)
-        elif action in ("select.block", "select.extend") and self.region_locked:
-            return  # a locked selection keeps its box
+        elif action in ("select.block", "select.extend") and self.region_confirmed:
+            return  # a confirmed selection keeps its boxes
+        elif action == "select.block" and self._click_box(hit) is not None:
+            self.activate_region(self._click_box(hit))  # type: ignore[arg-type]
+            self.region_changed.emit(self.region)
         elif action == "select.block":
             self._region_anchor = hit.pos if hit else None
             self.region = Region.from_corners(hit.pos, hit.pos) if hit else None
@@ -767,6 +782,15 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             self.rotate_requested.emit(hit.pos, 1 if action == "build.rotate" else 3)
 
     # ------------------------------------------------------------------ selections
+    def _click_box(self, hit: Hit | None) -> int | None:
+        """A click inside one of the further boxes (not the active one): its index."""
+        if self._last_mouse is None or not self.extra_regions:
+            return None
+        origin, direction = self._ray(self._last_mouse)
+        grab = _grab_any(self.all_regions(), origin, direction, hit)
+        if grab is None or grab[0] == len(self.extra_regions):
+            return None
+        return grab[0]
 
     # ------------------------------------------------------------------ paste preview
 
@@ -853,8 +877,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             if whole:
                 self._trackpad_rise -= whole
                 self._move.lift += whole
-                self._ghost = (self._move.ghost, self._move.offset_pos)
-                self.update()
+                self._apply_move()
             return
         if "Ctrl" in modifiers:
             self.zoom_by(dy / TRACKPAD_PIXELS_PER_NOTCH)

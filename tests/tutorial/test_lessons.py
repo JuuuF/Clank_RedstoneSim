@@ -114,6 +114,7 @@ def _actions(p: Player) -> list[Callable[[], None] | None]:
         # 5. Select
         lambda: v.update(mode="select"),
         lambda: v.update(regions=(inverter,)),
+        lambda: v.update(confirmed=True),
         copy,
         lambda: doc.transform_region(inverter, quarter_turns=1),
         lambda: v.update(regions=(inverter, Region.from_corners(s(4, (1, 1, 6)), s(4, (2, 1, 7))))),

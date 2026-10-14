@@ -111,6 +111,14 @@ EXTRA_SELECTION_COLOR = (0.35, 0.65, 0.95, 0.8)  # further selections (Shift+dra
 TARGET_COLOR = (1.0, 1.0, 1.0, 1.0)
 
 
+#: Blocks a pending move would overwrite (owner: moves "possibly destroy other blocks").
+REPLACED_COLOR = (1.0, 0.18, 0.12, 0.38)
+
+
+#: One breath of the preview of pending blocks (a move, turn, copy, stack or paste).
+PENDING_PULSE_SECONDS = 1.4
+
+
 NORMAL, BUILD, SELECT, ANIMATE = "normal", "build", "select", "animate"
 
 

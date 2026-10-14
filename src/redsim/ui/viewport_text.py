@@ -203,9 +203,11 @@ class TextOverlays:
             @ view.camera.view_matrix()
         )
         eye = np.asarray(view.camera.position, dtype=float)
+        reach = (SIGN_TEXT_DISTANCE + 1.0) ** 2
         for pos in positions:
             state = level.blocks.get(pos)
-            if state is None:
+            offset = np.array(pos, dtype=float) + 0.5 - eye
+            if state is None or float(offset @ offset) > reach:
                 continue
             for board in boards(pos, state):
                 distance = float(np.linalg.norm(board.center - eye))
@@ -423,8 +425,13 @@ class TextOverlays:
         if view.mode == SELECT and view.region is not None:
             low, high = view.region.low, view.region.high
             dx, dy, dz = (high[i] - low[i] + 1 for i in range(3))
-            locked = " · locked" if view.region_locked else ""
-            return f"{dx}×{dy}×{dz} = {dx * dy * dz} blocks{locked}"
+            if view.floating is not None or view.pending_stack is not None:
+                stage = " · Enter places, Esc cancels"
+            elif view.region_confirmed:
+                stage = " · confirmed"
+            else:
+                stage = ""
+            return f"{dx}×{dy}×{dz} = {dx * dy * dz} blocks{stage}"
         if view.mode == NORMAL and view.selection is not None:
             state = view.document.state_at(view.selection)
             x, y, z = view.selection

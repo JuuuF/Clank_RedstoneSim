@@ -50,84 +50,126 @@ def _tri(points: list[np.ndarray], color: Color) -> np.ndarray:
     return np.array([(*p, *color) for p in points], dtype=np.float32)
 
 
-def _basis(axis: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    axis = axis / np.linalg.norm(axis)
-    helper = np.array([0.0, 1.0, 0.0]) if abs(axis[1]) < 0.9 else np.array([1.0, 0.0, 0.0])
-    u = np.cross(axis, helper)
-    u /= np.linalg.norm(u)
-    return u, np.cross(axis, u)
+def _bases(axes: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Two unit vectors across each of the (n, 3) ``axes``."""
+    axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
+    helpers = np.where(
+        np.abs(axes[:, 1:2]) < 0.9, np.array([0.0, 1.0, 0.0]), np.array([1.0, 0.0, 0.0])
+    )
+    u = np.cross(axes, helpers)
+    u /= np.linalg.norm(u, axis=1, keepdims=True)
+    return u, np.cross(axes, u)
 
 
-def cylinder(
-    a: np.ndarray, b: np.ndarray, radius: float, color: Color, sides: int = 8
-) -> np.ndarray:
-    u, v = _basis(b - a)
-    rows: list[np.ndarray] = []
-    for i in range(sides):
-        t0, t1 = 2 * math.pi * i / sides, 2 * math.pi * (i + 1) / sides
-        o0 = (u * math.cos(t0) + v * math.sin(t0)) * radius
-        o1 = (u * math.cos(t1) + v * math.sin(t1)) * radius
-        rows += [a + o0, b + o0, b + o1, a + o0, b + o1, a + o1]
-    return _tri(rows, color)
+def _rims(axes: np.ndarray, radii: np.ndarray, sides: int) -> tuple[np.ndarray, np.ndarray]:
+    """Offsets of the start and end of each of a circle's ``sides`` around each axis, at
+    each radius: (n, sides, 3) twice."""
+    u, v = _bases(axes)
+    angles = 2 * math.pi * np.arange(sides + 1) / sides
+    cos, sin = np.cos(angles)[None, :, None], np.sin(angles)[None, :, None]
+    ring = (u[:, None, :] * cos + v[:, None, :] * sin) * radii[:, None, None]
+    return ring[:, :-1], ring[:, 1:]
 
 
-def cone(
-    base: np.ndarray, tip: np.ndarray, radius: float, color: Color, sides: int = 12
-) -> np.ndarray:
-    u, v = _basis(tip - base)
-    rows: list[np.ndarray] = []
-    for i in range(sides):
-        t0, t1 = 2 * math.pi * i / sides, 2 * math.pi * (i + 1) / sides
-        p0 = base + (u * math.cos(t0) + v * math.sin(t0)) * radius
-        p1 = base + (u * math.cos(t1) + v * math.sin(t1)) * radius
-        rows += [p0, p1, tip, p1, p0, base]
-    return _tri(rows, color)
+def _colored(points: np.ndarray, colors: np.ndarray) -> np.ndarray:
+    """(n, k, 3) points, (n, 4) colors → (n k, 7) vertices."""
+    n, k = points.shape[:2]
+    rgba = np.broadcast_to(colors[:, None, :], (n, k, 4))
+    return np.concatenate([points, rgba], axis=2).reshape(-1, 7).astype(np.float32)
+
+
+class Shapes:
+    """Tubes and cones collected first and built together, a few numpy calls for all of
+    them (a selection's gizmos are rebuilt whenever the camera turns or zooms)."""
+
+    def __init__(self) -> None:
+        self.tubes: dict[int, list[tuple[Any, ...]]] = {}
+        self.cones: list[tuple[Any, ...]] = []
+
+    def tube(
+        self, a: np.ndarray, b: np.ndarray, radius: float, color: Color, sides: int = 8
+    ) -> None:
+        self.tubes.setdefault(sides, []).append((a, b, radius, color))
+
+    def tubes_along(self, points: np.ndarray, radius: float, color: Color, sides: int = 8) -> None:
+        """Tubes from each point to the next."""
+        for a, b in zip(points[:-1], points[1:], strict=True):
+            self.tube(a, b, radius, color, sides)
+
+    def cone(self, base: np.ndarray, tip: np.ndarray, radius: float, color: Color) -> None:
+        self.cones.append((base, tip, radius, color))
+
+    def build(self) -> np.ndarray:
+        parts = []
+        for sides, rows in self.tubes.items():
+            a, b, radii, colors = (
+                np.array(column, dtype=float) for column in zip(*rows, strict=True)
+            )
+            o0, o1 = _rims(b - a, radii, sides)
+            start, end = a[:, None, None, :], b[:, None, None, :]
+            o0, o1 = o0[:, :, None, :], o1[:, :, None, :]
+            tris = np.concatenate(
+                [start + o0, end + o0, end + o1, start + o0, end + o1, start + o1], axis=2
+            )
+            parts.append(_colored(tris.reshape(len(a), -1, 3), colors))
+        if self.cones:
+            base, tip, radii, colors = (
+                np.array(column, dtype=float) for column in zip(*self.cones, strict=True)
+            )
+            o0, o1 = _rims(tip - base, radii, CONE_SIDES)
+            p0, p1 = base[:, None, :] + o0, base[:, None, :] + o1
+            tips = np.broadcast_to(tip[:, None, :], p0.shape)
+            bases = np.broadcast_to(base[:, None, :], p0.shape)
+            tris = np.stack([p0, p1, tips, p1, p0, bases], axis=2)
+            parts.append(_colored(tris.reshape(len(base), -1, 3), colors))
+        return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
+
+
+CONE_SIDES = 12
 
 
 def arrow(
-    start: np.ndarray, direction: np.ndarray, length: float, unit: float, color: Color
-) -> np.ndarray:
+    shapes: Shapes,
+    start: np.ndarray,
+    direction: np.ndarray,
+    length: float,
+    unit: float,
+    color: Color,
+) -> None:
     """A shaft with a cone head, ``length`` long from ``start`` along ``direction``."""
     direction = direction / np.linalg.norm(direction)
     head = 1.3 * unit
     neck = start + direction * max(length - head, 0.0)
-    return np.vstack(
-        [
-            cylinder(start, neck, 0.16 * unit, color),
-            cone(neck, start + direction * length, 0.5 * unit, color),
-        ]
-    )
+    shapes.tube(start, neck, 0.16 * unit, color)
+    shapes.cone(neck, start + direction * length, 0.5 * unit, color)
 
 
 def arrow_outline(
-    start: np.ndarray, direction: np.ndarray, length: float, unit: float
-) -> np.ndarray:
+    shapes: Shapes, start: np.ndarray, direction: np.ndarray, length: float, unit: float
+) -> None:
     """A slightly bigger dark arrow, drawn behind ``arrow`` as its outline (round 8)."""
     direction = direction / np.linalg.norm(direction)
     m = OUTLINE_MARGIN * unit
     head = 1.3 * unit
     neck = start + direction * max(length - head, 0.0)
-    return np.vstack(
-        [
-            cylinder(start - direction * m, neck, 0.16 * unit + m, OUTLINE_COLOR),
-            cone(
-                neck - direction * m,
-                start + direction * (length + 2 * m),
-                0.5 * unit + 1.6 * m,
-                OUTLINE_COLOR,
-            ),
-        ]
+    shapes.tube(start - direction * m, neck, 0.16 * unit + m, OUTLINE_COLOR)
+    shapes.cone(
+        neck - direction * m,
+        start + direction * (length + 2 * m),
+        0.5 * unit + 1.6 * m,
+        OUTLINE_COLOR,
     )
 
 
-def chevrons(start: np.ndarray, direction: np.ndarray, unit: float, color: Color) -> np.ndarray:
+def chevrons(
+    shapes: Shapes, start: np.ndarray, direction: np.ndarray, unit: float, color: Color
+) -> None:
     """Three flat cones in a row: the stacking look of a resize arrow."""
     direction = direction / np.linalg.norm(direction)
-    parts = [cylinder(start, start + direction * 1.2 * unit, 0.12 * unit, color)]
+    shapes.tube(start, start + direction * 1.2 * unit, 0.12 * unit, color)
     for i in range(3):
         base = start + direction * (1.2 + i * 0.9) * unit
-        parts.append(cone(base, base + direction * 0.9 * unit, 0.55 * unit, color))
-    return np.vstack(parts)
+        shapes.cone(base, base + direction * 0.9 * unit, 0.55 * unit, color)
 
 
 def box_faces(lo: np.ndarray, hi: np.ndarray, color: Color) -> np.ndarray:
@@ -183,29 +225,31 @@ def selection_gizmos(
     stacking: bool,
     hover: Hotspot | None,
     outlines: list[np.ndarray] | None = None,
+    handles: bool = True,
+    flips: bool = True,
 ) -> tuple[np.ndarray, list[Hotspot]]:
     """All gizmos of a selection: triangles and their hot spots. ``outlines``, if given,
-    collects dark outline shapes for the arrows, ring and arrowheads."""
-    shells: list[np.ndarray] = outlines if outlines is not None else []
+    collects dark outline shapes for the arrows, ring and arrowheads. ``handles``: the
+    face arrows (or chevrons), ``flips``: the flip arrows."""
+    parts, shells = Shapes(), Shapes()
     m = OUTLINE_MARGIN * unit
     lo, hi = bounds(region)
     center = (lo + hi) / 2
-    parts: list[np.ndarray] = []
     spots: list[Hotspot] = []
 
     def is_hovered(kind: str, data: Any) -> bool:
         return hover is not None and hover.kind == kind and hover.data == data
 
-    for handle in HANDLES:
+    for handle in HANDLES if handles else ():
         start = face_center(region, handle) + handle.normal * 0.15 * unit
         hovered = is_hovered("resize", handle)
         if stacking:
             color = HOVER_COLOR if hovered else STACK_COLOR
-            parts.append(chevrons(start, handle.normal, unit, color))
+            chevrons(parts, start, handle.normal, unit, color)
         else:
             color = HOVER_COLOR if hovered else AXIS_COLORS[handle.axis]
-            parts.append(arrow(start, handle.normal, 4.2 * unit, unit, color))
-            shells.append(arrow_outline(start, handle.normal, 4.2 * unit, unit))
+            arrow(parts, start, handle.normal, 4.2 * unit, unit, color)
+            arrow_outline(shells, start, handle.normal, 4.2 * unit, unit)
         tip = start + handle.normal * 3.4 * unit
         spots.append(Hotspot("resize", handle, tuple(tip), 1.2 * unit))
 
@@ -213,14 +257,17 @@ def selection_gizmos(
     radius = 0.5 * math.hypot(hi[0] - lo[0], hi[2] - lo[2]) + 1.5 * unit
     y = hi[1] + 0.05
     segments = 64
-    ring = []
-    for i in range(segments):
-        a0, a1 = 2 * math.pi * i / segments, 2 * math.pi * (i + 1) / segments
-        p0 = np.array([center[0] + radius * math.cos(a0), y, center[2] + radius * math.sin(a0)])
-        p1 = np.array([center[0] + radius * math.cos(a1), y, center[2] + radius * math.sin(a1)])
-        ring.append(cylinder(p0, p1, 0.1 * unit, RING_COLOR, sides=6))
-        shells.append(cylinder(p0, p1, 0.1 * unit + m, OUTLINE_COLOR, sides=6))
-    parts.extend(ring)
+    angles = 2 * math.pi * np.arange(segments + 1) / segments
+    points = np.stack(
+        [
+            center[0] + radius * np.cos(angles),
+            np.full(segments + 1, y),
+            center[2] + radius * np.sin(angles),
+        ],
+        axis=1,
+    )
+    parts.tubes_along(points, 0.1 * unit, RING_COLOR, sides=6)
+    shells.tubes_along(points, 0.1 * unit + m, OUTLINE_COLOR, sides=6)
     # Direction from the box towards the camera (yaw 0 looks south, so the camera is north).
     yaw = math.radians(camera_yaw)
     toward = math.atan2(-math.cos(yaw), math.sin(yaw))  # angle in the x/z plane
@@ -233,22 +280,18 @@ def selection_gizmos(
         tangent = np.array([-math.sin(angle), 0.0, math.cos(angle)]) * (1 if turns == 1 else -1)
         hovered = is_hovered("rotate", turns)
         color = HOVER_COLOR if hovered else RING_COLOR
-        parts.append(
-            cone(point - tangent * 0.7 * unit, point + tangent * 1.1 * unit, 0.6 * unit, color)
-        )
-        shells.append(
-            cone(
-                point - tangent * (0.7 * unit + m),
-                point + tangent * (1.1 * unit + 2 * m),
-                0.6 * unit + 1.6 * m,
-                OUTLINE_COLOR,
-            )
+        parts.cone(point - tangent * 0.7 * unit, point + tangent * 1.1 * unit, 0.6 * unit, color)
+        shells.cone(
+            point - tangent * (0.7 * unit + m),
+            point + tangent * (1.1 * unit + 2 * m),
+            0.6 * unit + 1.6 * m,
+            OUTLINE_COLOR,
         )
         spots.append(Hotspot("rotate", turns, tuple(point), 1.3 * unit))
 
     # Flip arrows: double-headed, across the top face.
     top = np.array([center[0], hi[1] + 0.1, center[2]])
-    for axis, index in (("x", 0), ("z", 2)):
+    for axis, index in (("x", 0), ("z", 2)) if flips else ():
         span = max(0.5 * (hi[index] - lo[index]) - 0.6 * unit, 1.2 * unit)
         direction = np.zeros(3)
         direction[index] = 1.0
@@ -265,11 +308,13 @@ def selection_gizmos(
             )
         )
         for sign in (1, -1):
-            parts.append(arrow(top, direction * sign, span, 0.8 * unit, color))
-            shells.append(arrow_outline(top, direction * sign, span, 0.8 * unit))
+            arrow(parts, top, direction * sign, span, 0.8 * unit, color)
+            arrow_outline(shells, top, direction * sign, span, 0.8 * unit)
             end = top + direction * sign * span
             spots.append(Hotspot("flip", axis, tuple(end), 1.1 * unit))
-    return np.vstack(parts), spots
+    if outlines is not None:
+        outlines.append(shells.build())
+    return parts.build(), spots
 
 
 def pick_hotspot(origin: np.ndarray, direction: np.ndarray, spots: list[Hotspot]) -> Hotspot | None:

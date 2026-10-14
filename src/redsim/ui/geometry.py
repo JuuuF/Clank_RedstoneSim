@@ -671,16 +671,30 @@ def box_lines(
     lo: Iterable[float], hi: Iterable[float], color: Color, grow: float = 0.002
 ) -> FloatArray:
     """12 edges of a box as GL_LINES vertices (x, y, z, r, g, b, a)."""
-    x0, y0, z0 = (v - grow for v in lo)
-    x1, y1, z1 = (v + grow for v in hi)
-    corners = [
-        (x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1),
-        (x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1),
-    ]  # fmt: skip
-    edges = [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4),
-             (0, 4), (1, 5), (2, 6), (3, 7)]  # fmt: skip
-    rows = [(*corners[i], *color) for edge in edges for i in edge]
-    return np.array(rows, dtype=np.float32)
+    lows = np.array([list(lo)], dtype=np.float32)
+    highs = np.array([list(hi)], dtype=np.float32)
+    return many_box_lines(lows, highs, np.array([color], dtype=np.float32), grow)
+
+
+#: The 12 edges of a box as pairs of corners (bit 0: x, bit 1: y, bit 2: z high).
+_EDGE_CORNERS = np.array(
+    [0, 1, 1, 5, 5, 4, 4, 0, 2, 3, 3, 7, 7, 6, 6, 2, 0, 2, 1, 3, 5, 7, 4, 6], dtype=np.int64
+)
+_EDGE_BITS = np.array([[(c >> 0) & 1, (c >> 1) & 1, (c >> 2) & 1] for c in _EDGE_CORNERS])
+
+
+def many_box_lines(
+    lows: np.ndarray, highs: np.ndarray, colors: np.ndarray | Color, grow: float = 0.002
+) -> FloatArray:
+    """``box_lines`` for many boxes at once: (n, 3) corners, (n, 4) or (4,) colors."""
+    lows = np.asarray(lows, dtype=np.float32) - grow
+    highs = np.asarray(highs, dtype=np.float32) + grow
+    n = len(lows)
+    if not n:
+        return np.zeros((0, 7), dtype=np.float32)
+    points = lows[:, None, :] + _EDGE_BITS[None, :, :] * (highs - lows)[:, None, :]
+    rgba = np.broadcast_to(np.asarray(colors, dtype=np.float32).reshape(-1, 1, 4), (n, 24, 4))
+    return np.concatenate([points, rgba], axis=2).reshape(-1, 7).astype(np.float32)
 
 
 def solid_box(lo: Iterable[float], hi: Iterable[float], color: Color) -> FloatArray:
@@ -696,18 +710,37 @@ def thick_edges(lo: Iterable[float], hi: Iterable[float], color: Color, width: f
     lo3 = np.array(list(lo), dtype=np.float32)
     hi3 = np.array(list(hi), dtype=np.float32)
     half = width / 2
-    parts = []
+    lows, highs = [], []
     for axis in range(3):
         others = [i for i in range(3) if i != axis]
         for u in (lo3[others[0]], hi3[others[0]]):
             for v in (lo3[others[1]], hi3[others[1]]):
-                a = np.zeros(3, dtype=np.float32)
-                b = np.zeros(3, dtype=np.float32)
+                a, b = [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
                 a[axis], b[axis] = lo3[axis] - half, hi3[axis] + half
                 a[others[0]], b[others[0]] = u - half, u + half
                 a[others[1]], b[others[1]] = v - half, v + half
-                parts.append(solid_box(a, b, color))
-    return np.vstack(parts)
+                lows.append(a)
+                highs.append(b)
+    return many_solid_boxes(np.array(lows), np.array(highs), color)
+
+
+_UNIT_BOX: FloatArray | None = None
+
+
+def many_solid_boxes(lows: np.ndarray, highs: np.ndarray, color: Color) -> FloatArray:
+    """``solid_box`` for many boxes of one color: (n, 3) corners → (36 n, 7)."""
+    global _UNIT_BOX
+    if _UNIT_BOX is None:
+        _UNIT_BOX = solid_box((0, 0, 0), (1, 1, 1), (1.0, 1.0, 1.0, 1.0))
+    unit = _UNIT_BOX
+    lows = np.asarray(lows, dtype=np.float32)
+    highs = np.asarray(highs, dtype=np.float32)
+    n = len(lows)
+    points = lows[:, None, :] + unit[None, :, :3] * (highs - lows)[:, None, :]
+    rgba = unit[:, 3:7] * np.array(color, dtype=np.float32)
+    rgba[:, 3] = color[3]
+    out = np.concatenate([points, np.broadcast_to(rgba, (n, len(unit), 4))], axis=2)
+    return out.reshape(-1, 7).astype(np.float32)
 
 
 def block_outline(level: Level, pos: Pos, color: Color) -> FloatArray:

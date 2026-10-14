@@ -323,9 +323,8 @@ def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
 
     window = MainWindow()
     panel = window.hotkeys
-    assert ("SELECT mode: boxes and copies", "Drag a copy of the box (from inside it)") in set(
-        panel.visible_rows()
-    )
+    copy_drag = "Drag a copy of the confirmed selection's blocks (from inside it)"
+    assert ("SELECT mode: boxes and copies", copy_drag) in set(panel.visible_rows())
     panel.search.setText("rotate")
     rows = panel.visible_rows()
     assert rows and all("otate" in action or "otate" in section for section, action in rows)
@@ -746,7 +745,7 @@ def test_opening_another_document_leaves_nothing_of_the_old_view(app: object) ->
     window = MainWindow()
     viewport = window.viewport
     window.document.setblock((0, 1, 0), blocks.STONE.default_state)
-    viewport.region, viewport.region_locked = Region((0, 1, 0), (0, 1, 0)), True
+    viewport.region, viewport.region_confirmed = Region((0, 1, 0), (0, 1, 0)), True
     viewport.extra_regions = [Region((2, 1, 0), (2, 1, 0))]
     viewport.locate((0, 1, 0))
     viewport.flash((0, 1, 0))
@@ -754,7 +753,7 @@ def test_opening_another_document_leaves_nothing_of_the_old_view(app: object) ->
     window._open_block_popup()
     window.simulation.canvas.selected_pulses = {3}
     window._set_document(Document.new_flat())
-    assert viewport.region is None and not viewport.region_locked and not viewport.extra_regions
+    assert viewport.region is None and not viewport.region_confirmed and not viewport.extra_regions
     assert viewport.located is None and viewport.highlight is None and viewport.hover is None
     assert not window.block_popup.isVisible()
     assert not window.simulation.canvas.selected_pulses
@@ -808,7 +807,10 @@ def test_pulses_mute_from_the_timeline_and_the_sequence_tab(app: object) -> None
 
 
 def test_several_selections_move_and_turn_together(app: object) -> None:
+    """Once confirmed (Enter), moves and turns of the selected blocks are only a preview
+    until the next Enter places them, all boxes together, as one undo step."""
     from redsim.editor.clipboard import Region
+    from redsim.editor.floating import Floating
     from redsim.ui.main_window import MainWindow
 
     window = MainWindow()
@@ -817,17 +819,56 @@ def test_several_selections_move_and_turn_together(app: object) -> None:
     document.setblock((3, 1, 0), blocks.parse_state("glass"))
     viewport.extra_regions = [Region((0, 1, 0), (0, 1, 0))]
     viewport.region = Region((3, 1, 0), (3, 1, 0))
-    window._move_region(viewport.region, (0, 0, 2), False)  # a drag of the active box
+    window._transform(quarter_turns=1)  # before Enter: the boxes turn, no blocks
+    assert document.state_at((3, 1, 0)).block is blocks.GLASS
+    assert viewport.region != Region((3, 1, 0), (3, 1, 0))
+    window._transform(quarter_turns=-1)  # and back
+    assert viewport.region == Region((3, 1, 0), (3, 1, 0))
+    window._confirm()  # Enter: the tools now act on the blocks
+    assert viewport.region_confirmed
+    viewport.floating = Floating(tuple(viewport.all_regions())).moved((0, 0, 2))  # a drag
+    window._transform(quarter_turns=1)
+    window._transform(quarter_turns=-1)  # back around the same pivot
+    assert document.state_at((0, 1, 0)).block is blocks.REDSTONE_BLOCK  # nothing placed yet
+    assert document.state_at((0, 1, 2)).is_air
+    window._confirm()  # Enter places
+    assert viewport.floating is None
     assert viewport.extra_regions == [Region((0, 1, 2), (0, 1, 2))]
     assert viewport.region == Region((3, 1, 2), (3, 1, 2))
     assert document.state_at((0, 1, 2)).block is blocks.REDSTONE_BLOCK
-    assert document.state_at((0, 1, 0)).is_air
-    window._transform(quarter_turns=1)
-    window._transform(quarter_turns=-1)  # back around the same pivot
-    assert viewport.extra_regions == [Region((0, 1, 2), (0, 1, 2))]
     assert document.state_at((3, 1, 2)).block is blocks.GLASS
+    assert document.state_at((0, 1, 0)).is_air
     window._copy()
     assert document.clipboard is not None and document.clipboard.size == (4, 1, 1)
+    document.undo()  # one undo step for the whole move
+    assert document.state_at((0, 1, 0)).block is blocks.REDSTONE_BLOCK
+    document.dirty = False
+    window.close()
+
+
+def test_a_pending_move_cancels_and_shows_what_it_would_replace(app: object) -> None:
+    from redsim.editor.clipboard import Region
+    from redsim.editor.floating import Floating
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.view_common import NORMAL
+
+    window = MainWindow()
+    document, viewport = window.document, window.viewport
+    document.setblock((0, 1, 0), blocks.parse_state("redstone_block"))
+    document.setblock((2, 1, 0), blocks.parse_state("glass"))
+    viewport.region = Region((0, 1, 0), (0, 1, 0))
+    window._confirm()
+    viewport.floating = Floating((viewport.region,)).moved((2, 0, 0))
+    window._floating_changed()
+    assert "replace 1 blocks" in window.hint_bar.message.text()
+    assert len(viewport._replaced_body()) == 36  # one red box
+    ghost = viewport._floating_ghost()
+    assert ghost is not None and ghost[1] == (2, 0, 0) and len(ghost[0])
+    window._mode_key(NORMAL)  # Esc: cancelled, nothing changed
+    assert viewport.floating is None and viewport.region_confirmed
+    assert document.state_at((2, 1, 0)).block is blocks.GLASS
+    window._mode_key(NORMAL)  # Esc again: editing the boxes
+    assert not viewport.region_confirmed
     document.dirty = False
     window.close()
 

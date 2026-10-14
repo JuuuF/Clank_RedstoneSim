@@ -75,6 +75,7 @@ class TutorialActions:
             pitch=float(camera.pitch),
             distance=float(camera.distance),
             pasting=viewport.paste_preview is not None,
+            confirmed=viewport.region_confirmed,
             heat=viewport.show_heat,
             xray=viewport.xray,
             info=viewport.show_info,

@@ -154,21 +154,29 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("select.block", "Select one block", ("Left Click",), MOUSE),
     ActionSpec(
         "select.box",
-        "Drag a box; from a face handle: resize; from inside the box: move it",
+        "Drag a box; from a face handle: resize; from inside a box: move it (once "
+        "confirmed: its blocks)",
         ("Left Drag",),
         MOUSE,
     ),
     ActionSpec(
-        "select.copy_drag", "Drag a copy of the box (from inside it)", ("Ctrl+Left Drag",), MOUSE
+        "select.copy_drag",
+        "Drag a copy of the confirmed selection's blocks (from inside it)",
+        ("Ctrl+Left Drag",),
+        MOUSE,
     ),
     ActionSpec(
         "select.stack",
-        "Stack copies: drag a face handle outwards; elsewhere: add another selection",
+        "Add another box; on a confirmed selection's face arrow: stack copies",
         ("Shift+Left Drag",),
         MOUSE,
     ),
     ActionSpec("select.clear_all", "Remove all selections", ("Alt+A",)),
-    ActionSpec("select.lock", "Lock / unlock the selection (Enter, like GIMP)", ("Return",)),
+    ActionSpec(
+        "select.lock",
+        "Confirm the selection / place the moved blocks (Enter, like GIMP)",
+        ("Return",),
+    ),
     ActionSpec("select.extend", "Extend the box to the block", ("Shift+Left Click",), MOUSE),
     ActionSpec("sim.run", "Run / pause", ("Space", "P")),
     ActionSpec("sim.run_back", "Play backwards / pause", ("Ctrl+Shift+Space",)),

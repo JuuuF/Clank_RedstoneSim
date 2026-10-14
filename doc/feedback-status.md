@@ -33,6 +33,15 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 - **Block popup** (2026-10-14): values pin to the block as a live tag in the view; the
   popup no longer grabs keys and clicks, so the timeline works while it is open; double
   chests show both halves, the other half greyed ([[controls]]).
+- **Selections like GIMP, and smooth frames with a selection** (2026-10-14, owner: frame
+  drops from 60 to 30 with a selection; "only place the blocks upon confirming the
+  position with Enter"; selections re-editable like GIMP): the gizmos were rebuilt every
+  frame while the camera moved (~45 ms, now ~2 ms, batched tubes and cones) and group and
+  edge outlines are vectorized (a frame with a selection: ~50 ms → ~7 ms of Python).
+  Selections now have two stages: edit the boxes (move, resize, add, turn), Enter
+  confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
+  the way marked red) that the next Enter places as one edit, Esc cancels
+  (`editor/floating.py`, [[controls]]).
 - **Viewport resizing** (2026-10-14, owner: a lower viewport showed more, not less): the
   view keeps its scale in both directions; the 70° field of view fits a viewport 0.7 of
   the screen's height (`FOV_SCREEN_SHARE`, `Viewport.lens`).

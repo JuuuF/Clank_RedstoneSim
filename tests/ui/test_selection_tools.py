@@ -55,10 +55,12 @@ def test_a_drag_grabs_the_selection_through_air_inside_it() -> None:
     import os
 
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from redsim.ui.viewport import Viewport
+    from redsim.ui.viewport_edit import _grab_any
 
     box = Region((0, 1, 0), (1, 2, 0))
-    grab = Viewport._grab_point(box, np.array([0.5, 10.0, 0.5]), np.array([0.0, -1.0, 0.0]), None)
-    assert grab is not None and np.allclose(grab, [0.5, 3.0, 0.5])  # the box's top face
-    miss = Viewport._grab_point(box, np.array([5.5, 10.0, 0.5]), np.array([0.0, -1.0, 0.0]), None)
-    assert miss is None
+    other = Region((0, 1, 3), (0, 1, 3))
+    down = np.array([0.0, -1.0, 0.0])
+    grab = _grab_any([other, box], np.array([0.5, 10.0, 0.5]), down, None)
+    assert grab is not None and grab[0] == 1  # the box it hit
+    assert np.allclose(grab[1], [0.5, 3.0, 0.5])  # its top face
+    assert _grab_any([other, box], np.array([5.5, 10.0, 0.5]), down, None) is None
