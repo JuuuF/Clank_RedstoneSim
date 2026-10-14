@@ -977,6 +977,8 @@ def test_tutorial_card_follows_the_lessons(app: object, tmp_path: object) -> Non
         window._use(tutorial_world.station(1, tutorial_world.USE_LEVER))
         window._poll_tutorial()
         assert card.progress.done and "Done" in card.status.text()
+        assert card._glint.state() == card._glint.State.Running  # the success glint
+        card.repaint()
         card._next()
         assert card.progress.step == 1
         window._poll_tutorial()
@@ -991,6 +993,73 @@ def test_tutorial_card_follows_the_lessons(app: object, tmp_path: object) -> Non
         window.close()
     finally:
         del os.environ["XDG_CONFIG_HOME"]
+
+
+def test_the_tutorial_is_a_mode_that_gives_the_world_back(app: object, tmp_path: object) -> None:
+    """Help → Tutorial puts the open world aside (unsaved changes and all); Exit tutorial
+    brings it back. Opening and saving worlds is part of the Files lesson."""
+    from redsim.tutorial import world as tutorial_world
+    from redsim.tutorial.lessons import LESSONS
+    from redsim.ui.main_window import MainWindow
+
+    os.environ["XDG_CONFIG_HOME"] = str(tmp_path)
+    try:
+        window = MainWindow()
+        window.show()
+        mine = window.document
+        mine.setblock((0, 1, 0), blocks.STONE.default_state)  # unsaved
+        window.start_tutorial()  # no question about unsaved changes
+        assert tutorial_world.is_tutorial(window.document)
+        bar = window.tutorial_bar
+        assert bar is not None and bar.isVisible()
+        assert window._confirm_discard()  # the tutorial world never asks
+        card = window.tutorial
+        assert card is not None
+        files = len(LESSONS) - 1
+        card.go(files, 0)  # Save
+        window._poll_tutorial()
+        assert not card.progress.done
+        window.saves += 1  # what saving does (``_saved``)
+        window._poll_tutorial()
+        assert card.progress.done
+        card._next()  # Open
+        window._poll_tutorial()
+        window.world_screens += 1
+        window._poll_tutorial()
+        assert card.progress.done
+        card.close_card()
+        window._place_tutorial()
+        assert bar.card_button.isVisibleTo(bar)  # the bar offers the card again
+        assert window.exit_tutorial()
+        assert window.document is mine and mine.dirty
+        assert not bar.isVisible() and window.tutorial_session is None
+        mine.dirty = False
+        window.close()
+    finally:
+        del os.environ["XDG_CONFIG_HOME"]
+
+
+def test_a_pasted_prefab_becomes_a_group(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("redstone_block"))
+    document.save_prefab("AND gate", Region((0, 1, 0), (1, 1, 0)))
+    window._load_prefab("AND gate")
+    assert window.viewport.paste_preview is not None  # follows the cursor at once
+    window._paste_at((5, 1, 5))
+    window._paste_at((9, 1, 5))  # Ctrl+V again: another group
+    groups = document.groups.groups
+    assert groups["AND gate"].region == Region((5, 1, 5), (6, 1, 5))
+    assert groups["AND gate 2"].region == Region((9, 1, 5), (10, 1, 5))
+    window._copy_region = None
+    window.viewport.region = Region((0, 1, 0), (0, 1, 0))
+    window._copy()  # a plain copy pastes as blocks only
+    window._paste_at((0, 1, 9))
+    assert len(groups) == 2
+    document.dirty = False
+    window.close()
 
 
 def test_groups_double_click_goes_there(app: object) -> None:

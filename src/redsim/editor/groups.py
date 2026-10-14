@@ -78,6 +78,15 @@ class Groups:
     def remove(self, name: str) -> None:
         self.groups.pop(name, None)
 
+    def free_name(self, name: str) -> str:
+        """``name``, or ``name 2``, ``name 3``, … if a group already has it."""
+        if name not in self.groups:
+            return name
+        number = 2
+        while f"{name} {number}" in self.groups:
+            number += 1
+        return f"{name} {number}"
+
     def to_json(self) -> list[dict[str, Any]]:
         return [group.to_json() for group in self.groups.values()]
 

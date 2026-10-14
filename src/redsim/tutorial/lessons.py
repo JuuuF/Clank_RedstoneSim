@@ -52,6 +52,8 @@ class Snapshot:
     build_block: str | None = None
     undo: tuple[str, ...] = ()
     redo: int = 0
+    saves: int = 0  # worlds saved so far
+    world_screens: int = 0  # Select World screens opened so far
 
 
 @dataclass(frozen=True)
@@ -626,11 +628,20 @@ LESSONS: tuple[Lesson, ...] = (
         8,
         (
             Step(
-                "Save and open",
+                "Save",
                 "{key:file.save} saves a world as a <b>.redsim.json</b> file, with its "
-                "timeline and notes. {key:file.open} shows the <b>Select World</b> screen "
-                "with your recent worlds and the examples.",
+                "timeline and notes. Try it: save this tutorial world anywhere you like "
+                "(the tutorial goes on with it).",
+                lambda snap, memo: snap.saves > start(memo).saves,
                 focus=_center(8),
+            ),
+            Step(
+                "Open",
+                "{key:file.open} shows the <b>Select World</b> screen with your recent "
+                "worlds and the examples. Open one, or cancel: the tutorial stays, and "
+                "<b>Exit tutorial</b> (top of the view) brings back the world you had "
+                "before. Any lesson takes you back to the tutorial world.",
+                lambda snap, memo: snap.world_screens > start(memo).world_screens,
             ),
             Step(
                 "Minecraft worlds",
@@ -653,7 +664,8 @@ LESSONS: tuple[Lesson, ...] = (
                 "Done!",
                 "That's everything. Open the <b>showcase</b> (File → Open…, Simulation "
                 "worlds) for 44 working stations: logic, signal strength, pistons, items, "
-                "clocks and a recorded sequence.",
+                "clocks and a recorded sequence. <b>Exit tutorial</b> takes you back to "
+                "your own world.",
             ),
         ),
     ),

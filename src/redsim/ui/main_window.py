@@ -562,6 +562,8 @@ class MainWindow(
         self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
         self._action(help_menu, "Tutorial", self.start_tutorial)
+        self._exit_tutorial_action = self._action(help_menu, "Exit tutorial", self.exit_tutorial)
+        self._exit_tutorial_action.setEnabled(False)
         self._action(help_menu, "Controls", self._show_controls, "help.controls")
         help_menu.addSeparator()
         self._action(help_menu, "About Redstone Simulator", lambda: AboutDialog(self).exec())
@@ -1039,6 +1041,9 @@ class MainWindow(
         return super().eventFilter(watched, event)
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        if not self.exit_tutorial():  # the world from before the tutorial may need saving
+            event.ignore()
+            return
         if self._confirm_discard(closing=True):
             self.save_layout()
             self.simulation.stop()

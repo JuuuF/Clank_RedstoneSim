@@ -31,6 +31,9 @@ if TYPE_CHECKING:
 class RegionActions:
     """Part of ``MainWindow`` (a mixin; its methods run on it)."""
 
+    #: The name a paste is grouped under (the clipboard came from a prefab), else None.
+    _paste_group: str | None = None
+
     def _region_changed(self, region: Region | None) -> None:
         view = cast("MainWindow", self)
         if region is not None:
@@ -52,6 +55,7 @@ class RegionActions:
             return
         regions = view.viewport.all_regions()
         prefab = view.document.copy(regions if len(regions) > 1 else region)
+        view._paste_group = None  # a plain copy pastes as blocks only
         boxes = f" from {len(regions)} boxes" if len(regions) > 1 else ""
         view._message(
             f"Copied {prefab.non_air_count} blocks{boxes} (with air: {len(prefab.blocks)})."
@@ -67,8 +71,20 @@ class RegionActions:
         view._message("Paste: left click places it · R rotates · right click or Esc cancels.")
 
     def _paste_at(self, origin: Pos) -> None:
+        """Place the paste; a prefab (or an imported schematic) becomes a group named after
+        it, so it shows as one piece with its outline (owner, 2026-10-14)."""
         view = cast("MainWindow", self)
+        clipboard = view.document.clipboard
+        revision = view.document.revision
         view._edit(view.document.paste, origin)
+        if view._paste_group is None or clipboard is None or view.document.revision == revision:
+            return
+        sx, sy, sz = clipboard.size
+        high = (origin[0] + sx - 1, origin[1] + sy - 1, origin[2] + sz - 1)
+        name = view.document.groups.free_name(view._paste_group)
+        view.document.groups.add(Group(name, Region(origin, high)))
+        view._changed()
+        view._message(f"Placed “{name}” as a group (Circuit → Groups).")
 
     def _rotate(self, quarter_turns: int) -> None:
         """R / Shift+R: the paste preview if one is shown, else the selection in place,
@@ -256,9 +272,16 @@ class RegionActions:
             view._changed()
 
     def _load_prefab(self, name: str) -> None:
+        """Circuit → Prefabs → Paste: the prefab follows the cursor; a click places it as
+        a group (Ctrl+V places more copies, each its own group)."""
         view = cast("MainWindow", self)
         view.document.clipboard = view.document.prefabs[name]
-        view._message(f"Prefab '{name}' is in the clipboard: Ctrl+V to paste.")
+        view._paste_group = name
+        view.viewport.begin_paste(view.document.clipboard)
+        view._message(
+            f"Paste “{name}”: left click places it as a group · R rotates · right click or "
+            "Esc cancels."
+        )
 
     def _delete_prefab(self, name: str) -> None:
         view = cast("MainWindow", self)
@@ -319,6 +342,7 @@ class RegionActions:
         if prefab is None:
             return
         view.document.clipboard = prefab
+        view._paste_group = prefab.name
         view.viewport.begin_paste(prefab)
         size = "×".join(str(v) for v in prefab.size)
         view._message(

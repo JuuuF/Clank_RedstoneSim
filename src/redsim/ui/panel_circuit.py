@@ -116,13 +116,15 @@ class ContraptionsPanel(QObject):
         self.prefab_page = prefab_page = QWidget()
         prefab_layout = QVBoxLayout(prefab_page)
         self.prefab_list = QListWidget()
-        self.prefab_list.setToolTip("Double-click a prefab to put it on the clipboard")
+        self.prefab_list.setToolTip(
+            "Double-click a prefab to paste it: it follows the cursor, a click places it as a group"
+        )
         self.prefab_list.itemDoubleClicked.connect(lambda _: self._with_prefab(self.load_prefab))
         prefab_layout.addWidget(self.prefab_list)
         row = QHBoxLayout()
         for text, slot in (
             ("Save selection…", self.save_prefab.emit),
-            ("To clipboard", lambda: self._with_prefab(self.load_prefab)),
+            ("Paste", lambda: self._with_prefab(self.load_prefab)),
             ("Delete", lambda: self._with_prefab(self.delete_prefab)),
         ):
             button = QPushButton(text)

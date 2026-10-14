@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import re
+from functools import cache
 from typing import Any
 
-from PySide6.QtCore import QRect, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QPainter, QPaintEvent
+from PySide6.QtCore import QPoint, QRect, Qt, QTimer, QVariantAnimation, Signal
+from PySide6.QtGui import QColor, QImage, QPainter, QPaintEvent, QPolygon
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -29,6 +31,7 @@ from PySide6.QtWidgets import (
 
 from redsim.tutorial.lessons import LESSONS, Progress, Snapshot, Step
 from redsim.ui import game_gui
+from redsim.ui.assets import Assets
 from redsim.ui.hints import keycaps_html, preferred_binding
 from redsim.ui.keymap import Keymap
 from redsim.ui.preferences import config_dir
@@ -46,6 +49,16 @@ PANEL_EDGE = QColor("#a8a8a8")
 WIDTH = 360
 #: How long "Done!" shows before the next step.
 DONE_MS = 1100
+#: The success glint: how long it plays, and the size of one glint texture tile.
+GLINT_MS = 1000
+GLINT_TILE = 96
+#: The Lessons menu, drawn like the game's tooltips (near-black, purple frame).
+MENU_STYLE = (
+    "QMenu { background: rgba(16, 0, 16, 240); color: #ffffff; border: 2px solid #28007f;"
+    " padding: 2px; }"
+    "QMenu::item { padding: 4px 18px 4px 10px; }"
+    "QMenu::item:selected { background: #3c1f8a; color: #ffff55; }"
+)
 #: The toast icon shown for each lesson (``toast/<name>``).
 ICONS = (
     "mouse",
@@ -59,6 +72,17 @@ ICONS = (
     "recipe_book",
 )
 _TOKEN = re.compile(r"\{(key|cap):([^}]+)\}")
+
+
+@cache
+def _glint_image() -> QImage | None:
+    """The game's item glint texture, darkened so its sum stays a shimmer."""
+    data = Assets.find()
+    raw = (
+        data.file_bytes("assets/minecraft/textures/misc/enchanted_glint_item.png") if data else None
+    )
+    image = QImage.fromData(raw) if raw else QImage()
+    return None if image.isNull() else image.convertToFormat(QImage.Format.Format_ARGB32)
 
 
 def progress_path() -> Any:
@@ -117,7 +141,7 @@ class TutorialCard(QWidget):
         top.addWidget(self.title, 1)
         close = QToolButton()
         close.setText("×")
-        close.setToolTip("Close the tutorial (Help → Tutorial continues it)")
+        close.setToolTip("Hide the card (the bar at the top shows it again)")
         close.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         close.setStyleSheet(
             f"QToolButton {{ color: {TEXT_COLOR}; border: none; font-size: 16px; }}"
@@ -137,15 +161,14 @@ class TutorialCard(QWidget):
         layout.addWidget(self.status)
         buttons = QHBoxLayout()
         buttons.setSpacing(4)
-        self.lessons = QToolButton()
-        self.lessons.setText("Lessons")
-        self.lessons.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.lessons.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.lessons = self._button("Lessons ▾", lambda: None)
         menu = QMenu(self.lessons)
+        menu.setStyleSheet(MENU_STYLE)
         for index, lesson in enumerate(LESSONS):
             action = menu.addAction(f"{index + 1}. {lesson.title}")
             action.triggered.connect(lambda _=False, i=index: self.go(i))
         self.lessons.setMenu(menu)
+        self.lessons.setMinimumWidth(96)
         buttons.addWidget(self.lessons)
         buttons.addStretch(1)
         self.back = self._button("Back", self._back)
@@ -156,6 +179,14 @@ class TutorialCard(QWidget):
         self._advance_timer = QTimer(self)
         self._advance_timer.setSingleShot(True)
         self._advance_timer.timeout.connect(self._next)
+        #: The success glint (0 → 1 while it plays), like an enchanted item's shimmer.
+        self.glint = 0.0
+        self._glint = QVariantAnimation(self)
+        self._glint.setStartValue(0.0)
+        self._glint.setEndValue(1.0)
+        self._glint.setDuration(GLINT_MS)
+        self._glint.valueChanged.connect(self._glint_frame)
+        self._glint.finished.connect(lambda: self._glint_frame(0.0))
         self._started = False
         self.show_step()
 
@@ -203,8 +234,17 @@ class TutorialCard(QWidget):
             return
         if self.progress.poll(snapshot):
             self.status.setText("✔ Done!")
-            self.update()
+            self.celebrate()
             self._advance_timer.start(DONE_MS)
+
+    def celebrate(self) -> None:
+        """A step is done: the card flashes and an enchantment glint sweeps over it."""
+        self._glint.stop()
+        self._glint.start()
+
+    def _glint_frame(self, value: object) -> None:
+        self.glint = float(value)  # type: ignore[arg-type]
+        self.update()
 
     def go(self, lesson: int, step: int = 0) -> None:
         self._advance_timer.stop()
@@ -259,4 +299,43 @@ class TutorialCard(QWidget):
         bar = QRect(6, rect.height() - 8, rect.width() - 12, 2)
         painter.fillRect(bar, BAR_TRACK)
         painter.fillRect(QRect(bar.x(), bar.y(), round(bar.width() * done / steps), 2), BAR_FILL)
+        if self.glint > 0.0:
+            self._paint_glint(painter, rect.adjusted(3, 3, -3, -3))
         painter.end()
+
+    def _paint_glint(self, painter: QPainter, rect: QRect) -> None:
+        """The enchantment glint (``misc/enchanted_glint_item``, added like the game's
+        glint shader), sliding diagonally and fading in and out, over a quick white
+        flash at the start."""
+        t = self.glint
+        flash = max(0.0, 1.0 - t * 5.0) * 0.55
+        if flash:
+            painter.fillRect(rect, QColor(255, 255, 255, round(255 * flash)))
+        strength = math.sin(math.pi * t)
+        painter.save()
+        painter.setClipRect(rect)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Plus)
+        painter.setOpacity(min(1.0, 1.3 * strength))
+        image = _glint_image()
+        if image is not None:
+            size = GLINT_TILE
+            shift = round(t * size * 2)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+            for x in range(rect.left() - 2 * size + shift, rect.right() + size, size):
+                for y in range(rect.top() - 2 * size + shift // 2, rect.bottom() + size, size):
+                    painter.drawImage(QRect(x, y, size, size), image)
+        else:  # without the jar: purple bands
+            painter.setPen(Qt.PenStyle.NoPen)
+            for k in range(-4, 8):
+                offset = round((k + t * 2) * rect.height() * 0.6)
+                band = QPolygon(
+                    [
+                        QPoint(rect.left() + offset, rect.bottom()),
+                        QPoint(rect.left() + offset + 18, rect.bottom()),
+                        QPoint(rect.left() + offset + 18 + rect.height(), rect.top()),
+                        QPoint(rect.left() + offset + rect.height(), rect.top()),
+                    ]
+                )
+                painter.setBrush(QColor(128, 64, 204, 150))
+                painter.drawPolygon(band)
+        painter.restore()

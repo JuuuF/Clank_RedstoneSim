@@ -42,6 +42,11 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Tutorial as a mode, prefabs as groups** (2026-10-14, owner after the tutorial):
+  Exit tutorial brings back the world from before; the Files lesson's save and open steps
+  are real steps; the Lessons menu and button in the game look; a glint when a step is
+  done ([[tutorial]]). A pasted prefab (or imported schematic) becomes a group named after
+  it; Circuit → Prefabs → Paste starts the paste at once.
 - **Viewport resizing** (2026-10-14, owner: a lower viewport showed more, not less): the
   view keeps its scale in both directions; the 70° field of view fits a viewport 0.7 of
   the screen's height (`FOV_SCREEN_SHARE`, `Viewport.lens`).

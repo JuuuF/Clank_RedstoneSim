@@ -49,9 +49,10 @@ class FileActions:
     """Part of ``MainWindow`` (a mixin; its methods run on it)."""
 
     def _confirm_discard(self, closing: bool = False) -> bool:
-        """Ask before unsaved changes would be lost; True means go ahead."""
+        """Ask before unsaved changes would be lost; True means go ahead. The tutorial
+        world never asks (the tutorial keeps it while another world is open)."""
         view = cast("MainWindow", self)
-        if not view.document.dirty:
+        if not view.document.dirty or view.in_tutorial_world():
             return True
         box = QMessageBox(view)
         box.setIconPixmap(pixel_icons.pixel_pixmap("warning", theme.GOLD, 4, tight=True))
@@ -99,6 +100,7 @@ class FileActions:
         if not view._confirm_discard():
             return
         picker = WorldPicker(view, tab)
+        view.world_screens += 1
         if not picker.exec() or picker.chosen is None:
             return
         kind, path = picker.chosen
@@ -257,6 +259,7 @@ class FileActions:
         view = cast("MainWindow", self)
         if path is None or view.document.dirty:
             return
+        view.saves += 1
         remember_world(path, SIMULATION)
         save_thumbnail(path, view.viewport.grabFramebuffer())
 

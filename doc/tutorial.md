@@ -8,6 +8,14 @@ where you stopped (progress: `tutorial.json` in the config folder, next to
 `preferences.json`). The card is drawn like the game's own tutorial hints (the
 `toast/tutorial` sprite and its icons, read from the jar).
 
+The tutorial is a mode (owner, 2026-10-14): the world you had open is put aside, as it
+was (unsaved changes included), and a bar at the top of the view says you are in the
+tutorial, with **Exit tutorial** (also Help → Exit tutorial) to get it back and **Show
+card** after the card's × hid it. A finished step makes the card flash and shimmer with
+the game's enchantment glint. In the Files lesson you really save the tutorial world and
+open the Select World screen; opening another world keeps the tutorial going, and any
+lesson with a station brings the tutorial world back.
+
 The tutorial world is built fresh each time (an untitled document; your files are never
 touched): nine stations on stone squares, one per lesson, each with signs. When a lesson
 starts, the camera glides to its station. Key names in the card come from your keymap,

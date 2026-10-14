@@ -139,7 +139,8 @@ def _actions(p: Player) -> list[Callable[[], None] | None]:
         sign,
         lambda: doc.set_marker(3, "here"),
         # 9. Files
-        None,
+        lambda: v.update(saves=v.get("saves", 0) + 1),
+        lambda: v.update(world_screens=v.get("world_screens", 0) + 1),
         None,
         None,
         None,
