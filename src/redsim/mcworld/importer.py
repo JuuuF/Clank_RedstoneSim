@@ -199,6 +199,29 @@ def open_world(path: Path, radius: int = 4, center: tuple[int, int] | None = Non
     return OpenedWorld(document, stream, foreign_ids(load.blocks.values()), ticks)
 
 
+def attach_world(document: Any) -> WorldStream | None:
+    """Connect a document saved from a Minecraft world (``extra["minecraft_world"]``) to
+    its save again, so chunks stream in around the camera as before. The chunks it held
+    are read again first (``WorldStream.reload``) without adding their blocks. None when
+    the save is gone or is another world now (a different seed)."""
+    world = document.extra.get("minecraft_world")
+    if not isinstance(world, dict) or "path" not in world:
+        return None
+    path = Path(str(world["path"]))
+    if not (path / "level.dat").exists():
+        return None
+    try:
+        info = read_save(path)
+    except (OSError, ValueError, KeyError):
+        return None
+    if world.get("seed") is not None and info.seed is not None and info.seed != world["seed"]:
+        return None
+    stream = WorldStream(info)
+    stream.reload = [(int(cx), int(cz)) for cx, cz in world.get("chunks", [])]
+    document.world = stream
+    return stream
+
+
 def stream_chunks(document: Any, center: tuple[int, int], radius: int, budget: float) -> int:
     """Load chunks of the document's world within ``radius`` of ``center`` (nearest
     first) for up to ``budget`` seconds; returns how many were loaded. Their blocks join
@@ -206,6 +229,9 @@ def stream_chunks(document: Any, center: tuple[int, int], radius: int, budget: f
     pending ticks of chunks loaded after opening are not imported."""
     stream: WorldStream | None = document.world
     if stream is None:
+        return 0
+    if stream.reload:  # a reopened document: its own chunks first
+        stream.reload_some(budget)
         return 0
     wanted = stream.wanted(center, radius)
     if not wanted:

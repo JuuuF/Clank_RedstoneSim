@@ -103,6 +103,26 @@ the moment of writing are stored the way the game stores them (`block_ticks`,
    yet: blocks outside loaded chunks (reported), pending scheduled ticks of the
    document, sections the save lacks, writing into the original save, and a check in
    the real game.
-5. Later: write into the original save (after checking `session.lock`, with backups of
-   changed region files), pending ticks, and a test that untouched chunks stay
-   byte-identical.
+5. **2026-10-14:**
+   - **Builds index:** File → Builds in this world… scans every chunk's palettes once
+     (`mcworld/index.py`, ~2 s for the example's 4 675 chunks), groups touching chunks
+     with placed blocks (not terrain, not nature) into builds, lists them with the most
+     redstone parts first, and "Go there" takes the camera to one (a jump when far, so
+     the chunks on the way are not loaded); the chunks around it stream in.
+   - **Reconnecting:** a document saved from a world remembers its chunks
+     (`extra["minecraft_world"]["chunks"]`); reopening it connects to the save again
+     (`importer.attach_world`, the same seed), reads those chunks without adding their
+     blocks (edits stay as they are), then streams further chunks as before.
+   - **Pending ticks** are written into the copy (`block_ticks` of every rewritten
+     chunk: delay from now, priority, in run order; chunks whose saved ticks have run
+     are rewritten too).
+   - **Checked in the real game:** `python -m tools.gameserver.check_world_copy` edits
+     the example save, writes a copy into the sandbox, starts the sandboxed server on it
+     and checks the edited blocks, a sign's text and that a pending repeater tick runs
+     (all match).
+   - Signs are simulated blocks now (standing and wall; their text is in their block
+     entity and written back); hanging signs stay foreign.
+6. Later: write into the original save (after checking `session.lock`, with backups of
+   changed region files); unloading far chunks (memory is bounded already by the
+   keyframe cap); an on-disk chunk cache (chunks load in ~9 ms, so it matters only for
+   very large areas); a test that untouched chunks stay byte-identical.

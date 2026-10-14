@@ -83,3 +83,69 @@ def test_an_opened_world_saves_back_into_a_copy(tmp_path: Path) -> None:
     assert read_save(tmp_path / "copy").name == "copy"
     with pytest.raises(ValueError):  # never over an existing folder
         save_world_copy(doc, tmp_path / "copy")
+
+
+@pytest.mark.skipif(not SAVE.exists(), reason="the example save is not supplied")
+def test_pending_ticks_go_into_the_copy(tmp_path: Path) -> None:
+    from redsim.mcworld.importer import open_world
+    from redsim.mcworld.writer import save_world_copy
+
+    opened = open_world(SAVE, radius=2)
+    doc = opened.document
+    assert opened.info.player_pos is not None
+    x, y, z = (int(v) for v in opened.info.player_pos)
+    doc.setblock((x, y + 2, z), blocks.STONE.default_state)  # something to stand on
+    doc.setblock((x, y + 3, z), blocks.parse_state("repeater[facing=east,delay=4]"))
+    doc.setblock((x + 1, y + 3, z), blocks.REDSTONE_BLOCK.default_state)  # its input
+    pending = [t for t in doc.level.block_ticks.pending() if t.pos == (x, y + 3, z)]
+    assert pending
+    save_world_copy(doc, tmp_path / "ticks")
+    copy = open_world(tmp_path / "ticks", radius=2).document.level
+    again = [t for t in copy.block_ticks.pending() if t.pos == (x, y + 3, z)]
+    assert [(t.block_id, t.trigger_tick - copy.game_time) for t in again] == [
+        (t.block_id, t.trigger_tick - doc.level.game_time) for t in pending
+    ]
+
+
+@pytest.mark.skipif(not SAVE.exists(), reason="the example save is not supplied")
+def test_a_saved_world_document_reconnects_to_its_save(tmp_path: Path) -> None:
+    from redsim.editor.document import Document
+    from redsim.mcworld.importer import attach_world, open_world, stream_chunks
+
+    opened = open_world(SAVE, radius=2)
+    doc = opened.document
+    wire = next(p for p, s in doc.level.blocks.items() if s.is_(blocks.REDSTONE_WIRE))
+    doc.break_block(wire)
+    held = set(opened.stream.loaded)
+    doc.save(tmp_path / "world.redsim.json")
+    reopened = Document.open(tmp_path / "world.redsim.json")
+    stream = attach_world(reopened)
+    assert stream is not None and set(stream.reload) == held
+    center = next(iter(held))
+    while stream.reload:  # its own chunks are read again, adding nothing
+        assert stream_chunks(reopened, center, 2, 10.0) == 0
+    assert wire not in reopened.level.blocks  # the removed wire stays removed
+    before = len(reopened.level.blocks)
+    assert stream_chunks(reopened, center, 4, 10.0) > 0  # further chunks stream in
+    assert len(reopened.level.blocks) > before
+
+
+@pytest.mark.skipif(not SAVE.exists(), reason="the example save is not supplied")
+def test_the_builds_of_the_example_save_are_found() -> None:
+    from redsim.mcworld.importer import read_save
+    from redsim.mcworld.index import scan_builds
+
+    builds = scan_builds(read_save(SAVE).regions)
+    assert builds and builds[0].redstone >= builds[-1].redstone
+    first = builds[0]
+    assert all(first.low[i] <= first.high[i] for i in range(3))
+    assert any(block_id.endswith("piston") for block_id, _ in first.top_parts())
+
+
+def test_build_blocks_and_redstone_parts() -> None:
+    from redsim.mcworld.index import is_build_block, is_redstone
+
+    assert not is_build_block("minecraft:stone") and not is_build_block("minecraft:oak_leaves")
+    assert not is_build_block("minecraft:short_grass") and not is_build_block("minecraft:air")
+    assert is_build_block("minecraft:glass") and is_build_block("minecraft:repeater")
+    assert is_redstone("minecraft:sticky_piston") and not is_redstone("minecraft:glass")

@@ -502,6 +502,13 @@ class Document(HistoryOps, SequenceOps):
         extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
         extra["monitors"] = [list(pos) for pos in self.monitors]
         extra["line_groups"] = self.lines.to_json()
+        if self.world is not None and isinstance(extra.get("minecraft_world"), dict):
+            # The chunks it holds, so reopening reconnects to the save (attach_world).
+            loaded = sorted(self.world.loaded | set(self.world.reload))
+            extra["minecraft_world"] = {
+                **extra["minecraft_world"],
+                "chunks": [list(chunk) for chunk in loaded],
+            }
         extra["row_line_groups"] = {
             row: lines.to_json() for row, lines in self.row_lines.items() if lines.groups
         }

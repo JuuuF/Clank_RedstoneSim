@@ -372,5 +372,9 @@ Type to search, ↑/↓ to choose, Enter or a double click opens; **Browse…** 
 file or save folder. Opening a Minecraft save shows the area around the player; further chunks load
 around the camera (Preferences → Minecraft worlds). File → Save as Minecraft world…
 writes the current state into a copy of the save next to the original (it asks for the
-copy's name; the original stays untouched); open the copy in the game.
+copy's name; the original stays untouched), pending scheduled ticks included; open the
+copy in the game. **File → Builds in this world…** lists the save's builds (most
+redstone first, with what they are made of); **Go there** takes the camera to one. A
+`.redsim.json` saved from a world connects to the save again when it is reopened, so
+chunks keep loading around the camera.
 

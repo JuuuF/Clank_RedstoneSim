@@ -871,3 +871,21 @@ def test_sign_text_typed_in_the_inspector(app: object) -> None:
     window.viewport.update()  # the text is drawn on the board (no crash)
     document.dirty = False
     window.close()
+
+
+def test_builds_dialog_and_going_to_a_build(app: object) -> None:
+    from collections import Counter
+
+    from redsim.mcworld.index import Build
+    from redsim.ui.main_window import MainWindow
+    from redsim.ui.world_builds import BuildsDialog, describe
+
+    build = Build((500, 60, 30), (520, 70, 60), 300, 100, Counter({"minecraft:piston": 30}), 4)
+    assert describe(build).startswith("510 66 46 · 21×11×31 · 100 redstone parts · Piston ×30")
+    dialog = BuildsDialog([build], "Example")
+    dialog._go()
+    assert dialog.chosen is build
+    window = MainWindow()
+    window._go_to_build(build)  # far away: the camera jumps there
+    assert tuple(window.viewport.camera.pivot) == (510.5, 65.5, 45.5)
+    window.close()

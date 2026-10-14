@@ -156,6 +156,14 @@ class WorldStream:
         self.movers: list[Pos] = []
         self.reach: list[Box] = []
         self._regions: dict[tuple[int, int], RegionFile | None] = {}
+        #: The save's builds (``mcworld.index.scan_builds``), once asked for.
+        self.builds: list[Any] | None = None
+        #: Chunks whose saved data has pending block ticks (rewritten on saving, so ticks
+        #: that ran in the simulation do not run again in the game).
+        self.ticked: set[tuple[int, int]] = set()
+        #: Chunks a reopened document already holds: read again (to know their sections)
+        #: without giving their blocks to the document a second time.
+        self.reload: list[tuple[int, int]] = []
 
     # ------------------------------------------------------------------ queries
     def wanted(self, center: tuple[int, int], radius: int) -> list[tuple[int, int]]:
@@ -190,6 +198,18 @@ class WorldStream:
             if (cx, cz) not in self.loaded and (cx, cz) not in self.missing:
                 result.merge(self._load_one(cx, cz))
         return result
+
+    def reload_some(self, budget: float) -> int:
+        """Read chunks of ``reload`` for up to ``budget`` seconds; their blocks are not
+        handed out (the document has them, edits included). Returns how many."""
+        import time
+
+        deadline = time.perf_counter() + budget
+        count = 0
+        while self.reload and time.perf_counter() < deadline:
+            self.load([self.reload.pop(0)])
+            count += 1
+        return count
 
     def _region(self, cx: int, cz: int) -> RegionFile | None:
         key = region_of(cx, cz)
@@ -232,6 +252,8 @@ class WorldStream:
         for entity in chunk.get("block_entities", []):
             out.block_entities[(int(entity["x"]), int(entity["y"]), int(entity["z"]))] = entity
         out.block_ticks.extend(chunk.get("block_ticks", []))
+        if chunk.get("block_ticks"):
+            self.ticked.add((cx, cz))
         if new_movers:
             self.movers.extend(new_movers)
             self.reach = _boxes(self.movers, PISTON_REACH)

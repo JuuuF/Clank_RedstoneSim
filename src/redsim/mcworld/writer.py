@@ -9,8 +9,13 @@ keys of an entity the game stored are kept), and the chunk is marked for relight
 (``isLightOn`` 0, light arrays and heightmaps dropped: the game recomputes them on load).
 Changed region files are rewritten with fresh sector allocation.
 
-Not written: blocks outside the loaded chunks, pending scheduled ticks of new blocks, and
-blocks of sections the save does not have.
+The document's pending scheduled ticks are written into the ``block_ticks`` of every
+rewritten chunk (delay from now, priority, in the order they will run), replacing what the
+save had there; a chunk with pending ticks is rewritten even without other changes. Fluid
+ticks stay as the save had them.
+
+Not written: blocks outside the loaded chunks and blocks of sections the save does not
+have.
 """
 
 from __future__ import annotations
@@ -83,6 +88,15 @@ def save_world_copy(document: Any, target: Path) -> WriteReport:
     for pos in level.block_entities:
         if (pos[0] >> 4, pos[2] >> 4) in stream.loaded:
             changes.setdefault((pos[0] >> 4, pos[2] >> 4), {})
+    # And chunks with pending ticks now or in the save (ticks that have run must go).
+    ticks: dict[tuple[int, int], list[Any]] = {}
+    for tick in level.block_ticks.pending():
+        chunk = (tick.pos[0] >> 4, tick.pos[2] >> 4)
+        if chunk in stream.loaded:
+            ticks.setdefault(chunk, []).append(tick)
+            changes.setdefault(chunk, {})
+    for chunk in stream.ticked:
+        changes.setdefault(chunk, {})
     by_region: dict[tuple[int, int], list[tuple[int, int]]] = {}
     for chunk in changes:
         by_region.setdefault(region_of(*chunk), []).append(chunk)
@@ -98,6 +112,10 @@ def save_world_copy(document: Any, target: Path) -> WriteReport:
             if root is None:
                 continue
             written = _apply(root, cx, cz, changes[(cx, cz)], level, report)
+            root["block_ticks"] = nbt.NbtList(
+                [_tick_entry(tick, level.game_time) for tick in ticks.get((cx, cz), [])],
+                nbt.COMPOUND,
+            )
             report.blocks += written
             new_payloads[(cx, cz)] = zlib.compress(nbt.dumps(root))
         _rewrite_region(region, new_payloads)
@@ -105,6 +123,19 @@ def save_world_copy(document: Any, target: Path) -> WriteReport:
         report.regions += 1
     _rename(target)
     return report
+
+
+def _tick_entry(tick: Any, now: int) -> dict[str, Any]:
+    """A pending tick as the game saves it (``SavedTick``): block id, position, delay from
+    now and priority."""
+    return {
+        "i": tick.block_id,
+        "x": nbt.Int(tick.pos[0]),
+        "y": nbt.Int(tick.pos[1]),
+        "z": nbt.Int(tick.pos[2]),
+        "t": nbt.Int(max(0, tick.trigger_tick - now)),
+        "p": nbt.Int(int(tick.priority.value)),
+    }
 
 
 def _region_dir(source: Path, target: Path, regions: Path) -> Path:

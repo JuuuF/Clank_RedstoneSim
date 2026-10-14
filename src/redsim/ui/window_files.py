@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
+import numpy as np
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
@@ -17,12 +18,14 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.editor.document import Document
-from redsim.mcworld.importer import open_world, stream_chunks
+from redsim.mcworld.importer import attach_world, open_world, stream_chunks
+from redsim.mcworld.index import Build, scan_builds
 from redsim.mcworld.writer import save_world_copy
 from redsim.ui import pixel_icons, theme
 from redsim.ui.camera import Camera
 from redsim.ui.names import block_name
 from redsim.ui.window_common import FILE_FILTER, STREAM_BUDGET_S, _plain_cube
+from redsim.ui.world_builds import BuildsDialog
 from redsim.ui.world_picker import (
     MINECRAFT,
     SIMULATION,
@@ -38,6 +41,8 @@ if TYPE_CHECKING:
 #: How long after opening a world without a thumbnail its view is captured for one (the
 #: meshes and textures are ready by then).
 THUMBNAIL_DELAY_MS = 1500
+#: Blocks: going to a build farther than this jumps instead of gliding.
+FAR_JUMP = 96.0
 
 
 class FileActions:
@@ -146,6 +151,44 @@ class FileActions:
         if stream_chunks(document, center, radius, STREAM_BUDGET_S):
             view.viewport.update()
 
+    def _show_builds(self) -> None:
+        """File → Builds in this world…: the save's builds (scanned once per opened
+        world); choosing one takes the camera there."""
+        view = cast("MainWindow", self)
+        stream = view.document.world
+        if stream is None:
+            view._message(
+                "Builds are listed for a world opened with File → Open Minecraft world….",
+                error=True,
+            )
+            return
+        if stream.builds is None:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                stream.builds = scan_builds(stream.info.regions)
+            except (OSError, ValueError, KeyError) as exc:
+                QMessageBox.critical(view, "Cannot read the world", str(exc))
+                return
+            finally:
+                QApplication.restoreOverrideCursor()
+        dialog = BuildsDialog(stream.builds, stream.info.name, view)
+        if dialog.exec() and dialog.chosen is not None:
+            view._go_to_build(dialog.chosen)
+
+    def _go_to_build(self, build: Build) -> None:
+        """The camera above a build, far enough to see it; the chunks around stream in.
+        Far away the camera jumps (gliding there would load every chunk on the way)."""
+        view = cast("MainWindow", self)
+        viewport = view.viewport
+        x, y, z = build.center
+        target = np.array([x, y, z])
+        distance = min(120.0, max(10.0, 1.3 * max(build.size)))
+        if float(np.linalg.norm(target - np.asarray(viewport.camera.pivot))) > FAR_JUMP:
+            viewport.camera.pivot = target
+            viewport.camera.distance = distance
+        viewport.glide_to(target, distance)
+        view._message(f"Going to the build at {round(x)} {round(y)} {round(z)}.")
+
     def _save_minecraft_world(self) -> None:
         """Write the document into a copy of the Minecraft save it was opened from."""
         view = cast("MainWindow", self)
@@ -188,11 +231,18 @@ class FileActions:
     def open_path(self, path: Path) -> None:
         view = cast("MainWindow", self)
         try:
-            view._set_document(Document.open(path))
+            document = Document.open(path)
         except (OSError, ValueError, KeyError) as exc:
             QMessageBox.critical(view, "Cannot open file", str(exc))
             return
+        stream = attach_world(document)
+        view._set_document(document)
         remember_world(path, SIMULATION)
+        if stream is not None:
+            view._message(
+                f"Connected to the Minecraft world {stream.info.name} again: its chunks "
+                "load around the camera as before."
+            )
         if not thumbnail_path(path).exists():  # worlds saved before thumbnails existed
             QTimer.singleShot(THUMBNAIL_DELAY_MS, lambda: view._thumbnail_if_missing(path))
 

@@ -319,6 +319,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         self._action(file_menu, "&New", self._new, "file.new")
         self._action(file_menu, "&Open…", lambda: self._open(SIMULATION), "file.open")
         self._action(file_menu, "Open Minecraft world…", self._open_minecraft_world)
+        self._action(file_menu, "Builds in this world…", self._show_builds)
         self._action(file_menu, "Save as Minecraft world…", self._save_minecraft_world)
         self._action(file_menu, "&Save", self._save, "file.save")
         self._action(file_menu, "Save &as…", self._save_as, "file.save_as")

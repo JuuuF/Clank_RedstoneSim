@@ -18,7 +18,7 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
    the trace; a signal-strength heat view in the viewport.
 4. [x] **O4 sign text:** text drawn on the sign's face; entering text for signs placed in
    the editor.
-5. [ ] **O1 worlds:** unloading far chunks; re-attaching the stream when a document saved
+5. [x] **O1 worlds:** unloading far chunks; re-attaching the stream when a document saved
    from a world is reopened; an on-disk chunk cache; an index of the save's builds with
    "go to"; pending ticks in the written copy.
 6. [ ] **O9 schematics:** import/export of Sponge `.schem` and vanilla structure `.nbt`.
@@ -60,3 +60,9 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
   drawn on the boards in perspective (`ui/sign_text.py`), not through blocks, only on
   sides facing the camera. Older documents' `extra["signs"]` text moves into the signs;
   hanging signs stay foreign (their text from worlds is still drawn).
+- O1 done (main parts): builds index with "go there" (`mcworld/index.py`,
+  `ui/world_builds.py`), reconnecting saved world documents (`attach_world`, chunks
+  read again without adding blocks), pending ticks in the written copy, and a real-game
+  check of a written copy (`tools/gameserver/check_world_copy.py`: blocks, sign text,
+  a pending tick; all match). Left as later (documented in world-import): writing into
+  the original save, unloading far chunks, an on-disk chunk cache.
