@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -29,10 +29,15 @@ from redsim.ui.world_picker import (
     WorldPicker,
     remember_world,
     save_thumbnail,
+    thumbnail_path,
 )
 
 if TYPE_CHECKING:
     from redsim.ui.main_window import MainWindow
+
+#: How long after opening a world without a thumbnail its view is captured for one (the
+#: meshes and textures are ready by then).
+THUMBNAIL_DELAY_MS = 1500
 
 
 class FileActions:
@@ -188,6 +193,14 @@ class FileActions:
             QMessageBox.critical(view, "Cannot open file", str(exc))
             return
         remember_world(path, SIMULATION)
+        if not thumbnail_path(path).exists():  # worlds saved before thumbnails existed
+            QTimer.singleShot(THUMBNAIL_DELAY_MS, lambda: view._thumbnail_if_missing(path))
+
+    def _thumbnail_if_missing(self, path: Path) -> None:
+        """A thumbnail of the opened world's first frames, for the Select World screen."""
+        view = cast("MainWindow", self)
+        if view.document.path == path and not thumbnail_path(path).exists():
+            save_thumbnail(path, view.viewport.grabFramebuffer())
 
     def _saved(self, path: Path | None) -> None:
         """After saving: the world goes to the recent list with a thumbnail of the view."""

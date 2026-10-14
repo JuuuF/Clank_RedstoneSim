@@ -590,6 +590,52 @@ def test_timeline_lines_expand_and_pulse_bars_move(app: object) -> None:
     window.close()
 
 
+def test_lines_of_other_categories_group_and_reorder(app: object) -> None:
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.run_ticks(3)
+    for z in (0, 1):  # set at tick 3: two lines under Changed
+        document.setblock((0, 1, z), blocks.parse_state("stone"))
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.resize(900, canvas.height())
+    canvas.expanded = {"edit"}
+    window._changed()
+    kinds = [(line.kind, line.pos) for line in canvas.lines if line.row == "edit"]
+    assert kinds == [("category", None), ("group", None), ("block", (0, 1, 0)),
+                     ("block", (0, 1, 1))]  # fmt: skip
+    first = next(i for i, line in enumerate(canvas.lines) if line.pos == (0, 1, 0))
+    second = first + 1
+
+    def mouse(kind: object, y: float) -> None:
+        button = Qt.MouseButton.LeftButton
+        event = QMouseEvent(kind, QPointF(40, y), QPointF(40, y), button, button,  # type: ignore[arg-type]
+                            Qt.KeyboardModifier.NoModifier)  # fmt: skip
+        {QMouseEvent.Type.MouseButtonPress: canvas.mousePressEvent,
+         QMouseEvent.Type.MouseMove: canvas.mouseMoveEvent,
+         QMouseEvent.Type.MouseButtonRelease: canvas.mouseReleaseEvent}[kind](event)  # fmt: skip
+
+    # Drag the second line's label above the first.
+    mouse(QMouseEvent.Type.MouseButtonPress, canvas._tops[second] + 7)
+    mouse(QMouseEvent.Type.MouseMove, canvas._tops[first] + 2)
+    mouse(QMouseEvent.Type.MouseButtonRelease, canvas._tops[first] + 2)
+    assert document.lines_of("edit").groups[0].members == [(0, 1, 1), (0, 1, 0)]
+    # A new group for one of them, from the line's menu.
+    window._group_request("toggle", "edit", 0)
+    assert document.lines_of("edit").groups[0].collapsed
+    document.lines_of("edit").add_group("Clock", [(0, 1, 0)])
+    window._changed()
+    titles = [line.title for line in canvas.lines if line.row == "edit" and line.kind == "group"]
+    assert titles == ["Blocks (1)", "Clock (1)"]
+    document.dirty = False
+    window.close()
+
+
 def test_selected_pulses_move_together_switch_lines_and_delete(app: object) -> None:
     from PySide6.QtCore import QPointF, Qt
     from PySide6.QtGui import QKeyEvent, QMouseEvent

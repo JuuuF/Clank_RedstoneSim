@@ -1,7 +1,7 @@
-"""The timeline's per-block lines: each category opens into one line per block position;
-Powered lines sit in the owner's colored groups and order, with pulse bars to select,
-move (also onto another line), stretch, add, delete and mute; line labels, dragging and
-their menus."""
+"""The timeline's per-block lines: each category opens into one line per block position,
+in the owner's colored groups and order (drag a line's label to reorder it or move it to
+another group). Powered lines have pulse bars to select, move (also onto another line),
+stretch, add, delete and mute; the other categories show their edits as diamonds."""
 
 from __future__ import annotations
 
@@ -34,37 +34,26 @@ class LineArea:
     """Part of ``TimelineCanvas`` (a mixin; its methods run on it)."""
 
     def _build_lines(self) -> None:
-        """The edit area's lines: each category, and when expanded its per-block lines
-        (Powered: in the user's groups and order)."""
+        """The edit area's lines: each category, and when expanded its groups and their
+        per-block lines (in the user's groups and order)."""
         view = cast("TimelineCanvas", self)
         lines: list[_Line] = []
         for row in EDIT_ROWS:
-            if row == "power":
-                children = [g.members for g in view.groups]
-                has = any(children)
-            else:
-                order: dict[Pos, None] = {}
-                for event in sorted(view.events, key=lambda e: (e.tick, e.index)):
-                    if event.row == row:
-                        order.setdefault(event.pos)
-                has = bool(order)
+            groups = view.groups.get(row, [])
+            has = any(g.members for g in groups)
             open_ = has and row in view.expanded
             lines.append(_Line("category", row, ROW_TITLES[row], 0, ROW_COLORS[row], None,
                                None, has, open_))  # fmt: skip
             if not open_:
                 continue
-            if row == "power":
-                for index, group in enumerate(view.groups):
-                    color = QColor(group.color)
-                    title = f"{group.name} ({len(group.members)})"
-                    lines.append(_Line("group", row, title, 1, color, index, None, True,
-                                       not group.collapsed))  # fmt: skip
-                    if not group.collapsed:
-                        for pos in group.members:
-                            lines.append(view._block_line(row, pos, color, 2, index))
-            else:
-                for pos in order:
-                    lines.append(view._block_line(row, pos, ROW_COLORS[row], 1, None))
+            for index, group in enumerate(groups):
+                color = QColor(group.color)
+                title = f"{group.name} ({len(group.members)})"
+                lines.append(_Line("group", row, title, 1, color, index, None, True,
+                                   not group.collapsed))  # fmt: skip
+                if not group.collapsed:
+                    for pos in group.members:
+                        lines.append(view._block_line(row, pos, color, 2, index))
         view.lines = lines
         tops, y = [], view.RULER_HEIGHT
         for _ in lines:
@@ -125,19 +114,27 @@ class LineArea:
         marks) or the block's edits as small diamonds."""
         view = cast("TimelineCanvas", self)
         for line, top in zip(view.lines, view._tops, strict=True):
-            if line.kind == "group":  # a faint summary of the group's pulses
-                members = set(view.groups[line.group or 0].members) if view.groups else set()
+            y = top + view.EDIT_ROW_HEIGHT / 2
+            if line.kind == "group":  # a faint summary of the group's pulses or edits
+                groups = view.groups.get(line.row, [])
+                members = set(groups[line.group or 0].members) if groups else set()
                 color = QColor(line.color)
                 color.setAlpha(70)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(color)
-                for pulse in view.pulses:
-                    if pulse.pos in members:
-                        painter.drawRect(view._pulse_box(pulse.tick, pulse.ticks, top))
+                if line.row == "power":
+                    for pulse in view.pulses:
+                        if pulse.pos in members:
+                            painter.drawRect(view._pulse_box(pulse.tick, pulse.ticks, top))
+                    continue
+                for event in view.events:
+                    if event.row == line.row and event.pos in members:
+                        x = view._x(event.tick)
+                        if x >= view.LABEL_WIDTH:
+                            painter.drawPolygon(_diamond(x, y, 3.0))
                 continue
             if line.kind != "block":
                 continue
-            y = top + view.EDIT_ROW_HEIGHT / 2
             if line.row == "power":
                 for pulse in view.pulses:
                     tick, ticks, pos = view._previewed(pulse)
@@ -163,17 +160,7 @@ class LineArea:
                 if event.row == line.row and event.pos == line.pos:
                     x = view._x(event.tick)
                     if x >= view.LABEL_WIDTH:
-                        size = 3.5
-                        painter.drawPolygon(
-                            QPolygonF(
-                                [
-                                    QPointF(x, y - size),
-                                    QPointF(x + size, y),
-                                    QPointF(x, y + size),
-                                    QPointF(x - size, y),
-                                ]
-                            )
-                        )
+                        painter.drawPolygon(_diamond(x, y, 3.5))
 
     def _pulse_hit(self, line: _Line, x: float, top: float) -> tuple[Pulse, str] | None:
         """The pulse of a Powered line under ``x``: ("resize" near its end, else "move")."""
@@ -195,7 +182,8 @@ class LineArea:
         left_button = event.button() == Qt.MouseButton.LeftButton
         right_button = event.button() == Qt.MouseButton.RightButton
         where = event.globalPosition().toPoint()
-        power_block = line.kind == "block" and line.row == "power" and line.pos is not None
+        block = line.kind == "block" and line.pos is not None
+        power_block = block and line.row == "power"
         if x < view.LABEL_WIDTH:
             if left_button and line.kind == "category" and line.expandable:
                 view.expanded ^= {line.row}
@@ -204,21 +192,21 @@ class LineArea:
                 view.update()
                 return True
             if left_button and line.kind == "group" and line.group is not None:
-                view.group_request.emit("toggle", line.group)
+                view.group_request.emit("toggle", line.row, line.group)
                 return True
-            if left_button and power_block:
+            if left_button and block:
                 assert line.pos is not None
-                view._line_drag = (line.pos, y)
+                view._line_drag = (line.row, line.pos, y)
                 return True
             if right_button and line.kind == "category" and line.row == "power":
                 self._power_menu(where)
                 return True
             if right_button and line.kind == "group" and line.group is not None:
-                view._group_menu(where, line.group)
+                view._group_menu(where, line.row, line.group)
                 return True
-            if right_button and power_block:
+            if right_button and block:
                 assert line.pos is not None
-                view._line_menu(where, line.pos)
+                view._line_menu(where, line.row, line.pos)
                 return True
             return False
         if not power_block:
@@ -281,15 +269,16 @@ class LineArea:
                 return
         QWidget.mouseDoubleClickEvent(view, event)
 
-    def _drop_target(self, y: float) -> tuple[int, int, float] | None:
-        """Where a dragged Powered line would go: (group, row, the marker's y)."""
+    def _drop_target(self, category: str, y: float) -> tuple[int, int, float] | None:
+        """Where a dragged line of ``category`` would go: (group, row, the marker's y)."""
         view = cast("TimelineCanvas", self)
-        if not view.groups:
+        groups = view.groups.get(category, [])
+        if not groups:
             return None
         rows = [
             (i, line)
             for i, line in enumerate(view.lines)
-            if line.row == "power" and line.kind != "category"
+            if line.row == category and line.kind != "category"
         ]
         if not rows:
             return None
@@ -300,12 +289,12 @@ class LineArea:
                 if line.kind == "group" and line.group is not None:
                     return line.group, 0, top + view.EDIT_ROW_HEIGHT
                 if line.group is not None and line.pos is not None:
-                    members = view.groups[line.group].members
+                    members = groups[line.group].members
                     row = members.index(line.pos) + (1 if below else 0)
                     return line.group, row, top + (view.EDIT_ROW_HEIGHT if below else 0)
-        last = len(view.groups) - 1
+        last = len(groups) - 1
         bottom = view._tops[rows[-1][0]] + view.EDIT_ROW_HEIGHT
-        return last, len(view.groups[last].members), bottom
+        return last, len(groups[last].members), bottom
 
     def _add_mute_actions(self, menu: QMenu, pulses: list[Pulse], what: str) -> None:
         """ "Mute …" / "Unmute …" entries for these pulses (bypassed, not deleted)."""
@@ -331,10 +320,11 @@ class LineArea:
         if not menu.isEmpty():
             menu.exec(where)
 
-    def _group_menu(self, where: QPoint, group: int) -> None:
+    def _group_menu(self, where: QPoint, category: str, group: int) -> None:
         view = cast("TimelineCanvas", self)
         menu = QMenu(view)
-        name = view.groups[group].name
+        groups = view.groups.get(category, [])
+        name = groups[group].name
         for text, action in (
             (f"Rename “{name}”…", "rename"),
             ("Color…", "color"),
@@ -344,25 +334,32 @@ class LineArea:
             ("Delete group (its lines join the group above)", "delete"),
         ):
             item = menu.addAction(text)
-            item.triggered.connect(lambda _=False, a=action: view.group_request.emit(a, group))
-        members = set(view.groups[group].members)
-        self._add_mute_actions(
-            menu, [p for p in view.pulses if p.pos in members], f"the group “{name}”"
-        )
+            item.triggered.connect(
+                lambda _=False, a=action: view.group_request.emit(a, category, group)
+            )
+        if category == "power":
+            members = set(groups[group].members)
+            self._add_mute_actions(
+                menu, [p for p in view.pulses if p.pos in members], f"the group “{name}”"
+            )
         menu.exec(where)
 
-    def _line_menu(self, where: QPoint, pos: Pos) -> None:
+    def _line_menu(self, where: QPoint, category: str, pos: Pos) -> None:
         view = cast("TimelineCanvas", self)
         menu = QMenu(view)
         move = menu.addMenu("Move to group")
-        for index, group in enumerate(view.groups):
+        groups = view.groups.get(category, [])
+        for index, group in enumerate(groups):
             move.addAction(group.name).triggered.connect(
-                lambda _=False, g=index: view.line_moved.emit(pos, g, len(view.groups[g].members))
+                lambda _=False, g=index: view.line_moved.emit(
+                    category, pos, g, len(groups[g].members)
+                )
             )
         menu.addAction("New group with this line…").triggered.connect(
-            lambda: view.line_group_new.emit(pos)
+            lambda: view.line_group_new.emit(category, pos)
         )
-        self._add_mute_actions(menu, [p for p in view.pulses if p.pos == pos], "this line")
+        if category == "power":
+            self._add_mute_actions(menu, [p for p in view.pulses if p.pos == pos], "this line")
         menu.exec(where)
 
     def _hover_position(self, y: float) -> None:
@@ -376,6 +373,12 @@ class LineArea:
         if pos != view._hovered_pos:
             view._hovered_pos = pos
             view.position_hovered.emit(pos)
+
+
+def _diamond(x: float, y: float, size: float) -> QPolygonF:
+    return QPolygonF(
+        [QPointF(x, y - size), QPointF(x + size, y), QPointF(x, y + size), QPointF(x - size, y)]
+    )
 
 
 @dataclass(frozen=True)

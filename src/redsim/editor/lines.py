@@ -1,6 +1,7 @@
-"""Timeline lines of the sequence: one line per powered position, in named, colored
-groups (like Ableton Live's group tracks), in the order the user chose. Annotations only:
-they never change the simulation, they are saved with the document (``extra``).
+"""Timeline lines: one line per block position of a category (powered positions, placed
+blocks, …), in named, colored groups (like Ableton Live's group tracks), in the order the
+user chose. Annotations only: they never change the simulation, they are saved with the
+document (``extra``).
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ from redsim.core.pos import Pos
 #: Colors offered for new groups, in turn (Ableton-like, readable on the dark theme).
 GROUP_COLORS = ("#e05050", "#4f8fe0", "#5fbf4a", "#e0a030", "#b060d0", "#40c0c0", "#d07090")
 DEFAULT_GROUP = "Pulses"
+#: The first group of the other categories' lines (Placed, Removed, …).
+BLOCKS_GROUP = "Blocks"
 
 
 @dataclass
@@ -55,9 +58,12 @@ class Lines:
         return self.groups[index].color if index is not None else GROUP_COLORS[0]
 
     # ------------------------------------------------------------------ changes
-    def sync(self, positions: Iterable[Pos]) -> bool:
-        """Every powered position has a line (new ones join the first group); lines of
-        positions without pulses go. Returns whether anything changed."""
+    def sync(
+        self, positions: Iterable[Pos], default: str = DEFAULT_GROUP, color: str = GROUP_COLORS[0]
+    ) -> bool:
+        """Every position has a line (new ones join the first group, made as ``default``
+        when there is none); lines of other positions go. Returns whether anything
+        changed."""
         wanted = list(dict.fromkeys(positions))
         changed = False
         for group in self.groups:
@@ -67,7 +73,7 @@ class Lines:
         missing = [p for p in wanted if self.group_of(p) is None]
         if missing:
             if not self.groups:
-                self.groups.append(LineGroup(DEFAULT_GROUP, GROUP_COLORS[0]))
+                self.groups.append(LineGroup(default, color))
             self.groups[0].members.extend(missing)
             changed = True
         return changed

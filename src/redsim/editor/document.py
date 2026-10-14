@@ -65,6 +65,9 @@ class Document(HistoryOps, SequenceOps):
     samples: dict[Pos, dict[int, int]] = field(default_factory=dict)
     #: Timeline lines of the sequence: groups of powered positions (saved).
     lines: Lines = field(default_factory=Lines)
+    #: The other categories' timeline lines (Placed, Removed, …): groups of positions
+    #: per category (saved).
+    row_lines: dict[str, Lines] = field(default_factory=dict)
     #: The Minecraft save this document streams chunks from (``mcworld.stream.WorldStream``;
     #: not saved).
     world: Any = None
@@ -431,6 +434,12 @@ class Document(HistoryOps, SequenceOps):
 
     # ------------------------------------------------------------------ simulation
 
+    def lines_of(self, row: str) -> Lines:
+        """The timeline lines of category ``row`` (``EDIT_ROWS``): Powered or another."""
+        if row == "power":
+            return self.lines
+        return self.row_lines.setdefault(row, Lines())
+
     # ------------------------------------------------------------------ files
     def save(self, path: Path | None = None) -> None:
         target = path or self.path
@@ -442,6 +451,9 @@ class Document(HistoryOps, SequenceOps):
         extra["prefabs"] = {name: prefab.to_json() for name, prefab in self.prefabs.items()}
         extra["monitors"] = [list(pos) for pos in self.monitors]
         extra["line_groups"] = self.lines.to_json()
+        extra["row_line_groups"] = {
+            row: lines.to_json() for row, lines in self.row_lines.items() if lines.groups
+        }
         history = self.history
         if history.inputs:  # the recorded edits (sequences too) and the build they start from
             base = Engine()
@@ -471,6 +483,10 @@ class Document(HistoryOps, SequenceOps):
         prefabs = {name: Prefab.from_json(data) for name, data in extra.pop("prefabs", {}).items()}
         monitors = [(int(x), int(y), int(z)) for x, y, z in extra.pop("monitors", [])]
         lines = Lines.from_json(extra.pop("line_groups", []))
+        row_lines = {
+            str(row): Lines.from_json(data)
+            for row, data in extra.pop("row_line_groups", {}).items()
+        }
         markers = {int(tick): str(name) for tick, name in extra.pop("markers", {}).items()}
         history = extra.pop("history", None)
         document = Document(
@@ -483,6 +499,7 @@ class Document(HistoryOps, SequenceOps):
             monitors=monitors,
             markers=markers,
             lines=lines,
+            row_lines=row_lines,
         )
         if isinstance(history, dict) and history.get("plan"):
             # Re-run the recorded edits from the saved build (the file's own state is

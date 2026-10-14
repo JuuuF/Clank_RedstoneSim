@@ -9,7 +9,7 @@ To click through the simulator: [[tour]].
 
 ## Navigation
 
-- **Project:** [[project-state]] · [[feedback-status]] · [[refactor-plan]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
+- **Project:** [[project-state]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]
@@ -30,7 +30,7 @@ To click through the simulator: [[tour]].
 - Sequences (ANIMATE mode, pulses locked to positions, 0-ticks, muting) on a timeline
   with Ableton-like line groups (ADR-026).
 - An optional compiled build (mypyc) runs the simulation about 2× faster
-  ([[implementation-notes]]); the overnight refactor pass is logged in [[refactor-plan]].
+  ([[implementation-notes]]); the overnight refactor pass is logged in [[refactor-plan]]; work through the open list is logged in [[todo-pass]].
 - Work happens on feature branches; verified work is fast-forwarded to `main` and pushed.
   `main` always holds the latest verified state.
 

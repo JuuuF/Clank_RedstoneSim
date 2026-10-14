@@ -80,8 +80,9 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   tick 0, keeping all other edits. Powered positions glow red; the timeline's "Powered"
   row shows each pulse with a bar for its duration.
 - **Timeline lines:** the arrow at a category (Placed, Removed, Changed, Used, Powered)
-  opens one line per block position. Powered lines live in groups (like Ableton Live's
-  group tracks): click a group's arrow to fold it, right click it to rename, recolor,
+  opens one line per block position. Lines live in groups (like Ableton Live's group
+  tracks; each category has its own: "Pulses" for Powered, "Blocks" for the others):
+  click a group's arrow to fold it, right click it to rename, recolor,
   reorder, add or delete groups; drag a line's label up or down to reorder it or move it
   into another group (right click: "Move to group", "New group with this line…"). On a
   line, click a pulse bar to select it (Shift/Ctrl+click adds more), drag the selection

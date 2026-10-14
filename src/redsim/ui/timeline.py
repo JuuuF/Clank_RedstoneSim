@@ -45,7 +45,7 @@ from PySide6.QtWidgets import (
 
 from redsim.core.pos import Pos
 from redsim.editor.document import EDIT_ROWS, Document, EditBatch, Pulse, edit_row
-from redsim.editor.lines import LineGroup
+from redsim.editor.lines import BLOCKS_GROUP, LineGroup
 from redsim.ui import pixel_icons, theme
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
@@ -88,9 +88,10 @@ class TimelineCanvas(LineArea, QWidget):
     pulses_muted = Signal(object, bool)  # [index], muted (bypassed, kept in the timeline)
     position_hovered = Signal(object)  # Pos | None: a line's block, to show in the view
     pulse_added = Signal(object, int)  # Pos, tick
-    line_moved = Signal(object, int, int)  # Pos, group, row
-    group_request = Signal(str, int)  # action, group ("toggle", "rename", "color", …)
-    line_group_new = Signal(object)  # Pos: a new group holding this line
+    line_moved = Signal(str, object, int, int)  # category, Pos, group, row
+    #: action ("toggle", "rename", "color", …), category, group
+    group_request = Signal(str, str, int)
+    line_group_new = Signal(str, object)  # category, Pos: a new group holding this line
 
     LABEL_WIDTH = 180
     INDENT = 12
@@ -110,12 +111,13 @@ class TimelineCanvas(LineArea, QWidget):
         self.pulse_spans: list[tuple[int, int]] = []  # sequence pulses: (start, ticks)
         self.pulses: list[Pulse] = []
         self.events: list[EditEvent] = []
-        self.groups: list[LineGroup] = []
+        self.groups: dict[str, list[LineGroup]] = {}  # each category's line groups
         self.names: dict[Pos, str] = {}  # block names for the per-block lines
         self.expanded: set[str] = set()  # categories showing their per-block lines
         self.lines: list[_Line] = []
         self._tops: list[int] = []
-        self._line_drag: tuple[Pos, float] | None = None  # a Powered line being reordered
+        #: A block line being reordered: (its category, its position, the press y).
+        self._line_drag: tuple[str, Pos, float] | None = None
         self._drop_y: float | None = None
         #: Selected pulses (their edit indices); Del deletes them, a drag moves them all.
         self.selected_pulses: set[int] = set()
@@ -160,7 +162,7 @@ class TimelineCanvas(LineArea, QWidget):
         pulse_spans: list[tuple[int, int]] | None = None,
         pulses: list[Pulse] | None = None,
         events: list[EditEvent] | None = None,
-        groups: list[LineGroup] | None = None,
+        groups: dict[str, list[LineGroup]] | None = None,
         names: dict[Pos, str] | None = None,
     ) -> None:
         if self._glide_rate is not None:  # carry on from where the playhead is shown
@@ -174,7 +176,7 @@ class TimelineCanvas(LineArea, QWidget):
         self.pulses = pulses or []
         self.selected_pulses &= {pulse.index for pulse in self.pulses}
         self.events = events or []
-        self.groups = groups or []
+        self.groups = groups or {}
         self.names = names or {}
         self._build_lines()
         present = {(b.tick, b.row) for b in batches}
@@ -567,7 +569,7 @@ class TimelineCanvas(LineArea, QWidget):
             self.update()
             return
         if self._line_drag is not None:
-            target = self._drop_target(y)
+            target = self._drop_target(self._line_drag[0], y)
             self._drop_y = target[2] if target is not None else None
             self.update()
             return
@@ -674,11 +676,11 @@ class TimelineCanvas(LineArea, QWidget):
             self.update()
             return
         if self._line_drag is not None:
-            pos = self._line_drag[0]
-            target = self._drop_target(event.position().y())
+            row, pos = self._line_drag[0], self._line_drag[1]
+            target = self._drop_target(row, event.position().y())
             self._line_drag, self._drop_y = None, None
             if target is not None:
-                self.line_moved.emit(pos, target[0], target[1])
+                self.line_moved.emit(row, pos, target[0], target[1])
             self.update()
             return
         if self._band is not None:
@@ -939,7 +941,6 @@ class TimelineBar(QWidget):
         ]
         self.canvas.set_markers(document.visible_markers())
         pulses = document.pulses()
-        document.lines.sync(pulse.pos for pulse in pulses)
         spans = [(pulse.tick, pulse.ticks) for pulse in pulses]
         inputs = document.history.inputs
         events = [
@@ -947,6 +948,12 @@ class TimelineBar(QWidget):
             for index, t in document.edit_ticks.items()
             if index in inputs
         ]
+        document.lines.sync(pulse.pos for pulse in pulses)
+        in_order = sorted(events, key=lambda e: (e.tick, e.index))
+        for row in EDIT_ROWS:  # the other categories: positions in order of their edits
+            if row != "power":
+                positions_of_row = (e.pos for e in in_order if e.row == row)
+                document.lines_of(row).sync(positions_of_row, BLOCKS_GROUP, ROW_COLORS[row].name())
         positions = {pulse.pos for pulse in pulses} | {event.pos for event in events}
         names = {  # what is at each line's position at the current tick
             pos: "empty" if state.is_air else block_name(state.block.id)
@@ -962,7 +969,7 @@ class TimelineBar(QWidget):
             spans,
             pulses,
             events,
-            document.lines.groups,
+            {row: document.lines_of(row).groups for row in EDIT_ROWS},
             names,
         )
 

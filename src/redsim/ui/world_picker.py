@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QSize, Qt
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QImage, QPaintEvent, QPalette, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -28,13 +28,12 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
-    QPushButton,
-    QTabBar,
     QVBoxLayout,
     QWidget,
 )
 
-from redsim.ui import theme
+from redsim.ui import game_gui, theme
+from redsim.ui.game_gui import GameButton, GameTabs
 from redsim.ui.icons import block_pixmap
 from redsim.ui.preferences import config_dir
 
@@ -227,12 +226,14 @@ class WorldPicker(QDialog):
         title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(title)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Type to search, ↑/↓ to choose, Enter to open")
+        # The leading space keeps the text cursor off the placeholder's first letter
+        # (together they read as a stray character).
+        self.search.setPlaceholderText(" Type to search, ↑/↓ to choose, Enter to open")
         self.search.textChanged.connect(self._filter)
         self.search.returnPressed.connect(self._open)
         self.search.installEventFilter(self)  # ↑/↓ in the search box move in the list
         layout.addWidget(self.search)
-        self.tabs = QTabBar()
+        self.tabs = GameTabs()
         self.tabs.addTab("Minecraft saves")
         self.tabs.addTab("Simulation worlds")
         self.tabs.setCurrentIndex(0 if tab == MINECRAFT else 1)
@@ -245,6 +246,19 @@ class WorldPicker(QDialog):
             f"QListWidget::item:selected {{ background: {theme.WIDGET_HOVER};"
             " border: 2px solid #ffffff; }"
         )
+        list_dirt = game_gui.dirt_brush(game_gui.LIST_SHADE)
+        if list_dirt is not None:  # the game's look: dirt, darker under the list
+            self.search.setStyleSheet(game_gui.TEXT_FIELD_STYLE)
+            self.list.setStyleSheet(
+                "QListWidget { background: transparent; border: none; }"
+                "QListWidget::item { background: transparent; }"
+                "QListWidget::item:selected { background: rgba(0, 0, 0, 160);"
+                " border: 2px solid #ffffff; }"
+            )
+            palette = self.list.viewport().palette()
+            palette.setBrush(QPalette.ColorRole.Base, list_dirt)
+            self.list.viewport().setPalette(palette)
+            self.list.viewport().setAutoFillBackground(True)
         self.list.itemDoubleClicked.connect(lambda _: self._open())
         self.list.currentItemChanged.connect(lambda *_: self._update_buttons())
         layout.addWidget(self.list, 1)
@@ -253,13 +267,13 @@ class WorldPicker(QDialog):
         self.empty.setWordWrap(True)
         layout.addWidget(self.empty)
         buttons = QHBoxLayout()
-        self.open_button = QPushButton("Play Selected World")
+        self.open_button = GameButton("Play Selected World")
         self.open_button.setDefault(True)
         self.open_button.clicked.connect(self._open)
-        browse = QPushButton("Browse…")
+        browse = GameButton("Browse…")
         browse.setToolTip("Open another .redsim.json file or Minecraft save folder")
         browse.clicked.connect(self._browse)
-        cancel = QPushButton("Cancel")
+        cancel = GameButton("Cancel")
         cancel.clicked.connect(self.reject)
         buttons.addWidget(self.open_button, 2)
         buttons.addWidget(browse, 1)
@@ -268,6 +282,9 @@ class WorldPicker(QDialog):
         self._entries: dict[str, list[WorldEntry]] = {}
         self._fill()
         self.search.setFocus()
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        game_gui.paint_dirt(self)
 
     def eventFilter(self, watched: object, event: QEvent) -> bool:
         if watched is self.search and event.type() == QEvent.Type.KeyPress:

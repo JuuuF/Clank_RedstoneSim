@@ -20,7 +20,7 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O10 | **Final look**: "a technical version of Minecraft", panels | round 1 (Looks) | Largely answered by the game's textures, the theme and the polish pass; the owner has not yet reviewed the result as a whole. |
 | O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
 
-| O12 | **Small loose ends** | rounds 9–12 | Select World screen: a stray "r" in the focused search box, the game's dirt-and-stone look, thumbnails for worlds saved before the screen existed; groups only for Powered lines; 0-tick behavior not checked against the real game. (The timeline height is remembered since 2026-10-14.) |
+| O12 | **Small loose ends** | rounds 9–12 | 0-tick behavior not checked against the real game. Done 2026-10-14: the Select World screen's stray "r" (the text cursor on the placeholder's "T"), its game look (dirt, stone buttons and tabs from the jar), thumbnails made when an older world is opened, colored groups for every timeline category; the timeline height is remembered. |
 
 ## Done after the list was compiled
 

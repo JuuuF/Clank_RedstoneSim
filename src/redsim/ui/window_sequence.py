@@ -45,10 +45,10 @@ class SequenceActions:
             return
         view._edit(view.document.delete_edits, [p.index for p in found])
 
-    def _move_line(self, pos: Pos, group: int, row: int) -> None:
-        """A Powered line dragged to another place (or chosen group)."""
+    def _move_line(self, category: str, pos: Pos, group: int, row: int) -> None:
+        """A timeline line dragged to another place (or chosen group)."""
         view = cast("MainWindow", self)
-        view.document.lines.move(pos, group, row)
+        view.document.lines_of(category).move(pos, group, row)
         view._lines_changed()
 
     def _lines_changed(self) -> None:
@@ -57,17 +57,19 @@ class SequenceActions:
         view.document.revision += 1
         view._changed()
 
-    def _new_line_group(self, pos: Pos | None = None) -> None:
+    def _new_line_group(self, category: str = "power", pos: Pos | None = None) -> None:
         view = cast("MainWindow", self)
-        name, ok = QInputDialog.getText(view, "New group", "Name of the group:", text="Inputs")
+        suggestion = "Inputs" if category == "power" else "Group"
+        name, ok = QInputDialog.getText(view, "New group", "Name of the group:", text=suggestion)
         if ok and name.strip():
-            view.document.lines.add_group(name.strip(), [pos] if pos is not None else [])
+            lines = view.document.lines_of(category)
+            lines.add_group(name.strip(), [pos] if pos is not None else [])
             view._lines_changed()
 
-    def _group_request(self, action: str, index: int) -> None:
+    def _group_request(self, action: str, category: str, index: int) -> None:
         """The timeline's group actions (fold, rename, color, order, new, delete)."""
         view = cast("MainWindow", self)
-        lines = view.document.lines
+        lines = view.document.lines_of(category)
         if not 0 <= index < len(lines.groups):
             return
         group = lines.groups[index]
@@ -86,7 +88,7 @@ class SequenceActions:
         elif action in ("up", "down"):
             lines.move_group(index, -1 if action == "up" else 1)
         elif action == "new":
-            view._new_line_group()
+            view._new_line_group(category)
             return
         elif action == "delete":
             lines.remove_group(index)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from redsim.editor.document import Document
-from redsim.editor.lines import DEFAULT_GROUP, Lines
+from redsim.editor.lines import BLOCKS_GROUP, DEFAULT_GROUP, Lines
 
 A, B, C = (0, 1, 0), (0, 1, 1), (0, 1, 2)
 
@@ -37,3 +37,17 @@ def test_groups_are_saved_with_the_document(tmp_path: Path) -> None:
     doc.save(tmp_path / "lines.redsim.json")
     loaded = Document.open(tmp_path / "lines.redsim.json")
     assert loaded.lines == doc.lines
+
+
+def test_every_category_has_its_own_saved_groups(tmp_path: Path) -> None:
+    doc = Document.new_flat()
+    placed = doc.lines_of("build")
+    assert placed is doc.lines_of("build") and doc.lines_of("power") is doc.lines
+    placed.sync([A, B], BLOCKS_GROUP, "#55aa55")
+    placed.add_group("Clock", [B])
+    doc.save(tmp_path / "rows.redsim.json")
+    loaded = Document.open(tmp_path / "rows.redsim.json")
+    assert loaded.lines_of("build") == placed
+    assert [g.name for g in loaded.lines_of("build").groups] == [BLOCKS_GROUP, "Clock"]
+    assert loaded.lines_of("build").groups[0].color == "#55aa55"
+    assert not loaded.lines_of("remove").groups
