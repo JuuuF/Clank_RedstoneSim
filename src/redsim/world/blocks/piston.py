@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from redsim.core.direction import ALL, Direction
 from redsim.core.javahash import JavaHashMap
 from redsim.core.pos import Pos, above, java_hash, offset
+from redsim.sim import trace as tr
 from redsim.world import ids
 from redsim.world.block import (
     Block,
@@ -103,6 +104,8 @@ class PistonBaseBlock(Block):
         extend = self.get_neighbor_signal(level, pos, direction)
         if extend and not state.get(EXTENDED):
             if PistonStructureResolver(level, pos, direction, True).resolve():
+                if level.trace.enabled:  # for "why did this change?" (not game logic)
+                    self._trace_power(level, pos, direction)
                 level.block_event(pos, self, TRIGGER_EXTEND, direction.data3d)
         elif not extend and state.get(EXTENDED):
             pushed_pos = offset(pos, direction, 2)
@@ -138,6 +141,54 @@ class PistonBaseBlock(Block):
             ):
                 return True
         return False
+
+    def signal_neighbor(
+        self, level: Level, pos: Pos, push_direction: Direction
+    ) -> tuple[Pos, Direction, bool] | None:
+        """The neighbor that makes ``get_neighbor_signal`` true (same order): its position,
+        the direction asked, and whether it is reached through the block above the piston
+        (quasi-connectivity). Not game logic: for the "why?" trace."""
+        for direction in ALL:
+            neighbor = offset(pos, direction)
+            if direction is not push_direction and level.has_signal(neighbor, direction):
+                return neighbor, direction, False
+        if level.has_signal(pos, Direction.DOWN):
+            return pos, Direction.DOWN, False
+        up = above(pos)
+        for direction in ALL:
+            neighbor = offset(up, direction)
+            if direction is not Direction.DOWN and level.has_signal(neighbor, direction):
+                return neighbor, direction, True
+        return None
+
+    def _trace_power(self, level: Level, pos: Pos, push_direction: Direction) -> None:
+        """A trace note of where the power that extends the piston comes from: the block
+        giving the signal and, for a powered block, what powers it."""
+        found = self.signal_neighbor(level, pos, push_direction)
+        if found is None:
+            return
+        via, direction, quasi = found
+        via_state = level.get_block_state(via)
+        sources: list[tuple[Pos, str]] = []
+        asking = offset(via, direction.opposite)  # the piston, or the block above it
+        if level.forced_power and asking in level.forced_power:
+            sources.append((asking, "sequence power"))
+        elif via_state.get_signal(level, via, direction) <= 0 and via_state.is_redstone_conductor(
+            level, via
+        ):
+            for side in ALL:
+                emitter = offset(via, side)
+                if level.get_direct_signal(emitter, side) > 0:
+                    sources.append((emitter, level.get_block_state(emitter).block.id))
+        level.trace.emit(
+            tr.NOTE,
+            pos,
+            kind="piston_power",
+            via=via,
+            via_block=via_state.block.id,
+            quasi=quasi,
+            sources=sources,
+        )
 
     # --- block events --------------------------------------------------------------------
     def trigger_event(self, state: BlockState, level: Level, pos: Pos, b0: int, b1: int) -> bool:

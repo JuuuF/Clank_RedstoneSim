@@ -6,6 +6,7 @@ from redsim.editor.document import Document
 from redsim.editor.heat import signal_heat
 from redsim.sim.causes import state_change, why
 from redsim.world import blocks
+from redsim.world.properties import EXTENDED
 
 P = blocks.parse_state
 LEVER, WIRE, REPEATER, LAMP = (0, 1, 0), (1, 1, 0), (2, 1, 0), (3, 1, 0)
@@ -80,3 +81,25 @@ def test_heat_follows_the_signal() -> None:
     assert [heat[(x, 1, 2)] for x in range(4, 8)] == [15, 14, 13, 12]
     assert heat[(0, 0, 0)] == 15  # the lever powers the block it stands on
     assert (9, 0, 9) not in heat  # the rest of the floor is not powered
+
+
+def test_a_quasi_connected_piston_names_its_power_source() -> None:
+    """The piston extends on a block update, but the power comes from a redstone block
+    two above it (through the space above the piston): Why? names it and its causes."""
+    piston, power, nudge = (0, 1, 0), (0, 3, 0), (0, 1, 1)
+    doc = Document.new_flat()
+    doc.setblock(piston, P("piston[facing=east]"))
+    doc.run_ticks(2)
+    doc.setblock(power, P("redstone_block"))  # no update reaches the piston
+    doc.run_ticks(2)
+    assert not doc.state_at(piston).get(EXTENDED)
+    doc.setblock(nudge, P("stone"))  # the update: the piston looks and extends
+    doc.run_ticks(3)
+    causes = why(doc.level.trace, piston)
+    main = [c for c in causes if c.branch == 0]
+    branch = [c for c in causes if c.branch == 1]
+    assert any("neighbor update from stone" in c.text for c in main)
+    assert branch, "the power source is missing"
+    assert "quasi-connectivity" in branch[0].text and "0 3 0" in branch[0].text
+    assert branch[0].pos == power
+    assert any(c.pos == power and "redstone block placed" in c.text for c in branch[1:])

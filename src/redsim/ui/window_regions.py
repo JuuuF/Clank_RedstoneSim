@@ -21,7 +21,7 @@ from redsim.editor.groups import Group, Port
 from redsim.io.schematics import FILE_FILTER as SCHEMATIC_FILTER
 from redsim.io.schematics import read_schematic, write_schematic
 from redsim.ui.names import block_name
-from redsim.ui.viewport import BUILD
+from redsim.ui.viewport import BUILD, SELECT
 from redsim.world import blocks
 
 if TYPE_CHECKING:
@@ -174,7 +174,11 @@ class RegionActions:
             floating = viewport.floating
             replaced = len(floating.replaced(view.document.level)) if floating.changed else 0
             warning = f" It would replace {replaced} blocks (red)." if replaced else ""
-            verb = "Copy" if floating.copy else "Preview"
+            verb = (
+                f"“{floating.prefab.name}”"
+                if floating.prefab is not None
+                else ("Copy" if floating.copy else "Preview")
+            )
             view._message(f"{verb}: {enter} places the blocks, Esc cancels.{warning}")
 
     def _confirm(self) -> None:
@@ -212,6 +216,9 @@ class RegionActions:
         if floating is None or not floating.changed:
             viewport.update()
             return
+        if floating.prefab is not None:
+            view._place_dropped_prefab(floating)
+            return
         turns, mirror, pivot, offset = floating.action()
         try:
             view.document.transform_regions(
@@ -225,6 +232,41 @@ class RegionActions:
             view.document.note_selection(floating.regions, moved)
             verb = "Copied" if floating.copy else "Placed"
             view._message(f"{verb} the blocks (no block updates).")
+        view._changed()
+
+    def _drop_prefab(self, name: str, origin: Pos) -> None:
+        """A prefab dropped into the view: a pending selection where it was dropped (not
+        placed yet): drag, turn and flip it like moved blocks; Enter pastes it as a
+        group, Esc drops it."""
+        view = cast("MainWindow", self)
+        prefab = view.document.prefabs.get(name)
+        viewport = view.viewport
+        if prefab is None:
+            return
+        floating = Floating.of_prefab(prefab, origin)
+        viewport.set_mode(SELECT)
+        viewport.extra_regions, viewport.region = [], floating.regions[0]
+        viewport.region_confirmed = True
+        viewport.floating = floating
+        viewport.update()
+        view._floating_changed()
+
+    def _place_dropped_prefab(self, floating: Floating) -> None:
+        view = cast("MainWindow", self)
+        viewport = view.viewport
+        origin, prefab = floating.placed_prefab()
+        try:
+            view.document.paste(origin, prefab)
+        except EditError as exc:
+            view._message(str(exc), error=True)
+            view._changed()
+            return
+        box = floating.boxes()[0]
+        name = view.document.groups.free_name(prefab.name)
+        view.document.groups.add(Group(name, box))
+        viewport.extra_regions, viewport.region = [], box
+        view.document.note_selection((), (box,))
+        view._message(f"Placed “{name}” as a group (Circuit → Groups).")
         view._changed()
 
     def _gizmo_transform(self, quarter_turns: int, mirror: str | None) -> None:

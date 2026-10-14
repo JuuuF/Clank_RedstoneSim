@@ -1114,8 +1114,16 @@ def test_a_prefab_dragged_into_the_view_is_placed(app: object) -> None:
     assert viewport.paste_preview is not None
     viewport.dropEvent(QDropEvent(center, Qt.DropAction.CopyAction, data, no_buttons, plain))
     assert viewport.paste_preview is None
+    floating = viewport.floating  # dropped: a pending selection, nothing placed yet
+    assert floating is not None and floating.prefab is not None and viewport.region_confirmed
+    low = floating.regions[0].low
+    assert document.state_at(low).is_air and "pair" not in document.groups.groups
+    window._confirm()  # Enter places it, as a group
     group = document.groups.groups["pair"]
-    assert document.state_at(group.region.low).is_(blocks.REPEATER)
+    assert group.region.low == low and document.state_at(low).is_(blocks.REPEATER)
+    assert viewport.floating is None and viewport.region == group.region
+    window._undo()  # the selection goes away with the blocks
+    assert document.state_at(low).is_air and viewport.region is None
     document.dirty = False
     window.close()
 

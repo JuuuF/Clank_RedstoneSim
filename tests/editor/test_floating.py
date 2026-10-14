@@ -104,3 +104,19 @@ def test_blocks_in_the_way_are_reported() -> None:
     assert floating.replaced(doc.level) == [(5, 1, 0)]
     assert Floating((A,)).moved((1, 0, 0)).replaced(doc.level) == []  # only its own blocks
     assert Floating((A,), copy=True).moved((1, 0, 0)).replaced(doc.level)  # a copy keeps them
+
+
+@pytest.mark.parametrize("steps", changes()[::11])
+def test_a_dropped_prefab_lands_as_previewed(steps: list[tuple[str, object]]) -> None:
+    doc = document()
+    prefab = doc.copy(A)
+    target = Document.new_flat()
+    floating = apply(Floating.of_prefab(prefab, (10, 1, 10)), steps)
+    preview = floating.preview(target.level)
+    origin, placed = floating.placed_prefab()
+    target.paste(origin, placed)
+    a, b, c, d = floating.linear
+    for (x, y, z), state in preview.items():  # preview keys are the map without its shift
+        pos = (x + floating.shift[0], y + floating.shift[1], z + floating.shift[2])
+        assert target.state_at(pos) == state, (steps, pos)
+    assert floating.boxes()[0].low == origin

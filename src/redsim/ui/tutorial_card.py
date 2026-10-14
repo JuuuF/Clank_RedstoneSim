@@ -13,11 +13,12 @@ import html
 import json
 import math
 import re
+import time
 from functools import cache
 from typing import Any
 
-from PySide6.QtCore import QPoint, QRect, Qt, QTimer, QVariantAnimation, Signal
-from PySide6.QtGui import QColor, QImage, QPainter, QPaintEvent, QPen, QPolygon
+from PySide6.QtCore import QRect, Qt, QTimer, QVariantAnimation, Signal
+from PySide6.QtGui import QBrush, QColor, QImage, QPainter, QPaintEvent, QTransform
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -48,11 +49,16 @@ PANEL = QColor("#dddddd")
 PANEL_EDGE = QColor("#a8a8a8")
 WIDTH = 360
 #: How long "Done!" shows before the next step.
-DONE_MS = 1100
+DONE_MS = 1400
 #: The success glint: how long it plays, and the size of one glint texture tile.
-GLINT_MS = 1000
-GLINT_TILE = 96
-GLINT_COLOR = QColor(150, 60, 255)
+GLINT_MS = 1600
+#: The glint as the game sets it up (``TextureTransform``): the entity scale (0.5; items
+#: use 8 over their tiny texture area), the default glint speed, and how many card pixels
+#: one unit of texture coordinates spans; the strongest overlay opacity.
+GLINT_SCALE = 0.5
+GLINT_SPEED = 0.5
+GLINT_UNIT = 160.0
+GLINT_ALPHA = 0.8
 #: The Lessons menu, drawn like the game's tooltips (near-black, purple frame).
 MENU_STYLE = (
     "QMenu { background: rgba(16, 0, 16, 240); color: #ffffff; border: 2px solid #28007f;"
@@ -77,8 +83,10 @@ _TOKEN = re.compile(r"\{(key|cap):([^}]+)\}")
 
 @cache
 def _glint_image() -> QImage | None:
-    """The game's item glint texture as purple streaks: its brightness becomes the
-    opacity (on the light card, adding it like the game's shader would only wash out)."""
+    """The game's enchantment glint texture (``misc/enchanted_glint_item``), its own
+    colors, with its brightness as the opacity: the game adds it (``glint.fsh``, blend
+    SRC_COLOR, ONE), which a light card would swallow; as an overlay it stays visible and
+    looks the same where it is bright."""
     data = Assets.find()
     path = "assets/minecraft/textures/misc/enchanted_glint_item.png"
     raw = data.file_bytes(path) if data else None
@@ -86,22 +94,28 @@ def _glint_image() -> QImage | None:
     if image.isNull():
         return None
     image = image.convertToFormat(QImage.Format.Format_ARGB32)
-    out = QImage(image.size(), QImage.Format.Format_ARGB32)
     for y in range(image.height()):
         for x in range(image.width()):
             color = image.pixelColor(x, y)
-            light = max(color.red(), color.green(), color.blue()) * color.alphaF()
-            out.setPixelColor(
-                x,
-                y,
-                QColor(
-                    GLINT_COLOR.red(),
-                    GLINT_COLOR.green(),
-                    GLINT_COLOR.blue(),
-                    min(170, round(max(0.0, light - 110) * 1.5)),
-                ),
-            )
-    return out
+            color.setAlpha(max(color.red(), color.green(), color.blue()))
+            image.setPixelColor(x, y, color)
+    return image
+
+
+def glint_matrix(millis: float, scale: float = GLINT_SCALE) -> QTransform:
+    """``TextureTransform.setupGlintTexturing``: texture coordinates are scaled, turned by
+    10° and shifted along two slow, different periods (110 s and 30 s, at the default glint
+    speed 0.5 times 8). Maps card coordinates (one unit: ``GLINT_UNIT`` pixels) to glint
+    texture coordinates (0..1 per repeat)."""
+    ticks = int(millis * GLINT_SPEED * 8.0)
+    offset0 = (ticks % 110000) / 110000.0
+    offset1 = (ticks % 30000) / 30000.0
+    # Column vectors in the game (translate · rotate · scale · uv); Qt applies left first.
+    return (
+        QTransform.fromScale(scale, scale)
+        * QTransform().rotateRadians(math.pi / 18)
+        * QTransform.fromTranslate(-offset0, offset1)
+    )
 
 
 def progress_path() -> Any:
@@ -322,45 +336,25 @@ class TutorialCard(QWidget):
         painter.end()
 
     def _paint_glint(self, painter: QPainter, rect: QRect) -> None:
-        """The enchantment glint (``misc/enchanted_glint_item``) sliding diagonally and
-        fading in and out, after a quick purple glow around the card."""
-        t = self.glint
-        strength = math.sin(math.pi * t)
-        glow = max(0.0, 1.0 - t * 2.5)  # a purple glow around the card, fading out first
-        if glow:
-            painter.fillRect(rect, QColor(200, 150, 255, round(90 * glow)))
-            pen = QPen(
-                QColor(
-                    GLINT_COLOR.red(), GLINT_COLOR.green(), GLINT_COLOR.blue(), round(255 * glow)
-                )
-            )
-            pen.setWidth(4)
-            painter.setPen(pen)
-            painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.drawRect(rect.adjusted(1, 1, -2, -2))
+        """The enchantment glint over the card, moving as on an enchanted item and fading
+        in and out (its alpha rises and falls with ``glint``)."""
+        image = _glint_image()
+        if image is None:
+            return
+        size = image.width()
+        card_to_texture = (
+            QTransform.fromScale(1 / GLINT_UNIT, 1 / GLINT_UNIT)
+            * glint_matrix(time.monotonic() * 1000.0)
+            * QTransform.fromScale(size, size)
+        )
+        texture_to_card, ok = card_to_texture.inverted()
+        if not ok:
+            return
+        brush = QBrush(image)
+        brush.setTransform(texture_to_card)
         painter.save()
         painter.setClipRect(rect)
-        painter.setOpacity(0.85 * strength)
-        image = _glint_image()
-        if image is not None:
-            size = GLINT_TILE
-            shift = round(t * size * 2)
-            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
-            for x in range(rect.left() - 2 * size + shift, rect.right() + size, size):
-                for y in range(rect.top() - 2 * size + shift // 2, rect.bottom() + size, size):
-                    painter.drawImage(QRect(x, y, size, size), image)
-        else:  # without the jar: purple bands
-            painter.setPen(Qt.PenStyle.NoPen)
-            for k in range(-4, 8):
-                offset = round((k + t * 2) * rect.height() * 0.6)
-                band = QPolygon(
-                    [
-                        QPoint(rect.left() + offset, rect.bottom()),
-                        QPoint(rect.left() + offset + 18, rect.bottom()),
-                        QPoint(rect.left() + offset + 18 + rect.height(), rect.top()),
-                        QPoint(rect.left() + offset + rect.height(), rect.top()),
-                    ]
-                )
-                painter.setBrush(QColor(128, 64, 204, 150))
-                painter.drawPolygon(band)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)  # "blur"
+        painter.setOpacity(GLINT_ALPHA * math.sin(math.pi * self.glint))
+        painter.fillRect(rect, brush)
         painter.restore()

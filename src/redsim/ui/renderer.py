@@ -106,8 +106,10 @@ void main() {
 #: Sky gradient (top of the screen, horizon); the fog fades the world into the horizon.
 SKY_TOP = (0.42, 0.62, 0.92)
 SKY_HORIZON = (0.72, 0.83, 0.96)
-#: The ground around the floor, like a superflat world fading into the horizon: just
-#: below the floor's top (hidden under it), out to where the fog hides its edge.
+#: The ground around the floor, like a superflat world fading into the horizon, out to
+#: where the fog hides its edge. It lies at the bottom of the y=0 layer, so the preset
+#: worlds' floors stand one block above the grass (owner, 2026-10-14); it is drawn pushed
+#: back in depth, so a block face in the same plane always wins (no flicker far away).
 GROUND_COLOR = (0.40, 0.53, 0.29)  # without the game's textures: a muted grass green
 GROUND_SHADE = (0.50, 0.66, 0.31)  # the plains grass color, a little darker
 GROUND_TEXTURE = "minecraft:block/grass_block_top"
@@ -116,7 +118,9 @@ CLOUD_TEXTURE = "minecraft:environment/clouds"
 CLOUD_Y = 112.0
 CLOUD_COLOR = (1.0, 1.0, 1.0, 0.8)
 CLOUD_SPEED = 0.6  # blocks per second
-GROUND_Y = 0.98
+GROUND_Y = 0.0
+#: Depth offset of the ground (``glPolygonOffset`` factor, units).
+GROUND_OFFSET = (4.0, 16.0)
 GROUND_REACH = 900.0  # inside the far plane (1000)
 #: Alpha of the parts of selection overlays hidden behind blocks.
 HIDDEN_OVERLAY_ALPHA = 0.4
@@ -370,8 +374,11 @@ class Renderer:
         program.setUniformValue(location, QMatrix4x4(*mvp.astype(np.float32).flatten()))
         program.setUniformValue1f(fog_amount, 1.0)
         if scenery:
+            gl.glEnable(GL_POLYGON_OFFSET_FILL)
+            gl.glPolygonOffset(*GROUND_OFFSET)
             self.ground.vao.bind()
             gl.glDrawArrays(GL_TRIANGLES, 0, self.ground.count)
+            gl.glDisable(GL_POLYGON_OFFSET_FILL)
         # World faces are wound counter-clockwise seen from outside, like the game's, which
         # draws them with back-face culling: flat parts (dust, rails) show one side only.
         gl.glEnable(GL_CULL_FACE)

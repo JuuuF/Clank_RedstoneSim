@@ -101,6 +101,9 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   frame, visible through blocks): timeline lines and monitor tracks, Sequence rows, the
   inspector's title (also in the E popup), Diagnostics rows and trace lines. Drag the handle
   between the view and the timeline to make the timeline taller; it scrolls when needed.
+- **Why did this change?** For a piston that extended, Why? also lists *where its power
+  comes from* (the block giving the signal, or for quasi-connectivity the block powering
+  the space above the piston, and what powers that block), with that block's own causes.
 - **Why did this change?** Diagnostics → **Why?** shows the selected block's last change
   and its causes, newest first, back across ticks to the action that started it (a
   lever, a pulse, an edit). Click a line to show its block, double click to go to its
@@ -211,10 +214,12 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   moved or copied blocks. Moves, turns and flips made before one Enter add up
   (`editor/floating.py`) and are placed by a single edit.
 - **Prefabs:** Circuit → Prefabs shows a small picture of each prefab (the inventory's
-  isometric view). Drag one into the 3D view to place it (the preview follows the
-  cursor until you drop it), or double-click it / press Paste to paste it like Ctrl+V.
-  A placed prefab (or imported schematic) becomes a group named after it, with its
-  outline (Circuit → Groups).
+  isometric view). Drag one into the 3D view (the preview follows the cursor), or
+  double-click it / press Paste to paste it like Ctrl+V (a click places it).
+  A dropped prefab is a pending selection, not placed yet: drag it, turn and flip it like
+  moved blocks; Enter places it as a group named after it, with its outline (Circuit →
+  Groups), Esc drops it. A pasted prefab (Paste, double click, Ctrl+V) or imported
+  schematic becomes such a group too.
 - **Paste (Trackmania-style):** Ctrl+C copies the box; Ctrl+V shows the clipboard as a
   ghost centered under the cursor on the camera's working layer (the pivot's height, shown
   in the badge). Shift+wheel moves the layer up or down (the wheel zooms while pasting), so

@@ -108,6 +108,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
     message_requested = Signal(str)  # a short note for the status bar
     #: A prefab dragged in from the Prefabs list (its name): the window starts its paste.
     prefab_dragged = Signal(str)
+    prefab_dropped = Signal(str, object)  # its name, the minimum corner where it was dropped
     transform_requested = Signal(int, object)  # quarter turns, mirror axis | None
     gizmo_hover_changed = Signal(object)  # Hotspot | None
     paste_requested = Signal(object)  # Pos (minimum corner)
@@ -730,15 +731,16 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             self.cancel_paste()
 
     def dropEvent(self, event: QDropEvent) -> None:
-        """Dropped: placed where the preview was, as a group."""
+        """Dropped: a pending selection where the preview was (Enter places it)."""
         self._last_mouse = event.position().toPoint()
         target = self.paste_target()
-        if self.paste_preview is None or target is None:
+        data = event.mimeData()
+        if self.paste_preview is None or target is None or not data.hasFormat(PREFAB_MIME):
             event.ignore()
             return
         event.acceptProposedAction()
         self.cancel_paste()
-        self.paste_requested.emit(target)
+        self.prefab_dropped.emit(bytes(data.data(PREFAB_MIME).data()).decode(), target)
         self.setFocus()
 
     def wheelEvent(self, event: QWheelEvent) -> None:

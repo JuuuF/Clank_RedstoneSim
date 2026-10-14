@@ -370,6 +370,8 @@ class EditTools:
         view = cast("Viewport", self)
         if view.floating is None and view.pending_stack is None:
             return False
+        if view.floating is not None and view.floating.prefab is not None:
+            view.region, view.region_confirmed = None, False  # a dropped prefab: gone
         view.floating = None
         view.pending_stack = None
         view.update()

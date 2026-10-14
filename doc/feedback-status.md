@@ -42,6 +42,13 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Why? for quasi-connected pistons, dropped prefabs as selections, glint, ground**
+  (2026-10-14): Why? names where an extending piston's power comes from (pistons note it
+  in the trace when they decide to extend) and follows that block's causes; a prefab
+  dropped into the view is a pending selection placed by Enter; the success animation is
+  the game's glint texture with the game's glint motion (``TextureTransform``), fading
+  in and out; the scenery ground lies one block below the preset worlds' floors and is
+  drawn behind any block face in its plane (no flicker far away).
 - **Tutorial as a mode, prefabs as groups** (2026-10-14, owner after the tutorial):
   Exit tutorial brings back the world from before; the Files lesson's save and open steps
   are real steps; the Lessons menu and button in the game look; a glint when a step is

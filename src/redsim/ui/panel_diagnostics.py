@@ -160,9 +160,16 @@ class DiagnosticsPanel(QTabWidget):
         header = QListWidgetItem(f"Why {name} at {where} changed at tick {causes[0].tick}:")
         header.setForeground(QColor(theme.GOLD))
         self.why.addItem(header)
+        branch = 0
         for depth, cause in enumerate(causes):
+            if cause.branch != branch:  # where a piston's power comes from
+                branch = cause.branch
+                title = QListWidgetItem("Where the piston's power comes from:")
+                title.setForeground(QColor(theme.GOLD))
+                self.why.addItem(title)
             at = " ".join(str(v) for v in cause.pos) if cause.pos is not None else "—"
-            arrow = "" if depth == 0 else "← "
+            first = depth == 0 or (branch and causes[depth - 1].branch != branch)
+            arrow = "" if first else "← "
             entry = QListWidgetItem(f"{arrow}tick {cause.tick} · {at} · {cause.text}")
             if cause.pos is not None:
                 entry.setData(Qt.ItemDataRole.UserRole, list(cause.pos))

@@ -15,8 +15,9 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass, replace
 
 from redsim.core.pos import Pos
-from redsim.editor.clipboard import Region, bounding_box
+from redsim.editor.clipboard import Prefab, Region, bounding_box
 from redsim.sim.level import Level
+from redsim.world import blocks
 from redsim.world.block import BlockState
 from redsim.world.rotation import default_pivot2, mirror_state, rotate_about, rotate_state
 
@@ -54,6 +55,10 @@ class Floating:
     copy: bool = False
     linear: Linear = IDENTITY
     shift: Pos = (0, 0, 0)
+    #: A prefab dragged into the view (owner, 2026-10-14: "a non-pasted selection instead
+    #: of a disruptive place action"): its blocks come from here, not from the world, at
+    #: ``regions[0]``; Enter pastes it (``placed_prefab``).
+    prefab: Prefab | None = None
     #: The doubled x/z point the last turn went around, with the boxes it left: further
     #: turns of the same boxes keep it, so four turns (or R, Shift+R) return exactly.
     turn_pivot: tuple[tuple[Region, ...], tuple[int, int]] | None = None
@@ -70,8 +75,48 @@ class Floating:
 
     @property
     def changed(self) -> bool:
-        """Whether placing would change anything (a copy in place changes nothing)."""
-        return self.linear != IDENTITY or self.shift != (0, 0, 0)
+        """Whether placing would change anything (a copy in place changes nothing; a
+        dragged-in prefab always places something)."""
+        return self.prefab is not None or self.linear != IDENTITY or self.shift != (0, 0, 0)
+
+    @property
+    def keeps_source(self) -> bool:
+        """The blocks stay where they are (a copy, or a prefab that is not in the world)."""
+        return self.copy or self.prefab is not None
+
+    @staticmethod
+    def of_prefab(prefab: Prefab, origin: Pos) -> Floating:
+        sx, sy, sz = prefab.size
+        high = (origin[0] + sx - 1, origin[1] + sy - 1, origin[2] + sz - 1)
+        return Floating((Region(origin, high),), prefab=prefab)
+
+    def _sources(self, level: Level) -> dict[Pos, BlockState]:
+        """The blocks being moved: from the world, or from the prefab."""
+        if self.prefab is None:
+            return level.blocks
+        ox, oy, oz = self.regions[0].low
+        return {
+            (ox + dx, oy + dy, oz + dz): blocks.parse_state(text)
+            for dx, dy, dz, text, _ in self.prefab.blocks
+        }
+
+    def placed_prefab(self) -> tuple[Pos, Prefab]:
+        """A dragged-in prefab as it goes into the world: its minimum corner and its
+        blocks turned and mirrored like the preview."""
+        assert self.prefab is not None
+        turns, mirrored = decompose(self.linear)
+        box = self.boxes()[0]
+        ox, oy, oz = self.regions[0].low
+        entries = []
+        for dx, dy, dz, text, data in self.prefab.blocks:
+            state = blocks.parse_state(text)
+            if mirrored:
+                state = mirror_state(state, "x")
+            state = rotate_state(state, turns)
+            x, y, z = self.map((ox + dx, oy + dy, oz + dz))
+            entries.append((x - box.low[0], y - box.low[1], z - box.low[2], repr(state), data))
+        entries.sort(key=lambda entry: (entry[2], entry[1], entry[0]))
+        return box.low, Prefab(self.prefab.name, box.size, entries)
 
     def _then(self, operation: Callable[[Pos], Pos]) -> Floating:
         """This map followed by ``operation`` (affine on block positions)."""
@@ -124,9 +169,10 @@ class Floating:
         preview made once follows a move by its offset alone): position → block state."""
         turns, mirrored = decompose(self.linear)
         a, b, c, d = self.linear
+        sources = self._sources(level)
         out: dict[Pos, BlockState] = {}
         for pos in self.cells():
-            state = level.blocks.get(pos)
+            state = sources.get(pos)
             if state is None or state.is_air:
                 continue
             if mirrored:
@@ -144,7 +190,7 @@ class Floating:
         for pos in own:
             target = self.map(pos)
             state = level.blocks.get(target)
-            if state is not None and not state.is_air and (self.copy or target not in own):
+            if state is not None and not state.is_air and (self.keeps_source or target not in own):
                 hit.append(target)
         return hit
 

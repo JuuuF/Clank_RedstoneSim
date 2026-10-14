@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from redsim.core.pos import Pos
 from redsim.sim import trace as tr
@@ -28,6 +29,8 @@ class Cause:
     tick: int
     pos: Pos | None
     text: str
+    #: 0: the chain itself; 1: where a piston's power comes from (and why that is on).
+    branch: int = 0
 
 
 def _short(block: str) -> str:
@@ -73,6 +76,8 @@ def describe(record: TraceRecord, name: Callable[[str], str] = _short) -> str:
         return f"{name(str(d.get('block')))} queued a block event ({d.get('b0')}, {d.get('b1')})"
     if record.kind == tr.BLOCK_ENTITY:
         return f"block entity {d.get('action')}"
+    if record.kind == tr.NOTE and d.get("kind") == "piston_power":
+        return piston_power_text(record, name)
     if record.kind == tr.NOTE:
         return str(d.get("text") or d.get("info") or "note")
     if record.kind == tr.STEP:
@@ -91,9 +96,33 @@ def describe(record: TraceRecord, name: Callable[[str], str] = _short) -> str:
     return record.summary()
 
 
-def last_change(trace: Trace, pos: Pos) -> TraceRecord | None:
-    """The latest record that changed the block at ``pos`` (state differs), if kept."""
-    for record in reversed(trace.records):
+def _at(pos: Any) -> str:
+    return " ".join(str(v) for v in pos)
+
+
+def piston_power_text(record: TraceRecord, name: Callable[[str], str] = _short) -> str:
+    """Where the power that extends a piston comes from (``Piston._trace_power``)."""
+    d = record.detail
+    via = name(str(d.get("via_block")))
+    sources = [
+        f"{label if label == 'sequence power' else name(str(label))} at {_at(pos)}"
+        for pos, label in d.get("sources") or ()
+    ]
+    powered = f" (powered by {', '.join(sources)})" if sources else ""
+    if d.get("quasi"):
+        above = record.pos[0], record.pos[1] + 1, record.pos[2]  # type: ignore[index]
+        return (
+            f"the piston is powered through quasi-connectivity: {via} at {_at(d.get('via'))}"
+            f"{powered} powers the space above it ({_at(above)}), as if the piston were there"
+        )
+    return f"the piston is powered by {via} at {_at(d.get('via'))}{powered}"
+
+
+def last_change(trace: Trace, pos: Pos, before: int | None = None) -> TraceRecord | None:
+    """The latest record that changed the block at ``pos`` (state differs), if kept;
+    with ``before``, the latest one with a smaller id."""
+    records = trace.records if before is None else trace.records[: max(0, before - trace.base_id)]
+    for record in reversed(records):
         if (
             record.kind == tr.SET_BLOCK
             and record.pos == pos
@@ -184,4 +213,45 @@ def why(
     record = last_change(trace, pos)
     if record is None:
         return []
-    return [Cause(r.id, r.game_time, r.pos, describe(r, name)) for r in chain(trace, record, limit)]
+    links = chain(trace, record, limit)
+    causes = [Cause(r.id, r.game_time, r.pos, describe(r, name)) for r in links]
+    return causes + _power_branch(trace, links, name, limit)
+
+
+def _power_note(trace: Trace, queued: TraceRecord) -> TraceRecord | None:
+    """The note a piston left right before queuing its extension (``_trace_power``)."""
+    end = queued.id - trace.base_id
+    for record in reversed(trace.records[max(0, end - 8) : max(0, end)]):
+        is_note = record.kind == tr.NOTE and record.detail.get("kind") == "piston_power"
+        if is_note and record.pos == queued.pos:
+            return record
+    return None
+
+
+def _power_branch(
+    trace: Trace, links: list[TraceRecord], name: Callable[[str], str], limit: int
+) -> list[Cause]:
+    """For a piston that extended: where its power came from, and that block's own
+    causes (owner, 2026-10-14: a quasi-connected piston only showed the update that
+    made it look, not why it would extend)."""
+    out: list[Cause] = []
+    seen = {record.id for record in links}
+    for record in links:
+        if record.kind != tr.BLOCK_EVENT_QUEUED or record.detail.get("b0") != 0:
+            continue
+        note = _power_note(trace, record)
+        if note is None:
+            continue
+        out.append(Cause(note.id, note.game_time, note.detail.get("via"), describe(note, name), 1))
+        targets = [tuple(pos) for pos, _ in note.detail.get("sources") or ()]
+        targets = targets or [tuple(note.detail.get("via") or ())]
+        for target in targets:
+            change = last_change(trace, target, before=note.id)
+            if change is None or change.id in seen:
+                continue
+            for link in chain(trace, change, limit):
+                if link.id in seen:
+                    break
+                seen.add(link.id)
+                out.append(Cause(link.id, link.game_time, link.pos, describe(link, name), 1))
+    return out

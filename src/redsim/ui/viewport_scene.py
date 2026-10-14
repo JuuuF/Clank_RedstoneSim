@@ -25,7 +25,7 @@ from redsim.ui.geometry import (
     thick_edges,
 )
 from redsim.ui.gizmos import Hotspot, box_faces, many_box_faces, pick_hotspot, selection_gizmos
-from redsim.ui.renderer import Renderer
+from redsim.ui.renderer import GROUND_Y, Renderer
 from redsim.ui.selection_tools import (
     shifted,
 )
@@ -455,7 +455,7 @@ class SceneGeometry:
         """The blocks a pending move takes away from where they are (a copy leaves them)."""
         view = cast("Viewport", self)
         floating = view.floating
-        if floating is None or floating.copy or not floating.changed:
+        if floating is None or floating.keeps_source or not floating.changed:
             return frozenset()
         key = (floating.regions, id(view.document.level), view.document.revision)
         if view._hidden_cache is None or view._hidden_cache[0] != key:
@@ -475,6 +475,7 @@ class SceneGeometry:
         return (
             floating.regions,
             floating.linear,
+            id(floating.prefab),
             id(level),
             document.engine.step_index,
             document.revision,
@@ -551,7 +552,7 @@ class SceneGeometry:
             ]
             if tops and by + max(tops) / 16.0 <= y:
                 return by + max(tops) / 16.0
-        return 1.0
+        return GROUND_Y
 
     def _pivot_block(self) -> np.ndarray:
         """The pivot as a small orange block (round 8: its place in space should be clear);
