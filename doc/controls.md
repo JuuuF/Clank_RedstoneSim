@@ -123,8 +123,15 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - Middle click picks the block type under the cursor in every mode.
 - **Block popup: E** over a block (any mode) opens its inspector next to the cursor:
   the same controls as the Inspector tab (state, contents, signal source, pressure-plate
-  visitors, section, monitor); it follows the block while the simulation runs. Esc, E
-  again or a click outside closes it (`ui/block_popup.py`, keymap action `block.popup`).
+  visitors, section, monitor); it follows the block while the simulation runs. It is a
+  floating panel: the timeline's buttons and keys (run, pause, step, rewind) keep working
+  while it is open, and keys it does not use itself go on to the window. Esc, E again,
+  its × or a click elsewhere (except on the timeline) closes it (`ui/block_popup.py`).
+  - **Pin to block:** the chips at its top (each property, *contents*, *signal*) pin
+    that value to the block: a small live tag above the block in the view, kept after the
+    popup closes and saved with the world (`editor/pins.py`). View → Remove all pins.
+  - A **double chest** shows all 54 slots, as the game does; the other half's slots are
+    greyed out (hover tells where they are) and only this half's slots can be edited.
 - The badge in the bottom-left corner shows the mode and what it works on; the hint bar below lists the keys.
 - Choosing a block (inventory, number keys, middle-click pick) switches to BUILD.
 - Esc in NORMAL clears the inspector selection and every selection box.

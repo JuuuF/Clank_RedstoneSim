@@ -13,7 +13,6 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O7 | **Mechanics left** (brief "later extensions") | brief; project-state | Done 2026-10-14: composters, signs. Open: dispense effects (shooting, placing, fluids), detector rails (need minecarts), daylight sensors (need sky light and the time of day, which the simulator does not model), furnaces and other containers, water streams; entities stay out of scope. |
 | O8 | **Abstract (black-box) group models** | brief M7 | Deferred on purpose (ADR-016): groups expose ports but always simulate their blocks. |
 | O10 | **Final look**: "a technical version of Minecraft", panels | round 1 (Looks) | Largely answered by the game's textures, the theme and the polish pass; the owner has not yet reviewed the result as a whole. |
-| O13 | **Popup and double chests** (2026-10-14) | owner, in session | Pin parts of the block popup to the block in the view; keep play/pause and tick keys working while a popup is open; the popup of a double chest shows both halves' contents, the other half's greyed. |
 | O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
 
 | O12 | **Small loose ends** | rounds 9–12 | 0-tick behavior not checked against the real game. Done 2026-10-14: the Select World screen's stray "r" (the text cursor on the placeholder's "T"), its game look (dirt, stone buttons and tabs from the jar), thumbnails made when an older world is opened, colored groups for every timeline category; the timeline height is remembered. |
@@ -31,6 +30,9 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   camera there; Circuit → Groups: a double click goes to the group; the chest model
   (the atlas squeezed its 64×64 texture into 16×16; double chests now use their own
   `_left`/`_right` textures like the game).
+- **Block popup** (2026-10-14): values pin to the block as a live tag in the view; the
+  popup no longer grabs keys and clicks, so the timeline works while it is open; double
+  chests show both halves, the other half greyed ([[controls]]).
 
 - Save as Minecraft world (a copy of the save), 2026-10-13 ([[world-import]] phase 4).
 - **Select World screen** like the game's (owner: the file dialog was slow): Minecraft

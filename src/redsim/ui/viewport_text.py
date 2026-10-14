@@ -13,12 +13,13 @@ from PySide6.QtGui import (
     QColor,
     QPainter,
     QPen,
+    QPolygon,
 )
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSlider, QWidget
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
-from redsim.editor import sources
+from redsim.editor import pins, sources
 from redsim.ui import theme
 from redsim.ui.debug_screen import block_lines
 from redsim.ui.geometry import pick
@@ -50,6 +51,11 @@ from redsim.ui.view_common import (
 from redsim.world.blocks.sign import SignBlockEntity
 from redsim.world.properties import POWER
 
+#: Pinned value tags (``_draw_pins``): background, accent bar, how far they show.
+PIN_BACKGROUND = QColor(18, 18, 24, 210)
+PIN_ACCENT = QColor(255, 210, 74)
+PIN_DISTANCE = 72.0
+
 if TYPE_CHECKING:
     from redsim.ui.viewport import Viewport
 
@@ -67,6 +73,7 @@ class TextOverlays:
         painter = QPainter(view)
         line = theme.line_height(2)
         view._draw_sign_texts(painter)
+        view._draw_pins(painter)
         if view.show_info:
             view._draw_info_labels(painter)
             view._draw_debug_columns(painter)
@@ -215,6 +222,54 @@ class TextOverlays:
                     continue
                 painter.setOpacity(min(1.0, (SIGN_TEXT_DISTANCE - distance) / 4.0))
                 draw_board(painter, image, board, mvp, width, height)
+        painter.setOpacity(1.0)
+
+    def _draw_pins(self, painter: QPainter) -> None:
+        """Pinned values (the block popup's pin chips, ``editor/pins.py``): a small tag
+        above each pinned block, live, fading out far away."""
+        view = cast("Viewport", self)
+        document = view.document
+        pinned = pins.pins(document)
+        if not pinned:
+            return
+        width, height = max(view.width(), 1), max(view.height(), 1)
+        mvp = view.camera.projection_matrix(width / height) @ view.camera.view_matrix()
+        eye = np.asarray(view.camera.position, dtype=float)
+        line = theme.line_height(2)
+        for pos, keys in pinned.items():
+            texts = pins.lines(document, pos, keys)
+            if not texts:
+                continue
+            point = np.array([pos[0] + 0.5, pos[1] + 1.05, pos[2] + 0.5])
+            distance = float(np.linalg.norm(point - eye))
+            alpha = min(1.0, (PIN_DISTANCE - distance) / 8.0)
+            clip = mvp @ np.array([*point, 1.0])
+            if clip[3] <= 0.05 or alpha <= 0:
+                continue
+            x = (clip[0] / clip[3] + 1) / 2 * width
+            y = (1 - clip[1] / clip[3]) / 2 * height
+            if not (-200 <= x <= width + 200 and 0 <= y <= height + 200):
+                continue
+            box_width = max(theme.text_width(text) for text in texts) + 14
+            box_height = len(texts) * (line + 2) + 6
+            rect = QRect(int(x - box_width / 2), int(y - box_height - 7), box_width, box_height)
+            painter.setOpacity(alpha)
+            painter.fillRect(rect, PIN_BACKGROUND)
+            painter.fillRect(QRect(rect.left(), rect.top(), 2, rect.height()), PIN_ACCENT)
+            tip = QPolygon(
+                [
+                    QPoint(int(x) - 5, rect.bottom() + 1),
+                    QPoint(int(x) + 5, rect.bottom() + 1),
+                    QPoint(int(x), rect.bottom() + 7),
+                ]
+            )
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(PIN_BACKGROUND)
+            painter.drawPolygon(tip)
+            for index, text in enumerate(texts):
+                theme.draw_text(
+                    painter, rect.left() + 8, rect.top() + 4 + index * (line + 2), text, "#ffffff"
+                )
         painter.setOpacity(1.0)
 
     def _draw_info_labels(self, painter: QPainter) -> None:

@@ -12,6 +12,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ["REDSIM_KEYMAP"] = os.devnull + ".missing"  # defaults, not the user's keymap
 os.environ["REDSIM_CONFIG_DIR"] = os.devnull + ".missing"  # default preferences, never saved
 QtWidgets = pytest.importorskip("PySide6.QtWidgets")
+from PySide6 import QtCore, QtGui  # noqa: E402
+from PySide6.QtCore import Qt  # noqa: E402
 
 from redsim.core.direction import Direction  # noqa: E402
 from redsim.editor.clipboard import Region  # noqa: E402
@@ -973,4 +975,69 @@ def test_f_goes_to_hovered_coordinates(app: object) -> None:
     target, _ = window.viewport._glide
     assert np.allclose(target, (30.5, 2.5, -6.5))
     window.simulation.canvas.position_hovered.emit(None)
+    window.close()
+
+
+def test_block_popup_pins_values_and_lets_the_timeline_work(app: object) -> None:
+    from PySide6.QtCore import QEvent
+    from PySide6.QtGui import QKeyEvent
+
+    from redsim.editor import pins
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.resize(1000, 700)
+    window.show()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("repeater[facing=east,delay=3]"))
+    window.viewport.hover = Hit((0, 1, 0), Direction.UP, 4.0)
+    window._open_block_popup()
+    popup = window.block_popup
+    assert popup.isVisible() and "prop:delay" in popup.pin_buttons
+    popup.pin_buttons["prop:delay"].setChecked(True)  # pin the delay
+    popup.pin_buttons["signal"].setChecked(True)
+    assert pins.pinned(document, (0, 1, 0)) == ["prop:delay", "signal"]
+    assert pins.lines(document, (0, 1, 0), ["prop:delay", "signal"]) == ["delay 3", "receives 0"]
+    # Keys the panel does not use go to the window: T steps a tick.
+    tick = document.tick
+    popup.keyPressEvent(
+        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_T, Qt.KeyboardModifier.NoModifier, "t")
+    )
+    assert document.tick == tick + 1 and popup.isVisible()
+    # A click on the timeline keeps it open; on the view it closes.
+    press = QtGui.QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QtCore.QPointF(5, 5),
+        QtCore.QPointF(5, 5),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    popup.eventFilter(window.simulation.canvas, press)
+    assert popup.isVisible()
+    popup.eventFilter(window.viewport, press)
+    assert not popup.isVisible()
+    assert pins.pinned(document, (0, 1, 0))  # pins stay after it closes
+    window._clear_pins()
+    assert not pins.pins(document)
+    document.dirty = False
+    window.close()
+
+
+def test_double_chest_contents_show_both_halves(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("chest[facing=south,type=right]"))
+    document.setblock((1, 1, 0), blocks.parse_state("chest[facing=south,type=left]"))
+    document.set_container_slot((0, 1, 0), 0, "minecraft:redstone", 5)  # the right half
+    window._select((1, 1, 0))  # the left half: the second 27 slots
+    grid = window.inspector.contents_grid
+    assert len(grid.items) == 54 and grid.first == 27
+    assert grid.items[0] == ("minecraft:redstone", 5) and 0 in grid.dimmed
+    assert "5 items in the other half at 0 1 0" in window.inspector.contents_label.text()
+    window._select((0, 1, 0))
+    assert grid.first == 0 and 27 in grid.dimmed and 0 not in grid.dimmed
+    document.dirty = False
     window.close()

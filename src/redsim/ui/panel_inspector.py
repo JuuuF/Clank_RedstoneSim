@@ -318,12 +318,23 @@ class InspectorPanel(QWidget):
             self.slot_box.setRange(0, be.SIZE - 1)
             filled = [stack for stack in be.items if stack is not None]
             total = sum(count for _, count in filled)
-            self.contents_label.setText(
+            summary = (
                 f"{total} items in {len(filled)} of {be.SIZE} slots"
                 if filled
                 else f"empty ({be.SIZE} slots)"
             )
-            self.contents_grid.set_items(be.items)
+            double = _double_chest(document, pos, state, be)
+            if double is None:
+                self.contents_grid.set_items(be.items)
+            else:
+                items, first, other = double
+                own = range(first, first + be.SIZE)
+                dimmed = [slot for slot in range(len(items)) if slot not in own]
+                where = "the other half at " + " ".join(map(str, other))
+                self.contents_grid.set_items(items, dimmed, first, where)
+                others = sum(stack[1] for stack in items if stack) - total
+                summary += f"; {others} items in {where} (grey)"
+            self.contents_label.setText(summary)
         if isinstance(be, SignBlockEntity):
             self.sign_box.setVisible(True)
             self.sign_box.setEnabled(editable)
@@ -413,7 +424,7 @@ class InspectorPanel(QWidget):
     def _pick_slot(self, slot: int) -> None:
         """A click on a slot of the grid: edit that slot, starting from its contents."""
         self.slot_box.setValue(slot)
-        stack = self.contents_grid.items[slot]
+        stack = self.contents_grid.items[slot + self.contents_grid.first]
         if stack is not None:
             index = self.item_box.findData(stack[0])
             if index >= 0:
@@ -449,3 +460,20 @@ class InspectorPanel(QWidget):
     def _section_changed(self, index: int) -> None:
         if self._pos is not None:
             self.section_requested.emit(self._pos, self.section_box.itemData(index))
+
+
+def _double_chest(
+    document: Document, pos: Pos, state: BlockState, entity: ContainerBlockEntity
+) -> tuple[list[Any], int, Pos] | None:
+    """For a half of a double chest: all 54 slots as the game shows them (the right half
+    first), where this half's slots start, and the other half's position."""
+    from redsim.world.blocks.chest import ChestBlockEntity, CompoundContainer, chest_container
+
+    if not isinstance(entity, ChestBlockEntity):
+        return None
+    container = chest_container(document.level, pos, state, ignore_blocked=True)
+    if not isinstance(container, CompoundContainer):
+        return None
+    first = 0 if container.first is entity else container.first.SIZE
+    other = container.second if first == 0 else container.first
+    return list(container.items), first, other.pos

@@ -243,7 +243,9 @@ CONTAINER_ITEMS = (
 
 class ContainerGrid(QWidget):
     """A container's slots as the game draws them: rows of 9 slots with item icons and
-    counts. Clicking a slot picks it for the slot editor below (``slot_clicked``)."""
+    counts. Clicking a slot picks it for the slot editor below (``slot_clicked``, the
+    slot number in the inspected block). For a double chest the grid shows all 54 slots;
+    the other half's (``dimmed``) are greyed and cannot be picked."""
 
     slot_clicked = Signal(int)
     COLUMNS = 9
@@ -252,14 +254,24 @@ class ContainerGrid(QWidget):
         super().__init__()
         self.items: list[tuple[str, int] | None] = []
         self.selected: int | None = None
+        self.dimmed: frozenset[int] = frozenset()
+        self.first = 0  # the grid index of the inspected block's slot 0
+        self.other_name = ""  # where the dimmed slots are ("the other half at x y z")
         self.setMouseTracking(True)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def slot_size(self) -> int:
         return max(24, min(36, (self.width() - 2) // self.COLUMNS))
 
-    def set_items(self, items: Iterable[tuple[str, int] | None]) -> None:
+    def set_items(
+        self,
+        items: Iterable[tuple[str, int] | None],
+        dimmed: Iterable[int] = (),
+        first: int = 0,
+        other_name: str = "",
+    ) -> None:
         self.items = list(items)
+        self.dimmed, self.first, self.other_name = frozenset(dimmed), first, other_name
         if self.selected is not None and self.selected >= len(self.items):
             self.selected = None
         rows = max(1, -(-len(self.items) // self.COLUMNS))
@@ -267,7 +279,7 @@ class ContainerGrid(QWidget):
         self.update()
 
     def resizeEvent(self, event: Any) -> None:
-        self.set_items(self.items)  # the slot size follows the width
+        self.set_items(self.items, self.dimmed, self.first, self.other_name)  # width → size
         super().resizeEvent(event)
 
     def _rect(self, slot: int) -> QRect:
@@ -282,6 +294,8 @@ class ContainerGrid(QWidget):
         painter = QPainter(self)
         for slot, stack in enumerate(self.items):
             rect = self._rect(slot).adjusted(1, 1, -1, -1)
+            dim = slot in self.dimmed
+            painter.setOpacity(0.35 if dim else 1.0)
             theme.paint_slot(painter, rect)
             if stack is not None:
                 item, count = stack
@@ -291,6 +305,7 @@ class ContainerGrid(QWidget):
                     text = str(count)
                     x = rect.right() - theme.text_width(text, 1) - 2
                     theme.draw_text(painter, x, rect.bottom() - 9, text, "#ffffff", 1)
+            painter.setOpacity(1.0)
             if slot == self.selected:
                 painter.setPen(QPen(QColor("#ffffff"), 2))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -300,19 +315,24 @@ class ContainerGrid(QWidget):
     def mouseMoveEvent(self, event: Any) -> None:
         slot = self.slot_at(event.position().toPoint())
         stack = self.items[slot] if slot is not None else None
+        number = slot - self.first if slot is not None and slot not in self.dimmed else slot
         tip = (
-            f"Slot {slot}: empty"
+            f"Slot {number}: empty"
             if stack is None
-            else f"Slot {slot}: {item_name(stack[0])} ×{stack[1]}"
+            else f"Slot {number}: {item_name(stack[0])} ×{stack[1]}"
         )
+        if slot is not None and slot in self.dimmed:
+            tip = f"{tip.replace(f'Slot {number}', 'Item', 1)} (in {self.other_name})"
         self.setToolTip(tip if slot is not None else "")
 
     def mousePressEvent(self, event: Any) -> None:
         slot = self.slot_at(event.position().toPoint())
-        if slot is not None and event.button() == Qt.MouseButton.LeftButton:
+        usable = slot is not None and slot not in self.dimmed
+        if usable and event.button() == Qt.MouseButton.LeftButton:
+            assert slot is not None
             self.selected = slot
             self.update()
-            self.slot_clicked.emit(slot)
+            self.slot_clicked.emit(slot - self.first)
 
 
 def _placeholder[T: (QTableWidgetItem, QListWidgetItem)](item: T) -> T:

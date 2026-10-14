@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos
-from redsim.editor import sources
+from redsim.editor import pins, sources
 from redsim.editor.clipboard import Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.placement import PlaceRequest
@@ -222,6 +222,10 @@ class MainWindow(
             inspector.page_requested.connect(self._turn_page)
             inspector.section_requested.connect(self._assign_section)
         self.viewport.hover_changed.connect(self._hover)
+        self.block_popup.pin_toggled.connect(self._pin)
+        self.block_popup.keep_open_for = lambda widget: (
+            widget is self.simulation or self.simulation.isAncestorOf(widget)
+        )
         self.diagnostics.highlight_requested.connect(self.viewport.flash)
         self.diagnostics.tick_requested.connect(self._go_to_cause)
         # Hovered coordinates anywhere light their block up in the view.
@@ -464,6 +468,7 @@ class MainWindow(
         )
         self._action(region_menu, "Export selection as schematic…", self._export_schematic)
         view_menu = bar.addMenu("&View")
+        self._action(view_menu, "Remove all pins", self._clear_pins)
         for attribute, text, tip in (
             (
                 "show_sections",
@@ -567,6 +572,9 @@ class MainWindow(
     # ------------------------------------------------------------------ modes and keymap
     def _mode_key(self, mode: str) -> None:
         """Mode shortcuts; the NORMAL key pressed in NORMAL mode clears the selections."""
+        if mode == NORMAL and self.block_popup.isVisible():
+            self.block_popup.close()  # Esc closes the block popup first
+            return
         if mode == NORMAL and self.viewport.region_locked:
             self.viewport.region_locked = False
             self.viewport.update()
@@ -654,10 +662,24 @@ class MainWindow(
         if pos is None:
             self._message("Point at a block to inspect it.")
             return
-        self.block_popup.close_keys = tuple(
+        popup = self.block_popup
+        if popup.isVisible() and popup.pos_ == pos:
+            popup.close()  # E again
+            return
+        popup.close_keys = tuple(
             b.upper() for b in self.keymap.bindings("block.popup") if len(b) == 1
         )
-        self.block_popup.open_at(self.document, pos, QCursor.pos())
+        popup.open_at(self.document, pos, QCursor.pos())
+
+    def _clear_pins(self) -> None:
+        pins.clear_pins(self.document)
+        self.block_popup.refresh(self.document)
+        self._changed()
+
+    def _pin(self, pos: Pos, key: str, on: bool) -> None:
+        """A pin chip of the block popup: show (or stop showing) a value at the block."""
+        pins.set_pin(self.document, pos, key, on)
+        self._changed()
 
     def _focus_pivot(self) -> None:
         """F: the pivot goes to the block under the cursor; with the cursor on coordinates
