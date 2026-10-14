@@ -20,6 +20,7 @@
 | [[note-block-and-copper-bulb]] | Note block (instrument, block event), copper bulb (T flip-flop) | researched | implemented (`world/blocks/note_block.py`, `copper_bulb.py`) | unit tests; game EXP-042, 043 |
 | [[dispensers-and-chests]] | Dispenser/dropper (QC, 4-tick delay, random slot), chests (double, blocked), trapped chest | researched | implemented (`world/blocks/dispenser.py`, `chest.py`; dispense effects not simulated) | unit tests; game EXP-044, 045 |
 | [[pressure-plates]] | Stone/wooden/weighted plates with entities as editor "visitors" | researched | implemented (`world/blocks/pressure_plate.py`) | unit tests; game EXP-046 |
+| [[composter-and-signs]] | Composter (levels, 7→8 after 20 ticks, hopper takes bone meal); standing and wall signs (support, piston-blocking, text) | researched | implemented (`world/blocks/composter.py`, `sign.py`) | unit tests; game EXP-048, 049 |
 
 Source locations for all of these: [[research/source-map]]. Quirks: [[quirks]]. Overall
 state: [[project-state]].

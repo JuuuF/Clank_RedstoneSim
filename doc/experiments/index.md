@@ -89,6 +89,7 @@ reading and unit tests only.
 | EXP-046 | `pressure_plates`: armor stands and items (real entities) on stone, oak and weighted plates; pressed next tick, released at the recheck | 60 | match | 2026-10-12 |
 | EXP-047 | `piston_scheduled_pulses`: sticky pistons on pulses that start and end in scheduled ticks (`isHandlingTick`): a 2-tick pulse through a 1-tick repeater spits the block; observer-driven pistons push, pull and re-trigger their observers through the moving blocks; states and extension progress compared | 30 | match | 2026-10-12 |
 | EXP-048 | `signs`: standing and wall signs on stones pushed by pistons stay (moving blocks and heads count as solid); a sign in front of a piston stops it (block entity: not pushable); standing and wall signs pop when their support is removed | 6 | match | 2026-10-14 |
+| EXP-049 | `composters`: level 7 becomes 8 after 20 ticks (comparator output compared), a hopper below a full composter takes the bone meal and the composter empties, a piston pushes a composter | 24 | match | 2026-10-14 |
 
 Hopper recordings also compare each hopper's `Items` and `TransferCooldown` (and the
 barrels' `Items`, `watch_items`) every tick with `data get block`.

@@ -117,6 +117,7 @@ page is the summary to start from.*
 | dispenser, dropper (+ block entity, 9 slots) | `dispenser.py` | QC trigger, 4-tick delay, random slot, dropper into containers | EXP-044 (dispense effects not simulated) |
 | chest, trapped chest (+ block entity, single/double) | `chest.py` | double-chest slots, blocked chest reads 0, hoppers ignore blocking | EXP-045 |
 | pressure plates (stone, polished blackstone, 12 woods, light/heavy weighted) | `pressure_plate.py` | press/release timing, weights, "visitors" instead of entities | EXP-046 |
+| composter (levels 0–8, a signal source kind) | `composter.py` | level timing, comparator, player/hopper emptying, pistons | EXP-049 |
 | standing and wall signs (12 woods, + block entity with front/back text) | `sign.py` | placement, popping, blocking pistons, text edits, saving, rotation | EXP-048 |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 

@@ -836,7 +836,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         of the block below (orientation from the cursor ray)."""
         yaw, pitch = self.viewport.player_view()
         request = PlaceRequest(self.viewport.build_face, yaw, pitch)
-        kind = sources.SOURCE_BLOCKS.get(self.current_block.id)
+        kind = sources.PLACED_AS_SOURCE.get(self.current_block.id)
         if kind is not None:
             strength = self.inventory.strength.value()
             vary = self.viewport.vary_state
@@ -904,7 +904,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         yaw, pitch = self.viewport.player_view()
         request = PlaceRequest(Direction.UP, yaw, pitch)
         block = self.current_block
-        kind = sources.SOURCE_BLOCKS.get(block.id)
+        kind = sources.PLACED_AS_SOURCE.get(block.id)
         self.document.notice = ""
         if kind is not None:
             strength = self.inventory.strength.value()

@@ -124,7 +124,10 @@ def test_playing_backwards_stops_at_tick_0(app: Any) -> None:
     bar.warp.setChecked(True)
     bar.reverse.setChecked(True)
     assert bar.backwards and not bar.play.isChecked()
-    window._play_tick()
+    for _ in range(50):  # each call runs what fits its time budget (as each frame does)
+        window._play_tick()
+        if not bar.reverse.isChecked():
+            break
     assert document.tick == 0 and not bar.reverse.isChecked()
     bar.play.setChecked(True)
     bar.reverse.setChecked(True)

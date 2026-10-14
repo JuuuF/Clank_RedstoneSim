@@ -22,7 +22,7 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
    from a world is reopened; an on-disk chunk cache; an index of the save's builds with
    "go to"; pending ticks in the written copy.
 6. [x] **O9 schematics:** import/export of Litematica, Sponge `.schem` and vanilla structure `.nbt`.
-7. [ ] **O6/O7 mechanics:** composter (block and source kind), hopper and chest as source
+7. [x] **O6/O7 mechanics:** composter (block and source kind), hopper and chest as source
    kinds, daylight sensor; verified in game like the other blocks.
 
 ## Log
@@ -74,3 +74,9 @@ line to the log. Items that need the owner (O5, O10, O11) or were deferred on pu
   its data fixer for older data versions): structure files with the old keys placed
   nothing. Checked in game with `tools/gameserver/check_structure.py` (all 18 cells,
   chest contents, sign text). Litematica and WorldEdit themselves were not run (mods).
+- O6/O7 done: composter (`world/blocks/composter.py`: levels, 7→8 after 20 ticks, a
+  player or a hopper below empties a full one, pistons move it; EXP-049 matches) and
+  hopper, chest and composter as signal-source kinds (hoppers and chests placed from the
+  Items folder stay empty; only the Signal sources folder places filled ones). Daylight
+  sensors were left out: they need sky light and the time of day, which the simulator
+  does not model.

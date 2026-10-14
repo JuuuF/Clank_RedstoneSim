@@ -28,8 +28,9 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/``):
   * ``setItem`` L80 and ``removeItem`` L74 do **not** call ``setChanged`` (unlike other
     containers), so ``/item replace`` on a hopper does not update comparators.
 
-Containers are block entities extending ``ContainerBlockEntity`` (barrels, hoppers); there
-are no chests, composters or container entities in scope. Pistons cannot move hoppers (block
+Containers are block entities extending ``ContainerBlockEntity`` (barrels, hoppers, chests,
+dispensers, droppers); a full composter above gives its bone meal (``_take_compost``);
+there are no container entities in scope. Pistons cannot move hoppers (block
 entity). Dust can sit on top of a hopper (``RedstoneWireBlock.canSurviveOn``).
 """
 
@@ -195,13 +196,28 @@ def eject_items(level: Level, pos: Pos, hopper: HopperBlockEntity) -> bool:
 
 
 def suck_in_items(level: Level, hopper: HopperBlockEntity) -> bool:
-    container = container_at(level, offset(hopper.pos, Direction.UP))
+    above = offset(hopper.pos, Direction.UP)
+    container = container_at(level, above)
     if container is None:
-        return False  # the game would collect item entities here (none simulated)
+        return _take_compost(level, hopper, above)  # (item entities are not simulated)
     for slot in range(container.SIZE):
         if _try_take_in_item_from_slot(level, hopper, container, slot):
             return True
     return False
+
+
+def _take_compost(level: Level, hopper: HopperBlockEntity, above: Pos) -> bool:
+    """A full composter above gives its bone meal (``ComposterBlock.OutputContainer``):
+    if the hopper has room for it, the composter empties (its ``setChanged``)."""
+    from redsim.world.blocks.composter import BONE_MEAL, LEVEL, READY, ComposterBlock
+
+    state = level.get_block_state(above)
+    if not isinstance(state.block, ComposterBlock) or state.get(LEVEL) != READY:
+        return False
+    if add_item(level, None, hopper, (BONE_MEAL, 1)) is not None:
+        return False
+    level.set_block_and_update(above, state.with_(LEVEL, 0))
+    return True
 
 
 def _try_take_in_item_from_slot(

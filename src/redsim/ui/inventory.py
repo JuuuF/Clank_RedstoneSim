@@ -90,7 +90,10 @@ INVENTORY = Folder(
                 "minecraft:obsidian",
             ),
         ),
-        Folder("Signal sources", ("minecraft:barrel", "minecraft:lectern", "minecraft:cake")),
+        Folder(
+            "Signal sources",
+            ("minecraft:barrel", "minecraft:lectern", "minecraft:cake", "minecraft:composter"),
+        ),
         Folder(
             "Items",
             (
@@ -659,7 +662,7 @@ class InventoryBar(QWidget):
         self.canvas.update()
         self.favourite_strip.updateGeometry()
         self.favourite_strip.update()
-        is_source = self.current in sources.SOURCE_BLOCKS
+        is_source = self.current in sources.PLACED_AS_SOURCE
         self.strength_label.setVisible(is_source)
         self.strength.setVisible(is_source)
 
@@ -686,7 +689,7 @@ class InventoryBar(QWidget):
 
     def _fit_strength(self, block_id: str) -> None:
         """The strength box offers what the chosen source can give (cakes: even 2-14)."""
-        kind = sources.SOURCE_BLOCKS.get(block_id)
+        kind = sources.PLACED_AS_SOURCE.get(block_id)
         if kind is None:
             return
         values = sources.KINDS[kind].strengths

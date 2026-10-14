@@ -11,6 +11,7 @@ from redsim.world.blocks.attached import ButtonBlock, LeverBlock
 from redsim.world.blocks.cake import CakeBlock
 from redsim.world.blocks.chest import ChestBlock, TrappedChestBlock
 from redsim.world.blocks.comparator import ComparatorBlock
+from redsim.world.blocks.composter import ComposterBlock
 from redsim.world.blocks.container import BarrelBlock
 from redsim.world.blocks.copper_bulb import COPPER_BULB_IDS, CopperBulbBlock
 from redsim.world.blocks.diode import RepeaterBlock
@@ -155,6 +156,7 @@ PISTON = register(PistonBaseBlock(sticky=False))
 STICKY_PISTON = register(PistonBaseBlock(sticky=True))
 PISTON_HEAD = register(PistonHeadBlock())
 MOVING_PISTON = register(MovingPistonBlock())
+COMPOSTER = register(ComposterBlock())
 SIGNS = tuple(register(StandingSignBlock(wood)) for wood in WOODS)
 WALL_SIGNS = tuple(register(WallSignBlock(wood)) for wood in WOODS)
 OAK_SIGN, OAK_WALL_SIGN = SIGNS[0], WALL_SIGNS[0]
@@ -166,6 +168,7 @@ __all__ = [
     "BEDROCK",
     "CAKE",
     "COMPARATOR",
+    "COMPOSTER",
     "COBBLESTONE",
     "GLASS",
     "GLOWSTONE",

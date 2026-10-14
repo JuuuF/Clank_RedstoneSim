@@ -18,8 +18,9 @@ from redsim.core.pos import Pos
 from redsim.sim.level import Level
 from redsim.world import blocks
 from redsim.world.block import BlockState
+from redsim.world.blocks.composter import LEVEL
 from redsim.world.blocks.container import BarrelBlockEntity, container_signal
-from redsim.world.properties import BITES, FACING, HAS_BOOK, HORIZONTAL_FACING
+from redsim.world.properties import BITES, FACING, FACING_HOPPER, HAS_BOOK, HORIZONTAL_FACING
 
 #: Item used to fill barrels (stacks to 64).
 FILL_ITEM = "minecraft:redstone"
@@ -65,8 +66,42 @@ KINDS: dict[str, SourceKind] = {
         "Cake: signal (7 - bites) * 2, so only even strengths 2-14. Needs a solid block "
         "below; pistons break it. Right click (NORMAL mode) eats a slice.",
     ),
+    "hopper": SourceKind(
+        "hopper",
+        "minecraft:hopper",
+        "Hopper (container)",
+        tuple(range(16)),
+        "Hopper: 5 slots; the signal follows the fill level like a barrel's (1 item gives "
+        "1, 320 give 15). It moves items: into a container it points at and out of one "
+        "above, unless powered (locked). Not a full block. Pistons cannot move it.",
+    ),
+    "chest": SourceKind(
+        "chest",
+        "minecraft:chest",
+        "Chest (container)",
+        tuple(range(16)),
+        "Chest: 27 slots, read like a barrel; a chest next to it of the same kind joins it "
+        "into a double chest (54 slots, both halves read the whole). A block on top stops "
+        "comparators reading it (0). Not a full block: it does not conduct. Pistons "
+        "cannot move it.",
+    ),
+    "composter": SourceKind(
+        "composter",
+        "minecraft:composter",
+        "Composter (level)",
+        tuple(range(9)),
+        "Composter: the signal is its level, 0-8. Level 7 becomes 8 after 20 ticks; a "
+        "player (right click) or a hopper below empties a full one. Solid but hollow: it "
+        "does not conduct. Pistons can move it (no block entity).",
+    ),
 }
 SOURCE_BLOCKS = {kind.block_id: kind.id for kind in KINDS.values()}
+#: Blocks placed as a signal source of the chosen strength (BUILD mode, the inventory's
+#: Signal sources folder). Hoppers and chests are placed empty, like any container; the
+#: inspector still offers them as source kinds.
+PLACED_AS_SOURCE = {
+    block_id: kind for block_id, kind in SOURCE_BLOCKS.items() if kind not in ("hopper", "chest")
+}
 
 
 def kind_of(state: BlockState) -> str | None:
@@ -87,14 +122,19 @@ def nearest_strength(kind: str, strength: int) -> int:
 
 
 @cache
-def barrel_total(strength: int) -> int:
-    """Fewest items (in 64-stacks) for a barrel signal of ``strength``."""
+def barrel_total(strength: int, size: int = BarrelBlockEntity.SIZE) -> int:
+    """Fewest items (in 64-stacks) for a signal of ``strength`` from a container of
+    ``size`` slots (a barrel by default)."""
     if strength <= 0:
         return 0
-    for total in range(1, BarrelBlockEntity.SIZE * 64 + 1):
-        if container_signal(_stacks(total), BarrelBlockEntity.SIZE) >= strength:
+    for total in range(1, size * 64 + 1):
+        if container_signal(_stacks(total), size) >= strength:
             return total
-    raise ValueError(f"no barrel fill gives {strength}")
+    raise ValueError(f"no fill of {size} slots gives {strength}")
+
+
+#: Slots of the containers offered as sources.
+CONTAINER_SIZES = {"barrel": 27, "hopper": 5, "chest": 27}
 
 
 def _stacks(total: int) -> list[tuple[str, int]]:
@@ -114,13 +154,24 @@ def source_setblock(
     block = blocks.get(KINDS[kind].block_id)
     state = block.default_state
     facing = _facing_of(oriented)
-    if kind == "barrel":
-        state = state.with_(FACING, facing or Direction.UP)
+    if kind in CONTAINER_SIZES:
+        if kind == "barrel":
+            state = state.with_(FACING, facing or Direction.UP)
+        elif kind == "hopper":  # down or sideways, never up
+            state = state.with_(
+                FACING_HOPPER, facing if facing in FACING_HOPPER.values else Direction.DOWN
+            )
+        else:
+            horizontal = facing if facing in HORIZONTAL else Direction.NORTH
+            state = state.with_(HORIZONTAL_FACING, horizontal)
+        total = barrel_total(strength, CONTAINER_SIZES[kind])
         items = [
             {"Slot": slot, "id": item, "count": count}
-            for slot, (item, count) in enumerate(_stacks(barrel_total(strength)))
+            for slot, (item, count) in enumerate(_stacks(total))
         ]
         return repr(state), {"Items": items}
+    if kind == "composter":
+        return repr(state.with_(LEVEL, strength)), None
     if kind == "lectern":
         horizontal = facing if facing in HORIZONTAL else Direction.NORTH
         state = state.with_(HORIZONTAL_FACING, horizontal).with_(HAS_BOOK, strength > 0)
@@ -135,7 +186,7 @@ def source_setblock(
 def _facing_of(state: BlockState | None) -> Direction | None:
     if state is None:
         return None
-    for prop in (FACING, HORIZONTAL_FACING):
+    for prop in (FACING, HORIZONTAL_FACING, FACING_HOPPER):
         if state.has(prop):
             value = state.get(prop)
             return value if isinstance(value, Direction) else None

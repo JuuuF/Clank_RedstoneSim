@@ -402,6 +402,31 @@ SIGNS = Scenario(
     },
 )
 
+COMPOSTERS = Scenario(
+    name="composters",
+    description=(
+        "Composters: level 7 becomes 8 after 20 ticks (a comparator reads it), a hopper "
+        "below takes a full composter's bone meal (it empties), a piston pushes one."
+    ),
+    size=(6, 8),
+    setup=[
+        ((2, 1, 1), "minecraft:comparator[facing=west]"),
+        ((1, 1, 1), "minecraft:composter[level=7]"),
+        ((3, 1, 1), "minecraft:redstone_wire"),
+        ((1, 1, 3), "minecraft:hopper[facing=east]"),
+        ((1, 2, 3), "minecraft:composter[level=8]"),
+        ((2, 1, 3), "minecraft:comparator[facing=west]"),
+        ((1, 1, 5), "minecraft:piston[facing=east]"),
+        ((2, 1, 5), "minecraft:composter[level=3]"),
+    ],
+    watch=[
+        (1, 1, 1), (2, 1, 1), (3, 1, 1), (1, 1, 3), (1, 2, 3), (2, 1, 3), (2, 1, 5),
+        (3, 1, 5),
+    ],  # fmt: skip
+    ticks=24,
+    inputs={2: [((0, 1, 5), RB)]},
+)
+
 CLONE_INVERTER = Scenario(
     name="clone_inverter",
     description=(
@@ -1158,6 +1183,7 @@ ALL = [
     SLIME_BRANCH_PUSH,
     PISTON_POPS_COMPONENTS,
     SIGNS,
+    COMPOSTERS,
     CLONE_INVERTER,
     FILL_REMOVES_LINE,
     CLONE_MOVE_RUNNING,

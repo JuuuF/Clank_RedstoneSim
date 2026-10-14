@@ -14,6 +14,7 @@ import numpy as np
 
 from redsim.core.direction import Direction
 from redsim.world.block import BlockState
+from redsim.world.blocks.composter import LEVEL as COMPOSTER_LEVEL
 from redsim.world.blocks.redstone_wire import PROPERTY_BY_DIRECTION
 from redsim.world.blocks.sign import ROTATION, SignBlock, WallSignBlock
 from redsim.world.properties import (
@@ -239,7 +240,27 @@ def block_boxes(state: BlockState) -> list[Box]:
         return face_horizontally(model, state.get(HORIZONTAL_FACING))
     if isinstance(state.block, SignBlock):
         return _sign(state)
+    if block_id == "minecraft:composter":
+        return _composter(int(state.get(COMPOSTER_LEVEL)))
     return full(UNKNOWN)
+
+
+COMPOSTER_WOOD = rgb(0.55, 0.40, 0.24)
+COMPOST = rgb(0.33, 0.25, 0.14)
+
+
+def _composter(level: int) -> list[Box]:
+    """A hollow box (floor and four walls), the compost inside at its level."""
+    model = [
+        Box((0, 0, 0), (16, 2, 16), COMPOSTER_WOOD),
+        Box((0, 2, 0), (2, 16, 16), COMPOSTER_WOOD),
+        Box((14, 2, 0), (16, 16, 16), COMPOSTER_WOOD),
+        Box((2, 2, 0), (14, 16, 2), COMPOSTER_WOOD),
+        Box((2, 2, 14), (14, 16, 16), COMPOSTER_WOOD),
+    ]
+    if level:
+        model.append(Box((2, 2, 2), (14, min(15, 1 + 2 * level), 14), COMPOST))
+    return model
 
 
 SIGN_WOOD = rgb(0.62, 0.47, 0.30)

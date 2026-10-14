@@ -94,7 +94,7 @@ class EditTools:
         state = placement_state(block, request, level, target)
         if state is not None:
             state = view.vary_state(state)
-        kind = sources.SOURCE_BLOCKS.get(block.id)
+        kind = sources.PLACED_AS_SOURCE.get(block.id)
         if state is not None and kind is not None:
             text, _ = sources.source_setblock(kind, view.build_strength, state)
             state = blocks.parse_state(text)

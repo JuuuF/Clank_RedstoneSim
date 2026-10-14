@@ -30,6 +30,7 @@ from redsim.ui.panel_widgets import (
     CONTAINER_ITEMS,
     NO_SELECTION,
     ContainerGrid,
+    FlowLayout,
     HoverWatch,
     _Choice,
     _later,
@@ -111,9 +112,7 @@ class InspectorPanel(QWidget):
         source_layout = self._source_form = QFormLayout(self.source_box)
         source_layout.setContentsMargins(0, 6, 0, 0)
         self.source_kind = QWidget()
-        kind_layout = QHBoxLayout(self.source_kind)
-        kind_layout.setContentsMargins(0, 0, 0, 0)
-        kind_layout.setSpacing(2)
+        kind_layout = FlowLayout(self.source_kind)  # six kinds: they wrap
         self.kind_buttons: dict[str, QPushButton] = {}
         for kind in sources.KINDS.values():
             button = QPushButton(kind.id.capitalize())
