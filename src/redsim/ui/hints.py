@@ -74,6 +74,7 @@ def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
             (key("build.break"), "remove"),
             (key("build.layer"), "layer up/down"),
             (key("edit.rotate"), "turn new block"),
+            (f"{key('inventory.shape')}/{key('inventory.color')}", "shape/color"),
             (key("edit.flip_depth"), "upside down"),
             (key("pick"), "pick"),
             ("1-9", "inventory"),

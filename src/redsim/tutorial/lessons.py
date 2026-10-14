@@ -225,6 +225,11 @@ def _undone(snap: Snapshot, memo: Memo) -> bool:
     return snap.redo > start(memo).redo
 
 
+def _wool_variant(snap: Snapshot, memo: Memo) -> bool:
+    block = snap.build_block or ""
+    return block.endswith("_wool_stairs") or block.endswith("_wool_slab")
+
+
 def _layer_moved(snap: Snapshot, memo: Memo) -> bool:
     return changed_by(snap.pivot[1], start(memo).pivot[1], 1)
 
@@ -409,7 +414,7 @@ LESSONS: tuple[Lesson, ...] = (
             ),
             Step(
                 "Choose redstone dust",
-                "Press the number key of the <b>Redstone</b> folder, then the number of "
+                "Press the number key of the <b>Redstone</b> folder, then <b>Wiring</b>, then "
                 "<b>Redstone Dust</b>. Or search: {key:search.blocks}, type “dust”, Enter.",
                 _chose("minecraft:redstone_wire"),
             ),
@@ -447,6 +452,13 @@ LESSONS: tuple[Lesson, ...] = (
                 "cursor). {key:build.layer} moves the layer up or down a block, for "
                 "building in the air.",
                 _layer_moved,
+            ),
+            Step(
+                "Shapes and colors",
+                "Choose a wool block (search “wool”), then press {key:inventory.color} for "
+                "its other colors and {key:inventory.shape} for its stairs and slab (Shift "
+                "goes back). The rows above the hotbar show them; a click picks one.",
+                _wool_variant,
             ),
         ),
     ),
@@ -612,8 +624,8 @@ LESSONS: tuple[Lesson, ...] = (
             ),
             Step(
                 "Signs",
-                "Place a sign (inventory folder <b>Special</b>) and type its text in the "
-                "inspector.",
+                "Place a sign (inventory <b>Wood</b> › a wood, or search “sign”) and type its "
+                "text in the inspector.",
                 _more(signs_with_text),
             ),
             Step(

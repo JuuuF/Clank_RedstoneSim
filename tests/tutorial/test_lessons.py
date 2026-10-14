@@ -111,6 +111,7 @@ def _actions(p: Player) -> list[Callable[[], None] | None]:
         turn,
         lambda: doc.undo(),
         lambda: v.update(pivot=(v["pivot"][0], v["pivot"][1] + 1, v["pivot"][2])),
+        lambda: v.update(build_block="minecraft:red_wool_stairs"),
         # 5. Select
         lambda: v.update(mode="select"),
         lambda: v.update(regions=(inverter,)),

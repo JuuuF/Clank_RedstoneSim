@@ -228,6 +228,12 @@ ACTIONS: tuple[ActionSpec, ...] = (
     # ^ is the key left of 1 on German layouts (` on US ones); its dead-key form is
     # translated by the main window.
     ActionSpec("inventory.up", "Inventory: back to the parent folder (the row below)", ("^", "`")),
+    ActionSpec(
+        "inventory.shape", "Next shape of the chosen block (planks, stairs, slab, …)", ("C",)
+    ),
+    ActionSpec("inventory.shape_back", "Previous shape of the chosen block", ("Shift+C",)),
+    ActionSpec("inventory.color", "Next color (or copper stage) of the chosen block", ("X",)),
+    ActionSpec("inventory.color_back", "Previous color of the chosen block", ("Shift+X",)),
 )
 SPECS: dict[str, ActionSpec] = {spec.id: spec for spec in ACTIONS}
 
@@ -580,6 +586,10 @@ HOTKEY_GROUPS: tuple[tuple[str, str | None, tuple[str, ...]], ...] = (
         (
             *(f"inventory.{slot}" for slot in range(1, 10)),
             "inventory.up",
+            "inventory.shape",
+            "inventory.shape_back",
+            "inventory.color",
+            "inventory.color_back",
             *(f"recent.{slot}" for slot in range(1, 10)),
         ),
     ),

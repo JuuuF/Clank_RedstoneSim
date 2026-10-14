@@ -137,6 +137,7 @@ class ContraptionsPanel(QObject):
     load_prefab = Signal(str)
     delete_prefab = Signal(str)
     import_prefab = Signal()
+    import_schematic = Signal()
     export_prefab = Signal(str)
     create_group = Signal()
     add_port = Signal(str)
@@ -166,11 +167,17 @@ class ContraptionsPanel(QObject):
             row.addWidget(button)
         prefab_layout.addLayout(row)
         row = QHBoxLayout()
-        for text, slot in (
-            ("Import…", self.import_prefab.emit),
-            ("Export…", lambda: self._with_prefab(self.export_prefab)),
+        for text, slot, tip in (
+            (
+                "Import schematic…",
+                self.import_schematic.emit,
+                "A schematic from the library (or Browse… for a new one) becomes a prefab",
+            ),
+            ("Import file…", self.import_prefab.emit, "A prefab file (.json) or a schematic"),
+            ("Export…", lambda: self._with_prefab(self.export_prefab), "As .json or a schematic"),
         ):
             button = QPushButton(text)
+            button.setToolTip(tip)
             button.clicked.connect(slot)
             row.addWidget(button)
         prefab_layout.addLayout(row)

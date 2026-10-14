@@ -39,7 +39,7 @@ def test_recent_blocks_are_remembered_and_saved(app: Any) -> None:
     bar.remember("minecraft:repeater")
     assert bar.recent[:2] == ["minecraft:repeater", "minecraft:redstone_wire"]
     assert load_recent()[:2] == bar.recent[:2]
-    bar.nav.path = [0, 7]  # Redstone › Switches
+    bar.nav.path = [0, 1]  # Redstone › Switches
     bar.refresh()
     bar.go_to_depth(1)
     assert bar.nav.breadcrumb() == ["Redstone"]
@@ -50,7 +50,7 @@ def test_recent_blocks_are_remembered_and_saved(app: Any) -> None:
         QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
     for _ in range(3):
-        bar.press(8)  # Switches
+        bar.press(2)  # Switches
         run_deletes()
         bar.go_up()
         run_deletes()
@@ -166,7 +166,7 @@ def test_inventory_stack_grows_upwards(app: Any) -> None:
     root_spots = bar.canvas._layout()
     root_top = min(s.rect.top() for s in root_spots if s.kind == "slot")
     bar.press(1)  # Redstone
-    bar.press(8)  # Switches
+    bar.press(2)  # Switches
     spots = bar.canvas._layout()
     rows = {}
     for spot in spots:
@@ -179,8 +179,8 @@ def test_inventory_stack_grows_upwards(app: Any) -> None:
     names = [s.title for s in spots if s.kind == "slot" and s.depth == 2]
     assert names[0] in ("Lever", "lever")
     assert root_top == min(s.rect.top() for s in root_spots if s.kind == "slot")
-    bar.pick_at_level(0, 1)  # the Movement slot of the root row
-    assert bar.nav.breadcrumb() == ["Movement"]
+    bar.pick_at_level(0, 1)  # the Wood slot of the root row
+    assert bar.nav.breadcrumb() == ["Wood"]
 
 
 def test_pixel_font_and_theme(app: Any) -> None:

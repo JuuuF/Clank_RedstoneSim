@@ -34,6 +34,8 @@ FORMATS = {
     ".schem": "Sponge schematic (WorldEdit)",
     ".nbt": "Structure file (structure blocks)",
 }
+#: File types a schematic library lists.
+SUFFIXES = (".litematic", ".schem", ".schematic", ".nbt")
 FILE_FILTER = (
     "Schematics (*.litematic *.schem *.schematic *.nbt);;"
     "Litematica (*.litematic);;Sponge / WorldEdit (*.schem);;Structure files (*.nbt)"
@@ -100,6 +102,20 @@ def _signed64(value: int) -> int:
 
 
 # ---------------------------------------------------------------------- reading
+def read_schematic_metadata(path: Path) -> dict[str, str]:
+    """The name, author and description a schematic carries (Litematica and Sponge
+    files have a ``Metadata`` compound; structure files have none)."""
+    raw = nbt.decompress(path.read_bytes())
+    _, root = nbt.loads(raw)
+    meta = root.get("Metadata") or root.get("Schematic", {}).get("Metadata") or {}
+    out = {}
+    for key in ("Name", "Author", "Description"):
+        value = meta.get(key) if isinstance(meta, dict) else None
+        if isinstance(value, str) and value.strip():
+            out[key.lower()] = value.strip()
+    return out
+
+
 def read_schematic(path: Path) -> Prefab:
     """A schematic file as a prefab named after the file."""
     raw = nbt.decompress(path.read_bytes())

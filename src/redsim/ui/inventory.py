@@ -13,7 +13,7 @@ line here; folders can nest when one grows past nine entries.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
 from redsim.editor import sources
 from redsim.ui import pixel_icons, theme
 from redsim.ui.assets import Assets
+from redsim.ui.block_tree import BlockIndex, Folder
 from redsim.ui.icons import block_pixmap
 from redsim.ui.names import block_name
 from redsim.ui.preferences import config_dir
@@ -43,103 +44,18 @@ ICON_SIZE = 32
 TILE_HEIGHT = 58
 
 
-@dataclass(frozen=True)
-class Folder:
-    title: str
-    children: tuple[Folder | str, ...] = field(default_factory=tuple)  # str: block id
-
-
-PAGE = 9  # entries per folder: one per number key
-
-
-def paged(title: str, block_ids: list[str]) -> Folder:
-    """A folder of many blocks in pages of nine (folders of folders as needed, each
-    named after its first block), keeping their order."""
-    entries: list[Folder | str] = list(block_ids)
-    while len(entries) > PAGE:
-        pages = [entries[i : i + PAGE] for i in range(0, len(entries), PAGE)]
-        entries = [Folder(_first_name(page), tuple(page)) for page in pages]
-    return Folder(title, tuple(entries))
-
-
-def _first_name(entries: list[Folder | str]) -> str:
-    first = entries[0]
-    return first.title if isinstance(first, Folder) else block_name(first)
-
-
-def creative_tab(title: str) -> Folder:
-    """One of the game's creative tabs (Building, Colored, Natural): its blocks the
-    simulator has, in the game's order (``catalog_data.CREATIVE_TABS``)."""
+def block_index() -> BlockIndex:
+    """The registered blocks, in the game's creative-tab order."""
     from redsim.world.blocks.catalog_data import CREATIVE_TABS
 
-    return paged(title, [b for b in CREATIVE_TABS[title] if b in blocks.REGISTRY])
+    order = [b for tab in CREATIVE_TABS.values() for b in tab]
+    return BlockIndex(blocks.REGISTRY, order)
 
 
-INVENTORY = Folder(
-    "Inventory",
-    (
-        Folder(
-            "Redstone",
-            (
-                "minecraft:redstone_wire",
-                "minecraft:redstone_torch",
-                "minecraft:repeater",
-                "minecraft:comparator",
-                "minecraft:observer",
-                "minecraft:redstone_block",
-                "minecraft:target",
-                Folder(
-                    "Switches",
-                    (
-                        "minecraft:lever",
-                        "minecraft:stone_button",
-                        "minecraft:oak_button",
-                        "minecraft:stone_pressure_plate",
-                        "minecraft:oak_pressure_plate",
-                        "minecraft:light_weighted_pressure_plate",
-                        "minecraft:heavy_weighted_pressure_plate",
-                    ),
-                ),
-                Folder(
-                    "Outputs",
-                    ("minecraft:redstone_lamp", "minecraft:copper_bulb", "minecraft:note_block"),
-                ),
-            ),
-        ),
-        Folder(
-            "Movement",
-            (
-                "minecraft:piston",
-                "minecraft:sticky_piston",
-                "minecraft:slime_block",
-                "minecraft:honey_block",
-                "minecraft:obsidian",
-            ),
-        ),
-        Folder(
-            "Signal sources",
-            ("minecraft:barrel", "minecraft:lectern", "minecraft:cake", "minecraft:composter"),
-        ),
-        Folder(
-            "Items",
-            (
-                "minecraft:hopper",
-                "minecraft:dropper",
-                "minecraft:dispenser",
-                "minecraft:chest",
-                "minecraft:trapped_chest",
-            ),
-        ),
-        Folder("Rails", ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail")),
-        creative_tab("Building"),
-        creative_tab("Colored"),
-        creative_tab("Natural"),
-        Folder(
-            "Special",
-            ("minecraft:glass", "minecraft:glowstone", "minecraft:bedrock", "minecraft:oak_sign"),
-        ),
-    ),
-)
+BLOCK_INDEX = block_index()
+#: The folder tree (``ui/block_tree.py``): redstone by role, woods, stone families,
+#: colors, copper stages, natural blocks; a block can be in several folders.
+INVENTORY = BLOCK_INDEX.tree(block_name)
 
 
 class InventoryNav:
@@ -255,15 +171,20 @@ def block_label(block_id: str) -> str:
     return block_name(block_id)
 
 
-def all_blocks(folder: Folder = INVENTORY, path: tuple[str, ...] = ()) -> list[tuple[str, str]]:
-    """Every block in the inventory with its folder path (``"Redstone › Switches"``)."""
-    found: list[tuple[str, str]] = []
-    for child in folder.children:
-        if isinstance(child, Folder):
-            found.extend(all_blocks(child, (*path, child.title)))
-        else:
-            found.append((child, " › ".join(path)))
-    return found
+def all_blocks(folder: Folder = INVENTORY) -> list[tuple[str, str]]:
+    """Every block in the inventory once, with the first folder path it has
+    (``"Redstone › Switches"``; blocks can be in several folders)."""
+    found: dict[str, str] = {}
+
+    def walk(current: Folder, path: tuple[str, ...]) -> None:
+        for child in current.children:
+            if isinstance(child, Folder):
+                walk(child, (*path, child.title) if child.title != "More…" else path)
+            else:
+                found.setdefault(child, " › ".join(path))
+
+    walk(folder, ())
+    return list(found.items())
 
 
 def first_block(folder: Folder) -> str | None:
@@ -282,7 +203,7 @@ class _Spot:
     """A clickable area of the inventory canvas."""
 
     rect: QRect
-    kind: str  # "slot": a folder level's row
+    kind: str  # "slot": a folder level's row; "variant": a shape or color of the chosen
     depth: int
     index: int
     block: str | None
@@ -326,6 +247,7 @@ class InventoryCanvas(QWidget):
     SLOT = 40  # the game's hotbar at 2×: 20-pixel slots
     GAP = 6
     NAME = 22
+    VARIANT = 24  # a row of the chosen block's shapes or colors (C, X)
     X0 = 16  # left edge of the first slot (the hotbar sprite starts 2 pixels earlier)
 
     def __init__(self, bar: InventoryBar) -> None:
@@ -359,8 +281,15 @@ class InventoryCanvas(QWidget):
         """The height being shown: while a row slides in or out, the animated one."""
         return self.animated_height or self.rows_height()
 
+    def variant_rows(self) -> list[tuple[str, list[str]]]:
+        """The chosen block's shapes and colors, a row each (key, blocks), if it has any."""
+        shapes, colors = self.bar.variants()
+        rows = [("C", shapes), ("X", colors)]
+        return [(key, found) for key, found in rows if len(found) > 1]
+
     def rows_height(self) -> int:
-        return self.NAME + (len(self.bar.nav.path) + 1) * (self.SLOT + self.GAP) + 4
+        variants = len(self.variant_rows()) * self.VARIANT
+        return variants + self.NAME + (len(self.bar.nav.path) + 1) * (self.SLOT + self.GAP) + 4
 
     def sizeHint(self) -> QSize:
         return QSize(self.X0 + HOTBAR_SLOTS * self.SLOT + 6, self.rows_height())
@@ -388,6 +317,11 @@ class InventoryCanvas(QWidget):
                     spots.append(_Spot(rect, "slot", depth, index, first_block(child), child.title))
                 else:
                     spots.append(_Spot(rect, "slot", depth, index, child, block_label(child)))
+        for row, (_, found) in enumerate(self.variant_rows()):
+            top = 2 + row * self.VARIANT
+            for index, block_id in enumerate(found):
+                rect = QRect(self.X0 + 18 + index * 21, top, 20, 20)
+                spots.append(_Spot(rect, "variant", row, index, block_id, block_label(block_id)))
         return spots
 
     # ------------------------------------------------------------------ painting
@@ -408,8 +342,13 @@ class InventoryCanvas(QWidget):
             for index in range(HOTBAR_SLOTS):
                 rect = QRect(self.X0 + index * self.SLOT, top, self.SLOT, self.SLOT)
                 theme.paint_slot(painter, rect.adjusted(1, 1, -1, -1))
+        for row, (key, _) in enumerate(self.variant_rows()):  # the key that steps through it
+            theme.draw_text(painter, self.X0, 2 + row * self.VARIANT + 2, key, theme.GOLD)
         for spot in self.spots:
             hovered = self.hovered is not None and self.hovered.rect == spot.rect
+            if spot.kind == "variant":
+                self._paint_variant(painter, spot, hovered)
+                continue
             child = self._levels()[spot.depth][1].children[spot.index]
             if isinstance(child, Folder):
                 selected = spot.depth < active and path[spot.depth] == spot.index
@@ -431,9 +370,23 @@ class InventoryCanvas(QWidget):
             self._fade_delay.start()
         if name:
             painter.setOpacity(1.0 if self.hovered is not None else self.name_alpha)
-            theme.draw_text(painter, 14, 3, name, theme.GOLD)
+            name_top = 3 + len(self.variant_rows()) * self.VARIANT
+            theme.draw_text(painter, 14, name_top, name, theme.GOLD)
             painter.setOpacity(1.0)
         painter.end()
+
+    def _paint_variant(self, painter: QPainter, spot: _Spot, hovered: bool) -> None:
+        """A small slot of the variant rows; the chosen block framed."""
+        r = spot.rect
+        painter.fillRect(r, QColor(0, 0, 0, 110))
+        if hovered:
+            painter.fillRect(r, QColor(255, 255, 255, 60))
+        if spot.block is not None:
+            painter.drawPixmap(r.left() + 2, r.top() + 2, block_pixmap(spot.block, 16))
+        if spot.block == self.bar.current:
+            painter.setPen(QPen(QColor("#ffffff"), 1))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRect(r.adjusted(0, 0, -1, -1))
 
     def resize_rows(self) -> None:
         """Fit the rows: slide to the new height when visible, else jump."""
@@ -522,6 +475,9 @@ class InventoryCanvas(QWidget):
     def mousePressEvent(self, event: QMouseEvent) -> None:
         spot = self._spot_at(event.position().toPoint())
         if spot is None or event.button() != Qt.MouseButton.LeftButton:
+            return
+        if spot.kind == "variant" and spot.block is not None:
+            self.bar.choose(spot.block)
             return
         self.bar.pick_at_level(spot.depth, spot.index)
 
@@ -718,6 +674,32 @@ class InventoryBar(QWidget):
     def go_up(self) -> None:
         if self.nav.up():
             self.refresh()
+
+    def variants(self) -> tuple[list[str], list[str]]:
+        """The chosen block's other shapes and colors (each with the block itself; a
+        single entry when there are none)."""
+        if self.current is None:
+            return [], []
+        return BLOCK_INDEX.shape_variants(self.current), BLOCK_INDEX.color_variants(self.current)
+
+    def cycle(self, kind: str, step: int) -> str | None:
+        """C / X: choose the next (``step`` 1) or previous shape or color of the chosen
+        block; the folders stay as they are. None when there is no other."""
+        shapes, colors = self.variants()
+        options = shapes if kind == "shape" else colors
+        if self.current is None or len(options) < 2:
+            return None
+        index = options.index(self.current) if self.current in options else 0
+        chosen = options[(index + step) % len(options)]
+        self.choose(chosen)
+        return chosen
+
+    def choose(self, block_id: str) -> None:
+        """Choose ``block_id`` without moving through the folders (a variant)."""
+        self.current = block_id
+        self._fit_strength(block_id)
+        self.refresh()
+        self.block_chosen.emit(blocks.get(block_id))
 
     def select_block(self, block: Block) -> None:
         """Show and highlight ``block`` (after a pick or search) and choose it."""

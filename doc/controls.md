@@ -43,8 +43,15 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   upwards (click a slot of a lower row to jump there; the red bar marks the row the number
   keys act on). Number keys (from any mode: they switch to BUILD) open a folder or pick the
   block with that number; **^** (the key left of 1; `` ` `` on US layouts) goes back to
-  the parent folder. Folders: Redstone, Movement, Signal sources, Items, Rails, Building,
-  Special. **PALETTE**, right next to the hotbar, holds favourite blocks
+  the parent folder. Folders (`ui/block_tree.py`, made from the blocks there are; a block
+  can be in several): **Redstone** by role (wiring, switches, outputs, movement, read by
+  comparators, items, rails), **Wood** (a folder per wood: planks, stairs, slab, logs,
+  leaves, button, plate, sign), **Stone & minerals** (a folder per material: granite, its
+  stairs, its slab), **Colored** (by kind and by color), **Copper** (by stage, waxed
+  apart), **Natural**, **Glass & light**, **Other**. A folder with more than nine entries
+  keeps eight and puts the rest under **More…**. **Variants:** with a block chosen, the
+  rows above the hotbar show its other shapes (**C**: planks → stairs → slab …) and colors
+  or copper stages (**X**); Shift goes back, a click picks one. **PALETTE**, right next to the hotbar, holds favourite blocks
   like the game's saved creative hotbars: 9 palettes of 9 slots (kept between sessions;
   **Alt+1–9** or a click picks one; **right click** a slot puts the chosen block there,
   **Shift+right click** empties it; the **< >** arrows or the wheel over the strip switch
@@ -215,6 +222,13 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   `/clone … replace force` (the copy may overlap the original). The selection follows the
   moved or copied blocks. Moves, turns and flips made before one Enter add up
   (`editor/floating.py`) and are placed by a single edit.
+- **Schematic library:** schematics are kept in `schematics/` in the config folder (like
+  the game's saves folder): every schematic imported (or exported) once is copied there
+  with a `.meta.json` (name, size, block count, author and description from the file,
+  where it came from, when) and a preview picture. **Select Schematic** (Region → Import
+  schematic…, and Circuit → Prefabs → **Import schematic…**) lists them with pictures and
+  search; Litematica's and WorldEdit's schematic folders in `.minecraft` are listed too.
+  Browse… adds another file, Open folder shows the library, Delete removes one.
 - **Prefabs:** Circuit → Prefabs shows a small picture of each prefab (the inventory's
   isometric view). Drag one into the 3D view (the preview follows the cursor), or
   double-click it / press Paste to paste it like Ctrl+V (a click places it).

@@ -18,9 +18,11 @@ from redsim.editor.clipboard import Prefab, Region
 from redsim.editor.document import Document, EditError
 from redsim.editor.floating import Floating
 from redsim.editor.groups import Group, Port
+from redsim.io import schematic_library
 from redsim.io.schematics import FILE_FILTER as SCHEMATIC_FILTER
-from redsim.io.schematics import read_schematic, write_schematic
+from redsim.io.schematics import read_schematic, read_schematic_metadata, write_schematic
 from redsim.ui.names import block_name
+from redsim.ui.schematic_picker import SchematicPicker, library_folder
 from redsim.ui.viewport import BUILD, SELECT
 from redsim.world import blocks
 
@@ -335,9 +337,39 @@ class RegionActions:
         view.document.prefabs.pop(name, None)
         view._changed()
 
+    def _choose_schematic(self, action: str) -> Prefab | None:
+        """The "Select Schematic" screen (the library); the chosen one, read."""
+        view = cast("MainWindow", self)
+        picker = SchematicPicker(view, action)
+        if not picker.exec() or picker.chosen is None:
+            return None
+        prefab = view._read_prefab_file(picker.chosen)
+        if prefab is not None:
+            try:  # the name the schematic gives itself, if any
+                meta = read_schematic_metadata(picker.chosen)
+                prefab.name = meta.get("name") or prefab.name
+            except (OSError, ValueError, KeyError, EOFError):
+                pass
+        return prefab
+
+    def _import_schematic_prefab(self) -> None:
+        """Circuit → Prefabs → Import schematic…: a schematic of the library becomes a
+        prefab (its name made unique)."""
+        view = cast("MainWindow", self)
+        prefab = view._choose_schematic("Add as prefab")
+        if prefab is None:
+            return
+        name, number = prefab.name, 2
+        while name in view.document.prefabs:
+            name, number = f"{prefab.name} {number}", number + 1
+        prefab.name = name
+        view.document.prefabs[name] = prefab
+        view._changed()
+        view._message(f"Prefab “{name}” added: drag it into the view to place it.")
+
     def _import_prefab(self) -> None:
         """A prefab from a file: the simulator's JSON or a schematic (Litematica,
-        Sponge/WorldEdit, structure file)."""
+        Sponge/WorldEdit, structure file; schematics also go into the library)."""
         view = cast("MainWindow", self)
         path, _ = QFileDialog.getOpenFileName(
             view, "Import prefab", "", f"Prefabs (*.json);;{SCHEMATIC_FILTER}"
@@ -353,6 +385,8 @@ class RegionActions:
         try:
             if path.suffix.lower() == ".json":
                 return Prefab.from_json(json.loads(path.read_text()))
+            if library_folder() not in path.resolve().parents:
+                schematic_library.add(library_folder(), path)  # remembered for next time
             return read_schematic(path)
         except (OSError, ValueError, KeyError, IndexError, EOFError) as exc:
             QMessageBox.critical(view, "Cannot read the file", f"{path.name}: {exc}")
@@ -374,18 +408,17 @@ class RegionActions:
                 path.write_text(json.dumps(prefab.to_json(), indent=1) + "\n")
             else:
                 write_schematic(path, prefab)
+                schematic_library.add(library_folder(), path)  # in the library too
         except (OSError, ValueError) as exc:
             QMessageBox.critical(view, "Cannot write the file", str(exc))
             return
         view._message(f"Wrote {prefab.non_air_count} blocks to {path.name}.")
 
     def _import_schematic(self) -> None:
-        """Region → Import schematic…: into the clipboard, shown at the cursor to paste."""
+        """Region → Import schematic…: the schematic library ("Select Schematic"); the
+        chosen one goes into the clipboard, shown at the cursor to paste."""
         view = cast("MainWindow", self)
-        path, _ = QFileDialog.getOpenFileName(view, "Import schematic", "", SCHEMATIC_FILTER)
-        if not path:
-            return
-        prefab = view._read_prefab_file(Path(path))
+        prefab = view._choose_schematic("Paste")
         if prefab is None:
             return
         view.document.clipboard = prefab

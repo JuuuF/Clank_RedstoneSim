@@ -297,6 +297,7 @@ class MainWindow(
         self.contraptions.load_prefab.connect(self._load_prefab)
         self.contraptions.delete_prefab.connect(self._delete_prefab)
         self.contraptions.import_prefab.connect(self._import_prefab)
+        self.contraptions.import_schematic.connect(self._import_schematic_prefab)
         self.contraptions.export_prefab.connect(self._export_prefab)
         self.contraptions.create_group.connect(self._create_group)
         self.contraptions.add_port.connect(self._add_port)
@@ -554,6 +555,18 @@ class MainWindow(
                 f"recent.{number}",
             )
         self._action(inventory_menu, "Up one folder", self.inventory.go_up, "inventory.up")
+        for text, kind, step, keymap_id in (
+            ("Next shape", "shape", 1, "inventory.shape"),
+            ("Previous shape", "shape", -1, "inventory.shape_back"),
+            ("Next color", "color", 1, "inventory.color"),
+            ("Previous color", "color", -1, "inventory.color_back"),
+        ):
+            self._action(
+                inventory_menu,
+                text,
+                lambda _=False, k=kind, s=step: self._cycle_variant(k, s),
+                keymap_id,
+            )
         self._action(
             inventory_menu, "Search blocks…", self._search_blocks, "search.blocks"
         ).setIcon(pixel_icons.pixel_icon("search"))
@@ -593,6 +606,15 @@ class MainWindow(
             self._select(None)
             return
         self.viewport.set_mode(mode)
+
+    def _cycle_variant(self, kind: str, step: int) -> None:
+        """C / X: the chosen block in its next shape or color (BUILD mode)."""
+        if self.viewport.mode != BUILD:
+            self.viewport.set_mode(BUILD)
+        found = self.inventory.cycle(kind, step)
+        if found is None:
+            what = "shapes" if kind == "shape" else "colors"
+            self._message(f"The chosen block has no other {what}.")
 
     def _inventory_key(self, number: int) -> None:
         """1–9: the inventory is only shown in BUILD mode, so a number key goes there."""

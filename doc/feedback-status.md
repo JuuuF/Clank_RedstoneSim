@@ -42,6 +42,14 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Inventory by role and material, variants, schematic library** (2026-10-14, owner:
+  "the inventory system is really messy"; a schematics folder "like the minecraft saves";
+  "Import schematic as prefab"): the folders come from `ui/block_tree.py` (redstone by
+  role, woods, stone families, colors by kind and by color, copper stages, natural,
+  glass; a block can be in several); C / X step through the chosen block's shapes and
+  colors, shown above the hotbar; the schematic library (`io/schematic_library.py`,
+  `ui/schematic_picker.py`) keeps every imported or exported schematic with metadata and
+  a picture; the Prefabs panel imports from it.
 - **Hundreds of blocks, observer arrows, F from far away** (2026-10-14): the game's
   ordinary blocks come from a table generated from ``Blocks.java``
   (``tools/extract_block_table.py`` → ``world/blocks/catalog_data.py``, classes in
