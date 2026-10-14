@@ -57,9 +57,7 @@ def main(argv: list[str]) -> int:
         chest = server.command(f"data get block {x0} {y0} {z0 + 2} Items").text
         if 'id: "minecraft:redstone"' not in chest or "count: 17" not in chest:
             failures.append(f"chest contents: {chest.strip()[-80:]}")
-        sign = server.command(
-            f"data get block {x0 + 1} {y0} {z0 + 2} front_text.messages[0]"
-        ).text
+        sign = server.command(f"data get block {x0 + 1} {y0} {z0 + 2} front_text.messages[0]").text
         if "structure" not in sign:
             failures.append(f"sign text: {sign.strip()[-80:]}")
     for failure in failures:
