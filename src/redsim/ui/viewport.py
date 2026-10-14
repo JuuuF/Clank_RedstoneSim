@@ -128,6 +128,9 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         #: The signal heat view (View menu) and its triangles for the step shown.
         self.show_heat = False
         self._heat_cache: tuple[tuple[int, int, int], np.ndarray] | None = None
+        #: Observers sending a pulse (or just done): position → (last seen powered, facing).
+        self._observer_glow: dict[Pos, tuple[float, Direction]] = {}
+        self._observer_key: tuple[int, int, int] | None = None
         #: F3 debug screen: the left column comes from the main window (it knows the rates).
         self.debug_left: list[str] = []
         #: SELECT mode: the face handle under the cursor, and drags in progress.
@@ -439,6 +442,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
                     self._highlight_body(),
                     self._power_body(),
                     self._heat_body(),
+                    self._observer_body(),
                     self._pivot_shadow(),
                 ]
             )
@@ -450,6 +454,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             self.region is not None
             or self.highlight is not None
             or self.located is not None
+            or bool(self._observer_glow)
             or self.tick_fraction is not None
             or (self.preferences.scenery and self.window().isActiveWindow())
         )

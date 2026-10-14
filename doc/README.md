@@ -5,11 +5,12 @@ relevant server algorithms from the supplied decompiled source and verified tick
 against the real game.
 
 **Start here:** [[project-state]] (what exists, what's verified, what's next, how to resume).
-To click through the simulator: [[tour]].
+New users: **Help → Tutorial** in the editor ([[tutorial]]); to click through the
+example world: [[tour]].
 
 ## Navigation
 
-- **Project:** [[project-state]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
+- **Project:** [[project-state]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tutorial]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]

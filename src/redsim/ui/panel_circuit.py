@@ -109,6 +109,7 @@ class ContraptionsPanel(QObject):
     add_port = Signal(str)
     toggle_port = Signal(str, int)
     delete_group = Signal(str)
+    go_to_group = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -148,6 +149,8 @@ class ContraptionsPanel(QObject):
         self.group_page = group_page = QWidget()
         group_layout = QVBoxLayout(group_page)
         self.group_list = QListWidget()
+        self.group_list.setToolTip("Double-click a group to go there")
+        self.group_list.itemDoubleClicked.connect(lambda _: self._with_group(self.go_to_group))
         group_layout.addWidget(self.group_list)
         row = QHBoxLayout()
         create = QPushButton("Group selection…")

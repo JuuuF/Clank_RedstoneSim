@@ -69,6 +69,7 @@ from redsim.ui.window_files import FileActions
 from redsim.ui.window_regions import RegionActions
 from redsim.ui.window_sequence import SequenceActions
 from redsim.ui.window_time import TimeActions
+from redsim.ui.window_tutorial import TutorialActions
 from redsim.ui.world_picker import (
     SIMULATION,
 )
@@ -78,7 +79,9 @@ from redsim.world.blocks.torch import RedstoneWallTorchBlock
 from redsim.world.rotation import rotate_state
 
 
-class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMainWindow):
+class MainWindow(
+    FileActions, RegionActions, TimeActions, SequenceActions, TutorialActions, QMainWindow
+):
     def __init__(self, document: Document | None = None, keymap: Keymap | None = None) -> None:
         super().__init__()
         app = QApplication.instance()
@@ -296,6 +299,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         self.contraptions.add_port.connect(self._add_port)
         self.contraptions.toggle_port.connect(self._toggle_port)
         self.contraptions.delete_group.connect(self._delete_group)
+        self.contraptions.go_to_group.connect(self._go_to_group)
         self.simulation.speed_changed.connect(self._speed)
 
     def _action(self, menu: Any, text: str, slot: Any, keymap_id: str | None = None) -> QAction:
@@ -555,6 +559,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         self._action(settings_menu, "Edit keymap file…", self._edit_keymap)
         self._action(settings_menu, "Reload keymap", self._reload_keymap)
         help_menu = bar.addMenu("&Help")
+        self._action(help_menu, "Tutorial", self.start_tutorial)
         self._action(help_menu, "Controls", self._show_controls, "help.controls")
         help_menu.addSeparator()
         self._action(help_menu, "About Redstone Simulator", lambda: AboutDialog(self).exec())
@@ -655,8 +660,16 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
         self.block_popup.open_at(self.document, pos, QCursor.pos())
 
     def _focus_pivot(self) -> None:
+        """F: the pivot goes to the block under the cursor; with the cursor on coordinates
+        elsewhere (a timeline line or diamond, a monitor track, the inspector's title,
+        Diagnostics, the Sequence tab), to that block."""
+        located = self.viewport.located
+        if located is not None and not self.viewport.underMouse():
+            self.viewport.look_at(located)
+            self.viewport.flash(located)
+            return
         if not self.viewport.focus_hover():
-            self._message("Point at a block to move the pivot there.")
+            self._message("Point at a block (or its coordinates) to move the pivot there.")
 
     def _open_keymap_editor(self) -> None:
         editor = KeymapEditor(self.keymap, self)
@@ -687,6 +700,8 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
             self._apply_shortcuts(keymap_id)
         self.viewport.set_keymap(keymap)
         self.hotkeys.set_keymap(keymap)
+        if self.tutorial is not None:
+            self.tutorial.set_keymap(keymap)
 
     # ------------------------------------------------------------------ refresh
     def _changed(self, running: bool = False) -> None:
@@ -759,6 +774,7 @@ class MainWindow(FileActions, RegionActions, TimeActions, SequenceActions, QMain
             running=self.play_timer.isActive(),
         )
         self.hint_bar.show_hints(context_hints(self.keymap, context))
+        self._poll_tutorial()
         if viewport.show_info:
             viewport.debug_left = self._debug_lines()
             viewport.update()

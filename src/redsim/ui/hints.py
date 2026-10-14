@@ -29,18 +29,24 @@ class Context:
     running: bool = False
 
 
+def preferred_binding(keymap: Keymap, action: str) -> str:
+    """The binding to show for ``action``: the first one, but on a Mac one that needs no
+    middle button, no F-key and not ⌘Space when there is one."""
+    bindings = keymap.bindings(action)
+    if keymap.mac:  # Mac trackpads have no middle button: show the alternative
+        bindings = tuple(b for b in bindings if "Middle" not in b) or bindings
+        if action == "search.blocks":  # ⌘Space is Spotlight: show ⌘F
+            bindings = tuple(b for b in bindings if b != "Ctrl+Space") or bindings
+        # F-keys need fn on a MacBook: prefer another binding if there is one.
+        bindings = tuple(b for b in bindings if not re.fullmatch(r"F\d+", b)) or bindings
+    return bindings[0] if bindings else "—"
+
+
 def context_hints(keymap: Keymap, context: Context) -> list[tuple[str, str]]:
     """(keys, what they do) pairs, most important first."""
 
     def key(action: str) -> str:
-        bindings = keymap.bindings(action)
-        if keymap.mac:  # Mac trackpads have no middle button: show the alternative
-            bindings = tuple(b for b in bindings if "Middle" not in b) or bindings
-            if action == "search.blocks":  # ⌘Space is Spotlight: show ⌘F
-                bindings = tuple(b for b in bindings if b != "Ctrl+Space") or bindings
-            # F-keys need fn on a MacBook: prefer another binding if there is one.
-            bindings = tuple(b for b in bindings if not re.fullmatch(r"F\d+", b)) or bindings
-        return bindings[0] if bindings else "—"
+        return preferred_binding(keymap, action)
 
     if context.pasting:
         return [

@@ -126,7 +126,11 @@ ACTIONS: tuple[ActionSpec, ...] = (
     ActionSpec("camera.right", "Move the pivot right", ("D",), HOLD),
     ActionSpec("camera.up", "Move the pivot up", ("PgUp",), HOLD),
     ActionSpec("camera.down", "Move the pivot down", ("PgDown",), HOLD),
-    ActionSpec("camera.focus", "Move the pivot to the block under the cursor", ("F",)),
+    ActionSpec(
+        "camera.focus",
+        "Move the pivot to the block under the cursor (or to hovered coordinates)",
+        ("F",),
+    ),
     ActionSpec(
         "block.popup",
         "Inspect the block under the cursor in a popup (contents, settings)",

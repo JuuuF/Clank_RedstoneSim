@@ -62,9 +62,15 @@ SOLID_COLORS: dict[str, Color] = {
     "minecraft:bedrock": rgb(0.22, 0.22, 0.22),
     "minecraft:glowstone": rgb(0.95, 0.82, 0.45),
     "minecraft:redstone_block": rgb(0.72, 0.07, 0.04),
+    "minecraft:dirt": rgb(0.53, 0.38, 0.26),
+    "minecraft:grass_block": rgb(0.40, 0.60, 0.27),
+    "minecraft:note_block": rgb(0.45, 0.30, 0.22),
+    "minecraft:dispenser": rgb(0.48, 0.48, 0.48),
+    "minecraft:dropper": rgb(0.46, 0.46, 0.46),
 }
 TRANSLUCENT_COLORS: dict[str, Color] = {
     "minecraft:glass": rgb(0.70, 0.88, 1.00, 0.28),
+    "minecraft:barrier": rgb(0.90, 0.20, 0.20, 0.15),
     "minecraft:slime_block": rgb(0.45, 0.82, 0.35, 0.75),
     "minecraft:honey_block": rgb(0.98, 0.66, 0.15, 0.75),
 }
@@ -242,7 +248,49 @@ def block_boxes(state: BlockState) -> list[Box]:
         return _sign(state)
     if block_id == "minecraft:composter":
         return _composter(int(state.get(COMPOSTER_LEVEL)))
+    if block_id.endswith("pressure_plate"):
+        return _pressure_plate(state)
+    if block_id in ("minecraft:chest", "minecraft:trapped_chest"):
+        return _chest(state)
+    if block_id.endswith("copper_bulb"):
+        return full(LAMP_ON if state.get(LIT) else rgb(0.62, 0.42, 0.30))
     return full(UNKNOWN)
+
+
+#: Pressure plate colors by material (stone, the weighted gold and iron plates, wood).
+PLATE_COLORS = {
+    "minecraft:stone_pressure_plate": rgb(0.55, 0.55, 0.55),
+    "minecraft:polished_blackstone_pressure_plate": rgb(0.22, 0.20, 0.24),
+    "minecraft:light_weighted_pressure_plate": rgb(0.96, 0.80, 0.25),
+    "minecraft:heavy_weighted_pressure_plate": rgb(0.78, 0.78, 0.78),
+}
+PLATE_WOOD = rgb(0.66, 0.52, 0.32)
+CHEST_WOOD = rgb(0.62, 0.42, 0.18)
+CHEST_LATCH = rgb(0.78, 0.78, 0.72)
+
+
+def _pressure_plate(state: BlockState) -> list[Box]:
+    """``BasePressurePlateBlock``: a 14×14 plate, 1 pixel high, half a pixel pressed."""
+    pressed = bool(state.get(POWERED)) if state.has(POWERED) else int(state.get(POWER)) > 0
+    color = PLATE_COLORS.get(state.block.id, PLATE_WOOD)
+    return [Box((1, 0, 1), (15, 0.5 if pressed else 1, 15), color)]
+
+
+def _chest(state: BlockState) -> list[Box]:
+    """``ChestBlock``'s 14×14×14 box; the halves of a double chest reach each other."""
+    from redsim.world.blocks.chest import CHEST_TYPE, connected_direction
+
+    lo, hi = [1.0, 0.0, 1.0], [15.0, 14.0, 15.0]
+    if state.get(CHEST_TYPE) != "single":
+        joined = connected_direction(state)
+        axis = 0 if joined.axis.name.lower() == "x" else 2
+        if joined.step[axis] > 0:
+            hi[axis] = 16.0
+        else:
+            lo[axis] = 0.0
+    facing: Direction = state.get(HORIZONTAL_FACING)
+    latch = face_horizontally([Box((7, 7, 0), (9, 11, 1), CHEST_LATCH)], facing)
+    return [Box(tuple(lo), tuple(hi), CHEST_WOOD), *latch]  # type: ignore[arg-type]
 
 
 COMPOSTER_WOOD = rgb(0.55, 0.40, 0.24)

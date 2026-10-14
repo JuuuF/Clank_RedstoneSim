@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, cast
 import numpy as np
 from PySide6.QtCore import QPoint
 
+from redsim.core.direction import Direction
 from redsim.core.pos import Pos
 from redsim.editor.clipboard import Region
 from redsim.editor.heat import signal_heat
@@ -49,9 +50,35 @@ from redsim.ui.view_common import (
     _layer_grid,
 )
 from redsim.world import ids
+from redsim.world.properties import FACING, POWERED
 
 if TYPE_CHECKING:
     from redsim.ui.viewport import Viewport
+
+
+OBSERVER_ID = "minecraft:observer"
+#: Observer lights (``_observer_body``): color and how long they fade after the pulse.
+OBSERVER_LIGHT = (1.0, 0.16, 0.08)
+OBSERVER_FADE_SECONDS = 0.45
+
+
+def _observer_lights(pos: Pos, facing: Direction, strength: float) -> list[np.ndarray]:
+    """A small bright square with a faint halo on the observer's output face, and a
+    smaller one on its top when it faces sideways."""
+    center = np.array(pos, dtype=float) + 0.5
+    lights = [(facing.opposite, 0.16, 0.30), (Direction.UP, 0.12, 0.24)]
+    if not facing.axis.is_horizontal:
+        lights = lights[:1]
+    parts = []
+    for side, core, halo in lights:
+        normal = np.array(side.step, dtype=float)
+        face = center + normal * 0.5
+        for half, lift, alpha in ((halo, 0.004, 0.22), (core, 0.008, 0.9)):
+            extent = np.where(normal != 0, 0.0, half)
+            lo = face - extent + np.minimum(normal, 0) * lift
+            hi = face + extent + np.maximum(normal, 0) * lift
+            parts.append(box_faces(lo, hi, (*OBSERVER_LIGHT, alpha * strength)))
+    return parts
 
 
 class SceneGeometry:
@@ -275,6 +302,44 @@ class SceneGeometry:
             body = np.zeros((0, 7), dtype=np.float32)
         view._heat_cache = (key, body)
         return body
+
+    def _observer_body(self) -> np.ndarray:
+        """Observers sending a pulse: a small red light on the output face (and on the top
+        of a sideways observer, which the usual camera sees), fading out for a moment
+        after the pulse so a 2-tick pulse can be seen at full speed. Powered observers are
+        found from the pending ticks (each one has its turn-off tick), so this stays cheap
+        in big worlds."""
+        view = cast("Viewport", self)
+        document = view.document
+        level = document.level
+        now = time.monotonic()
+        glow = view._observer_glow
+        key = (id(level), document.engine.step_index, document.revision)
+        if key != view._observer_key:
+            view._observer_key = key
+            for tick in level.block_ticks.pending():
+                if tick.block_id != OBSERVER_ID:
+                    continue
+                state = level.blocks.get(tick.pos)
+                if state is not None and state.block.id == OBSERVER_ID and state.get(POWERED):
+                    glow[tick.pos] = (now, state.get(FACING))
+            for pos in list(glow):
+                state = level.blocks.get(pos)
+                if state is None or state.block.id != OBSERVER_ID:
+                    del glow[pos]
+        parts = []
+        for pos, (since, facing) in list(glow.items()):
+            state = level.blocks.get(pos)
+            if state is not None and state.get(POWERED):
+                glow[pos] = (now, facing)
+                strength = 1.0
+            else:
+                strength = 1.0 - (now - since) / OBSERVER_FADE_SECONDS
+                if strength <= 0:
+                    del glow[pos]
+                    continue
+            parts.extend(_observer_lights(pos, facing, strength))
+        return np.vstack(parts) if parts else np.zeros((0, 7), dtype=np.float32)
 
     def locate(self, pos: Pos | None) -> None:
         """Light up ``pos`` while its coordinates are hovered elsewhere (None: stop)."""

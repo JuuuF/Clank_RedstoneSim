@@ -105,6 +105,13 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   and its causes, newest first, back across ticks to the action that started it (a
   lever, a pulse, an edit). Click a line to show its block, double click to go to its
   tick.
+- **Firing observers** show a small red light on their output face (and on top when
+  they face sideways) while they send their pulse, fading out just after it, so a
+  2-tick pulse is visible at full speed (`viewport_scene._observer_body`). The game
+  only lights the dot on the back texture.
+- **Tutorial:** Help → Tutorial opens the tutorial world and a card at the top right
+  that teaches the editor in nine lessons ([[tutorial]]).
+- **Groups:** a double click on a group in Circuit → Groups moves the camera to it.
 - **Signal heat view** (View menu, **Alt+H**): powered blocks glow by signal strength,
   dark red at 1 to yellow at 15 (wire as a thin layer).
 - **Signs** (inventory → Special): placed like a player places them (standing when
@@ -218,7 +225,7 @@ and paste layer follow the new height at once.
 | Shift+wheel | move the camera (pivot) up or down, one block per notch (in BUILD and while pasting: the layer) |
 | W A S D | move the pivot forward, left, back, right (faster when zoomed out) |
 | PgUp / PgDown | move the pivot up or down |
-| F | move the pivot to the block under the cursor |
+| F | move the pivot to the block under the cursor, or, with the cursor on coordinates elsewhere (a timeline line or diamond, a monitor track, Diagnostics, the Sequence tab, the inspector's title), to that block |
 
 Shift and Ctrl are not camera keys on their own, so they never collide with shortcuts (the
 reason the old Shift+T rewind was disliked).

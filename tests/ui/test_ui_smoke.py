@@ -164,11 +164,11 @@ def test_info_overlay_lists_signal_values(app: object) -> None:
     example = Path(__file__).resolve().parents[2] / "examples" / "showcase.redsim.json"
     window = MainWindow(Document.open(example))
     viewport = window.viewport
-    viewport.camera.pivot = np.array([4.0, 1.0, 0.0])
+    viewport.camera.pivot = np.array([56.0, 1.0, -30.0])  # district A, row 5
     labels = {
         (tuple(int(v) for v in point), text, kind) for point, text, kind in viewport.info_labels()
     }
-    assert ((6, 2, 2), "14", "source") in labels  # the barrel behind row 5's comparator
+    assert ((58, 2, -29), "14", "source") in labels  # the barrel behind row 5's comparator
     assert any(kind == "wire" for _, _, kind in labels)
     assert any(kind == "comparator" for _, _, kind in labels)
     window.document.dirty = False
@@ -888,4 +888,89 @@ def test_builds_dialog_and_going_to_a_build(app: object) -> None:
     window = MainWindow()
     window._go_to_build(build)  # far away: the camera jumps there
     assert tuple(window.viewport.camera.pivot) == (510.5, 65.5, 45.5)
+    window.close()
+
+
+def test_firing_observers_light_up_and_fade(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.setblock((0, 1, 0), blocks.parse_state("observer[facing=east]"))
+    document.setblock((-1, 1, 0), blocks.parse_state("redstone_lamp"))
+    viewport = window.viewport
+    assert len(viewport._observer_body()) == 0
+    document.setblock((1, 1, 0), blocks.STONE.default_state)  # the observer sees it
+    document.run_ticks(2)
+    assert document.state_at((0, 1, 0)).get(POWERED)
+    assert len(viewport._observer_body()) > 0
+    document.run_ticks(3)  # off again: the light fades, then goes
+    assert not document.state_at((0, 1, 0)).get(POWERED)
+    assert len(viewport._observer_body()) > 0
+    since, facing = viewport._observer_glow[(0, 1, 0)]
+    viewport._observer_glow[(0, 1, 0)] = (since - 10, facing)
+    assert len(viewport._observer_body()) == 0
+    document.dirty = False
+    window.close()
+
+
+def test_tutorial_card_follows_the_lessons(app: object, tmp_path: object) -> None:
+    from redsim.tutorial import world as tutorial_world
+    from redsim.tutorial.lessons import LESSONS
+    from redsim.ui.main_window import MainWindow
+
+    os.environ["XDG_CONFIG_HOME"] = str(tmp_path)
+    try:
+        window = MainWindow()
+        window.resize(1100, 750)
+        window.show()
+        window.start_tutorial()
+        assert tutorial_world.is_tutorial(window.document)
+        card = window.tutorial
+        assert card is not None and card.isVisible()
+        card.go(1)  # Use and inspect: right-click the lever
+        window._poll_tutorial()  # starts the step
+        assert not card.progress.done
+        window._use(tutorial_world.station(1, tutorial_world.USE_LEVER))
+        window._poll_tutorial()
+        assert card.progress.done and "Done" in card.status.text()
+        card._next()
+        assert card.progress.step == 1
+        window._poll_tutorial()
+        window._select(tutorial_world.station(1, tutorial_world.USE_LAMP))
+        window._poll_tutorial()
+        assert card.progress.done
+        card.go(len(LESSONS) - 1, len(LESSONS[-1].steps) - 1)
+        assert card.next.text() == "Finish"
+        card._next()
+        assert not card.isVisible()
+        window.document.dirty = False
+        window.close()
+    finally:
+        del os.environ["XDG_CONFIG_HOME"]
+
+
+def test_groups_double_click_goes_there(app: object) -> None:
+    from redsim.editor.groups import Group
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.document.groups.add(Group("far", Region((40, 1, 40), (44, 2, 41))))
+    window.viewport._glide = None
+    window._go_to_group("far")
+    target, _ = window.viewport._glide
+    assert np.allclose(target, (42.5, 2.0, 41.0))
+    window.close()
+
+
+def test_f_goes_to_hovered_coordinates(app: object) -> None:
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    window.simulation.canvas.position_hovered.emit((30, 2, -7))  # a timeline line
+    window.viewport._glide = None
+    window._focus_pivot()
+    target, _ = window.viewport._glide
+    assert np.allclose(target, (30.5, 2.5, -6.5))
+    window.simulation.canvas.position_hovered.emit(None)
     window.close()

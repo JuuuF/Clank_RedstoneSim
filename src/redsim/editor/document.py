@@ -290,9 +290,13 @@ class Document(HistoryOps, SequenceOps):
                 )
                 self.setblock(front, head)
 
-    def setblock(self, pos: Pos, state: BlockState) -> None:
-        """Inspector edit: ``/setblock`` semantics (shape-adjusted state, neighbor updates)."""
-        self._apply(Action("setblock", pos, repr(state)), f"set {state.block.name}")
+    def setblock(self, pos: Pos, state: BlockState, nbt: dict[str, Any] | None = None) -> None:
+        """Inspector edit: ``/setblock`` semantics (shape-adjusted state, neighbor updates),
+        with the block entity's data ``nbt`` if given (``/setblock … {Items: […]}``)."""
+        payload = {"nbt": nbt} if nbt is not None else None
+        self._apply(
+            Action("setblock", pos, repr(state), payload=payload), f"set {state.block.name}"
+        )
 
     # ------------------------------------------------------------------ regions
     def copy(self, region: Region | list[Region]) -> Prefab:

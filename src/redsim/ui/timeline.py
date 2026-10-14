@@ -624,6 +624,7 @@ class TimelineCanvas(LineArea, QWidget):
                 self._hover_tick = hover
                 self.update()
             if batch is not None:
+                self._hover_batch(batch)
                 lines = list(batch.labels[:12])
                 if len(batch.labels) > 12:
                     lines.append(f"… {len(batch.labels) - 12} more")
@@ -633,6 +634,14 @@ class TimelineCanvas(LineArea, QWidget):
                 QToolTip.showText(event.globalPosition().toPoint(), reading)
             else:
                 QToolTip.hideText()
+
+    def _hover_batch(self, batch: EditBatch) -> None:
+        """A hovered diamond lights up the block of its first edit (F goes there)."""
+        first = batch.indices[0] if batch.indices else None
+        pos = next((event.pos for event in self.events if event.index == first), None)
+        if pos is not None and pos != self._hovered_pos:
+            self._hovered_pos = pos
+            self.position_hovered.emit(pos)
 
     def track_reading(self, x: float, y: float) -> str | None:
         """The monitored value under the cursor: "Redstone Lamp 4 1 -2 · tick 23: 15"."""

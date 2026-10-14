@@ -134,3 +134,21 @@ def test_moved_blocks_are_drawn_at_their_progress(app: Any) -> None:
 
     assert span(1.0) == (1.5, 2.5)
     assert span(0.0) == (1.0, 2.0)  # the tick before: still at the start
+
+
+def test_chest_textures_keep_their_pixels(app: Any) -> None:
+    """Entity textures (64×64) are not squeezed into a 16×16 tile; double-chest halves
+    use their own textures, with the outline on the outer side (``ChestModel``)."""
+    from redsim.ui.atlas import Atlas
+
+    assert assets is not None
+    atlas = Atlas.for_blocks(assets)
+    for name in ("normal", "normal_left", "normal_right", "trapped"):
+        assert atlas.tile(f"minecraft:entity/chest/{name}").shape[:2] == (64, 64)
+    assert atlas.tile("minecraft:block/stone").shape[:2] == (16, 16)
+    left = assets.block_quads(blocks.parse_state("chest[facing=south,type=left]"))
+    assert {q.texture for q in left} == {"minecraft:entity/chest/normal_left"}
+    top = next(q for q in left if q.facing.name == "UP" and q.corners[0][1] > 0.8)
+    # The lid top's outline (texture column 43) lies at the half's outer (east) edge.
+    east = max(range(4), key=lambda i: top.corners[i][0])
+    assert round(top.uvs[east][0] * 64) == 44

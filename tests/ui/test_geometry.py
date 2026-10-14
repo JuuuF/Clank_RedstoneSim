@@ -152,3 +152,26 @@ def test_xray_keeps_full_cube_components_opaque() -> None:
     level.blocks[(0, 0, 0)] = blocks.REDSTONE_LAMP.default_state
     mesh = build_mesh(level)
     assert len(mesh.solid) == 0 and len(mesh.opaque) == 36
+
+
+def test_blocks_beside_a_pressure_plate_keep_their_face() -> None:
+    """Thin blocks (pressure plates, chests) do not hide their neighbor's faces."""
+    level = Level()
+    level.blocks[(0, 0, 0)] = blocks.STONE.default_state
+    alone = build_mesh(level).vertex_count
+    for beside in ("stone_pressure_plate", "light_weighted_pressure_plate", "chest"):
+        level.blocks[(1, 0, 0)] = blocks.parse_state(beside)
+        both = build_mesh(level).vertex_count
+        level.blocks.pop((1, 0, 0))
+        plate = Level()
+        plate.blocks[(1, 0, 0)] = blocks.parse_state(beside)
+        assert both == alone + build_mesh(plate).vertex_count, beside
+
+
+def test_every_block_has_a_shape() -> None:
+    """No block falls back to the magenta placeholder cube."""
+    from redsim.ui.style import UNKNOWN
+
+    for block in blocks.REGISTRY.values():
+        for state in (block.default_state,):
+            assert all(box.color != UNKNOWN for box in block_boxes(state)), block.id

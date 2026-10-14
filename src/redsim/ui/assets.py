@@ -193,55 +193,72 @@ def _up_face_uv(lo: Vec, hi: Vec, face: dict[str, Any]) -> Any:
     return uv
 
 
-#: Blocks the game draws with a block-entity renderer (no JSON model): their texture.
+#: Blocks the game draws with a block-entity renderer (no JSON model): their texture
+#: (``ChestSpecialRenderer``: ``entity/chest/<name>``, ``_left``/``_right`` for double
+#: chests).
 ENTITY_MODELS = {
     "minecraft:chest": "minecraft:entity/chest/normal",
     "minecraft:trapped_chest": "minecraft:entity/chest/trapped",
 }
-_Y_ROT = {"north": 0, "east": 90, "south": 180, "west": 270}
+#: ``ChestRenderer.createModelTransformation``: the model faces south and turns by
+#: -facing.toYRot() (in model-JSON terms, a y rotation of toYRot).
+_Y_ROT = {"south": 0, "west": 90, "north": 180, "east": 270}
 
 
-def _cube_faces(u: float, v: float, w: float, h: float, d: float, texture: str) -> dict[str, Any]:
-    """Minecraft's cube UV layout (``ModelPart.Cube``) for a box at texture offset (u, v)
-    of size w×h×d in a 64×64 texture, as model UVs (0–16)."""
+def _cube_faces(
+    u: float, v: float, w: float, h: float, d: float, hidden: str | None = None
+) -> dict[str, Any]:
+    """``ModelPart.Cube``'s faces for a box at texture offset (u, v) of size w×h×d in a
+    64×64 texture, as model-JSON UVs (0–16): each JSON corner gets the texture point the
+    game's polygon gives that corner. ``hidden``: a face the game leaves out."""
 
     def face(u0: float, v0: float, u1: float, v1: float) -> dict[str, Any]:
         return {"texture": "#chest", "uv": [u0 / 4, v0 / 4, u1 / 4, v1 / 4]}
 
-    return {
-        "up": face(u + d + w, v + d, u + d, v),  # entity textures are upside down
-        "down": face(u + d + w, v, u + d + 2 * w, v + d),
-        "north": face(u + d, v + d, u + d + w, v + d + h),
-        "south": face(u + 2 * d + w, v + d, u + 2 * d + 2 * w, v + d + h),
-        "west": face(u, v + d, u + d, v + d + h),
-        "east": face(u + d + w, v + d, u + 2 * d + w, v + d + h),
+    faces = {
+        "down": face(u + d, v, u + d + w, v + d),
+        "up": face(u + d + w, v + d, u + d + 2 * w, v),
+        "west": face(u + d, v + d + h, u, v + d),
+        "north": face(u + d + w, v + d + h, u + d, v + d),
+        "east": face(u + 2 * d + w, v + d + h, u + d + w, v + d),
+        "south": face(u + 2 * d + 2 * w, v + d + h, u + 2 * d + w, v + d),
     }
+    if hidden is not None:
+        faces.pop(hidden)
+    return faces
 
 
 def chest_model(state: BlockState) -> tuple[dict[str, Any], int]:
-    """A block model for a chest from its entity texture (``ChestModel``: base, lid and
-    latch), and its y rotation. A half of a double chest reaches to its partner."""
+    """A block model for a chest (``ChestModel``: bottom, lid and lock, facing south, from
+    the entity texture), and its y rotation. The halves of a double chest use the
+    ``createDoubleBody{Left,Right}Layer`` boxes and their own textures."""
     props = state.properties_dict()
     facing, kind = props.get("facing", "north"), props.get("type", "single")
-    x0, x1 = 1.0, 15.0
-    if kind == "left":  # the partner is clockwise of the facing: east of a north chest
-        x1 = 16.0
+    texture = ENTITY_MODELS[state.block.id] + ("" if kind == "single" else f"_{kind}")
+    if kind == "left":  # the partner is to the west (of a south-facing chest)
+        x0, width, lock, hidden = 0.0, 15.0, (0.0, 1.0), "west"
     elif kind == "right":
-        x0 = 0.0
-    texture = ENTITY_MODELS[state.block.id]
+        x0, width, lock, hidden = 1.0, 15.0, (15.0, 1.0), "east"
+    else:
+        x0, width, lock, hidden = 1.0, 14.0, (7.0, 2.0), None
+    lock_x, lock_w = lock
     elements = [
-        {"from": [x0, 0, 1], "to": [x1, 10, 15], "faces": _cube_faces(0, 19, 14, 10, 14, texture)},
-        {"from": [x0, 9, 1], "to": [x1, 14, 15], "faces": _cube_faces(0, 0, 14, 5, 14, texture)},
+        {
+            "from": [x0, 0, 1],
+            "to": [x0 + width, 10, 15],
+            "faces": _cube_faces(0, 19, width, 10, 14, hidden),
+        },
+        {
+            "from": [x0, 9, 1],
+            "to": [x0 + width, 14, 15],
+            "faces": _cube_faces(0, 0, width, 5, 14, hidden),
+        },
+        {
+            "from": [lock_x, 7, 15],
+            "to": [lock_x + lock_w, 11, 16],
+            "faces": _cube_faces(0, 0, lock_w, 4, 1, hidden),
+        },
     ]
-    if kind != "right":  # one latch per chest, on the left half's inner edge or centered
-        lx = 15.0 if kind == "left" else 7.0
-        elements.append(
-            {
-                "from": [lx, 7, 0],
-                "to": [lx + 2, 11, 1],
-                "faces": _cube_faces(0, 0, 2, 4, 1, texture),
-            }
-        )
     model = {"textures": {"chest": texture, "particle": texture}, "elements": elements}
     return model, _Y_ROT.get(facing, 0)
 
