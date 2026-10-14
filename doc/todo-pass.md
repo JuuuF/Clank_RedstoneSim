@@ -8,6 +8,18 @@ Whoever picks this up reads this page, continues with the first unchecked item a
 line to the log. Items that need the owner (O5, O10, O11) or were deferred on purpose
 (O8, ADR-016) are not part of this pass.
 
+## Summary (2026-10-14)
+
+All seven items are done and on `main`. New game checks all match: signs (EXP-048),
+composters (EXP-049), a written world copy opened by the game server (blocks, sign
+text, a pending tick), and a structure file placed with `/place template`. The test
+suite passes as plain Python and on the compiled build (speed unchanged).
+
+Left open on purpose (documented in [[feedback-status]] and [[world-import]]): writing
+into the original save, unloading far chunks, an on-disk chunk cache, daylight sensors
+(no sky light or time of day in the simulator), the remaining mechanics of O7, black-box
+groups (ADR-016), and the owner's own checks (O5, O10, O11).
+
 ## Order
 
 1. [x] **O12 loose ends:** the Select World screen's stray character in the search box,

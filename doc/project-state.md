@@ -3,8 +3,11 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-14, after the overnight refactor, stability and speed pass
-([[refactor-plan]]). Before that: 2026-10-12, after the missing blocks, world streaming and the E block popup
+*Last updated: 2026-10-14, after working through the open list ([[todo-pass]]: Select
+World look, timeline groups for every category, several selections acting together,
+"why did this change?" and a heat view, real signs with text, world builds index and
+reconnecting, schematics, composters and more signal sources). Before that: the
+overnight refactor, stability and speed pass ([[refactor-plan]]). Before that: 2026-10-12, after the missing blocks, world streaming and the E block popup
 (all merged into `main` and pushed). The session log of the work is in git history; this
 page is the summary to start from.*
 
@@ -25,7 +28,7 @@ page is the summary to start from.*
   pressure plates (stone, 12 woods, weighted).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
-  All 46 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
+  All 48 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
   live edits) match ([[experiments/index]]).
 - **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
   and a rebindable keymap ([[controls]], with a keymap editor and Mac defaults); BUILD
