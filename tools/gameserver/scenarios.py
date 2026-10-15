@@ -1518,8 +1518,76 @@ MIRRORED_QC_FURNACES = Scenario(
     inputs={1: [((1, 1, 7), "minecraft:stone")]},
 )
 
+#: The game's ordinary blocks (``world/blocks/catalog.py``, owner 2026-10-15: they must work
+#: exactly like the game): conduction (a repeater into the block, a lamp behind it), stair
+#: corners from a neighbor, leaves' distance a tick after the log goes (an observer sees
+#: it), a carpet losing its support, podzol under snow, huge mushroom sides, and glazed
+#: terracotta (pushed, never pulled by a sticky piston).
+_CONDUCTION = (
+    "minecraft:white_wool", "minecraft:quartz_block", "minecraft:oak_log[axis=x]",
+    "minecraft:white_stained_glass", "minecraft:oak_leaves[distance=7,persistent=true]",
+    "minecraft:sea_lantern", "minecraft:oak_slab[type=bottom]", "minecraft:oak_slab[type=double]",
+    "minecraft:oak_stairs[facing=north,half=bottom]", "minecraft:copper_block",
+)  # fmt: skip
+CATALOG_BLOCKS = Scenario(
+    name="catalog_blocks",
+    description=(
+        "Ordinary blocks: conduction, stair corners, leaves distance seen by an observer, "
+        "carpet support, snowy podzol, huge mushroom sides, glazed terracotta not pulled."
+    ),
+    size=(18, 14),
+    setup=[
+        *[((1, 1, z), "minecraft:repeater[facing=west]") for z in range(len(_CONDUCTION))],
+        *[((2, 1, z), block) for z, block in enumerate(_CONDUCTION)],
+        *[((3, 1, z), "minecraft:redstone_lamp") for z in range(len(_CONDUCTION))],
+        ((6, 1, 1), "minecraft:oak_stairs[facing=north]"),
+        ((6, 1, 4), "minecraft:oak_stairs[facing=north]"),
+        ((9, 1, 1), "minecraft:oak_log"),
+        ((10, 1, 1), "minecraft:oak_leaves[distance=1,persistent=true]"),
+        ((11, 1, 1), "minecraft:observer[facing=west]"),
+        ((13, 1, 1), "minecraft:stone"),
+        ((13, 2, 1), "minecraft:white_carpet"),
+        ((15, 1, 1), "minecraft:podzol"),
+        ((9, 1, 6), "minecraft:red_mushroom_block"),
+        ((13, 1, 8), "minecraft:sticky_piston[facing=east]"),
+        ((14, 1, 8), "minecraft:white_glazed_terracotta[facing=north]"),
+    ],
+    watch=[
+        *[(3, 1, z) for z in range(len(_CONDUCTION))],
+        (6, 1, 1),
+        (6, 1, 0),
+        (6, 1, 4),
+        (6, 1, 5),
+        (10, 1, 1),
+        (11, 1, 1),
+        (13, 2, 1),
+        (15, 1, 1),
+        (9, 1, 6),
+        (10, 1, 6),
+        (9, 2, 6),
+        (13, 1, 8),
+        (14, 1, 8),
+        (15, 1, 8),
+    ],  # fmt: skip
+    ticks=16,
+    inputs={
+        1: [((0, 1, z), "minecraft:redstone_block") for z in range(len(_CONDUCTION))],
+        2: [
+            ((6, 1, 0), "minecraft:oak_stairs[facing=east]"),  # behind: an outer corner
+            ((6, 1, 5), "minecraft:oak_stairs[facing=west]"),  # in front: an inner corner
+            ((15, 2, 1), "minecraft:snow_block"),
+            ((10, 1, 6), "minecraft:red_mushroom_block"),
+            ((9, 2, 6), "minecraft:red_mushroom_block"),
+            ((12, 1, 8), "minecraft:redstone_block"),
+        ],
+        4: [((9, 1, 1), "minecraft:air"), ((13, 1, 1), "minecraft:air")],
+        7: [((15, 2, 1), "minecraft:air"), ((12, 1, 8), "minecraft:air")],
+    },
+)
+
 
 ALL = [
+    CATALOG_BLOCKS,
     MIRRORED_QC_FURNACES,
     LAMP_REDSTONE_BLOCK,
     TORCH_INVERTER,

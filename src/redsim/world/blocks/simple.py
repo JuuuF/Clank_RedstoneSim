@@ -9,8 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from redsim.core.compiled import mypyc_attr
+from redsim.core.direction import Direction
 from redsim.core.pos import Pos
-from redsim.world.block import Block, BlockState, Conductor, PushReaction
+from redsim.world.block import Block, BlockState, Conductor, PlacementContext, PushReaction
 from redsim.world.properties import SLAB_TYPE, SNOWY, WATERLOGGED
 from redsim.world.shape import EMPTY, Shape, box, column
 
@@ -103,14 +104,42 @@ def full_cube(block_id: str, destroy_speed: float = 1.5) -> SimpleBlock:
     return SimpleBlock(block_id, destroy_speed=destroy_speed)
 
 
+#: ``BlockTags.SNOW`` (data/minecraft/tags/block/snow.json).
+SNOW = frozenset({"minecraft:snow", "minecraft:snow_block", "minecraft:powder_snow"})
+
+
+def snowy_shape(state: BlockState, direction: Direction, neighbor: BlockState) -> BlockState:
+    """``SnowyBlock.updateShape``: ``snowy`` follows the block above (``isSnowySetting``)."""
+    if direction is Direction.UP:
+        return state.with_(SNOWY, neighbor.block.id in SNOW)
+    return state
+
+
 class GrassBlock(SimpleBlock):
-    """``GrassBlock`` as terrain: a full cube with its ``snowy`` state (never set here)."""
+    """``GrassBlock`` (a ``SnowyBlock``): a full cube whose ``snowy`` follows the block above.
+    Spreading and turning into dirt are random ticks, which are not simulated."""
 
     properties = (SNOWY,)
 
     def __init__(self) -> None:
         super().__init__("minecraft:grass_block", destroy_speed=0.6)
         self.register_default_state(self.default_state.with_(SNOWY, False))
+
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``SnowyBlock.getStateForPlacement``."""
+        above = ctx.level.get_block_state((ctx.pos[0], ctx.pos[1] + 1, ctx.pos[2]))
+        return ctx.requested.with_(SNOWY, above.block.id in SNOW)
+
+    def update_shape(
+        self,
+        state: BlockState,
+        level: Level,
+        pos: Pos,
+        direction: Direction,
+        neighbor_pos: Pos,
+        neighbor: BlockState,
+    ) -> BlockState:
+        return snowy_shape(state, direction, neighbor)
 
 
 def non_conductor(block_id: str, destroy_speed: float = 0.3) -> SimpleBlock:

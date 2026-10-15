@@ -34,6 +34,9 @@ def rotate_state(state: BlockState, quarter_turns: int) -> BlockState:
         for _ in range(turns):
             shape = ROTATE_CW[shape]
         return state.with_(prop, shape)
+    own = getattr(state.block, "rotated", None)  # HugeMushroomBlock.rotate
+    if own is not None:
+        return own(state, turns)
     if state.block.id == "minecraft:redstone_wire":
         sides = {d: state.get(p) for d, p in PROPERTY_BY_DIRECTION.items()}
         for direction, value in sides.items():

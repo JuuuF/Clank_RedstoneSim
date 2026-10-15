@@ -91,6 +91,7 @@ reading and unit tests only.
 | EXP-048 | `signs`: standing and wall signs on stones pushed by pistons stay (moving blocks and heads count as solid); a sign in front of a piston stops it (block entity: not pushable); standing and wall signs pop when their support is removed | 6 | match | 2026-10-14 |
 | EXP-049 | `composters`: level 7 becomes 8 after 20 ticks (comparator output compared), a hopper below a full composter takes the bone meal and the composter empties, a piston pushes a composter | 24 | match | 2026-10-14 |
 | EXP-050 | `mirrored_qc_furnaces` (the owner's "simulation_bug" world): slime and honey carry sticky pistons onto quasi-powered spots in two mirrored halves; both extend on arrival. Furnaces beside the slime stay (block entities are never moved: `isPushable`); the simulator had treated the unmodeled furnaces as pushable, so one push failed | 14 | match | 2026-10-15 |
+| EXP-051 | `catalog_blocks`: the game's ordinary blocks: conduction through wool, quartz, logs, double slabs and copper (not stained glass, leaves, sea lanterns, slabs, stairs), stair corners from neighbors, leaves' distance a tick after the log goes (an observer sees it), a carpet losing its support, podzol under snow, huge mushroom sides, glazed terracotta pushed but never pulled | 16 | match | 2026-10-15 |
 
 Hopper recordings also compare each hopper's `Items` and `TransferCooldown` (and the
 barrels' `Items`, `watch_items`) every tick with `data get block`.

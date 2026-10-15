@@ -42,6 +42,13 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Game parity of the new blocks** (2026-10-15, owner: "everything HAS TO work exactly
+  like in the game … ALWAYS check against the game code"): every catalog class audited
+  against its source. Fixed: snowy (podzol, mycelium, grass) follows the block above;
+  huge mushroom sides turn and mirror with the block (and the game's property order);
+  carved pumpkins and jack o'lanterns are foreign again (golem patterns change blocks).
+  Stated as not modeled: random ticks, water (ice melting when broken, sponges), entities.
+  EXP-051 `catalog_blocks` on the real server: match.
 - **Bug: mirrored quasi-connected pistons** (2026-10-15, owner's `data/simulation_bug.json`):
   only one of two mirrored sticky pistons extended. Cause: furnaces next to the north
   half's slime are not simulated (foreign blocks), and foreign blocks were guessed to be

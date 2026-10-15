@@ -4,6 +4,13 @@ A Python simulator for Minecraft **Java Edition 26.3** redstone, built by portin
 relevant server algorithms from the supplied decompiled source and verified tick by tick
 against the real game.
 
+**Ground rule (owner, 2026-10-15):** everything simulated must work *exactly* like the
+game. Anything that affects the simulation (new blocks above all: shapes, properties,
+placement, updates, push reaction, conductor rule, block entities) is ported from the
+decompiled 26.3 source, never written from memory or guessed, and checked with a
+comparison scenario on the test server ([[experiments/index]]). What cannot be modeled is
+stated, not approximated; a block that cannot be modeled exactly stays foreign (inert).
+
 **Start here:** [[project-state]] (what exists, what's verified, what's next, how to resume).
 New users: **Help → Tutorial** in the editor ([[tutorial]]); to click through the
 example world: [[tour]].

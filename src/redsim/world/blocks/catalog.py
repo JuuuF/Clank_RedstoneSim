@@ -8,15 +8,22 @@ next to redstone:
 
 * full cubes without logic of their own (``Block``, ores, copper, glass, ice, sponge, …);
 * ``RotatedPillarBlock`` (logs, pillars: ``axis`` from the clicked face), blocks facing
-  away from the player (glazed terracotta, carved pumpkins, the loom), snowy blocks,
-  copper grates (``waterlogged``), huge mushroom blocks (sides hidden against each other);
+  away from the player (glazed terracotta, the loom), snowy blocks (``snowy`` follows
+  the block above), copper grates (``waterlogged``), huge mushroom blocks (sides hidden
+  against each other, turned and mirrored with the block);
 * slabs and stairs (``StairBlock``: shape, corner shapes from the neighbors, mirroring);
 * leaves (``LeavesBlock``: their ``distance`` follows neighbors a tick later, so observers
   see it change; they do not decay, random ticks are not simulated);
 * carpets (break without a block below).
 
-Blocks with mechanics of their own that are not modeled yet (falling blocks, doors,
-fences, TNT, …) stay foreign blocks: drawn and saved, inert in the simulation.
+Every class here was checked against its decompiled 26.3 source (owner, 2026-10-15:
+everything "HAS TO work exactly like in the game"). Not modeled, by design of the whole
+simulator: random ticks (leaf decay, copper oxidation, grass and mycelium spreading,
+budding amethyst, ice melting by light), water (sponges have nothing to absorb; ice broken
+by a player above most blocks becomes water in the game, air here), entities (silverfish
+from infested blocks) and menus. Blocks with mechanics of their own that are not modeled
+yet (carved pumpkins and jack o'lanterns: golem patterns; falling blocks, doors, fences,
+TNT, …) stay foreign blocks: drawn and saved, inert in the simulation.
 """
 
 from __future__ import annotations
@@ -31,7 +38,7 @@ from redsim.core.direction import ALL, Axis, Direction
 from redsim.core.pos import Pos, offset
 from redsim.world.block import Block, BlockState, Conductor, PlacementContext, PushReaction
 from redsim.world.blocks.catalog_data import BLOCKS, LEAF_DECAY_KEEPERS
-from redsim.world.blocks.simple import SimpleBlock, SlabBlock
+from redsim.world.blocks.simple import SNOW, SimpleBlock, SlabBlock, snowy_shape
 from redsim.world.properties import (
     HORIZONTAL_FACING,
     SNOWY,
@@ -52,8 +59,15 @@ STAIRS_SHAPE = Property(
 )
 DISTANCE = integer("distance", 1, 7)
 PERSISTENT = boolean("persistent")
-#: ``HugeMushroomBlock``: one property per side (``PipeBlock.PROPERTY_BY_DIRECTION``).
-MUSHROOM_SIDES = {d: boolean(d.serialized) for d in ALL}
+#: ``HugeMushroomBlock``: one property per side (``PipeBlock.PROPERTY_BY_DIRECTION``), in
+#: the order of its ``createBlockStateDefinition`` (up, down, north, east, south, west).
+MUSHROOM_SIDES = {
+    d: boolean(d.serialized)
+    for d in (
+        Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH,
+        Direction.WEST,
+    )
+}  # fmt: skip
 
 _FROM_YAW = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.EAST)
 
@@ -144,13 +158,30 @@ class FacingBlock(CatalogBlock):
 
 
 class SnowyBlock(CatalogBlock):
-    """``SnowyBlock`` (podzol, mycelium): ``snowy`` (no snow is simulated)."""
+    """``SnowyBlock`` (podzol, mycelium): ``snowy`` follows the block above (placement and
+    ``updateShape``). Mycelium's spreading is a random tick, which is not simulated."""
 
     properties = (SNOWY,)
 
     def __init__(self, block_id: str, spec: tuple[Any, ...]) -> None:
         super().__init__(block_id, spec)
         self.register_default_state(self.default_state.with_(SNOWY, False))
+
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``SnowyBlock.getStateForPlacement``."""
+        above = ctx.level.get_block_state(offset(ctx.pos, Direction.UP))
+        return ctx.requested.with_(SNOWY, above.block.id in SNOW)
+
+    def update_shape(
+        self,
+        state: BlockState,
+        level: Level,
+        pos: Pos,
+        direction: Direction,
+        neighbor_pos: Pos,
+        neighbor: BlockState,
+    ) -> BlockState:
+        return snowy_shape(state, direction, neighbor)
 
 
 class WaterloggedBlock(CatalogBlock):
@@ -194,6 +225,25 @@ class HugeMushroomBlock(CatalogBlock):
         if neighbor.block is self:
             return state.with_(MUSHROOM_SIDES[direction], False)
         return state
+
+    def rotated(self, state: BlockState, quarter_turns: int) -> BlockState:
+        """``rotate``: each side's value moves to the turned side."""
+        out = state
+        for direction, prop in MUSHROOM_SIDES.items():
+            turned = direction
+            for _ in range(quarter_turns % 4):
+                turned = turned.clockwise() if turned.is_horizontal else turned
+            out = out.with_(MUSHROOM_SIDES[turned], state.get(prop))
+        return out
+
+    def mirrored(self, state: BlockState, axis: str) -> BlockState:
+        """``mirror``: ``"x"`` (FRONT_BACK) swaps east and west, ``"z"`` (LEFT_RIGHT) north
+        and south."""
+        flipped = (
+            (Direction.EAST, Direction.WEST) if axis == "x" else (Direction.NORTH, Direction.SOUTH)
+        )
+        a, b = (MUSHROOM_SIDES[d] for d in flipped)
+        return state.with_(a, state.get(b)).with_(b, state.get(a))
 
 
 class CatalogSlab(SlabBlock):
@@ -437,7 +487,6 @@ FACTORIES: dict[str, Callable[[str, tuple[Any, ...]], Block]] = {
     "HayBlock": PillarBlock,
     "InfestedRotatedPillarBlock": PillarBlock,
     "GlazedTerracottaBlock": FacingBlock,
-    "CarvedPumpkinBlock": FacingBlock,
     "LoomBlock": FacingBlock,
     "SnowyBlock": SnowyBlock,
     "MyceliumBlock": SnowyBlock,

@@ -9,7 +9,7 @@ from redsim.editor.placement import PlaceRequest
 from redsim.world import blocks
 from redsim.world.block import PushReaction
 from redsim.world.blocks.catalog import AXIS, DISTANCE, STAIRS_SHAPE
-from redsim.world.properties import POWERED
+from redsim.world.properties import POWERED, SNOWY
 from redsim.world.rotation import mirror_state, rotate_state
 
 P = blocks.parse_state
@@ -111,3 +111,17 @@ def test_facing_blocks_face_the_player() -> None:
     doc = Document.new_flat()
     doc.place((0, 1, 0), blocks.get("white_glazed_terracotta"), up(yaw=0.0))  # looks south
     assert repr(doc.state_at((0, 1, 0))) == "minecraft:white_glazed_terracotta[facing=north]"
+
+
+def test_snowy_follows_the_block_above_and_mushrooms_turn() -> None:
+    doc = Document.new_flat()
+    doc.setblock((0, 1, 0), P("podzol"))
+    doc.setblock((0, 2, 0), P("snow_block"))
+    assert doc.state_at((0, 1, 0)).get(SNOWY)
+    doc.setblock((0, 2, 0), P("air"))
+    assert not doc.state_at((0, 1, 0)).get(SNOWY)
+    side = P("red_mushroom_block[north=false]")
+    turned = rotate_state(side, 1)
+    assert "north=true,east=false" in repr(turned)  # the hidden side turned with it
+    assert "south=false" in repr(mirror_state(side, "z"))
+    assert "minecraft:carved_pumpkin" not in blocks.REGISTRY  # golem patterns: not modeled
