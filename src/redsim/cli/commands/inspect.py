@@ -57,7 +57,8 @@ def _range_value(text: str, what: str) -> tuple[int, int]:
     The area is the box around everything above the floor (plus one block around it),
     or `from POS to POS`, or `around POS [radius R]` (default radius 4: the layers just
     below, at and above POS). `power` draws signal strengths instead of blocks (hex digit,
-    `.` for none). Maps wider than 64 blocks need `wide`.
+    `.` for none). Maps wider than 64 blocks need `wide`. The labels inside the area are
+    listed under the legend.
     """,
     examples=(
         "show",
@@ -70,7 +71,7 @@ def _range_value(text: str, what: str) -> tuple[int, int]:
     kind="view",
     data="""{"tick", "view": "y"|"x"|"z", "layers": [{"at": coordinate, "rows": [{"v":
     coordinate, "cells": [code, ...]}]}], "h": [first, last], "legend": {code: words},
-    "entities": [[x, y, z], ...]}""",
+    "entities": [[x, y, z], ...], "labels": {name: [x, y, z]} (the labels in the area)}""",
 )
 def show(session: Session, args: Args) -> Output:
     doc = session.doc
@@ -145,6 +146,13 @@ def show(session: Session, args: Args) -> Output:
         out.add("legend:")
         for line in legend.lines():
             out.add(line)
+    inside = [
+        (name, lab.pos) for name, lab in sorted(doc.labels.items())
+        if all(low[i] <= lab.pos[i] <= high[i] for i in range(3))
+        and (fixed[0] <= lab.pos[depth_index] <= fixed[1])
+    ]  # fmt: skip
+    if inside:
+        out.add("labels: " + ", ".join(f"@{n} {format_pos(p)}" for n, p in inside))
     if falling:
         out.add("falling blocks: " + ", ".join(format_pos(p) for p in falling))
     out.data = {
@@ -155,6 +163,7 @@ def show(session: Session, args: Args) -> Output:
         "power": power,
         "legend": dict(legend.entries),
         "entities": [list(p) for p in falling],
+        "labels": {n: list(p) for n, p in inside},
     }
     return out
 

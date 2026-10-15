@@ -270,3 +270,13 @@ def test_prefabs_paste_groups_line_supports_and_delays(rs: Run) -> None:
     rs.batch("at 2 use @A; run 12")
     delays = rs("delays", "@A", "@OUT")
     assert "tick 2    0 → 15: output 15 → 0 at tick 8 (6 ticks later)" in delays
+
+
+def test_the_guide_mentions_every_command() -> None:
+    import re
+
+    from redsim.cli.registry import COMMANDS
+
+    text = (Path(__file__).resolve().parents[2] / "doc" / "cli.md").read_text()
+    missing = [n for n in COMMANDS if not re.search(r"`" + re.escape(n) + r"[` ]", text)]
+    assert not missing, f"doc/cli.md does not mention: {missing}"

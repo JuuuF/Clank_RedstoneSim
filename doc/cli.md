@@ -122,6 +122,9 @@ Next to the world, `NAME.redsim.json.undo` keeps the last 20 versions of the fil
 
 `new` creates a world: a 32×32 smooth stone floor at y=0 (`new size N`, `new floor BLOCK`,
 `new floor none`). `open-save` creates one from a Minecraft save (section 12).
+`save-as FILE` writes a copy (to try something without touching the original, work on
+the copy).
+`help` inside a script or the shell prints the same help as `redsim-cli help`.
 
 ## 4. Positions, directions and blocks
 
@@ -156,9 +159,11 @@ minecraft:repeater[facing=west,delay=2]
 repeater facing=west delay=2
 ```
 
-Properties you leave out keep their default (the first value the game lists). Output
-writes states without `minecraft:` (`repeater[delay=2,facing=west,locked=false,powered=false]`),
-in a form the commands read back.
+Properties you leave out keep the block's default, as in `/setblock` (`facing=north`,
+`powered=false`, …); every building command prints the full state it produced. Output
+writes states without `minecraft:` and with every property
+(`repeater[facing=west,delay=2,locked=false,powered=false]`), in a form the commands read
+back.
 
 **Which way things face.** The game's `facing` property means different things for
 different blocks; getting it wrong is the most common building mistake:

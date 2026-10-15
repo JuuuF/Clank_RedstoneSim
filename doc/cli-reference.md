@@ -836,7 +836,8 @@ under the maps explains every code used.
 The area is the box around everything above the floor (plus one block around it),
 or `from POS to POS`, or `around POS [radius R]` (default radius 4: the layers just
 below, at and above POS). `power` draws signal strengths instead of blocks (hex digit,
-`.` for none). Maps wider than 64 blocks need `wide`.
+`.` for none). Maps wider than 64 blocks need `wide`. The labels inside the area are
+listed under the legend.
 
 Examples:
 
@@ -851,7 +852,7 @@ at 10 show y=1
 
 JSON `data`: {"tick", "view": "y"|"x"|"z", "layers": [{"at": coordinate, "rows": [{"v":
     coordinate, "cells": [code, ...]}]}], "h": [first, last], "legend": {code: words},
-    "entities": [[x, y, z], ...]}
+    "entities": [[x, y, z], ...], "labels": {name: [x, y, z]} (the labels in the area)}
 
 ### `inspect`
 
