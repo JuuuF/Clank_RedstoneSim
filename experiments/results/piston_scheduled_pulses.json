@@ -2,11 +2,11 @@
  "scenario": "piston_scheduled_pulses",
  "description": "Sticky pistons driven by pulses that start and end in scheduled ticks (isHandlingTick): a 2-tick input pulse through a 1-tick repeater, an observer's 2-tick pulse, and an observer pulse shortened by a repeater; does each piston push, pull back, or spit its block?",
  "origin": [
-  0,
+  1296,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 1732,
  "fingerprint": "2d781a9a014e27f0",
  "game_version": "26.3",
  "ticks": 30,

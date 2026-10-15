@@ -2,11 +2,11 @@
  "scenario": "torch_burnout",
  "description": "Self-oscillating wall torch: it strongly powers the block above it, which powers a dust dot on the torch's own support block. 8 turn-offs within 60 ticks burn it out; it re-lights 160 ticks later (RedstoneTorchBlock.tick / isToggledTooFrequently).",
  "origin": [
-  96,
+  264,
   0,
   0
  ],
- "start_time": 63,
+ "start_time": 272,
  "fingerprint": "8ae35c4f18631150",
  "game_version": "26.3",
  "ticks": 260,

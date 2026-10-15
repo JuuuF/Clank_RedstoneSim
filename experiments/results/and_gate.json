@@ -2,11 +2,11 @@
  "scenario": "and_gate",
  "description": "Torch AND gate: two inverted inputs joined by wire, inverted again.",
  "origin": [
-  72,
+  240,
   0,
   0
  ],
- "start_time": 33,
+ "start_time": 242,
  "fingerprint": "ec46be68e1775bfe",
  "game_version": "26.3",
  "ticks": 30,

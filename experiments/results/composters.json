@@ -2,11 +2,11 @@
  "scenario": "composters",
  "description": "Composters: level 7 becomes 8 after 20 ticks (a comparator reads it), a hopper below takes a full composter's bone meal (it empties), a piston pushes one.",
  "origin": [
-  0,
+  672,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 886,
  "fingerprint": "85dc469592c0f891",
  "game_version": "26.3",
  "ticks": 24,

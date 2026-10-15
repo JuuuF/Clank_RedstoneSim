@@ -2,11 +2,11 @@
  "scenario": "hopper_item_replace",
  "description": "`/item replace` puts 64 dust into an idle hopper, a barrel and a hopper facing a barrel. The barrel's comparator updates at once (setChanged); the idle hopper's does not (HopperBlockEntity.setItem has no setChanged) until a block placed next to the comparator updates it; the third hopper's comparator updates when the hopper moves its first item.",
  "origin": [
-  936,
+  1152,
   0,
   0
  ],
- "start_time": 1263,
+ "start_time": 1502,
  "fingerprint": "f46be3b12e7dabdd",
  "game_version": "26.3",
  "ticks": 16,

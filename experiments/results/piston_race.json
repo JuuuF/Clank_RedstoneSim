@@ -2,11 +2,11 @@
  "scenario": "piston_race",
  "description": "Two pistons push into the same gap in the same tick; which one is powered first (the order of block events) decides who wins. Row 2 swaps the order. Then a piston is powered, unpowered and powered again at one boundary (block-event dedup).",
  "origin": [
-  648,
+  864,
   0,
   0
  ],
- "start_time": 757,
+ "start_time": 996,
  "fingerprint": "538a4b7b596db0fd",
  "game_version": "26.3",
  "ticks": 12,

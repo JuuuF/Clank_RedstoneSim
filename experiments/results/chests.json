@@ -2,11 +2,11 @@
  "scenario": "chests",
  "description": "A barrel feeds a double chest through a hopper; comparators read each half (one 54-slot container); a block on top of one half makes both comparators read 0; a trapped chest is a signal source of 0 (wire beside it points at it).",
  "origin": [
-  48,
+  1248,
   0,
   0
  ],
- "start_time": 101,
+ "start_time": 1612,
  "fingerprint": "633eda9a0c669719",
  "game_version": "26.3",
  "ticks": 60,

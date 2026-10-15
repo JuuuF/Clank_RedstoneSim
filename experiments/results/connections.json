@@ -2,11 +2,11 @@
  "scenario": "connections",
  "description": "Fences, bars, panes and walls connect and disconnect through shape updates; exceptions, gates, wall posts and tall sides from the block above.",
  "origin": [
-  24,
+  96,
   0,
   0
  ],
- "start_time": 15,
+ "start_time": 170,
  "fingerprint": "42d1ff8678f84bb6",
  "game_version": "26.3",
  "ticks": 10,

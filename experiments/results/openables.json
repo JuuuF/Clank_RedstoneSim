@@ -2,11 +2,11 @@
  "scenario": "openables",
  "description": "Doors, trapdoors, fence gates: redstone opens/closes them, doors pop without support or when pushed, an observer sees a door, supports vanish when trapdoors/gates open.",
  "origin": [
-  0,
+  72,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 156,
  "fingerprint": "8ea328ec728f386f",
  "game_version": "26.3",
  "ticks": 14,

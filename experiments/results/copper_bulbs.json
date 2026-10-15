@@ -2,11 +2,11 @@
  "scenario": "copper_bulbs",
  "description": "Copper bulbs as T flip-flops: each rising edge toggles lit; a comparator reads 15 from a lit bulb into a lamp; bulbs never conduct (a bulb between a redstone block and a lamp leaves it off); placing a bulb next to power lights it.",
  "origin": [
-  24,
+  1200,
   0,
   0
  ],
- "start_time": 25,
+ "start_time": 1542,
  "fingerprint": "f7c0ec49ae06035f",
  "game_version": "26.3",
  "ticks": 30,

@@ -2,11 +2,11 @@
  "scenario": "piston_door",
  "description": "A 1x2 door: two stacked sticky pistons hold stone blocks. One redstone block powers the top piston directly and the bottom piston through quasi-connectivity; the top piston's own update wakes the bottom one in the same block-event phase.",
  "origin": [
-  408,
+  576,
   0,
   0
  ],
- "start_time": 639,
+ "start_time": 848,
  "fingerprint": "4b8ae70561425397",
  "game_version": "26.3",
  "ticks": 14,

@@ -2,11 +2,11 @@
  "scenario": "mirrored_qc_furnaces",
  "description": "Slime/honey carry sticky pistons onto quasi-powered spots in both mirrored halves; both extend on arrival (the furnaces next to the slime stay where they are).",
  "origin": [
-  0,
+  144,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 196,
  "fingerprint": "464b183531cc98fa",
  "game_version": "26.3",
  "ticks": 14,

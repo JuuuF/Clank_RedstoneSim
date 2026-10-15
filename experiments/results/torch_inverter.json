@@ -2,11 +2,11 @@
  "scenario": "torch_inverter",
  "description": "Wire powers a block; the torch on top turns off and on with a 2-tick delay.",
  "origin": [
-  24,
+  192,
   0,
   0
  ],
- "start_time": 11,
+ "start_time": 220,
  "fingerprint": "ecfaa81466f7fc9d",
  "game_version": "26.3",
  "ticks": 12,

@@ -2,11 +2,11 @@
  "scenario": "repeater_delays",
  "description": "Repeaters with delay 1-4 (2/4/6/8 ticks) light lamps; rows spaced apart.",
  "origin": [
-  168,
+  336,
   0,
   0
  ],
- "start_time": 467,
+ "start_time": 676,
  "fingerprint": "00a79e4710aa98ca",
  "game_version": "26.3",
  "ticks": 30,

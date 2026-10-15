@@ -2,11 +2,11 @@
  "scenario": "slime_branch_push",
  "description": "Sticky piston (in the air) pushes a slime block that drags a stone on top and one at the side; a honey block beside the slime stays. Retraction pulls the group back.",
  "origin": [
-  432,
+  600,
   0,
   0
  ],
- "start_time": 653,
+ "start_time": 862,
  "fingerprint": "ef4309f4d871572e",
  "game_version": "26.3",
  "ticks": 12,

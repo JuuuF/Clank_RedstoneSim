@@ -2,11 +2,11 @@
  "scenario": "droppers",
  "description": "A dropper pushes one item per rising edge into a hopper chain ending in a chest; a dispenser with one stack fires only after a later neighbor update (power at the block above: quasi-connectivity); comparators read both.",
  "origin": [
-  24,
+  1224,
   0,
   0
  ],
- "start_time": 61,
+ "start_time": 1572,
  "fingerprint": "9aae5a82d9297f71",
  "game_version": "26.3",
  "ticks": 40,

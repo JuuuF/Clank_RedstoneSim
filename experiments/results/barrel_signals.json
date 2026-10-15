@@ -2,11 +2,11 @@
  "scenario": "barrel_signals",
  "description": "Comparators read barrels at the fill thresholds of signals 1/2, 7/8 and 14/15 (64-stacks), and 14 slots of ender pearls (16-stacks); later /item replace adds one item (123 -> 124: signal 1 -> 2) and empties a slot (1728 -> 1664: 15 -> 14).",
  "origin": [
-  552,
+  768,
   0,
   0
  ],
- "start_time": 709,
+ "start_time": 948,
  "fingerprint": "385eb7327cd39db9",
  "game_version": "26.3",
  "ticks": 12,

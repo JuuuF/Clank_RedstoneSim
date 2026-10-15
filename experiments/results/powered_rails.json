@@ -2,11 +2,11 @@
  "scenario": "powered_rails",
  "description": "A line of 12 powered rails fed from one end (power reaches 8 rails past the powered one), a line of activator rails, a mixed line (powered rails do not pass power through activator rails), then the inputs are removed.",
  "origin": [
-  816,
+  1032,
   0,
   0
  ],
- "start_time": 967,
+ "start_time": 1206,
  "fingerprint": "0f74837558e1a8ad",
  "game_version": "26.3",
  "ticks": 12,

@@ -2,11 +2,11 @@
  "scenario": "piston_push_pull",
  "description": "Sliding piston: a normal piston (row z=0) and a sticky piston (row z=2) push a stone block and retract; only the sticky one pulls it back. Moving blocks are compared including their block-entity progress.",
  "origin": [
-  336,
+  504,
   0,
   0
  ],
- "start_time": 603,
+ "start_time": 812,
  "fingerprint": "1f1342c41c7bd93e",
  "game_version": "26.3",
  "ticks": 14,

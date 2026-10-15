@@ -2,11 +2,11 @@
  "scenario": "lamp_redstone_block",
  "description": "Lamp turns on instantly next to a redstone block and off 4 ticks after removal.",
  "origin": [
-  0,
+  168,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 210,
  "fingerprint": "b51003886f4e0643",
  "game_version": "26.3",
  "ticks": 10,

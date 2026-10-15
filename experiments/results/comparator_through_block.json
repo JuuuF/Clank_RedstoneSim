@@ -2,11 +2,11 @@
  "scenario": "comparator_through_block",
  "description": "Comparator reads cake through a stone block; a torch under the stone gives the stone strong power 15, which skips the through-block lookup (open question OQ-6).",
  "origin": [
-  288,
+  456,
   0,
   0
  ],
- "start_time": 575,
+ "start_time": 784,
  "fingerprint": "b27310df94080170",
  "game_version": "26.3",
  "ticks": 16,

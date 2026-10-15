@@ -2,11 +2,11 @@
  "scenario": "signs",
  "description": "Signs: standing and wall signs on pushed stones stay (moving blocks and piston heads count as solid), a sign in front of a piston stops it (block entity: not pushable), and signs pop when their support is removed.",
  "origin": [
-  0,
+  648,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 880,
  "fingerprint": "ae8832a8d61ec435",
  "game_version": "26.3",
  "ticks": 6,

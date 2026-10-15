@@ -2,11 +2,11 @@
  "scenario": "comparator_modes",
  "description": "Cake (14 - 2*bites) behind a comparator, wire side input 13: compare, then side > rear, then subtract mode (set by /setblock), then side removed.",
  "origin": [
-  264,
+  432,
   0,
   0
  ],
- "start_time": 555,
+ "start_time": 764,
  "fingerprint": "94104f6a0d81b720",
  "game_version": "26.3",
  "ticks": 20,

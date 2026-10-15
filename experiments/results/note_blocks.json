@@ -2,11 +2,11 @@
  "scenario": "note_blocks",
  "description": "Note blocks: instrument from the block below (stone, glass, planks, wool), powered from a redstone block and through a repeater; an observer watches one (each powered change is a state change) and lights a lamp.",
  "origin": [
-  0,
+  1176,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 1518,
  "fingerprint": "63712985fb072a84",
  "game_version": "26.3",
  "ticks": 24,

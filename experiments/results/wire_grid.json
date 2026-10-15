@@ -2,11 +2,11 @@
  "scenario": "wire_grid",
  "description": "A 6\u00d76 dust carpet powered from its corners and edges at different ticks, with lamps around it: dust update order, power levels and shapes in a dense grid.",
  "origin": [
-  672,
+  888,
   0,
   0
  ],
- "start_time": 769,
+ "start_time": 1008,
  "fingerprint": "3806e8f82c1e1023",
  "game_version": "26.3",
  "ticks": 20,

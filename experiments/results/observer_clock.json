@@ -2,11 +2,11 @@
  "scenario": "observer_clock",
  "description": "Two observers facing each other (a clock), each with a lamp behind it.",
  "origin": [
-  720,
+  936,
   0,
   0
  ],
- "start_time": 879,
+ "start_time": 1118,
  "fingerprint": "01aaca5e925ffc5c",
  "game_version": "26.3",
  "ticks": 30,

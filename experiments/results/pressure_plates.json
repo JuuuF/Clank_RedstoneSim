@@ -2,11 +2,11 @@
  "scenario": "pressure_plates",
  "description": "Entities on pressure plates: an armor stand (a mob) presses a stone and an oak plate, an item only the oak plate; weighted plates count entities. Each lamp shows its plate; plates release at their next recheck after the entities go.",
  "origin": [
-  0,
+  1272,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 1672,
  "fingerprint": "e2d30444a6317dde",
  "game_version": "26.3",
  "ticks": 60,

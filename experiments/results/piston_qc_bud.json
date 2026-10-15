@@ -2,11 +2,11 @@
  "scenario": "piston_qc_bud",
  "description": "Quasi-connectivity: a redstone block diagonally above a piston powers it, but the piston only notices after a neighbor update (a block placed beside it later).",
  "origin": [
-  384,
+  552,
   0,
   0
  ],
- "start_time": 629,
+ "start_time": 838,
  "fingerprint": "97f7879f14e5626d",
  "game_version": "26.3",
  "ticks": 10,

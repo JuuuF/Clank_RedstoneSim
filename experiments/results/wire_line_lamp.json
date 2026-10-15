@@ -2,11 +2,11 @@
  "scenario": "wire_line_lamp",
  "description": "15 wires from a redstone block decay to 1 and still light a lamp.",
  "origin": [
-  48,
+  216,
   0,
   0
  ],
- "start_time": 23,
+ "start_time": 232,
  "fingerprint": "d226379ddc253b99",
  "game_version": "26.3",
  "ticks": 10,

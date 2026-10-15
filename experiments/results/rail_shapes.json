@@ -2,11 +2,11 @@
  "scenario": "rail_shapes",
  "description": "Plain rails choose their shapes from their neighbors: a straight line, a corner, a T junction that switches when a redstone block next to it powers it, and a slope up a step.",
  "origin": [
-  792,
+  1008,
   0,
   0
  ],
- "start_time": 957,
+ "start_time": 1196,
  "fingerprint": "4123b5725bf23db4",
  "game_version": "26.3",
  "ticks": 10,

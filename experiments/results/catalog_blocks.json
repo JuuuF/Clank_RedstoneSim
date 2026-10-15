@@ -2,11 +2,11 @@
  "scenario": "catalog_blocks",
  "description": "Ordinary blocks: conduction, stair corners, leaves distance seen by an observer, carpet support, snowy podzol, huge mushroom sides, glazed terracotta not pulled.",
  "origin": [
-  0,
+  120,
   0,
   0
  ],
- "start_time": 1,
+ "start_time": 180,
  "fingerprint": "2da946eb1c612e16",
  "game_version": "26.3",
  "ticks": 16,

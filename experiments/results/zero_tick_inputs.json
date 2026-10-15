@@ -2,11 +2,11 @@
  "scenario": "zero_tick_inputs",
  "description": "0-tick pulses (a redstone block placed and removed at the same boundary) next to a piston, a sticky piston with a block, a repeater, a comparator, a torch on a block, a lamp and a dust line; then a normal pulse for contrast.",
  "origin": [
-  624,
+  840,
   0,
   0
  ],
- "start_time": 733,
+ "start_time": 972,
  "fingerprint": "f917750ec292018f",
  "game_version": "26.3",
  "ticks": 24,

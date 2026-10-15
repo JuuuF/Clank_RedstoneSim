@@ -2,11 +2,11 @@
  "scenario": "torch_tower",
  "description": "A torch tower (block, torch, block, ... four stages, lamp on top) driven by short and long pulses, then toggled every tick until the bottom torch burns out.",
  "origin": [
-  696,
+  912,
   0,
   0
  ],
- "start_time": 789,
+ "start_time": 1028,
  "fingerprint": "1212c0ef022329bc",
  "game_version": "26.3",
  "ticks": 90,

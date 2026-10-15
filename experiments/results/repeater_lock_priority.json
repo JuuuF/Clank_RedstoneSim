@@ -2,11 +2,11 @@
  "scenario": "repeater_lock_priority",
  "description": "Race in one game tick: repeater L (scheduled second) locks repeater M. L outputs into a diode's side, so it ticks at EXTREMELY_HIGH and wins against M's HIGH: M stays off until L turns off again.",
  "origin": [
-  216,
+  384,
   0,
   0
  ],
- "start_time": 521,
+ "start_time": 730,
  "fingerprint": "7f82946b444f80dd",
  "game_version": "26.3",
  "ticks": 14,

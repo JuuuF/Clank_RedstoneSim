@@ -141,8 +141,8 @@ page is the summary to start from.*
   directory (`tests/conftest.py`).
 - Real-game comparisons (`python -m tools.gameserver.run`): 55 of 55 named scenarios match (gravity blocks
   EXP-054/055 and campfires EXP-056 added 2026-10-15; signs and
-  composters added 2026-10-14); 46 of them
-  in one fresh full run (2026-10-11); the 40 random circuits were re-recorded after hoppers
+  composters added 2026-10-14); all 55 in one fresh full run
+  (2026-10-15); the 40 random circuits were re-recorded after hoppers
   joined the palette and all match. The harness fails loudly on rejected commands.
   Sensitivity was confirmed by deliberately breaking the lamp delay, the hopper 7-tick
   rule and the hopper `setItem` quirk ([[experiments/index]], [[mechanics/hopper]]).
