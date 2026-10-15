@@ -580,6 +580,51 @@ step 5
 JSON `data`: {"steps": [{"index", "kind", "pos", "changes": [{"pos", "from", "to"}]}],
     "tick", "inside_tick"}
 
+### `settle`
+
+`settle [max N]`
+
+Let the build settle (torches react, …) and make that state the build.
+
+Right after building, a contraption is often not in its steady state yet: a torch
+placed next to a powered block is still lit, a lamp still on, wire still powered. They
+react in the first ticks. `settle` simulates the build alone (without the timeline's
+edits) until a tick passes with no block change and nothing pending (scheduled ticks,
+block events, moving pistons, falling blocks), at most N ticks (default 200), and
+makes that state the new build (tick 0). The timeline's edits keep their tick numbers;
+the output lists what changed. A clock never settles: then nothing changes and
+`settle` says so. This is the editor's "Set tick 0 here" after letting the circuit
+run, without moving the timeline.
+
+Examples:
+
+```
+settle
+settle max 50
+```
+
+JSON `data`: {"ticks": ticks it took or null, "changes": [{"pos", "from", "to"}]}
+
+### `rebase`
+
+`rebase`
+
+Make the view tick the new build (the editor's "Set tick 0 here").
+
+The world at the view tick becomes the build (tick 0): the history before it is
+dropped (edits recorded before the view tick are baked into the build), edits
+recorded later move earlier by the view tick, and the simulated length is kept. Use
+`settle` instead to just let a fresh build react.
+
+Examples:
+
+```
+seek 6
+rebase
+```
+
+JSON `data`: {"tick": the old tick that is now 0}
+
 ### `where`
 
 `where`
@@ -869,6 +914,26 @@ waves 0 1 0 5 1 0
 ```
 
 JSON `data`: {"from", "to", "rows": [{"pos", "name", "block", "values": [int, ...]}]}
+
+### `changes`
+
+`changes POS [POS ...] [ticks A..B]`
+
+How a block's state changed over time: each new state with its tick.
+
+For each position, the block state at the start of the range and then every tick
+where it changed, with the new state. Where `waves` shows signal values, `changes`
+shows the blocks themselves: a piston extending, a block arriving where a piston
+pushed it, a repeater locking. The range defaults to the whole simulated history.
+
+Examples:
+
+```
+changes 2 1 0
+changes @DOOR @P ticks 0..30
+```
+
+JSON `data`: {"from", "to", "rows": [{"pos", "name", "changes": [{"tick", "state"}]}]}
 
 ### `monitor`
 

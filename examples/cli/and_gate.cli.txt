@@ -1,0 +1,27 @@
+# An AND gate (two levers → one lamp), built and tested with redsim-cli.
+#   redsim-cli examples/cli/and_gate.redsim.json new force
+#   redsim-cli examples/cli/and_gate.redsim.json < examples/cli/and_gate.cli.txt
+# Layout (from above, y=1 and y=2): levers on the west sides of two stones, a torch
+# on each stone, wire joining the torches (the NOR of the inputs), the wire into a
+# stone with a torch on its east side (inverting: AND), the lamp after it.
+fill 0 1 0 0 1 2 stone
+place 0 2 0 redstone_torch
+place 0 2 2 redstone_torch
+place -1 1 0 lever face=wall facing=west
+place -1 1 2 lever face=wall facing=west
+place 1 1 1 stone
+place 0 2 1 redstone_wire
+place 1 2 1 redstone_wire
+place 2 2 1 stone
+place 3 2 1 redstone_wall_torch facing=east
+place 4 1 1 stone
+place 4 2 1 redstone_lamp
+settle                              # let the torches react: that state is the build
+label A -1 1 0 "input A (lever)"
+label B -1 1 2 "input B (lever)"
+label OUT 4 2 1 "output (lamp)"
+note "AND gate: @OUT lights when both levers @A and @B are on (3 ticks later)"
+target new and "the lamp is on only when both levers are on"
+target and truth @A @B -> @OUT rows 00:0 01:0 10:0 11:1
+check
+show

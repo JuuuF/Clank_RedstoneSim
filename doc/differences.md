@@ -57,6 +57,8 @@ own mechanics.
 | 0-tick pulses | Nothing directly (contraptions make them) | On at the start of a tick, off right after its block events, inside one tick | `Level.zero_tick_pulses` |
 | Container slots, sign text, sources | `/item replace`, `/setblock … {…}`, a player writing a sign | Applied with the commands' semantics (`setChanged`, comparators update) | `engine.py` actions |
 | Editing the history | Nothing in the game | Edits inside the recorded history keep the later ones and re-run (ADR-022) | `editor/document.py` |
+| Settling the build (`redsim-cli settle`) | Nothing in the game | The build simulated alone until quiet becomes the new build (the editor's "Set tick 0 here" without moving the timeline) | `editor/document_history.py` |
+| Truth-table inputs (`redsim-cli target … truth`) | A player or a circuit switching the input | A lever input is flipped with `use` (a player); any other input gets a sequence power pulse (editor power) | `cli/targets.py` |
 
 Order inside the entity phase: the editor's stand-ins (0-tick ends, projectile hits,
 plate visitors) come before falling blocks, which tick in the order they were created. In

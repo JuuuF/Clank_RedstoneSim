@@ -19,6 +19,14 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **A command line for agents and people** (2026-10-15/16, owner: make the simulation
+  "the bridge between minecraft and AI agents", easy to interact with, documented for
+  agents and humans in the same format): `redsim-cli` ([[cli]], [[cli-reference]],
+  [[cli-internals]], ADR-027). The world file is the state; one command language for the
+  command line, scripts and targets; text maps, signal timelines (`waves`), block
+  histories (`changes`), cause chains (`why`), step-by-step ticks (`step`, `trace`);
+  labels, notes; targets (acceptance tests, truth tables) checked from the build; `settle`
+  for fresh builds; schematics and saves in and out; `AGENTS.md` and a Claude Code skill.
 - **Campfires** (2026-10-15, owner: "campfires are a thing in redstone"): campfire and
   soul campfire with their block entity (`campfire.py`): signal fire from a hay bale
   (observers see it), immovable for pistons, not a conductor, food cooking and cooling;

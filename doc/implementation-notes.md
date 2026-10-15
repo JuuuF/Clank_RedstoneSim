@@ -32,6 +32,8 @@ python -m tools.gameserver.run fuzz_61    # a new random circuit (seed 61) again
 python -m tools.bench                     # speed numbers (compare before/after a change)
 python -m tools.build_compiled            # optional compiled build (about 2× faster)
 REDSIM_PURE=1 python -m pytest            # force plain Python when a build exists
+python -m redsim.cli W.redsim.json info   # the command line (doc/cli.md, doc/cli-internals.md)
+python -m redsim.cli help --markdown > doc/cli-reference.md   # after changing any command's help
 ```
 
 Large modules are split into mixins (`viewport_*`, `window_*`, `timeline_lines`,

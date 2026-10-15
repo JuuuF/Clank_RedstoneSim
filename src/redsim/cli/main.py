@@ -4,6 +4,7 @@
     redsim-cli [OPTIONS] WORLD -c "CMD; CMD ..."   several commands
     redsim-cli [OPTIONS] WORLD < script.txt        commands from standard input
     redsim-cli [OPTIONS] WORLD                     (a terminal) the world's summary
+    redsim-cli [OPTIONS] WORLD shell               an interactive prompt
     redsim-cli help [COMMAND | --markdown]         help
 
 Options (anywhere before the command): ``--json`` (one JSON object per command),
@@ -25,6 +26,7 @@ from redsim.cli.session import Session
 USAGE = """usage: redsim-cli [--json] [--dry-run] [--keep-going] WORLD [COMMAND [ARGS...]]
        redsim-cli [OPTIONS] WORLD -c "COMMAND; COMMAND; ..."
        redsim-cli [OPTIONS] WORLD < commands.txt
+       redsim-cli [OPTIONS] WORLD shell
        redsim-cli help [COMMAND] | help --markdown
 
 WORLD is a .redsim.json world file (the editor's format); 'redsim-cli WORLD new' creates
@@ -59,6 +61,9 @@ def main(
     )
     try:
         session.open()
+        if args == ["shell"]:
+            out.write(f"redsim-cli shell on {world}: commands as in scripts; help; exit\n")
+            return session.interactive(input)
         if args and args[0] == "-c":
             if len(args) != 2:
                 out.write("error: -c takes one argument: the commands, separated by ';'\n")

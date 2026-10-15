@@ -254,7 +254,10 @@ def truth_cases(
     settle: int,
 ) -> list[dict[str, Any]]:
     """One case per row ``BITS:BITS`` (inputs, then outputs). ``inputs`` are (name, pos,
-    is a lever)."""
+    is a lever).
+
+    Not as in the game: an input that is not a lever is switched on with a sequence power
+    pulse (editor power on the position, ADR-026), not by anything in the game."""
     cases = []
     check_at = 1 + settle
     for row in rows:

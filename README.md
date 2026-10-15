@@ -32,6 +32,21 @@ If `redsim` is not found afterwards (macOS): `pip` may have been another Python'
 (check `pip -V`), so use `python -m pip …` as above; in zsh run `rehash` once. `python -m
 redsim` always works in the environment.
 
+## Command line (for AI agents and people)
+
+`redsim-cli` builds, runs, inspects and tests contraptions from a terminal, on the same
+world files the editor opens: text maps, signal timelines, cause chains, and targets
+(acceptance tests) that say when a contraption works.
+
+```sh
+redsim-cli gate.redsim.json new
+redsim-cli gate.redsim.json -c "place 0 1 0 lever face=floor; place 1 1 0 redstone_lamp; show"
+redsim-cli gate.redsim.json < examples/cli/and_gate.cli.txt    # build and test an AND gate
+```
+
+Guide: [`doc/cli.md`](doc/cli.md) · every command: [`doc/cli-reference.md`](doc/cli-reference.md)
+· for agents: [`AGENTS.md`](AGENTS.md).
+
 ## Documentation
 
 All design notes, mechanics research (with source references) and experiment results live

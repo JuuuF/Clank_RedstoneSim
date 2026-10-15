@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-15: edits inside the recorded history keep the later keyframes, single edits move on their own block lines, gravity blocks with falling block entities ([[mechanics/gravity-blocks]], EXP-054/055), campfires ([[mechanics/campfire]], EXP-056). Before that: 2026-10-14, after working through the open list ([[todo-pass]]: Select
+*Last updated: 2026-10-16: the command line `redsim-cli` for agents and people ([[cli]]). Before that, 2026-10-15: edits inside the recorded history keep the later keyframes, single edits move on their own block lines, gravity blocks with falling block entities ([[mechanics/gravity-blocks]], EXP-054/055), campfires ([[mechanics/campfire]], EXP-056). Before that: 2026-10-14, after working through the open list ([[todo-pass]]: Select
 World look, timeline groups for every category, several selections acting together,
 "why did this change?" and a heat view, real signs with text, world builds index and
 reconnecting, schematics, composters and more signal sources). Before that: the
@@ -59,6 +59,10 @@ page is the summary to start from.*
   (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
   a prefab library (save, import/export JSON), and groups with exposed input/output ports and
   live readings. Abstract (black-box) group models are deferred (ADR-016).
+- **Command line (`redsim-cli`):** for AI agents and people ([[cli]], ADR-027): build,
+  run, inspect (maps, signals per side, waves, cause chains, steps) and test (targets)
+  contraptions in the editor's world files; reference [[cli-reference]], internals
+  [[cli-internals]], examples in `examples/cli/`.
 - **Minecraft worlds:** File → Open Minecraft world… opens a Java 26.x save around the
   player and streams further chunks in around the camera up to a view distance; blocks the
   simulator does not model come in as inert "foreign" blocks drawn with their real model
@@ -88,6 +92,7 @@ page is the summary to start from.*
 | `redsim.editor` | Document, placement orientation, sections, undo, clipboard/prefabs, groups | done | `tests/editor/test_editor.py`, `tests/editor/test_contraptions.py` |
 | `redsim.world.rotation` | State/offset rotation (`Rotation.CLOCKWISE_90`) | done | `tests/editor/test_contraptions.py` |
 | `redsim.ui` | PySide6 editor (viewport, panels, main window), chunked meshes with the game's textured models (`assets`, `atlas`), run pacing, smooth orbit camera, keymap and modes, theme and pixel font, hotbar inventory, block search, timeline with keyframe rows, F3 screen, gizmos | done | `tests/ui/*` (offscreen; asset tests skip without the jar) |
+| `redsim.cli` | The command line `redsim-cli`: language, registry, session, views, targets, commands ([[cli-internals]]) | done | `tests/cli/*` (commands, examples, reference in sync) |
 | `tools/java_oracle` | JVM oracle for hash order | done | `tests/core/test_javahash.py` |
 | `tools/gameserver` | Sandboxed server harness, scenarios, comparison runner | done | `tests/sim/test_game_verified.py` replays its recordings |
 

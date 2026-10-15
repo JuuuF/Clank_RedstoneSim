@@ -19,6 +19,7 @@ example world: [[tour]].
 
 ## Navigation
 
+- **Command line (agents and people):** [[cli]] · [[cli-reference]] · [[cli-internals]]
 - **Project:** [[project-state]] · [[differences]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tutorial]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]

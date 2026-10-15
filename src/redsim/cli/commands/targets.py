@@ -283,7 +283,8 @@ def check(session: Session, args: Args) -> Output:
         raise CliError("check: no targets yet (target new NAME …)")
     results = [model.run_case(doc, t["name"], c) for t in chosen for c in t["cases"]]
     passed = sum(r.passed for r in results)
-    out = Output([f"check: {len(results)} cases, {passed} passed, {len(results) - passed} failed"])
+    cases = "1 case" if len(results) == 1 else f"{len(results)} cases"
+    out = Output([f"check: {cases}, {passed} passed, {len(results) - passed} failed"])
     for r in results:
         title = r.target if r.case == "main" else f"{r.target} [{r.case}]"
         out.add(f"{'PASS' if r.passed else 'FAIL'}  {title}")
@@ -302,10 +303,11 @@ def check(session: Session, args: Args) -> Output:
                     f"tick {t}: {e.expectation.key}={_fmt(e.observed[t])}" for t in failing[:6]
                 )
                 out.add(f"           saw {seen}" + (" …" if len(failing) > 6 else ""))
-                if e.expectation.key == "power" or all(
-                    isinstance(v, int) for v in e.observed.values()
+                numbers = [v for v in e.observed.values() if not isinstance(v, bool)]
+                if len(numbers) == len(e.observed) and all(
+                    isinstance(v, int) and 0 <= v <= 15 for v in numbers
                 ):
-                    values = [v if isinstance(v, int) else 0 for v in e.observed.values()]
+                    values = [int(v) for v in numbers]
                     out.add(
                         f"           ticks {e.expectation.low}..{e.expectation.high}: "
                         f"{wave_row(values)}"

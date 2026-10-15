@@ -1,0 +1,15 @@
+# Two observers watching each other make a clock; a lamp shows it.
+#   redsim-cli examples/cli/observer_clock.redsim.json new force
+#   redsim-cli examples/cli/observer_clock.redsim.json < examples/cli/observer_clock.cli.txt
+place 0 1 0 observer facing=east
+place 1 1 0 observer facing=west
+place -1 1 0 redstone_lamp
+label CLK 0 1 0 "the observer whose output is the clock"
+label LAMP -1 1 0 "a lamp on the clock"
+run 24
+waves @CLK @LAMP
+target new clock "the observer pulses at least once in every 6 ticks"
+target clock expect @CLK powered=true within 2..7
+target clock expect @CLK powered=true within 8..13
+target clock expect @CLK powered=true within 14..19
+check

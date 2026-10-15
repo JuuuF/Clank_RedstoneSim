@@ -221,6 +221,48 @@ class HistoryOps:
         view._shift_markers(-here)
         view.notice = f"Tick {here} is now tick 0 (the build)."
 
+    def settle_build(self, max_ticks: int = 200) -> int | None:
+        """Let the build settle: simulate it alone (without the timeline's edits) until a
+        tick passes with no block change, no pending scheduled tick or block event and no
+        falling block, and make that state the build. Recorded edits keep their ticks.
+        Returns how many ticks it took (0: already settled), or None if it did not settle
+        within ``max_ticks`` (a clock): then nothing changes. One undo step.
+
+        Not as in the game (an editor feature, no game mechanic): a world has no "build"
+        to replace; this is the editor's "Set tick 0 here" for the build alone."""
+        from redsim.sim.engine import Engine
+
+        view = cast("Document", self)
+        if not view.can_edit:
+            raise EditError("Finish the current tick first.")
+        engine = Engine()
+        engine.restore(view.history.base)
+        level = engine.level
+        level.take_touched()
+        ticks = 0
+        while True:
+            quiet = (
+                not level.block_ticks.pending()
+                and not level.block_ticks.to_run
+                and not level.block_events
+                and not level.entities
+                and not level.take_touched()
+                and not any(not w.is_removed() for w in level.tickers if _moving(w))
+            )
+            if quiet:
+                break
+            if ticks >= max_ticks:
+                return None
+            engine.run_tick()
+            ticks += 1
+        if ticks == 0:
+            return 0
+        before = view._history_state()
+        view._rebuild(HistoryState(engine.snapshot(), before.plan, before.end_tick, before.tick))
+        view._undo.append(replace(before, label=f"settle the build ({ticks} ticks)"))
+        view._redo.clear()
+        return ticks
+
     def step(self) -> StepInfo:
         view = cast("Document", self)
         info = view.history.step()
@@ -328,6 +370,12 @@ class HistoryOps:
             return False
         view.seek(view.tick_steps[max(known)])
         return True
+
+
+def _moving(wrapper: Any) -> bool:
+    """A ticker of a block moved by a piston (it changes blocks when it finishes)."""
+    entity = getattr(getattr(wrapper, "ticker", None), "block_entity", None)
+    return type(entity).__name__ == "PistonMovingBlockEntity"
 
 
 class EditError(Exception):

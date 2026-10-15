@@ -1,0 +1,21 @@
+# A sticky piston moves a block out and back on a schedule (timeline edits), with a
+# target that checks where the block is at which tick.
+#   redsim-cli examples/cli/piston_door.redsim.json new force
+#   redsim-cli examples/cli/piston_door.redsim.json < examples/cli/piston_door.cli.txt
+place 0 1 0 sticky_piston facing=east
+place 1 1 0 stone
+place -1 1 0 lever face=floor
+label L -1 1 0 "the lever"
+label P 0 1 0 "the sticky piston"
+label OUT 2 1 0 "where the block goes"
+at 3 use @L                          # the lever goes on at tick 3 …
+at 10 use @L                         # … and off at tick 10
+run until 16
+changes @OUT @P
+target new door "the block is out from tick 6 to 10 and back by tick 13"
+target door do at 3 use @L
+target door do at 10 use @L
+target door expect @OUT block=stone during 6..10
+target door expect @OUT block=air at 13
+target door expect 1 1 0 block=stone at 13
+check

@@ -225,6 +225,44 @@ class Session:
             return 1
         return 1 if failed or self.failed_check else 0
 
+    def interactive(self, read: Any) -> int:
+        """The shell: read a line (``read(prompt)``, ``EOFError`` ends), run its
+        commands, save after every line that changed something. ``exit`` or ``quit``
+        ends it."""
+        from redsim.cli.language import split_commands
+
+        failed = False
+        while True:
+            try:
+                line = read("redsim> ")
+            except EOFError:
+                break
+            if line.strip() in ("exit", "quit"):
+                break
+            try:
+                commands = list(split_commands(line))
+            except CliError as exc:
+                self._print_error(line, str(exc), False)
+                continue
+            for words in commands:
+                try:
+                    self.edit_tick = 0
+                    output = self.execute(words)
+                    cmd = lookup(words[0])
+                    if cmd is not None and cmd.kind != "view":
+                        self.log.append(join_words(words))
+                except CliError as exc:
+                    failed = True
+                    self._print_error(join_words(words), str(exc), False)
+                    break
+                self._print(join_words(words), output, False)
+            if self.has_document and (self.changed or self.file_undone) and not self.dry_run:
+                self.restore_view()
+                self.save()
+                self.changed = self.file_undone = False
+        self.finish()
+        return 1 if failed else 0
+
     def _print(self, text: str, output: Output, echo: bool) -> None:
         if self.json_mode:
             record = {"command": text, "ok": True, "data": output.data}

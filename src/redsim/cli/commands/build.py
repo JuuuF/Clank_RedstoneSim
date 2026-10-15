@@ -76,8 +76,33 @@ def place(session: Session, args: Args) -> Output:
                 f"place: {format_pos(pos)} holds {doc.state_at(pos).block.name}; "
                 "break it first or use set"
             )
+        if not state.can_survive(doc.level, pos):
+            raise CliError(
+                f"place: {state.block.name} cannot stay at {format_pos(pos)}: "
+                f"{_support_hint(doc, state, pos)}"
+            )
         doc.place_state(pos, state)
     return _done(session, "placed", pos)
+
+
+def _support_hint(doc: Any, state: Any, pos: Pos) -> str:
+    """Why a block has no support: the block it would rest on or hang from."""
+    from redsim.cli.views import prop
+    from redsim.core.direction import Direction
+    from redsim.core.pos import offset
+
+    facing = prop(state, "facing")
+    face = prop(state, "face")
+    if face == "ceiling":
+        side = Direction.UP
+    elif face == "wall" or state.block.id.endswith("wall_torch"):
+        side = facing.opposite if isinstance(facing, Direction) else Direction.DOWN
+    else:
+        side = Direction.DOWN
+    near = offset(pos, side)
+    what = doc.state_at(near).block.name
+    where = {"down": "below it", "up": "above it"}.get(side.serialized, f"to its {side.serialized}")
+    return f"it needs a supporting block {where} ({format_pos(near)} is {what})"
 
 
 @command(

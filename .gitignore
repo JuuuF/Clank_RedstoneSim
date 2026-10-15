@@ -19,3 +19,5 @@ dist/
 
 # Sandboxed game server for behavior comparison (never committed)
 .sandbox/
+*.redsim.json.undo
+.claude/scheduled_tasks.lock

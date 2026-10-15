@@ -377,12 +377,8 @@ def trace(session: Session, args: Args) -> Output:
                     }
                 )
     shown = [s for s in steps.values() if near is None or s["changes"]]
-    out = Output(
-        [
-            f"tick {tick}: {len(steps)} steps"
-            + (f", {len(shown)} changed blocks near {format_pos(near)}" if near else "")
-        ]
-    )
+    near_text = f", {len(shown)} of them changed blocks near {format_pos(near)}" if near else ""
+    out = Output([f"tick {tick}: {len(steps)} steps{near_text}"])
     for entry in shown:
         where = f" at {name_of(doc, tuple(entry['pos']))}" if entry["pos"] else ""
         out.add(
@@ -462,6 +458,61 @@ def waves(session: Session, args: Args) -> Output:
         "to": high,
         "rows": [
             {"pos": list(p), "name": name_of(doc, p), "block": blocks[p], "values": values[p]}
+            for p in positions
+        ],
+    }
+    return out
+
+
+@command(
+    "changes",
+    group="inspect",
+    usage="changes POS [POS ...] [ticks A..B]",
+    summary="How a block's state changed over time: each new state with its tick.",
+    help="""
+    For each position, the block state at the start of the range and then every tick
+    where it changed, with the new state. Where `waves` shows signal values, `changes`
+    shows the blocks themselves: a piston extending, a block arriving where a piston
+    pushed it, a repeater locking. The range defaults to the whole simulated history.
+    """,
+    examples=("changes 2 1 0", "changes @DOOR @P ticks 0..30"),
+    kind="view",
+    data='{"from", "to", "rows": [{"pos", "name", "changes": [{"tick", "state"}]}]}',
+)
+def changes(session: Session, args: Args) -> Output:
+    doc = session.doc
+    positions = []
+    while args.more() and args.peek() != "ticks":
+        positions.append(args.pos())
+    low, high = 0, doc.end_tick
+    if args.option("ticks"):
+        low, high = args.tick_range()
+    args.done()
+    if not positions:
+        raise CliError("changes: which positions?")
+    view = session.view_now()
+    seen: dict[Pos, list[tuple[int, str]]] = {p: [] for p in positions}
+    for tick in range(low, high + 1):
+        session.goto(tick)
+        for pos in positions:
+            text = state_text(doc.level.get_block_state(pos))
+            if not seen[pos] or seen[pos][-1][1] != text:
+                seen[pos].append((tick, text))
+    session.goto_view(view)
+    out = Output()
+    for pos in positions:
+        out.add(f"{named(doc, pos)} (ticks {low}..{high}):")
+        for tick, text in seen[pos]:
+            out.add(f"  tick {tick:<4} {text}")
+    out.data = {
+        "from": low,
+        "to": high,
+        "rows": [
+            {
+                "pos": list(p),
+                "name": name_of(doc, p),
+                "changes": [{"tick": t, "state": text} for t, text in seen[p]],
+            }
             for p in positions
         ],
     }

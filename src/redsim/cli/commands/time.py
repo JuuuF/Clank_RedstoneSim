@@ -216,6 +216,93 @@ def step(session: Session, args: Args) -> Output:
 
 
 @command(
+    "settle",
+    group="time",
+    usage="settle [max N]",
+    summary="Let the build settle (torches react, …) and make that state the build.",
+    help="""
+    Right after building, a contraption is often not in its steady state yet: a torch
+    placed next to a powered block is still lit, a lamp still on, wire still powered. They
+    react in the first ticks. `settle` simulates the build alone (without the timeline's
+    edits) until a tick passes with no block change and nothing pending (scheduled ticks,
+    block events, moving pistons, falling blocks), at most N ticks (default 200), and
+    makes that state the new build (tick 0). The timeline's edits keep their tick numbers;
+    the output lists what changed. A clock never settles: then nothing changes and
+    `settle` says so. This is the editor's "Set tick 0 here" after letting the circuit
+    run, without moving the timeline.
+    """,
+    examples=("settle", "settle max 50"),
+    kind="time",
+    data='{"ticks": ticks it took or null, "changes": [{"pos", "from", "to"}]}',
+)
+def settle(session: Session, args: Args) -> Output:
+    from redsim.editor.document_history import EditError
+
+    limit = args.option_int("max", 200)
+    args.done()
+    doc = session.doc
+    old = dict(doc.history.base.level.blocks)
+    try:
+        ticks = doc.settle_build(limit)
+    except EditError as exc:
+        raise CliError(str(exc)) from exc
+    if ticks is None:
+        return Output(
+            [
+                f"did not settle within {limit} ticks (a clock, or something always moving): "
+                "the build is unchanged"
+            ],
+            {"ticks": None, "changes": []},
+        )
+    if ticks == 0:
+        return Output(["the build is settled already"], {"ticks": 0, "changes": []})
+    session.changed = True
+    new = doc.history.base.level.blocks
+    air = doc.level.air
+    changes = [
+        {"pos": list(p), "from": short(repr(old.get(p, air))), "to": short(repr(new.get(p, air)))}
+        for p in sorted(set(old) | set(new), key=lambda q: (q[1], q[2], q[0]))
+        if old.get(p, air) is not new.get(p, air)
+    ]
+    out = Output(
+        [f"settled after {ticks} ticks; that is the build now ({len(changes)} blocks changed)"]
+    )
+    for change in changes[:50]:
+        out.add(f"  {name_of(doc, tuple(change['pos'])):<12} {change['from']} → {change['to']}")
+    out.data = {"ticks": ticks, "changes": changes}
+    return out
+
+
+@command(
+    "rebase",
+    group="time",
+    usage="rebase",
+    summary='Make the view tick the new build (the editor\'s "Set tick 0 here").',
+    help="""
+    The world at the view tick becomes the build (tick 0): the history before it is
+    dropped (edits recorded before the view tick are baked into the build), edits
+    recorded later move earlier by the view tick, and the simulated length is kept. Use
+    `settle` instead to just let a fresh build react.
+    """,
+    examples=("seek 6", "rebase"),
+    kind="time",
+    data='{"tick": the old tick that is now 0}',
+)
+def rebase(session: Session, args: Args) -> Output:
+    from redsim.editor.document_history import EditError
+
+    args.done()
+    doc = session.doc
+    here = doc.tick
+    try:
+        doc.set_tick_zero()
+    except EditError as exc:
+        raise CliError(str(exc)) from exc
+    session.changed = True
+    return Output([f"tick {here} is the build now (tick 0)"], {"tick": here})
+
+
+@command(
     "where",
     group="time",
     usage="where",
