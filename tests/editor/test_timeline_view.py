@@ -189,7 +189,9 @@ def test_set_tick_zero_and_relative_ticks(tmp_path: Path) -> None:
     doc.run_ticks(4)
     doc.save(tmp_path / "w.redsim.json")
     again = Document.open(tmp_path / "w.redsim.json")
-    assert again.engine.game_time == 0 and again.tick == 0  # saved at game time 4: shifted
+    # Saved after running: the file keeps the build and reopens at tick 4 (ADR-027).
+    assert again.tick == 4 and again.end_tick == 4 and again.engine.game_time == 4
+    assert again.jump("start") and again.tick == 0 and again.engine.game_time == 0
     doc.run_ticks(3)
     doc.set_tick_zero()
     assert doc.tick == 0 and doc.end_tick == 0 and doc.engine.game_time == 0
@@ -222,3 +224,33 @@ def test_set_tick_zero_after_letting_the_circuit_settle() -> None:
     assert [b.tick for b in doc.edit_batches()] == [3]  # tick 7 → tick 3
     assert doc.end_tick == 6  # recorded to tick 10 → 6
     assert doc.undo() and doc.tick == 4 and [b.tick for b in doc.edit_batches()] == [7]
+
+
+def test_a_world_saved_after_running_keeps_its_build(tmp_path: Path) -> None:
+    """ADR-027: before, the state at the playhead silently became the new build."""
+    lit = blocks.REDSTONE_LAMP.properties[0]
+    doc = lamp_circuit()
+    doc.setblock((0, 1, 0), blocks.REDSTONE_BLOCK.default_state)  # the lamp lights at once
+    doc.setblock((0, 1, 0), blocks.AIR.default_state)  # and goes off 4 ticks later
+    assert doc.state_at((1, 1, 0)).get(lit)
+    doc.run_ticks(6)
+    doc.save(tmp_path / "w.redsim.json")
+    again = Document.open(tmp_path / "w.redsim.json")
+    assert again.tick == 6 and not again.state_at((1, 1, 0)).get(lit)
+    assert again.seek_tick(0) and again.state_at((1, 1, 0)).get(lit)  # the build
+
+
+def test_deferred_edits_rerun_once_and_undo_one_by_one() -> None:
+    doc = lamp_circuit()
+    doc.run_ticks(2)
+    doc.setblock((0, 1, 0), blocks.REDSTONE_BLOCK.default_state)  # recorded at tick 2
+    doc.run_ticks(4)
+    doc.seek_tick(0)
+    with doc.deferred():
+        doc.setblock((5, 1, 5), blocks.STONE.default_state)
+        doc.setblock((6, 1, 5), blocks.STONE.default_state)
+        assert doc.end_tick == 0  # the future waits
+    assert doc.end_tick == 6 and sorted(doc.edit_ticks.values()) == [2]
+    assert doc.undo() and doc.state_at((6, 1, 5)).is_air
+    assert doc.state_at((5, 1, 5)).is_(blocks.STONE) and sorted(doc.edit_ticks.values()) == [2]
+    assert doc.undo() and doc.state_at((5, 1, 5)).is_air and doc.end_tick == 6

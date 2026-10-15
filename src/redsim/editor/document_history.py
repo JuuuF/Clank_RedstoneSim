@@ -21,9 +21,18 @@ class HistoryOps:
     """Part of ``Document`` (a mixin; its methods run on it)."""
 
     def _history_state(self) -> HistoryState:
+        """The history as it stands, including recorded edits that a deferred re-run
+        (``Document.deferred``) holds aside for now."""
         view = cast("Document", self)
         history = view.history
-        return HistoryState(history.base, history.plan(), view.end_tick, view.tick)
+        plan, end_tick = history.plan(), view.end_tick
+        kept = view._kept_future
+        if kept is not None:
+            future, kept_end = kept
+            for tick, actions in sorted(future.items()):
+                plan.setdefault(tick, []).extend(actions)
+            end_tick = max(end_tick, kept_end)
+        return HistoryState(history.base, plan, end_tick, view.tick)
 
     def undo(self) -> bool:
         """Undo the last edit (or edit batch, history change): the history is rebuilt

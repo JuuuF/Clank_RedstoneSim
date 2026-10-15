@@ -461,3 +461,57 @@ the build (`extra["history"]["base"]`) and the plan, and opening re-runs them.
 engine applies the edit as a step with no effect, so muting keeps the timeline, the
 undo history and the step numbering of everything else as it was.
 
+
+## ADR-027
+
+**A command line for agents and humans (`redsim-cli`), with the world file as its state**
+
+**Date:** 2026-10-15 · **Status:** accepted · **Context:** the owner wants the simulator to
+be "the bridge between Minecraft and AI agents": an agent (or a person in a terminal) must
+be able to build, change and test contraptions step by step, inspect what happens
+(signals, timing, causes) and leave the result as an ordinary world file that the editor
+opens. Everything must be documented carefully, in one format for agents and humans.
+
+**Decision:**
+
+- **One program, one language.** `redsim-cli WORLD COMMAND ARGS…` runs one command;
+  `redsim-cli WORLD -c "a; b"`, a script file (`script FILE`) or commands on standard input
+  run several in one go; `redsim-cli WORLD shell` is an interactive prompt. The same
+  commands, with the same words, are typed on the command line, written in scripts and
+  stored in targets.
+- **The world file is the state.** Every invocation opens the `.redsim.json` file (the
+  editor's format), runs the commands and saves it back if something changed. Nothing
+  else is needed to continue later. Labels, notes and targets are saved in the file too
+  (the editor keeps them). A small undo file next to the world (`WORLD.undo.gz`) keeps the
+  last versions so `undo` can revert earlier invocations.
+- **Edits go to the build; the timeline is explicit.** Building commands (`place`, `set`,
+  `fill`, …) change the build (tick 0) wherever the view is; `at T COMMAND` records the
+  edit at tick T instead, and `pulse` adds sequence power. The view tick (`run`, `back`,
+  `seek`, `step`) only says what inspection commands look at. This differs from the editor,
+  where edits happen at the playhead: an agent that ran 20 ticks to look at a result and
+  then fixes a wire must change the contraption, not record a timeline edit at tick 20.
+- **Output is text first, readable by both.** Plain, stable, compact text (no colors, no
+  boxes): one block per command, positions as `x y z`, block states as `/setblock`
+  strings. `--json` prints one JSON object per command instead (`{"command", "ok",
+  "data" | "error"}`) for programs. Maps (`show`) draw a layer as a grid of two-character
+  codes with a legend; signal timelines (`waves`) as one hex digit per tick.
+- **Labels and targets.** `label NAME POS` names a position (`@NAME` works wherever a
+  position does). A *target* is an acceptance test for a contraption: stimuli at ticks
+  (`do T COMMAND`) and expectations (`expect @OUT lit=true at 4..9`), or a truth table;
+  `check` runs every target from the build in a copy and reports what passed and, for
+  what failed, the values it saw. This is how an agent knows it is done.
+- **Help is the documentation.** Every command's help (usage, description, examples) lives
+  in its registry entry; `redsim-cli help` prints it and `doc/cli-reference.md` is
+  generated from it (a test keeps them equal). The guide `doc/cli.md` explains the concepts
+  and workflows for both readers.
+
+**Also changed:** a world saved after running (without recorded edits) keeps its build:
+the file stores the build, the simulated length and the view tick whenever the view is not
+at tick 0 (before, the state at the playhead silently became the new build). Edits made
+while re-runs are deferred (`Document.deferred`, used by the CLI to run many build edits
+with one re-run) keep correct undo states.
+
+**Consequences:** agents work through files and text, which suits shell tools and keeps
+every step visible to a person; the same file opens in the editor with its labels and
+targets. Each invocation re-simulates the recorded history when it opens the file, which
+costs milliseconds for typical contraptions.

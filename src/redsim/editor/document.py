@@ -28,6 +28,7 @@ from redsim.editor.document_common import EDIT_ROWS, FLOOR_HALF_SIZE, Vary, edit
 from redsim.editor.document_history import EditBatch, EditError, HistoryOps, HistoryState
 from redsim.editor.document_sequences import Pulse, SequenceOps
 from redsim.editor.groups import Groups
+from redsim.editor.labels import Label
 from redsim.editor.lines import Lines
 from redsim.editor.placement import PlaceRequest, placement_state
 from redsim.io import save as save_io
@@ -84,6 +85,15 @@ class Document(HistoryOps, SequenceOps):
     #: point (tick → actions) and the simulated length, put back once the edit (or the
     #: batch) is done (``_rerun_future``).
     _kept_future: tuple[Plan, int] | None = None
+    #: Inside ``deferred()``: edits do not re-run the recorded future one by one.
+    _defer_depth: int = 0
+    #: Named positions (saved): name → ``Label``; ``@name`` on the command line.
+    labels: dict[str, Label] = field(default_factory=dict)
+    #: Free-text notes about the world (saved), e.g. what a contraption is for.
+    notes: list[str] = field(default_factory=list)
+    #: Acceptance tests of the world's contraptions (saved as plain JSON; their model and
+    #: checker are ``redsim.cli.targets``).
+    targets: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.timeline is None:
@@ -146,7 +156,7 @@ class Document(HistoryOps, SequenceOps):
             else:
                 history.apply(action)
         except ActionError as exc:
-            if not self._batch_depth:
+            if not self._batch_depth and not self._defer_depth:
                 self._rerun_future()
             raise EditError(str(exc)) from exc
         if before is not None:
@@ -157,7 +167,7 @@ class Document(HistoryOps, SequenceOps):
             self._forget_after(self.tick)
         if not history.at_base:
             self.edit_ticks[index] = self.tick
-        if not self._batch_depth:
+        if not self._batch_depth and not self._defer_depth:
             self._rerun_future()
         self._changed()
 
@@ -199,7 +209,35 @@ class Document(HistoryOps, SequenceOps):
             self._batch_depth -= 1
             if not self._batch_depth:
                 self._batch_saved = False
+                if not self._defer_depth:
+                    self._rerun_future()
+
+    @contextmanager
+    def deferred(self) -> Iterator[None]:
+        """Edits stay separate undo steps, but the recorded future (the edits after the
+        edit point, ADR-022) is put back and re-simulated only once, when the outermost
+        ``deferred`` ends or ``flush`` is called. Between edits the history ends at the
+        edit point. The command line (``redsim.cli``) runs whole scripts this way."""
+        self._defer_depth += 1
+        try:
+            yield
+        finally:
+            self._defer_depth -= 1
+            if not self._defer_depth and not self._batch_depth:
                 self._rerun_future()
+
+    def flush(self) -> None:
+        """Re-run the recorded future now if edits deferred it (``deferred``)."""
+        if not self._batch_depth:
+            self._rerun_future()
+
+    def set_label(self, name: str, pos: Pos | None, note: str = "") -> None:
+        """Name a position (``pos=None`` removes the label)."""
+        if pos is None:
+            self.labels.pop(name, None)
+        else:
+            self.labels[name] = Label(pos, note)
+        self._changed(dirty=True)
 
     def place_many(
         self, positions: Iterable[Pos], block: Block, request: PlaceRequest, vary: Vary = None
@@ -233,6 +271,15 @@ class Document(HistoryOps, SequenceOps):
         if state is None:
             raise EditError(f"{block.name} cannot be placed there (needs support).")
         self._apply(Action("place", pos, repr(state)), f"place {block.name}")
+
+    def place_state(self, pos: Pos, state: BlockState) -> None:
+        """Place a block like a player (``BlockItem.place``), with the orientation already
+        chosen in ``state`` (``facing``, ``face``, ``half``, …): the block's own placement
+        rules still derive the rest (wire connections, a lamp's ``lit``, a repeater's
+        ``locked``, a door's upper half). Needs air at ``pos`` and support."""
+        if not state.can_survive(self.engine.level, pos):
+            raise EditError(f"{state.block.name} cannot be placed there (needs support).")
+        self._apply(Action("place", pos, repr(state)), f"place {state.block.name}")
 
     def break_block(self, pos: Pos) -> None:
         self._apply(Action("break", pos), f"break {self.state_at(pos).block.name}")
@@ -562,7 +609,10 @@ class Document(HistoryOps, SequenceOps):
             row: lines.to_json() for row, lines in self.row_lines.items() if lines.groups
         }
         history = self.history
-        if history.inputs:  # the recorded edits (sequences too) and the build they start from
+        # The build the history starts from, the recorded edits (sequences too), the
+        # simulated length and the view: whenever there is more than the build (a file
+        # saved after running keeps its build; ADR-027).
+        if history.inputs or self.tick or self.end_tick:
             base = Engine()
             base.restore(history.base)
             extra["history"] = {
@@ -577,6 +627,15 @@ class Document(HistoryOps, SequenceOps):
         else:
             extra.pop("history", None)
         extra["markers"] = {str(tick): name for tick, name in self.visible_markers().items()}
+        for key, value in (
+            ("labels", {name: label.to_json() for name, label in self.labels.items()}),
+            ("notes", list(self.notes)),
+            ("targets", list(self.targets)),
+        ):
+            if value:
+                extra[key] = value
+            else:
+                extra.pop(key, None)
         save_io.save(target, self.engine, extra)
         self.path = target
         self.dirty = False
@@ -597,6 +656,9 @@ class Document(HistoryOps, SequenceOps):
             for row, data in extra.pop("row_line_groups", {}).items()
         }
         markers = {int(tick): str(name) for tick, name in extra.pop("markers", {}).items()}
+        labels = {str(n): Label.from_json(v) for n, v in extra.pop("labels", {}).items()}
+        notes = [str(note) for note in extra.pop("notes", [])]
+        targets = list(extra.pop("targets", []))
         history = extra.pop("history", None)
         document = Document(
             engine=engine,
@@ -609,6 +671,9 @@ class Document(HistoryOps, SequenceOps):
             markers=markers,
             lines=lines,
             row_lines=row_lines,
+            labels=labels,
+            notes=notes,
+            targets=targets,
         )
         signs = {  # sign text kept as document data: only for signs not simulated now
             key: lines for key, lines in old_signs.items() if not _is_sign(engine.level, key)
@@ -617,7 +682,7 @@ class Document(HistoryOps, SequenceOps):
             extra["signs"] = signs
         else:
             extra.pop("signs", None)
-        if isinstance(history, dict) and history.get("plan"):
+        if isinstance(history, dict) and "base" in history:
             # Re-run the recorded edits from the saved build (the file's own state is
             # the result at the saved tick, recomputed here).
             base_engine = save_io.engine_from_json(history["base"])
