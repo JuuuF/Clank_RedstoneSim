@@ -128,6 +128,10 @@ class TimelineCanvas(LineArea, QWidget):
         self._pulse_additive = False
         self._hovered_pos: Pos | None = None
         self.selected: set[tuple[int, str]] = set()  # (tick, row)
+        #: Single edits selected on the per-block lines (their step indices), and after
+        #: moving them, where they went (row, position, tick: indices change on a move).
+        self.selected_events: set[int] = set()
+        self._moved_events: set[tuple[str, Pos, int]] = set()
         self.tracks: list[Track] = []
         self._scrubbing = False
         self._pan_from: tuple[int, float] | None = None
@@ -176,6 +180,11 @@ class TimelineCanvas(LineArea, QWidget):
         self.pulses = pulses or []
         self.selected_pulses &= {pulse.index for pulse in self.pulses}
         self.events = events or []
+        if self._moved_events:
+            moved, self._moved_events = self._moved_events, set()
+            self.selected_events = {e.index for e in self.events if (e.row, e.pos, e.tick) in moved}
+        else:
+            self.selected_events &= {e.index for e in self.events}
         self.groups = groups or {}
         self.names = names or {}
         self._build_lines()
@@ -191,9 +200,13 @@ class TimelineCanvas(LineArea, QWidget):
         self.setFixedHeight(self._tracks_top() + 4 + self.ROW_HEIGHT * max(1, len(self.tracks)))
 
     def selected_indices(self) -> list[int]:
-        return sorted(
-            i for b in self.batches if (b.tick, b.row) in self.selected for i in b.indices
-        )
+        """The selected keyframes' edits and the single edits selected on block lines."""
+        chosen = {i for b in self.batches if (b.tick, b.row) in self.selected for i in b.indices}
+        return sorted(chosen | self.selected_events)
+
+    def _selected_ticks(self) -> set[int]:
+        ticks = {tick for tick, _ in self.selected}
+        return ticks | {e.tick for e in self.events if e.index in self.selected_events}
 
     # ------------------------------------------------------------------ geometry
     def _x(self, tick: float) -> float:
@@ -514,7 +527,7 @@ class TimelineCanvas(LineArea, QWidget):
                 return
             batch = self._batch_at(x, y)
             if batch is not None and (batch.tick, batch.row) not in self.selected:
-                self.selected = {(batch.tick, batch.row)}
+                self.selected, self.selected_events = {(batch.tick, batch.row)}, set()
                 self.update()
             self._context_menu(event.globalPosition().toPoint(), self._edit_row_at(y))
             return
@@ -531,13 +544,13 @@ class TimelineCanvas(LineArea, QWidget):
                 if additive:
                     self.selected ^= {key}
                 elif key not in self.selected:
-                    self.selected = {key}
+                    self.selected, self.selected_events = {key}, set()
                 self._drag_from = (x, y)
                 self._dragging_edits = False
                 self._drag_delta = 0
             else:
                 if not additive:
-                    self.selected = set()
+                    self.selected, self.selected_events = set(), set()
                 self._band = QRectF(x, y, 0, 0)
                 self._drag_from = (x, y)
             self.update()
@@ -588,7 +601,19 @@ class TimelineCanvas(LineArea, QWidget):
                 if hit is not None
                 else Qt.CursorShape.ArrowCursor
             )
+            edits = self._event_hit(line, x) if hit is None else []
+            if edits:
+                shape = Qt.CursorShape.OpenHandCursor
             self.setCursor(shape)
+            if edits:
+                where = " ".join(map(str, edits[0].pos))
+                labels = "\n".join(e.label for e in edits[:12])
+                QToolTip.showText(
+                    event.globalPosition().toPoint(),
+                    f"{ROW_TITLES[line.row]} at tick {edits[0].tick} ({where}):\n{labels}\n"
+                    "Drag to move only these edits to another tick (Shift: select more)",
+                )
+                return
             if hit is not None:
                 pulse = hit[0]
                 QToolTip.showText(
@@ -609,12 +634,13 @@ class TimelineCanvas(LineArea, QWidget):
             fx, fy = self._drag_from
             self._band = QRectF(QPointF(min(fx, x), min(fy, y)), QPointF(max(fx, x), max(fy, y)))
             self.update()
-        elif self._drag_from is not None and self.selected:
+        elif self._drag_from is not None and (self.selected or self.selected_events):
             delta = self.tick_at(x) - self.tick_at(self._drag_from[0])
             if abs(x - self._drag_from[0]) > 4 or self._dragging_edits:
                 self._dragging_edits = True
-                earliest = min(tick for tick, _ in self.selected)
+                earliest = min(self._selected_ticks())
                 self._drag_delta = max(delta, -earliest)
+                QToolTip.showText(event.globalPosition().toPoint(), f"{self._drag_delta:+d} ticks")
                 self.update()
         else:
             batch = self._batch_at(x, y)
@@ -706,8 +732,16 @@ class TimelineCanvas(LineArea, QWidget):
                         self.selected.add((batch.tick, batch.row))
             self._band = None
         elif self._dragging_edits and self._drag_delta:
-            self.move_edits.emit(self.selected_indices(), self._drag_delta)
-            self.selected = {(tick + self._drag_delta, row) for tick, row in self.selected}
+            delta = self._drag_delta
+            chosen = self.selected_indices()
+            self._moved_events = {
+                (e.row, e.pos, max(0, e.tick + delta))
+                for e in self.events
+                if e.index in self.selected_events
+            }
+            self.selected = {(tick + delta, row) for tick, row in self.selected}
+            self._dragging_edits = False
+            self.move_edits.emit(chosen, delta)
         self._dragging_edits = False
         self._drag_delta = 0
         self._drag_from = None
@@ -719,7 +753,8 @@ class TimelineCanvas(LineArea, QWidget):
     def event(self, event: QEvent) -> bool:
         # Delete and M act on selected keyframes when the timeline has focus (before the
         # window's shortcuts see them).
-        if event.type() == QEvent.Type.ShortcutOverride and (self.selected or self.selected_pulses):
+        chosen = self.selected or self.selected_events or self.selected_pulses
+        if event.type() == QEvent.Type.ShortcutOverride and chosen:
             key = event.key()  # type: ignore[attr-defined]
             if key in (Qt.Key.Key_Delete, Qt.Key.Key_M, Qt.Key.Key_Backspace, Qt.Key.Key_0):
                 event.accept()
@@ -733,10 +768,14 @@ class TimelineCanvas(LineArea, QWidget):
         elif self.selected_pulses and event.key() == Qt.Key.Key_0:  # Ableton: (de)activate
             chosen = [p for p in self.pulses if p.index in self.selected_pulses]
             self.pulses_muted.emit([p.index for p in chosen], not all(p.muted for p in chosen))
-        elif self.selected and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
-            self.delete_edits.emit(self.selected_indices())
-            self.selected = set()
-        elif self.selected and event.key() == Qt.Key.Key_M:
+        elif (self.selected or self.selected_events) and event.key() in (
+            Qt.Key.Key_Delete,
+            Qt.Key.Key_Backspace,
+        ):
+            indices = self.selected_indices()
+            self.selected, self.selected_events = set(), set()
+            self.delete_edits.emit(indices)
+        elif (self.selected or self.selected_events) and event.key() == Qt.Key.Key_M:
             self.merge_edits.emit(self.selected_indices(), None)
         else:
             super().keyPressEvent(event)
@@ -762,7 +801,7 @@ class TimelineCanvas(LineArea, QWidget):
     def _context_menu(self, where: QPoint, row: int | None) -> None:
         menu = QMenu(self)
         chosen = self.selected_indices()
-        ticks = {tick for tick, _ in self.selected}
+        ticks = self._selected_ticks()
         merge = menu.addAction("Merge selected into the earliest tick (M)")
         merge.setEnabled(len(ticks) > 1)
         merge.setIcon(pixel_icons.pixel_icon("previous"))

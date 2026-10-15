@@ -1,7 +1,8 @@
 """The timeline's per-block lines: each category opens into one line per block position,
 in the owner's colored groups and order (drag a line's label to reorder it or move it to
 another group). Powered lines have pulse bars to select, move (also onto another line),
-stretch, add, delete and mute; the other categories show their edits as diamonds."""
+stretch, add, delete and mute; the other categories show their edits as diamonds, each
+block's own, to select and drag to another tick one by one (Del deletes, M merges)."""
 
 from __future__ import annotations
 
@@ -129,7 +130,7 @@ class LineArea:
                     continue
                 for event in view.events:
                     if event.row == line.row and event.pos in members:
-                        x = view._x(event.tick)
+                        x = view._x(view._shown_event_tick(event))
                         if x >= view.LABEL_WIDTH:
                             painter.drawPolygon(_diamond(x, y, 3.0))
                 continue
@@ -155,12 +156,41 @@ class LineArea:
                     painter.drawRoundedRect(box, 2, 2)
                 continue
             painter.setBrush(line.color)
-            painter.setPen(QPen(BACKGROUND, 1))
             for event in view.events:
                 if event.row == line.row and event.pos == line.pos:
-                    x = view._x(event.tick)
+                    x = view._x(view._shown_event_tick(event))
                     if x >= view.LABEL_WIDTH:
-                        painter.drawPolygon(_diamond(x, y, 3.5))
+                        selected = event.index in view.selected_events
+                        painter.setPen(
+                            QPen(QColor(255, 255, 255), 1.6) if selected else QPen(BACKGROUND, 1)
+                        )
+                        painter.drawPolygon(_diamond(x, y, 4.5 if selected else 3.5))
+
+    def _shown_event_tick(self, event: EditEvent) -> int:
+        """Where an edit's diamond is drawn: moved along while selected edits are dragged."""
+        view = cast("TimelineCanvas", self)
+        if view._dragging_edits and event.index in view.selected_events:
+            return max(0, event.tick + view._drag_delta)
+        return event.tick
+
+    def _event_hit(self, line: _Line, x: float) -> list[EditEvent]:
+        """The edits under ``x`` on a block line (that block's edits at the nearest tick)
+        or a group's summary line (its blocks' edits at that tick); not Powered lines."""
+        view = cast("TimelineCanvas", self)
+        if line.row == "power" or line.kind not in ("block", "group"):
+            return []
+        if line.kind == "block":
+            members = {line.pos}
+        else:
+            groups = view.groups.get(line.row, [])
+            members = set(groups[line.group or 0].members) if groups else set()
+        mine = [e for e in view.events if e.row == line.row and e.pos in members]
+        best, best_dx = None, 6.0
+        for event in mine:
+            dx = abs(view._x(event.tick) - x)
+            if dx <= best_dx:
+                best, best_dx = event.tick, dx
+        return [e for e in mine if e.tick == best] if best is not None else []
 
     def _pulse_hit(self, line: _Line, x: float, top: float) -> tuple[Pulse, str] | None:
         """The pulse of a Powered line under ``x``: ("resize" near its end, else "move")."""
@@ -210,7 +240,7 @@ class LineArea:
                 return True
             return False
         if not power_block:
-            return False
+            return view._event_press(event, line)
         hit = view._pulse_hit(line, x, top)
         if right_button and hit is not None:
             menu = QMenu(view)
@@ -254,6 +284,41 @@ class LineArea:
             view.selected_pulses = set()
             view.update()
         return False
+
+    def _event_press(self, event: QMouseEvent, line: _Line) -> bool:
+        """A click on an edit's diamond on a block (or group) line selects it (Shift or
+        Ctrl: adds or removes it) and starts dragging the selection to another tick."""
+        view = cast("TimelineCanvas", self)
+        x, y = event.position().x(), event.position().y()
+        hit = view._event_hit(line, x)
+        indices = {e.index for e in hit}
+        additive = bool(
+            event.modifiers()
+            & (Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.ControlModifier)
+        )
+        if event.button() == Qt.MouseButton.RightButton and indices:
+            if not indices <= view.selected_events:
+                view.selected_events, view.selected = indices, set()
+                view.update()
+            view._context_menu(event.globalPosition().toPoint(), None)
+            return True
+        if event.button() != Qt.MouseButton.LeftButton:
+            return False
+        if not indices:
+            if not additive and (view.selected_events or view.selected):
+                view.selected_events, view.selected = set(), set()
+                view.update()
+            return False
+        if additive:
+            view.selected_events ^= indices
+        elif not indices <= view.selected_events:
+            view.selected_events, view.selected = indices, set()
+        view._drag_from = (x, y)
+        view._dragging_edits = False
+        view._drag_delta = 0
+        view.setFocus()
+        view.update()
+        return True
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         """A double click on an empty spot of a Powered line adds a pulse there."""

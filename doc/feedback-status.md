@@ -19,6 +19,11 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **Single edits moved one by one** (2026-10-15, owner: move keyframes "for specific blocks
+  in every timeline category, making it able to alter events that happen in the same tick
+  individually"): the diamonds on each block's line (Placed, Removed, Changed, Used) are
+  selected and dragged on their own; Del, M and the menu act on them
+  (`ui/timeline_lines.py`, `TimelineCanvas.selected_events`, [[controls]]).
 - **Bug: keyframes deleted when placing blocks** (2026-10-15, owner: "they are supposed to
   remain where they are"): an edit made inside the recorded history (at tick 0 too) dropped
   every later recorded edit. Now the later edits stay at their ticks and the simulation is

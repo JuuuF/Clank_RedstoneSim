@@ -29,6 +29,13 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     placed while the simulation ran), moves the selection into the build (tick 0), and
     sets tick 0 at the current tick. Each of these re-runs the history and is one
     undo step; edits that cannot be applied at their new time are dropped (with a note).
+  - **Single edits:** open a category (its arrow) to see one line per block. Each block's
+    own edits are diamonds on its line: click one (Shift/Ctrl+click adds more, also from
+    other lines) and drag it to move only that block's edit in time, even when other
+    blocks were edited in the same tick; **Del** and **M** and the right-click menu work
+    on these selections too. A group's summary line selects its blocks' edits at that tick.
+    Edits made anywhere in the recorded history keep the later keyframes where they are
+    (the history re-runs from the edit).
   - **Monitor tracks** (logic-analyzer style): Inspector → Monitor adds the selected
     block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
     row; hovering a row shows the value at that tick. Right-click a row's label to

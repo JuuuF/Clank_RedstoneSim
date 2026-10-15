@@ -637,6 +637,59 @@ def test_lines_of_other_categories_group_and_reorder(app: object) -> None:
     window.close()
 
 
+def test_single_edits_on_block_lines_move_alone(app: object) -> None:
+    """Two blocks changed at one tick: one block's diamond is dragged to another tick
+    without the other, then the other one alone is deleted (Del)."""
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtTest import QTest
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    document = window.document
+    document.run_ticks(3)
+    for z in (0, 1):  # set at tick 3: one keyframe holding both
+        document.setblock((0, 1, z), blocks.parse_state("stone"))
+    document.run_ticks(5)
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.resize(900, canvas.height())
+    canvas.view_start, canvas.view_span = 0.0, 20.0
+    canvas.expanded = {"edit"}
+    window._changed()
+    line = next(i for i, line in enumerate(canvas.lines) if line.pos == (0, 1, 1))
+    y = canvas._tops[line] + 7
+
+    def mouse(kind: object, tick: int) -> None:
+        x = canvas._x(tick)
+        button = Qt.MouseButton.LeftButton
+        event = QMouseEvent(kind, QPointF(x, y), QPointF(x, y), button, button,  # type: ignore[arg-type]
+                            Qt.KeyboardModifier.NoModifier)  # fmt: skip
+        {QMouseEvent.Type.MouseButtonPress: canvas.mousePressEvent,
+         QMouseEvent.Type.MouseMove: canvas.mouseMoveEvent,
+         QMouseEvent.Type.MouseButtonRelease: canvas.mouseReleaseEvent}[kind](event)  # fmt: skip
+
+    mouse(QMouseEvent.Type.MouseButtonPress, 3)
+    assert len(canvas.selected_events) == 1
+    mouse(QMouseEvent.Type.MouseMove, 5)
+    mouse(QMouseEvent.Type.MouseMove, 6)
+    mouse(QMouseEvent.Type.MouseButtonRelease, 6)
+    ticks = {document.history.inputs[i].pos: t for i, t in document.edit_ticks.items()}
+    assert ticks == {(0, 1, 0): 3, (0, 1, 1): 6}
+    assert len(canvas.selected_events) == 1  # it stays selected at its new tick
+    other = next(i for i, line in enumerate(canvas.lines) if line.pos == (0, 1, 0))
+    y = canvas._tops[other] + 7
+    mouse(QMouseEvent.Type.MouseButtonPress, 3)
+    mouse(QMouseEvent.Type.MouseButtonRelease, 3)
+    canvas.setFocus()
+    QTest.keyClick(canvas, Qt.Key.Key_Delete)
+    ticks = {document.history.inputs[i].pos: t for i, t in document.edit_ticks.items()}
+    assert ticks == {(0, 1, 1): 6}
+    document.dirty = False
+    window.close()
+
+
 def test_selected_pulses_move_together_switch_lines_and_delete(app: object) -> None:
     from PySide6.QtCore import QPointF, Qt
     from PySide6.QtGui import QKeyEvent, QMouseEvent
