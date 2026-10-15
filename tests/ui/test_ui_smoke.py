@@ -1295,3 +1295,25 @@ def test_resizing_the_viewport_crops_the_view(app: object) -> None:
     assert sizes[2] == pytest.approx(sizes[0], rel=1e-6)
     window.document.dirty = False
     window.close()
+
+
+def test_world_tab_shows_labels_notes_and_checks_targets(app: object) -> None:
+    """The World tab shows what redsim-cli keeps in a world, and Check runs its targets."""
+    from pathlib import Path
+
+    from redsim.ui.main_window import MainWindow
+
+    window = MainWindow()
+    world = Path(__file__).resolve().parents[2] / "examples" / "cli" / "and_gate.redsim.json"
+    window.open_path(world)
+    window.tabs.setCurrentWidget(window.world_panel)
+    window._changed()
+    panel = window.world_panel
+    assert "AND gate" in panel.notes.text()
+    assert panel.labels.rowCount() == 3 and panel.labels.item(0, 0).text() == "@A"
+    panel.check()
+    assert panel.summary.text() == "4 passed, 0 failed"
+    window.inspector.show_block(window.document, (4, 2, 1))
+    assert "@OUT: output (lamp)" in window.inspector.title.text()
+    window.document.dirty = False
+    window.close()

@@ -113,7 +113,9 @@ A world is one file, `NAME.redsim.json`: the editor's own format. It holds every
 
 So you can stop at any point and continue later, or hand the file to someone else: a
 person opens it in the editor (`redsim NAME.redsim.json`) and sees the same contraption,
-timeline, labels and view; an agent runs `redsim-cli NAME.redsim.json info` and `log`.
+timeline and view; the editor's **World** tab lists the notes, labels and targets and
+runs `check` with a button, and labeled blocks show their label in the inspector and on
+the timeline. An agent runs `redsim-cli NAME.redsim.json info` and `log`.
 
 Next to the world, `NAME.redsim.json.undo` keeps the last 20 versions of the file, for
 `undo` across runs (section 5.6). It can be deleted at any time.

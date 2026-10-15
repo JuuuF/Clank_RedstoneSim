@@ -1003,8 +1003,9 @@ class TimelineBar(QWidget):
                 positions_of_row = (e.pos for e in in_order if e.row == row)
                 document.lines_of(row).sync(positions_of_row, BLOCKS_GROUP, ROW_COLORS[row].name())
         positions = {pulse.pos for pulse in pulses} | {event.pos for event in events}
-        names = {  # what is at each line's position at the current tick
-            pos: "empty" if state.is_air else block_name(state.block.id)
+        labels = {lab.pos: f"@{name} " for name, lab in sorted(document.labels.items())}
+        names = {  # what is at each line's position at the current tick (and its label)
+            pos: labels.get(pos, "") + ("empty" if state.is_air else block_name(state.block.id))
             for pos in positions
             for state in (document.state_at(pos),)
         }

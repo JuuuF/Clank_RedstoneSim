@@ -45,6 +45,7 @@ from redsim.ui.keymap import SPECS, Keymap, default_path
 from redsim.ui.keymap_editor import KeymapEditor
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter, TickPacer
+from redsim.ui.panel_world import WorldPanel
 from redsim.ui.panels import (
     AboutDialog,
     ContraptionsPanel,
@@ -124,6 +125,7 @@ class MainWindow(
         self.tabs = QTabWidget()
         self.tabs.setDocumentMode(True)  # flat tabs, no frame (Blender-like)
         self.tabs.addTab(self.inspector, "Inspector")
+        self.world_panel = WorldPanel()
         circuit = QTabWidget()
         circuit.setProperty("subtabs", True)
         circuit.setDocumentMode(True)
@@ -133,6 +135,7 @@ class MainWindow(
         self.tabs.addTab(circuit, "Circuit")
         self.tabs.addTab(self.sequence, "Sequence")
         self.tabs.addTab(self.diagnostics, "Diagnostics")
+        self.tabs.addTab(self.world_panel, "World")
         self.tabs.addTab(self.hotkeys, "Hotkeys")
         self.side_dock = self._dock("Properties", self.tabs, Qt.DockWidgetArea.RightDockWidgetArea)
         self.side_dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
@@ -225,9 +228,11 @@ class MainWindow(
         )
         self.diagnostics.highlight_requested.connect(self.viewport.flash)
         self.diagnostics.tick_requested.connect(self._go_to_cause)
+        self.world_panel.highlight_requested.connect(self.viewport.flash)
         # Hovered coordinates anywhere light their block up in the view.
         for source in (
             self.diagnostics,
+            self.world_panel,
             self.inspector,
             self.block_popup.inspector,
             self.sequence,
@@ -776,6 +781,8 @@ class MainWindow(
         self.contraptions.show_document(self.document)
         if self.tabs.currentWidget() is self.diagnostics:
             self.diagnostics.show_state(self.document, self.last_steps, self.viewport.selection)
+        if self.tabs.currentWidget() is self.world_panel:
+            self.world_panel.show_document(self.document)
         name = self.document.path.name if self.document.path else "untitled"
         self.setWindowTitle(
             f"Redstone Simulator (Java 26.3) — {name}{' *' if self.document.dirty else ''}"

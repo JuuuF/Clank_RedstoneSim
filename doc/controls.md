@@ -14,7 +14,12 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
 - **Top:** menus, then the tool bar: modes (Normal, Build, Select) and the selection tools
   (rotate, flip, copy, paste, delete, confirm).
 - **Middle:** the 3D view. On the right, one **Properties** panel with tabs: Inspector,
-  Circuit (sections, groups and prefabs), Diagnostics, Hotkeys.
+  Circuit (sections, groups and prefabs), Diagnostics, World, Hotkeys. **World** shows what
+  the command line keeps in a world ([[cli]]): its notes, its labels (named positions;
+  click one to see its block) and its targets, with **Check** running them from the
+  build like `redsim-cli WORLD check` (passing cases green, failing ones red with the
+  values they saw). A labeled block shows its label in the inspector's title and on
+  its timeline line.
 - **Timeline** (like Blender's): transport buttons (start, previous edit, tick back, play
   backwards, run, tick forward, next edit, end), speed and warp, and a ruler counting ticks
   from **tick 0, the build** ([[decisions]] ADR-022), with the recorded range and the blue

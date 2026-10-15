@@ -294,9 +294,15 @@ class InspectorPanel(QWidget):
             self._rebuild(state)
             self._layout_key = key
         x, y, z = pos
+        label = next(
+            (f"@{name}" + (f": {lab.note}" if lab.note else "")
+             for name, lab in sorted(document.labels.items()) if lab.pos == pos),
+            "",
+        )  # fmt: skip
+        label_html = f"<br><span style='color:{theme.GOLD}'>{label}</span>" if label else ""
         self.title.setText(
             f"<span style='font-size:14px; font-weight:600'>{block_name(state.block.id)}</span>"
-            f"<br><span style='color:{theme.TEXT_DIM}'>x {x} · y {y} · z {z}</span>"
+            f"<br><span style='color:{theme.TEXT_DIM}'>x {x} · y {y} · z {z}</span>{label_html}"
         )
         self.icon.setPixmap(block_pixmap(state.block.id, 32) if not state.is_air else QPixmap())
         for prop in state.block.properties:
