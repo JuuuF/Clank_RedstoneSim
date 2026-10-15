@@ -20,7 +20,7 @@ Lighting, sounds, particles, game events, entities and client synchronization ar
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from redsim.core.direction import ALL, HORIZONTAL, Direction
 from redsim.core.pos import Pos, offset
@@ -123,6 +123,11 @@ class Level:
         self.zero_tick_ends: list[Pos] = []
         #: Plates whose visitors step on them in this tick's entity phase (in order).
         self.entity_queue: list[Pos] = []
+        #: Entities (falling blocks, ``sim/entities.py``) by id, in the order they joined
+        #: (``EntityTickList``), the next id, and the ids still to tick in this entity phase.
+        self.entities: dict[int, Any] = {}
+        self.next_entity_id = 0
+        self.entity_tick_queue: list[int] = []
         self.tickers: list[TickerWrapper] = []
         self.pending_tickers: list[TickerWrapper] = []
         self.tickers_by_pos: dict[Pos, TickerWrapper] = {}
@@ -500,9 +505,27 @@ class Level:
                 self.force_power(pos, 0, until)
 
     def plate_visitors_at(self, pos: Pos) -> tuple[int, int]:
-        """(mobs, other entities) standing on the plate at ``pos`` now."""
+        """(mobs, other entities) on the plate at ``pos`` now: its visitors, and the falling
+        blocks in its ``TOUCH_AABB`` (``Block.column(14, 0, 4)``)."""
         mobs, others, until = self.plate_visitors.get(pos, (0, 0, -1))
-        return (mobs, others) if self.game_time <= until else (0, 0)
+        if self.game_time > until:
+            mobs, others = 0, 0
+        if self.entities:
+            from redsim.sim.entities import entities_in
+
+            x, y, z = pos
+            touch = (x + 0.0625, y + 0.0, z + 0.0625, x + 0.9375, y + 0.25, z + 0.9375)
+            others += len(entities_in(self, touch))
+        return mobs, others
+
+    def new_entity_id(self) -> int:
+        """``Entity.ENTITY_COUNTER``: ids in creation order."""
+        self.next_entity_id += 1
+        return self.next_entity_id
+
+    def add_entity(self, entity: Any) -> None:
+        """``addFreshEntity``: it ticks from this tick's entity phase on."""
+        self.entities[entity.id] = entity
 
     def has_scheduled_tick(self, pos: Pos, block: Block) -> bool:
         return self.block_ticks.has_scheduled_tick(pos, block.id)
@@ -611,6 +634,8 @@ class Level:
                 entities.setdefault(id(wrapper.ticker.block_entity), wrapper.ticker.block_entity)
         for entity in entities.values():
             entity.shift_time(delta)
+        for mob in self.entities.values():
+            mob.piston_deltas_time += delta
 
     # =================================================================== snapshots
     def clone(self) -> Level:
@@ -658,6 +683,9 @@ class Level:
         other.zero_tick_pulses = list(self.zero_tick_pulses)
         other.zero_tick_ends = list(self.zero_tick_ends)
         other.entity_queue = list(self.entity_queue)
+        other.entities = {i: e.clone() for i, e in self.entities.items()}
+        other.next_entity_id = self.next_entity_id
+        other.entity_tick_queue = list(self.entity_tick_queue)
         other.ticking_block_entities = self.ticking_block_entities
         other.handling_tick = self.handling_tick
         other.torch_toggles = list(self.torch_toggles)

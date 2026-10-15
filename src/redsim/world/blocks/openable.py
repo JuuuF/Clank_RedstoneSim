@@ -125,7 +125,13 @@ class _GameBlock(Block):
     """A block with its game settings; drawn without textures from its shape."""
 
     def __init__(self, block_id: str) -> None:
-        super().__init__(block_id, **_settings(block_id))
+        settings = _settings(block_id)  # passed one by one: mypyc mishandles ** here
+        super().__init__(
+            block_id,
+            destroy_speed=settings["destroy_speed"],
+            push_reaction=settings["push_reaction"],
+            conductor=settings["conductor"],
+        )
         color = BLOCKS[block_id][5]
         self.map_color = int(color) or 0x8F7748
         self.see_through = True  # noOcclusion: never hides its neighbors' faces
@@ -360,6 +366,9 @@ def is_wall(state: BlockState) -> bool:
 class FenceGateBlock(_GameBlock):
     """``FenceGateBlock``: opened by hand (towards the player) and by a signal (flag 2);
     lowered in walls (``in_wall``); no collision or support while open."""
+
+    #: The collision shape's top in pixels (``sim/entities.local_boxes``).
+    collision_height = 24
 
     properties = (HORIZONTAL_FACING, OPEN, POWERED, IN_WALL)
 

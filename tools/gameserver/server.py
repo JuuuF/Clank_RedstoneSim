@@ -126,6 +126,8 @@ class GameServer:
                 # The simulator has no item entities: popped blocks must not drop items
                 # that hoppers could collect (found by fuzzing, EXP-031).
                 "gamerule block_drops false",
+                # Nor item entities from falling blocks that cannot land (gravity blocks).
+                "gamerule entity_drops false",
                 "kill @e[type=minecraft:item]",
                 "tick freeze",
             ]

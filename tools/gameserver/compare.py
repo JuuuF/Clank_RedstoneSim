@@ -56,6 +56,8 @@ class Scenario:
     commands: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
     #: Also compare barrel contents (hopper contents and cooldowns are always compared).
     watch_items: bool = False
+    #: Also compare every falling block entity (state, exact position and motion).
+    watch_entities: bool = False
 
     def fingerprint(self) -> str:
         """Hash of everything that determines the run (recordings go stale if it changes)."""
@@ -70,6 +72,8 @@ class Scenario:
             parts.append(sorted(self.commands.items()))
         if self.watch_items:
             parts.append("watch_items")
+        if self.watch_entities:
+            parts.append("watch_entities")
         payload = json.dumps(parts)
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
@@ -226,7 +230,29 @@ def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, st
         elif state.block.id == "minecraft:moving_piston" and be is not None:
             # The saved "progress" tag is progressO (PistonMovingBlockEntity.saveAdditional).
             frame[f"{rel}#progress"] = str(float(be.progress_o))  # type: ignore[attr-defined]
+    if scenario.watch_entities:
+        frame[ENTITIES_KEY] = " | ".join(
+            sorted(entity_text(repr(m.state), m.position, m.delta) for m in level.entities.values())
+        )
     return frame
+
+
+ENTITIES_KEY = "entities"
+
+
+def canonical_state(text: str) -> str:
+    """A block state with its properties sorted (the game's NBT lists them its own way)."""
+    name, _, rest = text.partition("[")
+    props = sorted(part for part in rest.rstrip("]").split(",") if part)
+    return name + (f"[{','.join(props)}]" if props else "")
+
+
+def entity_text(state: str, position: tuple[float, ...], motion: tuple[float, ...]) -> str:
+    """A falling block as compared: state, exact position and motion (Python ``repr``
+    of the doubles on both sides)."""
+    pos = ",".join(repr(float(v)) for v in position)
+    mot = ",".join(repr(float(v)) for v in motion)
+    return f"{canonical_state(state)} pos=({pos}) motion=({mot})"
 
 
 # ---------------------------------------------------------------- game side
@@ -239,11 +265,16 @@ def prepare_area(server: GameServer, origin: Pos, size: tuple[int, int], margin:
             f"fill {x0} {FLOOR_Y} {z0} {x1} {FLOOR_Y} {z1} minecraft:stone strict",
             f"fill {x0} {FLOOR_Y + 1} {z0} {x1} {FLOOR_Y + 12} {z1} minecraft:air strict",
             "kill @e[type=minecraft:item]",
+            "kill @e[type=minecraft:falling_block]",
         ]
     )
 
 
 def observe_game(server: GameServer, expected: dict[str, str], origin: Pos) -> dict[str, str]:
+    observed: dict[str, str] = {}
+    if ENTITIES_KEY in expected:
+        observed[ENTITIES_KEY] = read_entities(server)
+        expected = {k: v for k, v in expected.items() if k != ENTITIES_KEY}
     data_keys = [key for key in expected if "#" in key]
     observed_data = {
         key: read_block_data(server, absolute(origin, _parse_rel(key.split("#")[0])), key)
@@ -252,11 +283,39 @@ def observe_game(server: GameServer, expected: dict[str, str], origin: Pos) -> d
     keys = [key for key in expected if "#" not in key]
     positions = [absolute(origin, _parse_rel(key)) for key in keys]
     verdicts = server.test_blocks(list(zip(positions, [expected[k] for k in keys], strict=True)))
-    observed: dict[str, str] = {}
     for key, pos, ok in zip(keys, positions, verdicts, strict=True):
         observed[key] = expected[key] if ok else discover_state(server, pos)
     observed.update(observed_data)
     return observed
+
+
+_NUMBERS = re.compile(r"(-?[\d.]+(?:E-?\d+)?)d")
+
+
+def read_entities(server: GameServer) -> str:
+    """Every falling block's state, position and motion (``data get entity``)."""
+    text = server.command("execute as @e[type=minecraft:falling_block] run data get entity @s").text
+    found = []
+    for line in text.splitlines():
+        if "has the following entity data" not in line:
+            continue
+        # A default state is saved as its id alone, others as {id, properties}.
+        name = re.search(r'BlockState: (?:\{id: )?"([^"]+)"', line)
+        props = re.search(r"BlockState: \{[^{}]*properties: \{([^}]*)\}", line)
+        pos = re.search(r"Pos: \[([^\]]*)\]", line)
+        motion = re.search(r"Motion: \[([^\]]*)\]", line)
+        if not (name and pos and motion):
+            found.append(f"<unparsed: {line[:120]}>")
+            continue
+        state = name.group(1)
+        if props:
+            pairs = re.findall(r'(\w+): "([^"]*)"', props.group(1))
+            state += "[" + ",".join(f"{k}={v}" for k, v in pairs) + "]"
+        state = repr(blocks.parse_state(state))  # the default properties written out
+        position = tuple(float(v) for v in _NUMBERS.findall(pos.group(1)))
+        velocity = tuple(float(v) for v in _NUMBERS.findall(motion.group(1)))
+        found.append(entity_text(state, position, velocity))
+    return " | ".join(sorted(found))
 
 
 DATA_PATHS = {

@@ -126,6 +126,9 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
             "zero_tick_pulses": [[list(p), s] for p, s in level.zero_tick_pulses],
             "zero_tick_ends": [list(p) for p in level.zero_tick_ends],
             "entity_queue": [list(p) for p in level.entity_queue],
+            "entities": [mob.to_json() for mob in level.entities.values()],
+            "next_entity_id": level.next_entity_id,
+            "entity_tick_queue": list(level.entity_tick_queue),
             "wrappers": wrappers,
             "tickers": tickers,
             "pending_tickers": pending,
@@ -188,6 +191,13 @@ def engine_from_json(data: dict[str, Any]) -> Engine:
     level.zero_tick_pulses = [(_pos(p), int(s)) for p, s in raw.get("zero_tick_pulses", [])]
     level.zero_tick_ends = [_pos(p) for p in raw.get("zero_tick_ends", [])]
     level.entity_queue = [_pos(p) for p in raw.get("entity_queue", [])]
+    from redsim.sim.entities import FallingBlockEntity
+
+    for entry in raw.get("entities", []):
+        mob = FallingBlockEntity.from_json(entry)
+        level.entities[mob.id] = mob
+    level.next_entity_id = int(raw.get("next_entity_id", 0))
+    level.entity_tick_queue = [int(i) for i in raw.get("entity_tick_queue", [])]
 
     wrappers = [
         TickerWrapper(None if index is None else _BoundTicker(entities[index]))

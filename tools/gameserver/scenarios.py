@@ -1744,7 +1744,99 @@ CONNECTIONS = Scenario(
 )
 
 
+GRAVITY_BLOCKS = Scenario(
+    name="gravity_blocks",
+    description=(
+        "Gravity blocks fall as entities and land: long and short falls, gravel pressing a "
+        "wooden plate on its way (it breaks there), powder breaking on a slab, red sand on "
+        "a carpet, an anvil landing on a fence (from 0.5 above: no random damage), sand "
+        "held up by a torch, a falling stack, "
+        "the dragon egg's 5-tick delay, sand on slime, an observer seeing sand leave."
+    ),
+    size=(15, 6),
+    setup=[
+        ((1, 11, 1), "minecraft:sand"),
+        ((3, 1, 1), "minecraft:oak_pressure_plate"),
+        ((3, 1, 2), "minecraft:redstone_lamp"),
+        ((3, 6, 1), "minecraft:gravel"),
+        ((5, 1, 1), "minecraft:smooth_stone_slab"),
+        ((5, 7, 1), "minecraft:white_concrete_powder"),
+        ((7, 1, 1), "minecraft:oak_fence"),
+        ((7, 3, 1), "minecraft:anvil[facing=east]"),  # 0.5 above the fence: no damage roll
+        ((9, 1, 1), "minecraft:redstone_torch"),
+        ((9, 2, 1), "minecraft:sand"),
+        ((11, 4, 1), "minecraft:sand"),
+        ((11, 5, 1), "minecraft:gravel"),
+        ((11, 6, 1), "minecraft:red_sand"),
+        ((13, 5, 1), "minecraft:dragon_egg"),
+        ((1, 1, 4), "minecraft:slime_block"),
+        ((1, 9, 4), "minecraft:sand"),
+        ((3, 1, 4), "minecraft:white_carpet"),
+        ((3, 6, 4), "minecraft:red_sand"),
+        ((5, 4, 4), "minecraft:sand"),
+        ((6, 4, 4), "minecraft:observer[facing=west]"),
+        ((7, 4, 4), "minecraft:redstone_lamp"),
+    ],
+    watch=[
+        (1, 1, 1),
+        (1, 11, 1),
+        (3, 1, 1),
+        (3, 1, 2),
+        (3, 6, 1),
+        (5, 1, 1),
+        (5, 2, 1),
+        (7, 2, 1),
+        (9, 2, 1),
+        (11, 1, 1),
+        (11, 2, 1),
+        (11, 3, 1),
+        (11, 4, 1),
+        (13, 1, 1),
+        (13, 5, 1),
+        (1, 2, 4),
+        (3, 1, 4),
+        (3, 2, 4),
+        (5, 1, 4),
+        (5, 4, 4),
+        (6, 4, 4),
+        (7, 4, 4),
+    ],  # fmt: skip
+    ticks=45,
+    watch_entities=True,
+)
+
+GRAVITY_PISTONS = Scenario(
+    name="gravity_pistons",
+    description=(
+        "Pistons and falling blocks: a piston head pushes falling sand sideways, a slime "
+        "block on a sticky piston launches falling sand upwards, a piston lifts sand that "
+        "falls back once it retracts."
+    ),
+    size=(11, 3),
+    setup=[
+        ((1, 1, 1), "minecraft:stone"),
+        ((1, 2, 1), "minecraft:piston[facing=east]"),
+        ((2, 11, 1), "minecraft:sand"),
+        ((5, 1, 1), "minecraft:sticky_piston[facing=up]"),
+        ((5, 2, 1), "minecraft:slime_block"),
+        ((5, 11, 1), "minecraft:sand"),
+        ((9, 1, 1), "minecraft:piston[facing=up]"),
+        ((9, 2, 1), "minecraft:sand"),
+    ],
+    watch=[(2, 1, 1), (3, 1, 1), (2, 2, 1), (5, 3, 1), (5, 4, 1), (9, 2, 1), (9, 3, 1)],
+    ticks=80,
+    inputs={
+        4: [((8, 1, 1), "minecraft:redstone_block")],
+        19: [((4, 1, 1), "minecraft:redstone_block")],
+        21: [((0, 2, 1), "minecraft:redstone_block")],
+        30: [((8, 1, 1), "minecraft:air")],
+    },
+    watch_entities=True,
+)
+
 ALL = [
+    GRAVITY_BLOCKS,
+    GRAVITY_PISTONS,
     OPENABLES,
     CONNECTIONS,
     CATALOG_BLOCKS,

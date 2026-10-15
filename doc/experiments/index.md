@@ -94,6 +94,8 @@ reading and unit tests only.
 | EXP-051 | `catalog_blocks`: the game's ordinary blocks: conduction through wool, quartz, logs, double slabs and copper (not stained glass, leaves, sea lanterns, slabs, stairs), stair corners from neighbors, leaves' distance a tick after the log goes (an observer sees it), a carpet losing its support, podzol under snow, huge mushroom sides, glazed terracotta pushed but never pulled | 16 | match | 2026-10-15 |
 | EXP-052 | `openables`: doors (oak, iron, spruce, birch, copper), trapdoors and fence gates opened and closed by signals at either door half, doors popping without support and when a piston pushes them, an observer watching a door, a lever and dust dropping when their trapdoor opens, a torch dropping from an opening fence gate, a gate between walls (`in_wall`) | 14 | match | 2026-10-15 |
 | EXP-053 | `connections`: fences, bars, panes and walls connecting and disconnecting through shape updates (an observer sees a fence connect), nether brick vs oak fences and pumpkins not connecting, gates connecting across a fence only, panes joining walls and bars, wall posts and tall sides under a stone, a raised post under a redstone torch (`WALL_POST_OVERRIDE`), corners | 10 | match | 2026-10-15 |
+| EXP-054 | `gravity_blocks`: sand, gravel, red sand, concrete powder, an anvil and the dragon egg fall as entities; every falling block's state, exact position and motion compared each tick (`data get entity`). Long and short falls, gravel pressing a wooden plate while passing (then breaking on it), powder on a slab and red sand on a carpet breaking, an anvil on a fence (from 0.5 above: a longer fall rolls the game's random damage, which chipped it in the first run), sand held by a torch, a falling stack, the dragon egg's 5-tick delay, sand on slime, an observer seeing sand leave | 45 | match | 2026-10-15 |
+| EXP-055 | `gravity_pistons`: a piston head pushes falling sand sideways, a slime block on a sticky piston launches falling sand 10 blocks up (it falls back onto the slime), a piston lifts sand that falls back once the piston retracts; positions and motion compared each tick | 80 | match | 2026-10-15 |
 
 Hopper recordings also compare each hopper's `Items` and `TransferCooldown` (and the
 barrels' `Items`, `watch_items`) every tick with `data get block`.
@@ -121,6 +123,13 @@ no item entities by design, so the harness now sets `gamerule block_drops false`
 (`Block.popResource` checks it; container contents only spill when a container is removed
 with side effects, which `/setblock` skips) and kills stray items before each scenario.
 Both seeds then matched. Neither change affects redstone behavior.
+
+Gravity blocks (EXP-054, 055) added `gamerule entity_drops false`: a falling block that
+cannot land drops itself as an item with that rule on (an item on a wooden plate would
+keep it pressed), and the simulator has no items. Scenarios with `watch_entities` also
+compare every falling block (`execute as @e[type=falling_block] run data get entity
+@s`: block state, `Pos`, `Motion`, exact doubles). In 26.3 the entity's `BlockState` is
+saved as a bare id for a default state and as `{id, properties}` otherwise.
 
 ### EXP-023 sensitivity
 

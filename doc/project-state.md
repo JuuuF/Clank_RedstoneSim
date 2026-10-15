@@ -3,7 +3,7 @@
 The authoritative "where are we" page. Update it at the end of every work slice. For design
 rationale see [[architecture]] and [[decisions]]; for the plan see [[roadmap]].
 
-*Last updated: 2026-10-14, after working through the open list ([[todo-pass]]: Select
+*Last updated: 2026-10-15: edits inside the recorded history keep the later keyframes, single edits move on their own block lines, gravity blocks with falling block entities ([[mechanics/gravity-blocks]], EXP-054/055). Before that: 2026-10-14, after working through the open list ([[todo-pass]]: Select
 World look, timeline groups for every category, several selections acting together,
 "why did this change?" and a heat view, real signs with text, world builds index and
 reconnecting, schematics, composters and more signal sources). Before that: the
@@ -28,7 +28,7 @@ page is the summary to start from.*
   pressure plates (stone, 12 woods, weighted).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
-  All 48 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
+  All 54 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
   live edits) match ([[experiments/index]]).
 - **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
   and a rebindable keymap ([[controls]], with a keymap editor and Mac defaults); BUILD
@@ -125,11 +125,12 @@ page is the summary to start from.*
 | the game's ordinary blocks (~580: full cubes, pillars, facing blocks, slabs, stairs, leaves, carpets, all wood/stone buttons, poplar plates and signs) | `catalog.py` + generated `catalog_data.py` | settings from `Blocks.java` (conductor rule, push reaction, destroy time, see-through); stair corners and mirroring, leaves distance (ticked), carpets breaking | `tests/world/test_catalog.py` (not yet checked in the game) |
 | doors (22), trapdoors (22), fence gates (13) | `openable.py` | signals at either door half, hand use (not iron), hinge and click-height placement, creative breaking of door pairs, shapes (support, no conduction), `in_wall` | EXP-052; `tests/world/test_openable_connecting.py` |
 | fences (14), bars and panes (26), walls (32) | `connecting.py` | connections through shape updates (exceptions, fence kinds, gates), wall posts and low/tall sides from the block above, turning and mirroring | EXP-053 |
+| gravity blocks: sand, red sand, gravel, 16 concrete powders, 3 anvils, dragon egg; falling block entities | `falling.py`, `sim/entities.py` | fall delay 2 (egg 5), exact first positions, torch holds, carpet breaks, powder hardens by water, snapshots/saves/history mid-fall, placing blocked by a falling block | EXP-054, EXP-055 (positions and motion compared) |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status
 
-- `python -m pytest`: **522 tests pass** (2026-10-14, after the open-list pass; also on the
+- `python -m pytest`: **647 tests pass** (2026-10-15, after gravity blocks; earlier also on the
   compiled build), including
   the JDK oracle, the 107 game-recording replays (47 named recordings, 60 random),
   randomized history checks (replay, save/open, undo/redo), every window action in every
@@ -137,7 +138,8 @@ page is the summary to start from.*
   chunked-mesh consistency, run pacing and offscreen UI tests. `ruff check`,
   `ruff format --check` and `mypy src tools` are clean. Tests use a private config
   directory (`tests/conftest.py`).
-- Real-game comparisons (`python -m tools.gameserver.run`): 48 of 48 named scenarios match (signs and
+- Real-game comparisons (`python -m tools.gameserver.run`): 54 of 54 named scenarios match (gravity blocks
+  EXP-054/055 added 2026-10-15; signs and
   composters added 2026-10-14); 46 of them
   in one fresh full run (2026-10-11); the 40 random circuits were re-recorded after hoppers
   joined the palette and all match. The harness fails loudly on rejected commands.
@@ -151,8 +153,9 @@ page is the summary to start from.*
 - Levers and buttons cannot be operated on the dedicated server (no player), so player
   interaction paths (`BlockItem.place`, `useWithoutItem`) are verified by source reading and
   unit tests, not in game.
-- No entities: no minecarts (so no detector rails), no item entities (the test server runs
-  with `block_drops false`), no projectiles except the target-block hit action.
+- Entities: only falling blocks (`sim/entities.py`). No minecarts (so no detector rails),
+  no item entities (the test server runs with `block_drops false` and `entity_drops false`),
+  no projectiles except the target-block hit action.
 - Containers: barrels, hoppers, chests, dispensers and droppers (no composters, furnaces,
   shulker boxes). What a dispenser shoots or places, and items a dropper drops, are not
   simulated (the item just leaves the container).
@@ -162,7 +165,8 @@ page is the summary to start from.*
 - The trace keeps the last 200 000 records; the UI shows the last step's records as an
   indented causal list (no interactive tree yet).
 - Saves keep the timeline's recorded edits (sequences too) with the build they start
-  from, and opening re-runs them; undo history and samples are not saved.
+  from, and opening re-runs them; undo history and samples are not saved. Editing at an
+  earlier tick (or at tick 0) keeps the later edits and re-runs from the edit (ADR-022).
 - Chunks of an opened Minecraft world that stream in later join every stored level as if
   they had always been loaded; their pending scheduled ticks are not imported (only those
   of the first area are). A `.redsim.json` saved from an opened world keeps the blocks

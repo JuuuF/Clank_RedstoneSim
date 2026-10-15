@@ -38,6 +38,7 @@ from redsim.world.blocks.simple import (
     RedstoneBlock,
     SimpleBlock,
     SlabBlock,
+    SlimeBlock,
     full_cube,
     immovable,
     non_conductor,
@@ -113,7 +114,7 @@ BEDROCK = register(SimpleBlock("minecraft:bedrock", destroy_speed=-1.0))
 BARRIER = register(
     SimpleBlock("minecraft:barrier", destroy_speed=-1.0, push_reaction=PushReaction.IMMOVEABLE)
 )
-SLIME_BLOCK = register(full_cube("minecraft:slime_block", destroy_speed=0.0))
+SLIME_BLOCK = register(SlimeBlock())
 HONEY_BLOCK = register(HoneyBlock())
 SMOOTH_STONE_SLAB = register(SlabBlock("minecraft:smooth_stone_slab"))
 REDSTONE_BLOCK = register(RedstoneBlock())

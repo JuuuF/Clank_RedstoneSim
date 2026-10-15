@@ -175,3 +175,18 @@ def test_every_block_has_a_shape() -> None:
     for block in blocks.REGISTRY.values():
         for state in (block.default_state,):
             assert all(box.color != UNKNOWN for box in block_boxes(state)), block.id
+
+
+def test_falling_blocks_are_drawn_between_their_positions() -> None:
+    from redsim.sim.entities import FallingBlockEntity
+
+    level = Level()
+    mob = FallingBlockEntity(1, blocks.get("sand").default_state, (0.5, 4.0, 0.5))
+    mob.old = (0.5, 5.0, 0.5)
+    level.add_entity(mob)
+    world = ChunkedMesh()
+    world.mesher.partial_tick = 0.5
+    mesh = world.moving_mesh(level)
+    assert len(mesh.opaque) and mesh.animated
+    heights = mesh.opaque[:, 1]
+    assert heights.min() == 4.5 and heights.max() == 5.5  # halfway between 5 and 4

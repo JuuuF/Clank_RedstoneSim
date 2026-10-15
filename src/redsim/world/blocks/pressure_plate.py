@@ -1,13 +1,15 @@
 """Pressure plates: ``BasePressurePlateBlock.java``, ``PressurePlateBlock.java`` and
 ``WeightedPressurePlateBlock.java``.
 
-Entities are not simulated; the editor puts "visitors" on a plate instead: a number of
-mobs (players count) and of other entities (items) standing on it for some ticks
-(``Level.plate_visitors``). In the entity phase a visited, unpressed plate is pressed
-(``entityInside`` → ``checkPressed``); while pressed it rechecks every 20 ticks (10 for
-weighted plates) and releases once nobody is left. Stone and polished-blackstone plates
-count mobs only (``PressurePlateSensitivity.MOBS``), wooden plates everything, weighted
-plates count entities: light (gold) up to 15, heavy (iron) up to 150.
+Mobs and items are not simulated; the editor puts "visitors" on a plate instead: a number
+of mobs (players count) and of other entities (items) standing on it for some ticks
+(``Level.plate_visitors``). Falling blocks are real entities (``sim/entities.py``): they
+press a plate they pass or land on, and count while they touch it. In the entity phase a
+visited, unpressed plate is pressed (``entityInside`` → ``checkPressed``); while pressed
+it rechecks every 20 ticks (10 for weighted plates) and releases once nobody is left.
+Stone and polished-blackstone plates count mobs only (``PressurePlateSensitivity.MOBS``),
+wooden plates everything, weighted plates count entities: light (gold) up to 15, heavy
+(iron) up to 150.
 """
 
 from __future__ import annotations
@@ -101,6 +103,12 @@ class BasePressurePlateBlock(Block):
         signal = self.signal_for_state(state)
         if signal == 0:
             self.check_pressed(level, pos, state, signal)
+
+    def entity_inside_entity(
+        self, state: BlockState, level: Level, pos: Pos, entity: object
+    ) -> None:
+        """``entityInside`` for a simulated entity (a falling block)."""
+        self.entity_inside(state, level, pos)
 
     def check_pressed(self, level: Level, pos: Pos, state: BlockState, old_signal: int) -> None:
         """``checkPressed`` L71."""

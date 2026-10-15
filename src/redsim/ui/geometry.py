@@ -500,6 +500,16 @@ class Mesher:
                 continue
             for piece, at in pieces:
                 grouped.setdefault(piece, []).append(at)
+        # Falling blocks (``FallingBlockRenderer``): the block's model with its bottom center
+        # at the entity's position, between its last two positions (the partial tick).
+        for mob in level.entities.values():
+            t = self.partial_tick
+            x, y, z = (o + (n - o) * t for o, n in zip(mob.old, mob.position, strict=True))
+            corner = (x - 0.5, y, z - 0.5)
+            if self.assets is None:
+                self._falling_boxes(mob.state, corner, opaque, translucent)
+            else:
+                grouped.setdefault(mob.state, []).append(corner)
         # One numpy operation per kind of moving block: its model, repeated at every spot.
         for piece, spots in grouped.items():
             shifts = np.array(spots, dtype=np.float32)[:, None, :]
@@ -509,6 +519,22 @@ class Mesher:
                     moved[:, :, :3] += shifts
                     target.append(moved.reshape(-1, rows.shape[1]))
         return Mesh(_stack(opaque), _stack(translucent), animated=bool(opaque or translucent))
+
+    def _falling_boxes(
+        self,
+        state: BlockState,
+        corner: tuple[float, float, float],
+        opaque: list[np.ndarray],
+        translucent: list[np.ndarray],
+    ) -> None:
+        """A falling block without textures: its boxes at ``corner``."""
+        origin = np.array(corner, dtype=np.float32)
+        for box in block_boxes(state):
+            lo = origin + np.array(box.lo, dtype=np.float32) / 16.0
+            hi = origin + np.array(box.hi, dtype=np.float32) / 16.0
+            target = translucent if box.translucent else opaque
+            for direction in ALL:
+                target.append(_pad(_triangles(lo, hi, direction, box.color)))
 
     def _moving(
         self, level: Level, pos: Pos, opaque: list[np.ndarray], translucent: list[np.ndarray]

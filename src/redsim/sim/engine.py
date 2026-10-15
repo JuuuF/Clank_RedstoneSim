@@ -188,6 +188,9 @@ class Engine:
             return f"projectile hits the target at {pos} (strength {strength}, {ticks} ticks)"
         if self.phase is Phase.ENTITIES and level.entity_queue:
             return f"entities on the pressure plate at {level.entity_queue[0]}"
+        if self.phase is Phase.ENTITIES and level.entity_tick_queue:
+            mob = level.entities.get(level.entity_tick_queue[0])
+            return f"entity tick: {mob.describe()}" if mob is not None else "entity tick"
         if self.phase is Phase.BLOCK_ENTITIES:
             for wrapper in level.tickers[self.be_index :]:
                 if not wrapper.is_removed():
@@ -253,6 +256,14 @@ class Engine:
                 level.force_power(pos, 0, level.game_time)  # the 0-tick pulse ends
             finally:
                 self._end_step()
+        elif self.phase is Phase.ENTITIES and not level.projectile_hits and not level.entity_queue:
+            # Falling blocks, in the order they joined (ServerLevel.tick → tickNonPassenger).
+            mob = level.entities[level.entity_tick_queue.pop(0)]
+            info = self._begin_step("entity_tick", mob.block_position, {"entity": mob.id})
+            try:
+                mob.tick(level)
+            finally:
+                self._end_step()
         elif self.phase is Phase.ENTITIES and not level.projectile_hits:
             from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
 
@@ -309,8 +320,14 @@ class Engine:
                     p: v for p, v in level.plate_visitors.items() if v[2] >= level.game_time
                 }
                 level.entity_queue = list(level.plate_visitors)
+                level.entity_tick_queue = list(level.entities)
             elif self.phase is Phase.ENTITIES:
                 if level.zero_tick_ends or level.projectile_hits or level.entity_queue:
+                    return
+                queue = level.entity_tick_queue
+                while queue and queue[0] not in level.entities:  # removed before its turn
+                    queue.pop(0)
+                if queue:
                     return
                 # Level.tickBlockEntities L527: pending tickers join the list first.
                 level.ticking_block_entities = True
@@ -481,6 +498,10 @@ class Engine:
         state = requested.block.get_state_for_placement(PlacementContext(level, pos, requested))
         if state is None or not state.can_survive(level, pos):
             raise ActionError(f"{requested.block.name} cannot be placed at {pos} (no support)")
+        from redsim.sim.entities import is_unobstructed
+
+        if not is_unobstructed(level, state, pos):  # BlockItem.canPlace
+            raise ActionError(f"a falling block is in the way at {pos}")
         if not level.set_block(pos, state, UpdateFlags.ALL_IMMEDIATE):
             raise ActionError(f"placing {requested.block.name} at {pos} failed")
         placed = level.get_block_state(pos)

@@ -88,6 +88,10 @@ REDSTONE = (
         "copper_door", "copper_trapdoor",
     )),
     ("Rails", ("rail", "powered_rail", "activator_rail")),
+    ("Gravity", (
+        "sand", "red_sand", "gravel", "white_concrete_powder", "anvil", "chipped_anvil",
+        "damaged_anvil", "dragon_egg",
+    )),
 )  # fmt: skip
 #: Building materials: category → family names (``material``) matched in order.
 STONE_GROUPS = (
@@ -110,6 +114,7 @@ STONE_GROUPS = (
 )  # fmt: skip
 NATURAL_GROUPS = (
     ("Ground", r"grass_block|podzol|mycelium|(coarse_|rooted_)?dirt|clay|mud|packed_mud|"
+               r"(red_)?sand|gravel|"
                r"(pale_)?moss_block|moss_carpet|muddy_mangrove_roots|dirt_path|farmland"),
     ("Logs", r"(stripped_)?\w+_(log|stem|wood|hyphae)|mushroom_stem"),
     ("Leaves", r"\w+_leaves"),
@@ -130,6 +135,7 @@ GLASS_AND_LIGHT = (
 #: Colored blocks by kind (base names after the color).
 COLORED_KINDS = (
     ("Wool", "wool"), ("Carpet", "carpet"), ("Concrete", "concrete"),
+    ("Concrete powder", "concrete_powder"),
     ("Terracotta", "terracotta"), ("Glazed terracotta", "glazed_terracotta"),
     ("Stained glass", "stained_glass"), ("Glass panes", "stained_glass_pane"),
     ("Wool stairs", "wool_stairs"),

@@ -696,7 +696,13 @@ class PistonMovingBlockEntity(BlockEntity):
                     level.set_block(pos, new_state, 67)
                     level.neighbor_changed(pos, new_state.block)
         else:
-            self.progress = min(self.progress + 0.5, 1.0)
+            new_progress = self.progress + 0.5
+            if level.entities:
+                from redsim.sim.entities import move_collided_entities, move_stuck_entities
+
+                move_collided_entities(level, pos, new_progress, self)
+                move_stuck_entities(level, pos, new_progress, self)
+            self.progress = min(new_progress, 1.0)
 
     def final_tick(self, level: Level) -> None:
         """``finalTick`` L259: complete the move immediately."""

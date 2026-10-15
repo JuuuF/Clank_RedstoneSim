@@ -153,6 +153,9 @@ class FenceBlock(CrossCollisionBlock):
     """``FenceBlock`` (4-pixel posts; collision 24 high): connects to sturdy faces, to fences
     of its kind (wooden or not) and to fence gates across its side."""
 
+    #: The collision shape's top in pixels (``sim/entities.local_boxes``).
+    collision_height = 24
+
     shapes = _cross_shapes(4, 16, 4, 16)
     collision_shapes = _cross_shapes(4, 24, 4, 24)
 
@@ -221,6 +224,9 @@ def _covers(above: np.ndarray, test: Shape) -> bool:
 class WallBlock(_GameBlock):
     """``WallBlock``: sides none/low/tall and a post (``up``) from the neighbors and the
     collision shape of the block above."""
+
+    #: The collision shape's top in pixels (``sim/entities.local_boxes``).
+    collision_height = 24
 
     properties = (UP, WALL_SIDES[Direction.NORTH], WALL_SIDES[Direction.EAST],
                   WALL_SIDES[Direction.WEST], WALL_SIDES[Direction.SOUTH], WATERLOGGED)  # fmt: skip

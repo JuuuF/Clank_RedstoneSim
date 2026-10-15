@@ -6,7 +6,7 @@ doc/mechanics/block-properties.md for the table and line references).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from redsim.core.compiled import mypyc_attr
 from redsim.core.direction import Direction
@@ -58,10 +58,56 @@ class SimpleBlock(Block):
 
 class HoneyBlock(SimpleBlock):
     """``HoneyBlock``: collision shape ``Block.column(14, 0, 15)`` (HoneyBlock.java L29), so
-    it is not a conductor and only its bottom face gives CENTER support."""
+    it is not a conductor and only its bottom face gives CENTER support. Entities: speed
+    factor 0.4, no bouncing off it (``BlockTags.SUPPRESSES_BOUNCE``), sliding down its
+    sides (``entityInside``); pistons carry entities standing on it (``moveStuckEntities``)."""
+
+    speed_factor = 0.4
+    suppresses_bounce = True
 
     def __init__(self) -> None:
         super().__init__("minecraft:honey_block", collision_shape=column(14, 0, 15))
+
+    def entity_inside_entity(self, state: BlockState, level: Level, pos: Pos, entity: Any) -> None:
+        """``entityInside``: ``isSlidingDown`` → ``doSlideMovement``."""
+        from redsim.sim.entities import AIR_DRAG, HALF_WIDTH
+
+        if entity.on_ground or entity.position[1] > pos[1] + 0.9375 - 1.0e-7:
+            return
+        dx, dy, dz = entity.delta
+
+        def old_dy(value: float) -> float:
+            return value / AIR_DRAG + 0.08
+
+        if old_dy(dy) >= -0.08:
+            return
+        overlap = 0.4375 + HALF_WIDTH
+        x_off = abs(pos[0] + 0.5 - entity.position[0])
+        z_off = abs(pos[2] + 0.5 - entity.position[2])
+        if not (x_off + 1.0e-7 > overlap or z_off + 1.0e-7 > overlap):
+            return
+        new_dy = (-0.05 - 0.08) * AIR_DRAG  # getNewDeltaY(-0.05)
+        if old_dy(dy) < -0.13:
+            factor = -0.05 / old_dy(dy)
+            entity.delta = (dx * factor, new_dy, dz * factor)
+        else:
+            entity.delta = (dx, new_dy, dz)
+
+
+class SlimeBlock(SimpleBlock):
+    """``SlimeBlock``: bounce restitution 1.0 (``Blocks.SLIME_BLOCK``); slows entities
+    walking on it (``stepOn``). A full cube and a conductor."""
+
+    bounce_restitution = 1.0
+
+    def __init__(self) -> None:
+        super().__init__("minecraft:slime_block", destroy_speed=0.0)
+
+    def step_on(self, level: Level, pos: Pos, state: BlockState, entity: Any) -> None:
+        dx, dy, dz = entity.delta
+        if abs(dy) < 0.1:  # (isSteppingCarefully: never for falling blocks)
+            scale = 0.4 + abs(dy) * 0.2
+            entity.delta = (dx * scale, dy, dz * scale)
 
 
 class SlabBlock(Block):

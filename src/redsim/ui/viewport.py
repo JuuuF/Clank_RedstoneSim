@@ -471,12 +471,14 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
                     renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
         partial = self.tick_fraction() if self.tick_fraction is not None else 1.0
         world = self.world_mesh
-        if (world.has_moving or self._moving_shown) and at_boundary:
-            # Moving pistons: one small mesh of their own, every frame while they move.
+        animated = world.has_moving or bool(self.document.level.entities)
+        if (animated or self._moving_shown) and at_boundary:
+            # Moving pistons and falling blocks: one small mesh of their own, every frame
+            # while they move.
             world.mesher.partial_tick = partial
             moving = world.moving_mesh(self.document.level)
             renderer.set_chunk(MOVING_KEY, moving.opaque, moving.translucent, moving.solid)
-            self._moving_shown = world.has_moving
+            self._moving_shown = animated
         renderer.upload_lines(self._overlay_lines())
         renderer.upload_overlay(self._overlay_triangles())
         renderer.upload_outline(self._outline_triangles())

@@ -22,8 +22,8 @@ simulator: random ticks (leaf decay, copper oxidation, grass and mycelium spread
 budding amethyst, ice melting by light), water (sponges have nothing to absorb; ice broken
 by a player above most blocks becomes water in the game, air here), entities (silverfish
 from infested blocks) and menus. Blocks with mechanics of their own that are not modeled
-yet (carved pumpkins and jack o'lanterns: golem patterns; falling blocks, doors, fences,
-TNT, …) stay foreign blocks: drawn and saved, inert in the simulation.
+yet (carved pumpkins and jack o'lanterns: golem patterns; TNT, …) stay foreign blocks:
+drawn and saved, inert in the simulation. Gravity blocks are in ``falling.py``.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from __future__ import annotations
 import functools
 import math
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
@@ -303,7 +303,7 @@ class StairBlock(CatalogBlock):
     waterlogged."""
 
     properties = (HORIZONTAL_FACING, HALF, STAIRS_SHAPE, WATERLOGGED)
-    _shapes: dict[tuple[str, bool, Direction], Shape] | None = None
+    _shapes: ClassVar[dict[tuple[str, bool, Direction], Shape] | None] = None
 
     def __init__(self, block_id: str, spec: tuple[Any, ...]) -> None:
         super().__init__(block_id, spec)
@@ -534,6 +534,20 @@ def _register_openable_and_connecting() -> None:
 
 
 _register_openable_and_connecting()
+
+
+def _register_falling() -> None:
+    """Gravity blocks (``falling.py``), by their game class."""
+    from redsim.world.blocks import falling
+
+    FACTORIES["SandBlock"] = falling.ColoredFallingBlock
+    FACTORIES["ColoredFallingBlock"] = falling.ColoredFallingBlock
+    FACTORIES["ConcretePowderBlock"] = falling.ConcretePowderBlock
+    FACTORIES["AnvilBlock"] = falling.AnvilBlock
+    FACTORIES["DragonEggBlock"] = falling.DragonEggBlock
+
+
+_register_falling()
 
 
 def catalog_blocks(known: set[str]) -> list[Block]:

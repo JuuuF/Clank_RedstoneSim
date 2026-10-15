@@ -19,6 +19,12 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **Gravity blocks** (2026-10-15, owner: "Add gravity blocks as well"): sand, red sand,
+  gravel, concrete powders, anvils and the dragon egg, with the game's falling block
+  entity ported (`sim/entities.py`: movement, collision, landing, pressure plates, slime,
+  honey, pistons pushing and launching entities); EXP-054/055 match the real server with
+  exact positions and motion ([[mechanics/gravity-blocks]]). Not modeled: the anvil's
+  random damage on long falls, the dragon egg's random teleport, item drops.
 - **Single edits moved one by one** (2026-10-15, owner: move keyframes "for specific blocks
   in every timeline category, making it able to alter events that happen in the same tick
   individually"): the diamonds on each block's line (Placed, Removed, Changed, Used) are
