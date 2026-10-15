@@ -1,13 +1,17 @@
 """Blocks the simulator does not model yet, kept as the game wrote them (round 8: opening
 Minecraft worlds). A foreign block carries its id and properties as text, is drawn with
-the game's model and written back unchanged; in the simulation it is inert. Whether it is
-a full, conducting cube is guessed from its name (doc/world-import.md), so circuits
-touching foreign blocks are approximate; the import lists them.
+the game's model and written back unchanged; in the simulation it is inert. How pistons
+treat it, whether it conducts and how hard it is come from the game's block table
+(``catalog_data``, from ``Blocks.java``): a block with a block entity (a furnace, a
+beacon, …) is never moved by pistons (``PistonBaseBlock.isPushable``:
+``!state.hasBlockEntity()``), which slime and honey rely on. Only whether it is a full
+cube is still guessed from its name (doc/world-import.md); the import lists such blocks.
 """
 
 from __future__ import annotations
 
 from redsim.world.block import Conductor, PushReaction
+from redsim.world.blocks.catalog_data import BLOCKS
 from redsim.world.blocks.simple import SimpleBlock
 from redsim.world.shape import EMPTY
 
@@ -26,6 +30,9 @@ _NOT_FULL = (
 _NOT_CONDUCTING = ("glass", "leaves", "ice", "beacon", "sea_lantern", "glowstone", "tnt")
 
 _CACHE: dict[str, ForeignBlock] = {}
+#: ``catalog_data`` flags.
+NO_COLLISION = 1
+HAS_BLOCK_ENTITY = 16
 
 
 class ForeignBlock(SimpleBlock):
@@ -33,14 +40,34 @@ class ForeignBlock(SimpleBlock):
 
     def __init__(self, block_id: str, properties: dict[str, str]) -> None:
         name = block_id.split(":", 1)[-1]
+        spec = BLOCKS.get(block_id)
         self.full = not any(part in name for part in _NOT_FULL)
+        if spec is not None and spec[4] & NO_COLLISION:
+            self.full = False
         conducting = self.full and not any(part in name for part in _NOT_CONDUCTING)
+        conductor = Conductor.DEFAULT if conducting else Conductor.NEVER
+        push = PushReaction.PUSH_PULL if self.full else PushReaction.POPPED
+        destroy = 1.5
+        if spec is not None:  # the game's settings (``Blocks.java``)
+            _, destroy, reaction, rule, flags, _ = spec
+            push = PushReaction[reaction]
+            if flags & HAS_BLOCK_ENTITY and push is PushReaction.PUSH_PULL:
+                # isPushable is false for any block entity: the same for pistons (pushed or
+                # pulled by slime) as IMMOVEABLE. The block entity itself is not modeled.
+                push = PushReaction.IMMOVEABLE
+            if rule == "never" or not self.full:
+                conductor = Conductor.NEVER
+            elif rule == "always":
+                conductor = Conductor.ALWAYS
+            else:
+                conductor = Conductor.DEFAULT
         super().__init__(
             block_id,
             shape=None if self.full else EMPTY,
             collision_shape=None if self.full else EMPTY,
-            push_reaction=PushReaction.PUSH_PULL if self.full else PushReaction.POPPED,
-            conductor=Conductor.DEFAULT if conducting else Conductor.NEVER,
+            push_reaction=push,
+            conductor=conductor,
+            destroy_speed=float(destroy),
         )
         self.extra_properties = dict(properties)
 

@@ -42,6 +42,13 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Bug: mirrored quasi-connected pistons** (2026-10-15, owner's `data/simulation_bug.json`):
+  only one of two mirrored sticky pistons extended. Cause: furnaces next to the north
+  half's slime are not simulated (foreign blocks), and foreign blocks were guessed to be
+  pushable; in the game a block with a block entity is never moved, so slime leaves it
+  behind. Foreign blocks now take their push reaction, conductor rule and hardness from
+  the game's table (block-entity classes found from the source); EXP-050 compares the
+  contraption with the real game (match), `tests/world/test_foreign.py`.
 - **Inventory by role and material, variants, schematic library** (2026-10-14, owner:
   "the inventory system is really messy"; a schematics folder "like the minecraft saves";
   "Import schematic as prefab"): the folders come from `ui/block_tree.py` (redstone by

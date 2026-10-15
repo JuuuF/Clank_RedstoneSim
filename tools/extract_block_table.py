@@ -34,6 +34,36 @@ OUT = ROOT / "src/redsim/world/blocks/catalog_data.py"
 WEATHERING = ("", "exposed_", "weathered_", "oxidized_")
 WAXED = ("waxed_", "waxed_exposed_", "waxed_weathered_", "waxed_oxidized_")
 FLAG_NAMES = {"noCollision": 1, "noOcclusion": 2, "forceSolidOn": 4, "forceSolidOff": 8}
+#: Flag of blocks whose class has a block entity (``EntityBlock``): pistons never move them
+#: (``PistonBaseBlock.isPushable``: ``!state.hasBlockEntity()``).
+BLOCK_ENTITY = 16
+CLASSES = SRC / "world/level/block"
+
+
+def entity_classes() -> set[str]:
+    """Block classes that implement ``EntityBlock``, directly or through a parent."""
+    parents: dict[str, str] = {}
+    entity: set[str] = set()
+    for path in CLASSES.rglob("*.java"):
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(
+            r"\bclass (\w+)(?:<[^>{]*>)?(?: extends (\w+)(?:<[^>{]*>)?)?"
+            r"(?: implements ([^{]+))?\s*\{",
+            text,
+        ):
+            name, parent, interfaces = match.groups()
+            if parent:
+                parents[name] = parent
+            if interfaces and re.search(r"\bEntityBlock\b", interfaces):
+                entity.add(name)
+    changed = True
+    while changed:
+        changed = False
+        for name, parent in parents.items():
+            if parent in entity and name not in entity:
+                entity.add(name)
+                changed = True
+    return entity
 
 
 @dataclass(frozen=True)
@@ -218,9 +248,12 @@ def extract() -> tuple[dict[str, Spec], list[str]]:
         specs[name] = spec
         return spec
 
+    entities = entity_classes()
     table: dict[str, Spec] = {}
     for statement in statements:
         spec = spec_of(statement.name)
+        if spec.kind in entities:
+            spec = replace(spec, flags=spec.flags | BLOCK_ENTITY)
         ids_ref = re.search(r"(?:BlockItemIds|BlockIds)\.(\w+)", statement.body)
         ids = item_ids.get(ids_ref.group(1), []) if ids_ref else []
         if not ids:
@@ -319,7 +352,8 @@ def main() -> None:
         '"""Every block of the game: its class and the settings the simulator needs',
         "(generated from the decompiled ``Blocks.java`` by ``tools/extract_block_table.py``;",
         "do not edit by hand). Values: class, destroy time, push reaction, redstone-conductor",
-        "rule, flags (1 noCollision, 2 noOcclusion, 4 forceSolidOn, 8 forceSolidOff), map",
+        "rule, flags (1 noCollision, 2 noOcclusion, 4 forceSolidOn, 8 forceSolidOff, 16 has a",
+        "block entity), map",
         'color (0xRRGGBB)."""',
         "",
         "BLOCKS: dict[str, tuple[str, float, str, str, int, int]] = {",
