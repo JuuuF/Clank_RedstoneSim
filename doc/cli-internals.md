@@ -162,7 +162,23 @@ codes (the JSON `layers`). To give a block its own code: add a branch to `block_
 and its words to `WORDS`, and describe it in [[cli]] section 7.1 and the module
 docstring.
 
-## 8. Tests and documentation
+## 8. Causes: `why` and `effects`
+
+Both read the simulation trace (`redsim.sim.trace`: one record per block change, neighbor
+update, scheduled tick, block event and engine step, each with a `parent` record) through
+`redsim.sim.causes`. `why` (`causes.why`) walks from the block's last change back along
+`parent` links; where a link ends at an engine step, `_origin` finds the record that
+queued it (the `schedule_tick` for a scheduled tick, the queued block event), so the
+chain crosses ticks. `effects` (`causes.effects`) does the same forwards: starting from
+the change it collects every later record whose parent is already collected, every
+scheduled tick and block event step that a collected record queued (matched by position,
+trigger tick and sub-tick, or position and event numbers), and neighbor updates sent in
+the same engine step from a position a collected change changed (the game updates around
+a wire after changing it, from the same step but not as a child record). The commands
+first simulate the whole history (`goto(end_tick)`) so the trace is complete, and return
+to the view afterwards.
+
+## 9. Tests and documentation
 
 - `tests/cli/test_cli.py` runs `main` the way users do (arguments, `-c`, standard input)
   on temporary worlds and checks the printed text and JSON; it also checks that

@@ -225,7 +225,19 @@ ticks (repeaters switching, torches turning, lamps turning off, observers pulsin
 priority), block events (pistons starting to move), entities (falling blocks), block
 entities (pistons moving on, hoppers). `step` prints each step with the blocks it
 changed, so you can see exactly in which order things happen. A tick with nothing to do
-is one step. `run` finishes a started tick.
+is one step. `run` finishes a started tick. `step back [N]` goes back N steps (into the
+previous tick if needed); stepping forward again runs the same steps:
+
+```
+> seek 4
+now at tick 4 of 12
+  @A=15  @OUT=15
+> step
+  step 11: tick start 1 scheduled tick(s) due
+now inside tick 5 (1 step after tick 4); next: scheduled tick redstone_wall_torch at (3, 1, 0) (NORMAL)
+> step back
+stepped back 1: now at tick 4 of 12; next: tick start (game time 4 → 5)
+```
 
 ### 5.4 Settling the build
 
@@ -335,6 +347,19 @@ receives, `.` for none), `at T show …`.
 ### 7.2 One block: `inspect`
 
 ```
+3 1 0  redstone_wall_torch[facing=east,lit=false]   (at tick 12 of 12)
+  faces     on the block to its west; powers the block above it (facing=east)
+  receives  west 15
+  gives     nothing
+  conducts  no
+  value     0  (what the monitor and waves show)
+  neighbors
+    down  3 0 0  smooth_stone
+    west  2 1 0  stone
+    east  4 1 0  redstone_wire[north=none,east=side,south=none,west=side,power=0]
+```
+
+```
 4 1 0  redstone_wire[north=none,east=side,south=none,west=side,power=15]   (at tick 2 of 2)
   receives  down 15, west 15, east 15
   gives     down 15 (direct 15), west 15 (direct 15), east 15 (direct 15)
@@ -346,6 +371,10 @@ receives, `.` for none), `at T show …`.
     east  @OUT  redstone_lamp[lit=true]
 ```
 
+- **faces**: for blocks with a direction, which way they work, in words: where a
+  repeater or comparator takes its input and gives its output (its `facing` is the side
+  of the *input*), what an observer watches, where a piston pushes, which block a torch,
+  lever or button is attached to. Most wrong builds are a block facing the wrong way.
 - **receives SIDE N**: the neighbor on that side gives this block signal N (the game's
   `getSignal`, which is what lamps, pistons, repeater inputs and wire read).
 - **gives SIDE N (direct M)**: this block gives N to that neighbor; M is the *direct*
@@ -407,10 +436,30 @@ from (including quasi-connectivity). Newest first:
 block that should have caused it, and `inspect` the block that should have reacted (does
 it receive anything? from which side?).
 
+`effects POS` is the same chain read forwards: where a signal goes. It takes the block's
+last change (up to the view tick) and lists every block change that followed from it,
+oldest first, through the updates, scheduled ticks and block events in between, to the
+end of the simulated history. Here for a NOT gate in a row along x (lever `@A`, wire, a
+stone block with a wall torch on its east side, wire, lamp `@OUT`), the lever switched on
+at tick 3:
+
+```
+0 1 0 (@A) changed at tick 3: lever: powered false → true
+  it caused 4 block changes:
+  → tick 3    1 1 0        redstone wire: power 0 → 15
+  → tick 5    3 1 0        redstone wall torch: lit true → false
+  → tick 5    4 1 0        redstone wire: power 15 → 0
+  → tick 9    @OUT         redstone lamp: lit true → false
+```
+
+If the output is not in the list, the signal never reached it: the last block in the list
+is where it stops (`inspect` it and its neighbors). `max N` limits the list (default 200).
+
 ### 7.6 Step by step: `trace`, `step`, `ticks`, `diff`
 
 - `trace T [near POS]`: every engine step of tick T in order, with the blocks each changed.
-- `step [N]`: walk through the current tick step by step (section 5.3).
+- `step [N]`, `step back [N]`: walk through the current tick step by step, forwards and
+  backwards (section 5.3).
 - `ticks`: pending scheduled ticks (with the tick they run at and their priority) and
   block events.
 - `diff A [B]`: every block that differs between two ticks (`diff 0`: everything that
@@ -557,8 +606,10 @@ The steps, as a habit:
 3. `inspect` the last block that has the signal and the first that does not: does the
    second *receive* anything, from which side? A repeater facing the wrong way receives
    nothing from the side it should; a torch on the wrong block inverts the wrong signal.
-4. `why` the block that should have changed (or that changed wrongly).
-5. `step` through the tick where it goes wrong to see the order of updates.
+4. `effects` the input: which blocks did its change reach, and where does the list stop?
+   `why` the block that should have changed (or that changed wrongly).
+5. `step` through the tick where it goes wrong to see the order of updates (`step back`
+   to look at a step again).
 
 ### 10.3 Timing
 

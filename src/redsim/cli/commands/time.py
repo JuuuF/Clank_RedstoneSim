@@ -154,7 +154,7 @@ def back(session: Session, args: Args) -> Output:
 @command(
     "step",
     group="time",
-    usage="step [N]",
+    usage="step [N] | step back [N]",
     summary="Run N single engine steps (inside a tick) and show what each did.",
     help="""
     A game tick is a series of steps (doc/mechanics/tick-scheduling.md): the tick start,
@@ -162,9 +162,10 @@ def back(session: Session, args: Args) -> Output:
     entity. `step` runs them one at a time and prints each with the blocks it changed, so
     you can see the order things happen in. A tick with nothing to do is a single step.
     The view is then *inside* a tick: inspection commands show the world at that moment;
-    edits still go to the build or `at T`. `run` finishes the tick.
+    edits still go to the build or `at T`. `run` finishes the tick. `step back [N]` goes
+    back N steps (the same steps run again when you step forward).
     """,
-    examples=("step", "step 5"),
+    examples=("step", "step 5", "step back"),
     kind="time",
     data="""{"steps": [{"index", "kind", "pos", "changes": [{"pos", "from", "to"}]}],
     "tick", "inside_tick"}""",
@@ -172,9 +173,19 @@ def back(session: Session, args: Args) -> Output:
 def step(session: Session, args: Args) -> Output:
     from redsim.sim import trace as tr
 
+    backwards = args.option("back")
     count = args.number("a number of steps") if args.more() else 1
     args.done()
     doc = session.doc
+    if backwards:
+        for _ in range(count):
+            if not doc.step_back():
+                break
+        session.changed = True
+        out = Output([f"stepped back {count}: now {tick_line(session)}; next: "
+                      f"{doc.engine.peek_next_step()}"])  # fmt: skip
+        out.data = {"steps": [], **view_data(session)}
+        return out
     out = Output()
     steps = []
     for _ in range(count):
@@ -550,7 +561,9 @@ def undo(session: Session, args: Args) -> Output:
     doc = session.doc
     if doc._undo:
         label = doc.undo_labels[0]
+        view = session.view_now()
         doc.undo()
+        session.goto_view(view)  # the editor's undo goes to the edit's tick; keep the view
         session.changed = True
         return Output([f"undid: {label}"], {"undid": "command", "label": label})
     return _file_version(session, "undo")
@@ -573,7 +586,9 @@ def redo(session: Session, args: Args) -> Output:
     args.done()
     doc = session.doc
     if doc._redo:
+        view = session.view_now()
         doc.redo()
+        session.goto_view(view)
         session.changed = True
         return Output(["redid the last undone command"], {"redid": "command"})
     return _file_version(session, "redo")

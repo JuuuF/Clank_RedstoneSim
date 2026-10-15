@@ -391,3 +391,37 @@ def neighbors_text(level: Level, pos: Pos, name: Callable[[Pos], str]) -> list[s
             continue
         lines.append(f"    {direction.serialized:<5} {name(near)}  {state_text(state)}")
     return lines
+
+
+def orientation_text(state: BlockState) -> str | None:
+    """Which way a directional block works, in words: "input from the east, output to the
+    west" for a repeater with ``facing=east``. None for blocks without a direction."""
+    bid = state.block.id.removeprefix("minecraft:")
+    if bid == "redstone_torch":
+        return "on the block below it; powers the block above it"
+    facing = prop(state, "facing")
+    if not isinstance(facing, Direction):
+        return None
+    f, o = facing.serialized, facing.opposite.serialized
+    if bid in ("repeater", "comparator"):
+        sides = f"{facing.clockwise().serialized} and {facing.counter_clockwise().serialized}"
+        what = "lock it" if bid == "repeater" else "are its side inputs"
+        return (f"input from the {f}, output to the {o}; repeaters and comparators at the "
+                f"{sides} {what} (facing={f})")  # fmt: skip
+    if bid == "observer":
+        return f"watches the block to its {f}, outputs to the {o} (facing={f})"
+    if bid in ("piston", "sticky_piston"):
+        return f"pushes to the {f} (facing={f})"
+    if bid == "piston_head":
+        return f"faces {f}, its piston is to the {o}"
+    if bid in ("dispenser", "dropper", "hopper"):
+        return f"outputs to the {f} (facing={f})"
+    if bid == "redstone_wall_torch":
+        return f"on the block to its {o}; powers the block above it (facing={f})"
+    face = prop(state, "face")
+    if face == "wall":
+        return f"on the block to its {o} (face=wall, facing={f})"
+    if face in ("floor", "ceiling"):
+        below = "below it" if face == "floor" else "above it"
+        return f"on the block {below} (face={face})"
+    return None

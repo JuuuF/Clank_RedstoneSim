@@ -20,8 +20,9 @@ Workflow:
 3. Build with `place` (components; `out=DIRECTION` for repeaters, comparators, observers)
    and `fill`/`set` (structure), in one script: `redsim-cli W < build.cli.txt`.
 4. `settle`, then `show` (text maps: upper case = on; legend under the map), `check`.
-5. Debug failing cases: `target NAME load CASE`, `run N`, `waves`, `inspect POS`,
-   `why POS`, `changes POS`, `step`.
+5. Debug failing cases: `target NAME load CASE`, `run N`, `waves`, `inspect POS`
+   (`faces`: which way it works), `effects @INPUT` (where the signal goes and where it
+   stops), `why POS` (where a change came from), `changes POS`, `step` / `step back`.
 6. Leave a `note`. Optional: `export FILE.litematic` for Minecraft.
 
 Rules: building commands change the build (tick 0) wherever the view is; `at T COMMAND`

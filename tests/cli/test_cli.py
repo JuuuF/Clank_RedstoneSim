@@ -280,3 +280,22 @@ def test_the_guide_mentions_every_command() -> None:
     text = (Path(__file__).resolve().parents[2] / "doc" / "cli.md").read_text()
     missing = [n for n in COMMANDS if not re.search(r"`" + re.escape(n) + r"[` ]", text)]
     assert not missing, f"doc/cli.md does not mention: {missing}"
+
+
+def test_effects_step_back_and_orientation(rs: Run) -> None:
+    rs.batch(NOT_GATE + "; at 3 use @A; run 12")
+    out = rs("at", "3", "effects", "@A")
+    assert "changed at tick 3: lever: powered false → true" in out
+    assert "→ tick 5    3 1 0        redstone wall torch: lit true → false" in out
+    assert "@OUT" in out and "redstone lamp: lit true → false" in out  # the lamp, 4 ticks on
+    assert "tick 9    @OUT" in rs("effects", "@A")  # the view (tick 12) sees the same change
+    assert "has not changed since the build" in rs("at", "2", "effects", "@A")
+    rs.batch("seek 4; step")
+    assert "inside tick 5 (1 step after tick 4)" in rs("where")
+    assert "stepped back 1: now at tick 4" in rs("step", "back")
+    assert "stepped back 2: now at tick 3" in rs("step", "back", "2")  # through tick 4's steps
+    rs.batch("place 7 1 0 stone; undo; redo")
+    assert "view at tick 3 of 12" in rs("where")  # undo and redo keep the view
+    assert "faces     on the block to its west" in rs("inspect", "3", "1", "0")
+    data = json.loads(rs("--json", "inspect", "3", "1", "0").splitlines()[0])
+    assert "west" in data["data"]["blocks"][0]["orientation"]

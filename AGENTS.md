@@ -25,7 +25,9 @@ The habits that matter most:
   is; record actions during a run with **`at T COMMAND`** or **`pulse`**.
 - **`settle`** after building, before testing.
 - **Label** inputs and outputs (`label OUT x y z`), write a **target**, and run **`check`**
-  until it passes. Debug with `waves`, `inspect`, `why`, `changes`, `step`.
+  until it passes. Debug with `waves`, `inspect` (its `faces` line: which way a block
+  works), `effects` (where a signal goes), `why` (where it came from), `changes`,
+  `step` / `step back`.
 - Repeaters, comparators and observers face their input: write **`out=DIRECTION`**.
 - Leave a `note` saying what you built and what is left.
 

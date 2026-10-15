@@ -255,3 +255,44 @@ def _power_branch(
                 seen.add(link.id)
                 out.append(Cause(link.id, link.game_time, link.pos, describe(link, name), 1))
     return out
+
+
+#: How many block changes ``effects`` lists at most.
+MAX_EFFECTS = 200
+
+
+def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list[TraceRecord]:
+    """The block changes that ``record`` (a block change) caused, oldest first: through
+    the updates it sent, the scheduled ticks and block events those queued (in later
+    ticks too), and their own updates — ``chain`` read forwards. Changes made in the same
+    engine step as a caused change and updating from its position count as caused too
+    (wire changes first and updates around it afterwards, see ``_source_change``)."""
+    caused = {record.id}
+    changed: set[tuple[int, Any]] = {(record.step, record.pos)}
+    scheduled: set[tuple[Any, Any, Any]] = set()
+    queued: set[tuple[Any, Any, Any]] = set()
+    out: list[TraceRecord] = []
+    for r in trace.after(record.id):
+        d = r.detail
+        inside = r.parent in caused
+        if not inside and r.kind == tr.NEIGHBOR_UPDATE and d.get("source_pos") is not None:
+            inside = (r.step, tuple(d["source_pos"])) in changed
+        if not inside and r.kind == tr.STEP:
+            kind = d.get("kind")
+            if kind == "scheduled_tick":
+                inside = (r.pos, r.game_time, d.get("sub_tick")) in scheduled
+            elif kind == "block_event":
+                inside = (r.pos, d.get("b0"), d.get("b1")) in queued
+        if not inside:
+            continue
+        caused.add(r.id)
+        if r.kind == tr.SET_BLOCK and d.get("old") != d.get("new"):
+            out.append(r)
+            changed.add((r.step, r.pos))
+            if len(out) >= limit:
+                break
+        elif r.kind == tr.SCHEDULE_TICK and d.get("accepted"):
+            scheduled.add((r.pos, d.get("trigger_tick"), d.get("sub_tick")))
+        elif r.kind == tr.BLOCK_EVENT_QUEUED and d.get("accepted"):
+            queued.add((r.pos, d.get("b0"), d.get("b1")))
+    return out

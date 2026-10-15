@@ -15,6 +15,7 @@ from redsim.cli.views import (
     Legend,
     describe_signals,
     neighbors_text,
+    orientation_text,
     render_map,
     short,
     side_signals,
@@ -174,7 +175,8 @@ def show(session: Session, args: Args) -> Output:
     usage="inspect POS [POS ...]",
     summary="Everything about a block: state, signals in and out, pending ticks, data.",
     help="""
-    For each position: its full block state, its label and note, what signal it receives
+    For each position: its full block state, its label and note, which way it works (for
+    directional blocks: "input from the east, output to the west"), what signal it receives
     from each side and what it gives to each side, whether it is a solid block that
     conducts and how much power it has, its monitor value, its pending scheduled ticks,
     its block-entity data (container items, comparator output, …) and its neighbors.
@@ -197,7 +199,7 @@ def show(session: Session, args: Args) -> Output:
     examples=("inspect 3 1 0", "inspect @A @OUT", "at 7 inspect @OUT"),
     kind="view",
     data="""{"blocks": [{"pos", "state", "label", "signals": {side: {"in", "in_direct",
-    "out", "out_direct"}}, "conductor", "direct_power", "best_signal", "monitor",
+    "out", "out_direct"}}, "orientation", "conductor", "direct_power", "best_signal", "monitor",
     "scheduled": [{"block", "tick", "priority"}], "block_entity", "neighbors":
     {side: state}}], "tick"}""",
 )
@@ -220,6 +222,9 @@ def inspect(session: Session, args: Args) -> Output:
         out.add(f"{named(doc, pos)}  {state_text(state)}   ({tick_line(session)})")
         if label and doc.labels[label].note:
             out.add(f"  note      {doc.labels[label].note}")
+        orientation = orientation_text(state)
+        if orientation:
+            out.add(f"  faces     {orientation}")
         for line in describe_signals(level, pos):
             out.add(line)
         conductor = state.is_redstone_conductor(level, pos)
@@ -265,6 +270,7 @@ def inspect(session: Session, args: Args) -> Output:
                 "conductor": conductor,
                 "direct_power": direct,
                 "best_signal": best,
+                "orientation": orientation,
                 "monitor": value,
                 "scheduled": scheduled,
                 "block_entity": data,
@@ -331,6 +337,58 @@ def why(session: Session, args: Args) -> Output:
             for c in causes
         ],
     }
+    return out
+
+
+@command(
+    "effects",
+    group="inspect",
+    usage="effects POS [max N]",
+    summary="Where a signal goes: every block change the block's last change caused.",
+    help="""
+    The forward view of `why`: takes the last change of the block at POS up to the view
+    tick (a lever switched on, a repeater turning on) and lists every block change it
+    caused afterwards, oldest first: through the updates it sent, the scheduled ticks and
+    block events those queued (in later ticks too), and so on, to the end of the simulated
+    history. Use it to see where a signal goes and what it reaches, or to find out why
+    something far away reacted. At most N changes (default 200).
+    """,
+    examples=("effects @A", "at 3 effects @CLOCK max 40"),
+    kind="view",
+    data='{"pos", "change": {"tick", "text"} or null, "effects": [{"tick", "pos", "text"}]}',
+)
+def effects(session: Session, args: Args) -> Output:
+    from redsim.sim.causes import describe, last_change
+    from redsim.sim.causes import effects as find_effects
+
+    pos = args.pos()
+    limit = args.option_int("max", 200)
+    args.done()
+    doc = session.doc
+    base = doc.history.base_time
+    view = session.view_now()
+    upto = doc.tick
+    session.goto(doc.end_tick)  # the trace of the whole history
+    trace = doc.level.trace
+    boundary = next((r.id for r in trace.records if r.game_time > upto + base), None)
+    change = last_change(trace, pos, before=boundary)
+    found = find_effects(trace, change, limit) if change is not None else []
+    session.goto_view(view)
+    out = Output()
+    if change is None:
+        out.add(f"{named(doc, pos)} has not changed since the build (up to tick {upto})")
+        out.data = {"pos": list(pos), "change": None, "effects": []}
+        return out
+    out.add(f"{named(doc, pos)} changed at tick {change.game_time - base}: {describe(change)}")
+    out.add(f"  it caused {len(found)} block changes" + (":" if found else ""))
+    for r in found:
+        out.add(f"  → tick {r.game_time - base:<4} {name_of(doc, r.pos):<12} {describe(r)}")  # type: ignore[arg-type]
+    if len(found) >= limit:
+        out.add(f"  … (stopped at {limit}; more with max N)")
+    out.data = {"pos": list(pos),
+                "change": {"tick": change.game_time - base, "text": describe(change)},
+                "effects": [{"tick": r.game_time - base, "pos": list(r.pos) if r.pos else None,
+                             "text": describe(r)} for r in found]}  # fmt: skip
     return out
 
 

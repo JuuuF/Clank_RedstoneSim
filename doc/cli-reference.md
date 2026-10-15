@@ -603,7 +603,7 @@ JSON `data`: {"tick", "end_tick", "inside_tick", "values"}
 
 ### `step`
 
-`step [N]`
+`step [N] | step back [N]`
 
 Run N single engine steps (inside a tick) and show what each did.
 
@@ -612,13 +612,15 @@ each scheduled tick (in priority order), each block event, each entity, each blo
 entity. `step` runs them one at a time and prints each with the blocks it changed, so
 you can see the order things happen in. A tick with nothing to do is a single step.
 The view is then *inside* a tick: inspection commands show the world at that moment;
-edits still go to the build or `at T`. `run` finishes the tick.
+edits still go to the build or `at T`. `run` finishes the tick. `step back [N]` goes
+back N steps (the same steps run again when you step forward).
 
 Examples:
 
 ```
 step
 step 5
+step back
 ```
 
 JSON `data`: {"steps": [{"index", "kind", "pos", "changes": [{"pos", "from", "to"}]}],
@@ -860,7 +862,8 @@ JSON `data`: {"tick", "view": "y"|"x"|"z", "layers": [{"at": coordinate, "rows":
 
 Everything about a block: state, signals in and out, pending ticks, data.
 
-For each position: its full block state, its label and note, what signal it receives
+For each position: its full block state, its label and note, which way it works (for
+directional blocks: "input from the east, output to the west"), what signal it receives
 from each side and what it gives to each side, whether it is a solid block that
 conducts and how much power it has, its monitor value, its pending scheduled ticks,
 its block-entity data (container items, comparator output, …) and its neighbors.
@@ -889,7 +892,7 @@ at 7 inspect @OUT
 ```
 
 JSON `data`: {"blocks": [{"pos", "state", "label", "signals": {side: {"in", "in_direct",
-    "out", "out_direct"}}, "conductor", "direct_power", "best_signal", "monitor",
+    "out", "out_direct"}}, "orientation", "conductor", "direct_power", "best_signal", "monitor",
     "scheduled": [{"block", "tick", "priority"}], "block_entity", "neighbors":
     {side: state}}], "tick"}
 
@@ -914,6 +917,28 @@ at 9 why 3 1 0
 ```
 
 JSON `data`: {"pos", "causes": [{"tick", "pos", "text", "branch"}], "tick"}
+
+### `effects`
+
+`effects POS [max N]`
+
+Where a signal goes: every block change the block's last change caused.
+
+The forward view of `why`: takes the last change of the block at POS up to the view
+tick (a lever switched on, a repeater turning on) and lists every block change it
+caused afterwards, oldest first: through the updates it sent, the scheduled ticks and
+block events those queued (in later ticks too), and so on, to the end of the simulated
+history. Use it to see where a signal goes and what it reaches, or to find out why
+something far away reacted. At most N changes (default 200).
+
+Examples:
+
+```
+effects @A
+at 3 effects @CLOCK max 40
+```
+
+JSON `data`: {"pos", "change": {"tick", "text"} or null, "effects": [{"tick", "pos", "text"}]}
 
 ### `trace`
 
