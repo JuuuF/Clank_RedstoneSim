@@ -3,11 +3,11 @@
 
 A chest is a 27-slot container. Two chests side by side, facing the same way, join into
 a double chest (``type`` left/right): hoppers, droppers and comparators then see one
-54-slot container, the ``right`` half's slots first. A comparator reads 0 from a chest
-whose (either) half has a redstone conductor on top (``isChestBlockedAt``: the combiner
-gives no container), hoppers ignore that. Players opening chests are not simulated, so a
-trapped chest is a signal source of strength 0 (redstone wire still points at it).
-Chests never get waterlogged here (no fluids).
+54-slot container, the ``right`` half's slots first. A comparator reads 0 from a chest whose
+(either) half has a redstone conductor on top (``isChestBlockedAt``: the combiner gives no
+container), hoppers ignore that. Not as in the game: players opening chests are not
+simulated, so a trapped chest is a signal source of strength 0 (redstone wire still points
+at it). Chests never get waterlogged here (no fluids).
 """
 
 from __future__ import annotations
@@ -104,7 +104,8 @@ def connected_direction(state: BlockState) -> Direction:
 
 
 def is_blocked(level: Level, pos: Pos) -> bool:
-    """``isChestBlockedAt`` L263: a redstone conductor on top (cats are not simulated)."""
+    """``isChestBlockedAt`` L263: a redstone conductor on top. Not as in the game: cats
+    sitting on it are not simulated."""
     top = above(pos)
     return level.get_block_state(top).is_redstone_conductor(level, top)
 
@@ -224,8 +225,8 @@ class ChestBlock(Block):
 
 
 class TrappedChestBlock(ChestBlock):
-    """``TrappedChestBlock``: a signal source; its signal counts the players looking in,
-    so it is 0 here."""
+    """``TrappedChestBlock``: a signal source; its signal counts the players looking in.
+    Not as in the game: there are no players, so it is always 0."""
 
     def __init__(self) -> None:
         super().__init__(TRAPPED_CHEST)

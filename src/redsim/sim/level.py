@@ -108,17 +108,20 @@ class Level:
         self.sub_tick_count = 0
         self.block_ticks = LevelTicks()
         self.block_events: dict[BlockEventKey, None] = {}  # insertion-ordered dedup set
-        #: Projectiles that hit target blocks in the next entity phase: (pos, strength, ticks).
+        #: Not as in the game (an editor stand-in for arrows and snowballs): projectiles that
+        #: hit target blocks in the next entity phase: (pos, strength, ticks).
         self.projectile_hits: list[tuple[Pos, int, int]] = []
-        #: Entities standing on pressure plates (not simulated as entities): pos → (mobs,
-        #: other entities, last game time they are there).
+        #: Not as in the game: an editor stand-in for mobs and items standing on pressure
+        #: plates (not simulated as entities): pos → (mobs, other entities, last game time
+        #: they are there).
         self.plate_visitors: dict[Pos, tuple[int, int, int]] = {}
-        #: Power given to positions by the editor's sequences (not a game mechanic: like an
+        #: Not as in the game: power given to positions by the editor's sequences (like an
         #: invisible redstone block next to the block, from every side): pos → (strength,
         #: last game time it is on). Locked to the position, whatever block is there.
         self.forced_power: dict[Pos, tuple[int, int]] = {}
-        #: 0-tick pulses: (pos, strength) that switch on at the next tick's start and off
-        #: right after its block events (``zero_tick_ends``), inside one tick.
+        #: Not as in the game (an editor stand-in): 0-tick pulses: (pos, strength) that
+        #: switch on at the next tick's start and off right after its block events
+        #: (``zero_tick_ends``), inside one tick.
         self.zero_tick_pulses: list[tuple[Pos, int]] = []
         self.zero_tick_ends: list[Pos] = []
         #: Plates whose visitors step on them in this tick's entity phase (in order).
@@ -257,7 +260,7 @@ class Level:
         return self.set_block(pos, self.air, flags)
 
     def destroy_block(self, pos: Pos, drop_resources: bool = True, limit: int = 512) -> bool:
-        """``Level.destroyBlock`` (drops are not simulated)."""
+        """``Level.destroyBlock``. Not as in the game: no item drops (items are not simulated)."""
         if self.get_block_state(pos).is_air:
             return False
         return self.set_block(pos, self.air, UpdateFlags.ALL, limit)

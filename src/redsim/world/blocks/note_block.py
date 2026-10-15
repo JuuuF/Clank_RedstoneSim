@@ -96,7 +96,7 @@ class NoteBlock(Block):
         return True
 
     def trigger_event(self, state: BlockState, level: Level, pos: Pos, b0: int, b1: int) -> bool:
-        """``triggerEvent`` L141: plays the sound (nothing to simulate). A custom head's
-        sound needs the head's block entity, which is not simulated: it fails like a head
-        without a sound."""
+        """``triggerEvent`` L141: plays the sound (nothing to simulate). Not as in the game:
+        a custom head's sound needs the head's block entity, which is not simulated: it
+        fails like a head without a sound."""
         return state.get(INSTRUMENT) != "custom_head"

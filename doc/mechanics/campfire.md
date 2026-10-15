@@ -34,9 +34,11 @@ campfire with an item in hand, which the editor cannot do; `/setblock` data can
 (`campfire{Items:[…],CookingTotalTimes:[I;…]}`; a given array overwrites as many slots as
 it has, a missing one is zeroed, as `loadAdditional` does).
 
-## Not modeled (stated)
+## Not as in the game
 
-Light, smoke and particles, hurting mobs (`entityInside`), lighting and dousing with items
-(flint and steel, fire charges, shovels, water bottles), burning projectiles lighting it,
-water (a waterlogged campfire's water does not flow: the water tick it schedules is not
-simulated), beehives calmed by smoke (`isSmokeyPos`).
+Also in [[differences]] and marked in the code with `Not as in the game:`. Cooked food
+leaves without becoming an item (see above). Not modeled: light, smoke and particles,
+hurting mobs (`entityInside`), lighting and dousing with items (flint and steel, fire
+charges, shovels, water bottles), burning projectiles lighting it, water (a waterlogged
+campfire's water does not flow: the water tick it schedules is not simulated), beehives
+calmed by smoke (`isSmokeyPos`).

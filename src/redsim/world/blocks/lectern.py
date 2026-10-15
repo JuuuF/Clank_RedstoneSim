@@ -14,9 +14,9 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/``):
   (``floor(page / (pageCount - 1.0F) * 14.0F) + 1`` in 32-bit float), ``loadAdditional``
   L196 (``Page`` clamped with ``Mth.clamp``, which yields -1 for a book without pages).
 
-The outline shape's slanted top is not modeled (voxel shapes are whole pixels); support and
-collision use the exact collision shape. Lecterns have a block entity, so pistons cannot
-move them.
+Not as in the game: the outline shape's slanted top is not modeled (voxel shapes are whole
+pixels); support and collision use the exact collision shape. Lecterns have a block entity,
+so pistons cannot move them.
 """
 
 from __future__ import annotations

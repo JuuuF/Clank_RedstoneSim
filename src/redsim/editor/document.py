@@ -171,7 +171,10 @@ class Document(HistoryOps, SequenceOps):
 
     def _rerun_future(self) -> None:
         """Put back the edits recorded after an edit made inside the history (at their
-        ticks) and re-run the simulation to the old length; the view stays at the edit."""
+        ticks) and re-run the simulation to the old length; the view stays at the edit.
+
+        Not as in the game (an editor feature, no game mechanic): the game has no history
+        to edit; ADR-022."""
         kept, self._kept_future = self._kept_future, None
         if kept is None:
             return

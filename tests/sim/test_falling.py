@@ -118,3 +118,11 @@ def test_editor_history_replays_falls() -> None:
     assert doc.state_at((0, 1, 0)).is_(blocks.get("sand"))
     assert doc.seek_tick(10) and len(doc.level.entities) == 1
     assert doc.seek_tick(32) and doc.state_at((0, 1, 0)).is_(blocks.get("sand"))
+
+
+def test_using_a_dragon_egg_is_refused() -> None:
+    """Its teleport is random in the game; the simulator says so instead of guessing."""
+    engine = flat()
+    setblock(engine, (0, 1, 0), "minecraft:dragon_egg")
+    with pytest.raises(ActionError, match="random"):
+        engine.apply(Action("use", (0, 1, 0)))

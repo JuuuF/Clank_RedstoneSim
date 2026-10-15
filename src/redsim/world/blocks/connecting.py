@@ -1,8 +1,8 @@
 """Fences, iron/copper bars, glass panes and walls: blocks that connect to their neighbors
 through shape updates. Ported from ``CrossCollisionBlock``, ``FenceBlock``,
 ``IronBarsBlock`` (panes are ``IronBarsBlock`` / ``StainedGlassPaneBlock``; copper bars only
-add oxidation, a random tick, not simulated) and ``WallBlock`` (26.3). Leading animals
-with leads on fences is an entity mechanic and left out; water is not simulated
+add oxidation, a random tick, not simulated) and ``WallBlock`` (26.3). Not as in the game:
+leading animals with leads on fences (an entity mechanic) is left out; water is not simulated
 (``waterlogged`` stays inert).
 """
 

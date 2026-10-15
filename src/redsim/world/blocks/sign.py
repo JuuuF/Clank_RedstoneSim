@@ -14,7 +14,7 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/world/level/`
 * ``block/entity/SignBlockEntity.java``: front and back text (4 lines each), color, glow,
   wax. ``updateSignText`` calls ``setChanged`` (comparators around re-read).
 
-Not modeled: water (``waterlogged`` is kept but schedules no fluid ticks), the sign
+Not as in the game: water (``waterlogged`` is kept but schedules no fluid ticks), the sign
 block entity's ticker (it only forgets which player may edit; no effect on the world).
 Signs have a block entity, so pistons cannot move them (``PistonBaseBlock.isPushable``).
 """

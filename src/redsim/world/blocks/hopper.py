@@ -18,8 +18,8 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/``):
     moved, cooldown 8 and ``setChanged`` (comparators update).
   * ``ejectItems`` L143: into the container in front (``getAttachedContainer``), unless all
     its slots are full; the first slot whose item fits is used.
-  * ``suckInItems`` L218: from the container above, the first slot whose item fits. (Item
-    entities above are not simulated.)
+  * ``suckInItems`` L218: from the container above, the first slot whose item fits.
+    Not as in the game: item entities above are not simulated.
   * ``tryMoveInItem`` L314: an empty slot takes the stack (``setItem``), a matching stack
     grows; when an **empty** hopper receives an item, its cooldown becomes 8, or 7 if the
     sending hopper has not ticked later in this game tick than the receiver

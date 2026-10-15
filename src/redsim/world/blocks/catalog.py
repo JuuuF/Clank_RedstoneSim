@@ -17,7 +17,7 @@ next to redstone:
 * carpets (break without a block below).
 
 Every class here was checked against its decompiled 26.3 source (owner, 2026-10-15:
-everything "HAS TO work exactly like in the game"). Not modeled, by design of the whole
+everything "HAS TO work exactly like in the game"). Not as in the game, by design of the whole
 simulator: random ticks (leaf decay, copper oxidation, grass and mycelium spreading,
 budding amethyst, ice melting by light), water (sponges have nothing to absorb; ice broken
 by a player above most blocks becomes water in the game, air here), entities (silverfish

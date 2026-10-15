@@ -6,6 +6,11 @@ treat it, whether it conducts and how hard it is come from the game's block tabl
 beacon, …) is never moved by pistons (``PistonBaseBlock.isPushable``:
 ``!state.hasBlockEntity()``), which slime and honey rely on. Only whether it is a full
 cube is still guessed from its name (doc/world-import.md); the import lists such blocks.
+
+Not as in the game (doc/differences.md): a foreign block does nothing (no ticks, no
+signals, no reaction to its neighbors), and its shape is a full cube or nothing. So a
+non-full foreign block (bed, cauldron, snow layer, scaffolding, …) supports nothing and
+has no collision: falling blocks fall through it, where the game lands them on top.
 """
 
 from __future__ import annotations

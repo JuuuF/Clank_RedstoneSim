@@ -2,11 +2,11 @@
 ``DropperBlock.java``, with ``DispenserBlockEntity`` (9 slots).
 
 Both trigger on a rising signal at themselves or the block above (quasi-connectivity,
-``neighborChanged`` L77): ``triggered`` is set at once (flags 2) and a 4-tick scheduled
-tick dispenses. A random non-empty slot is chosen (``getRandomSlot``: reservoir sampling
-with the level's random source). With one filled slot this is exact; with several the
-game itself is random, and the simulation draws from its own random source, seeded with
-the game time and position so a replay gives the same choice.
+``neighborChanged`` L77): ``triggered`` is set at once (flags 2) and a 4-tick scheduled tick
+dispenses. A random non-empty slot is chosen (``getRandomSlot``: reservoir sampling with the
+level's random source). With one filled slot this is exact; with several the game itself is
+random. Not as in the game: the simulation draws from its own random source, seeded with the
+game time and position so a replay gives the same choice.
 
 The dropper moves one item into the container in front (``HopperBlockEntity.addItem``),
 else drops it. Dropped items (and anything a dispenser shoots, places or uses) are item
@@ -96,8 +96,8 @@ class DispenserBlock(Block):
         self.dispense_from(level, state, pos)
 
     def dispense_from(self, level: Level, state: BlockState, pos: Pos) -> None:
-        """``dispenseFrom`` L37. Every item uses the default behavior here: one item
-        leaves the dispenser (shot, dropped, placed or used in the game)."""
+        """``dispenseFrom`` L37. Not as in the game: every item uses the default behavior
+        here: one item leaves the dispenser (shot, dropped, placed or used in the game)."""
         entity = level.get_block_entity(pos)
         if not isinstance(entity, DispenserBlockEntity):
             return

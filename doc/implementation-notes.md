@@ -85,6 +85,13 @@ Rules for code in compiled modules (`tools/build_compiled.MODULES`), checked by 
   import cycles.
 - Commits: small and verified, on feature branches (`feat/...`), with docs updated in the
   same slice ([[decisions]] ADR-012). Nothing is pushed without the owner's request.
+- **Differences from the game are always written down** (owner, 2026-10-15: "an essential
+  part of the project"). Wherever the code does not do exactly what the game does
+  (randomness, items, water, approximated shapes, editor stand-ins), a comment or
+  docstring there starts with `Not as in the game:` and says what the game does instead.
+  The module docstring sums them up, the mechanics page has a section for them, and
+  [[differences]] lists every one of them. `grep -rn "Not as in the game" src` must find
+  each row of [[differences]].
 
 ## Checklist: adding a block
 
@@ -97,6 +104,9 @@ Rules for code in compiled modules (`tools/build_compiled.MODULES`), checked by 
    <name>`, commit the JSON in `experiments/results/`, and log it in [[experiments/index]].
 6. Update the mechanics page (Status, Tests), [[mechanics/index]], [[quirks]] and
    [[project-state]].
+7. List everything that is not exactly the game's: mark it in the code (`Not as in the
+   game:`), describe it on the mechanics page and add it to [[differences]]. Design the
+   game scenario around it (for example a random outcome must not be compared).
 
 ## Checklist: adding a game scenario
 

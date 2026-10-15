@@ -3,8 +3,8 @@
 A T flip-flop: each rising signal toggles ``lit``; ``powered`` follows the signal. A
 comparator reads 15 while lit. Never a conductor (``Blocks.COPPER_BULB``,
 ``isRedstoneConductor(Blocks::never)``). The weathering stages (``exposed_``, …) and the
-waxed bulbs behave the same; only their light level differs, and oxidation needs random
-ticks, which are off in the simulation (doc/decisions.md).
+waxed bulbs behave the same; only their light level differs. Not as in the game: oxidation
+needs random ticks, which are off in the simulation (doc/decisions.md).
 """
 
 from __future__ import annotations

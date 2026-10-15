@@ -131,7 +131,7 @@ page is the summary to start from.*
 
 ## Verification status
 
-- `python -m pytest`: **652 tests pass** (2026-10-15, after gravity blocks and campfires; earlier also on the
+- `python -m pytest`: **654 tests pass** (2026-10-15, after gravity blocks, campfires and the differences list; earlier also on the
   compiled build), including
   the JDK oracle, the 107 game-recording replays (47 named recordings, 60 random),
   randomized history checks (replay, save/open, undo/redo), every window action in every
@@ -148,6 +148,9 @@ page is the summary to start from.*
   rule and the hopper `setItem` quirk ([[experiments/index]], [[mechanics/hopper]]).
 
 ## Known limitations (current)
+
+Every difference from the game, with what the game does instead and where it is in the
+code, is listed in [[differences]]; the points below are the broad ones.
 
 - Only tick-boundary states are compared in game; sub-tick order is verified against the
   source and unit tests only.

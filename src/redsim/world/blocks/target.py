@@ -54,7 +54,10 @@ class TargetBlock(Block):
         return int(state.get(POWER))
 
     def hit(self, level: Level, pos: Pos, strength: int, ticks: int) -> bool:
-        """``updateRedstoneOutput``; returns False when a reset tick was still pending."""
+        """``updateRedstoneOutput``; returns False when a reset tick was still pending.
+
+        Not as in the game: called by the editor's projectile-hit stand-in (projectiles are
+        not simulated), with the strength and duration the editor chose."""
         if level.has_scheduled_tick(pos, self):
             return False
         state = level.get_block_state(pos)

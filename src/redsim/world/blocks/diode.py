@@ -87,7 +87,7 @@ class DiodeBlock(Block):
             if state.can_survive(level, pos):
                 self.check_tick_on_neighbor(level, pos, state)
             else:
-                level.remove_block(pos, False)  # dropResources is not simulated
+                level.remove_block(pos, False)  # Not as in the game: no item drops
                 for direction in ALL:
                     level.update_neighbors_at(offset(pos, direction), self)
 

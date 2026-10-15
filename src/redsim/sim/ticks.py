@@ -10,10 +10,11 @@ Source (paths relative to ``data/minecraft_src/client-src/``):
   ``maxTicksToProcess``) into ``toRunThisTick`` first, then run them in order;
   ``willTickThisTick`` L208; ``hasScheduledTick`` L202.
 
-Chunk containers are not modeled. With every due tick sharing ``triggerTick == gameTime``
-the cross-container merge (``INTRA_TICK_DRAIN_ORDER``) and a single global ``DRAIN_ORDER``
-coincide. Overdue ticks only arise when an earlier tick hit the 65 536 cap; the collector
-reports them so a possible divergence is visible (doc/quirks.md Q-SCHED-OVERDUE).
+Chunk containers are not modeled, which gives the game's order: with every due tick sharing
+``triggerTick == gameTime`` the cross-container merge (``INTRA_TICK_DRAIN_ORDER``) and a
+single global ``DRAIN_ORDER`` coincide. Not as in the game: overdue ticks are not merged per
+chunk; they only arise when an earlier tick hit the 65 536 cap; the collector reports them
+so a possible divergence is visible (doc/quirks.md Q-SCHED-OVERDUE).
 """
 
 from __future__ import annotations

@@ -286,7 +286,7 @@ class PistonBaseBlock(Block):
 
         for pos in reversed(to_destroy):
             state = level.get_block_state(pos)
-            level.set_block(pos, level.air, 18)  # dropResources is not simulated
+            level.set_block(pos, level.air, 18)  # Not as in the game: no item drops
             to_update.append(state)
 
         moving_piston = blocks.MOVING_PISTON

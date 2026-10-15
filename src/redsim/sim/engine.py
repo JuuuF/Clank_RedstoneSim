@@ -258,6 +258,9 @@ class Engine:
                 self._end_step()
         elif self.phase is Phase.ENTITIES and not level.projectile_hits and not level.entity_queue:
             # Falling blocks, in the order they joined (ServerLevel.tick → tickNonPassenger).
+            # Not as in the game: the editor's stand-ins for other entities (0-tick ends,
+            # projectile hits, plate visitors) all go first; in the game every entity has
+            # its place in one list by creation order.
             mob = level.entities[level.entity_tick_queue.pop(0)]
             info = self._begin_step("entity_tick", mob.block_position, {"entity": mob.id})
             try:

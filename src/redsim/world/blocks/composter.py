@@ -12,9 +12,9 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/world/level/b
   takes compostable items.
 * ``Blocks.java``: strength 0.6, no block entity (pistons move it).
 
-Not simulated: composting itself (players or hoppers putting compostable items in), which
-adds a layer only by chance (``Compostable.layers``, random). The editor's container items
-are not compostable, so hoppers never put anything in.
+Not as in the game: composting itself is not simulated (players or hoppers putting
+compostable items in), which adds a layer only by chance (``Compostable.layers``, random).
+The editor's container items are not compostable, so hoppers never put anything in.
 """
 
 from __future__ import annotations

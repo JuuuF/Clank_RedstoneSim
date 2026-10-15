@@ -12,12 +12,14 @@ comparison scenario on the test server ([[experiments/index]]). What cannot be m
 stated, not approximated; a block that cannot be modeled exactly stays foreign (inert).
 
 **Start here:** [[project-state]] (what exists, what's verified, what's next, how to resume).
+Everything that does **not** work exactly like the game is listed in [[differences]]
+and marked in the source with `Not as in the game:`.
 New users: **Help → Tutorial** in the editor ([[tutorial]]); to click through the
 example world: [[tour]].
 
 ## Navigation
 
-- **Project:** [[project-state]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tutorial]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
+- **Project:** [[project-state]] · [[differences]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tutorial]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
 - **Mechanics:** [[mechanics/index]] · [[quirks]]
 - **Experiments:** [[experiments/index]]
@@ -29,7 +31,7 @@ example world: [[tour]].
   rails (plain, powered, activator), target blocks, hoppers, note blocks, copper bulbs,
   droppers, dispensers, chests (double, trapped), pressure plates, doors, fences, walls
   gravity blocks with falling block entities and campfires ([[mechanics/index]]).
-- 652 tests pass. A sandboxed 26.3 server confirms 55 of 55 named scenarios and 60 random
+- 654 tests pass. A sandboxed 26.3 server confirms 55 of 55 named scenarios and 60 random
   circuits tick for tick, including container contents and hopper cooldowns, and opens
   the simulator's written world copies and structure files correctly.
 - The 3D editor (`redsim`): eight rounds of owner feedback are in ([[ui-direction]]): tick

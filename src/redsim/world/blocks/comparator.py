@@ -3,9 +3,9 @@
 
 Methods: ``getDelay`` L39, ``updateShape`` L44, ``getOutputSignal`` L60,
 ``calculateOutputSignal`` L64, ``shouldTurnOn`` L79, ``getInputSignal`` L90,
-``useWithoutItem`` L123, ``checkTickOnNeighbor`` L140, ``refreshOutputState`` L151, ``tick`` L174.
-Item frames (entities) are not simulated, so the "item frame behind a block" input is
-always absent. See doc/mechanics/comparator.md.
+``useWithoutItem`` L123, ``checkTickOnNeighbor`` L140, ``refreshOutputState`` L151, ``tick``
+L174. Not as in the game: item frames (entities) are not simulated, so the "item frame
+behind a block" input is always absent. See doc/mechanics/comparator.md.
 """
 
 from __future__ import annotations

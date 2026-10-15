@@ -13,9 +13,13 @@ campfire).
   (comparators next to it are updated). Food is placed by players with items (not in the
   editor) or with ``/setblock`` data (``Items``, ``CookingTimes``, ``CookingTotalTimes``).
 
-Not modeled: light, smoke, hurting entities, lighting and dousing with items (shovels,
-flint and steel, fire charges, burning arrows, splash water), water (a waterlogged
-campfire's water does not flow), beehives calmed by smoke.
+Not as in the game (also marked where it happens; all differences: doc/differences.md):
+
+* cooked food leaves the campfire but is not dropped as an item (items are not simulated);
+* a waterlogged campfire schedules no water tick, so its water never flows;
+* not modeled at all: light, smoke, hurting mobs standing in it, lighting and dousing with
+  items (flint and steel, fire charges, shovels, splash water), burning arrows lighting
+  it, beehives calmed by its smoke.
 """
 
 from __future__ import annotations
@@ -79,8 +83,9 @@ class CampfireBlock(CatalogBlock):
         neighbor_pos: Pos,
         neighbor: BlockState,
     ) -> BlockState:
-        """``updateShape``: ``signal_fire`` follows the block below (the water tick of a
-        waterlogged campfire is not simulated)."""
+        """``updateShape``: ``signal_fire`` follows the block below."""
+        # Not as in the game: a waterlogged campfire also schedules a water tick here
+        # (water is not simulated, so its water never flows).
         if direction is Direction.DOWN:
             return state.with_(SIGNAL_FIRE, _is_smoke_source(neighbor))
         return state
@@ -118,7 +123,9 @@ class CampfireBlockEntity(BlockEntity):
                     changed = True
                     self.cooking_progress[slot] += 1
                     if self.cooking_progress[slot] >= self.cooking_time[slot]:
-                        self.items[slot] = None  # dropped as an item in the game
+                        # Not as in the game: the game drops the cooked result as an
+                        # item entity here (Containers.dropItemStack); no items here.
+                        self.items[slot] = None
         else:
             for slot in range(SLOTS):
                 if self.cooking_progress[slot] > 0:

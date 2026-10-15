@@ -81,18 +81,33 @@ shifted by its progress, plus the piston base for a retracting source
 A player cannot place a block where a falling block is (`BlockItem.canPlace` →
 `isUnobstructed`: falling blocks have `blocksBuilding`); commands like `/setblock` can.
 
-## Not modeled (stated, not approximated)
+## Not as in the game
+
+All of these are also in [[differences]] and marked in the code with `Not as in the
+game:`.
 
 - The anvil's damage on landing: when it fell more than one block the game rolls its
   per-entity random (5 % + 5 % per block) to turn it chipped or damaged; the simulator
   keeps it as it is. EXP-054 drops its anvil from 0.5 blocks so no roll happens. The
   anvil's menu.
-- The dragon egg's teleport when used or hit (the game's level random).
+- The dragon egg's teleport when used (the level's random): the editor refuses "use" on
+  a dragon egg with a message instead of guessing a spot. Breaking it in the editor is
+  creative breaking, which removes it as in the game (it teleports when hit only in
+  survival).
+- Concrete powder moving faster than one block per tick: the game also ray casts for
+  water it passed between two positions; not ported (water is not simulated anyway).
 - Item drops, other entities (falling blocks do not collide with entities), fall damage,
   water and lava: falling blocks pass foreign water like air; concrete powder still
   hardens next to water blocks of an opened world and waterlogged blocks.
 - Where an entity already overlaps a block, the game's `VoxelShape` grid of that block
   (which can differ from the box split used here) decides the push-out distance.
+- **Blocks the simulator does not model (foreign blocks) have no collision unless they are
+  full cubes:** a falling block falls through an unmodeled bed, cauldron, snow layer or
+  scaffolding, where the game lands it on top.
+- The piston head's arm where it reaches into the piston base is missing from the
+  collision shapes (shapes end at the block's cell; no entity fits there).
+- Blocks with a `canBeReplaced` of their own (snow layers, …) are foreign: whether a
+  falling block may replace them follows the game's `replaceable` flag.
 - Suspicious sand and gravel (loot, brushing) and pointed dripstone stay foreign blocks.
 
 ## Ordering

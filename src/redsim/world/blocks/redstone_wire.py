@@ -287,7 +287,7 @@ class RedstoneWireBlock(Block):
         if state.can_survive(level, pos):
             self.update_power_strength(level, pos, state)
         else:
-            level.remove_block(pos, False)  # dropResources is not simulated
+            level.remove_block(pos, False)  # Not as in the game: no item drops
 
     # --- signals ------------------------------------------------------------------------
     def is_signal_source(self, state: BlockState) -> bool:

@@ -124,7 +124,8 @@ class LeverBlock(FaceAttachedBlock):
 
 
 class ButtonBlock(FaceAttachedBlock):
-    """Stone (20 ticks) and wooden (30 ticks) buttons. Arrows are not simulated."""
+    """Stone (20 ticks) and wooden (30 ticks) buttons. Not as in the game: arrows (which hold
+    wooden buttons down) are not simulated."""
 
     def __init__(self, block_id: str, ticks_to_stay_pressed: int) -> None:
         super().__init__(block_id, destroy_speed=0.5)

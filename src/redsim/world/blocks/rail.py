@@ -18,7 +18,8 @@ Sources (``data/minecraft_src/client-src/net/minecraft/world/level/block/``):
   (``findPoweredRailSignal``/``isSameRailWithPower``); a change updates the block below
   (and above for slopes).
 
-Not modeled: waterlogging (always false here), detector rails (they need minecarts).
+Not as in the game: waterlogging is not simulated (always false here), and detector rails
+are not modeled (they need minecarts).
 """
 
 from __future__ import annotations
@@ -112,7 +113,7 @@ class BaseRailBlock(Block):
         if level.get_block_state(pos).block is not self:
             return
         if self.should_be_removed(pos, level, state.get(self.shape_property)):
-            level.remove_block(pos, moved_by_piston)  # dropResources is not simulated
+            level.remove_block(pos, moved_by_piston)  # Not as in the game: no item drops
         else:
             self.update_state(state, level, pos, source)
 

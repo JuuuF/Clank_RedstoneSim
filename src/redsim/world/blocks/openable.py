@@ -2,8 +2,8 @@
 from ``DoorBlock``, ``TrapDoorBlock`` and ``FenceGateBlock`` (26.3); the copper ones
 (``WeatheringCopperDoorBlock``, ``…TrapDoorBlock``) only add oxidation, a random tick, which
 the simulator does not run. Sounds and game events (``BLOCK_OPEN``) have no effect on
-blocks and are left out; explosions (wind charges) are not simulated. Water is not
-simulated: ``waterlogged`` is kept for the state text and stays inert.
+blocks and are left out. Not as in the game: explosions (wind charges) are not simulated;
+water is not simulated: ``waterlogged`` is kept for the state text and stays inert.
 
 Shapes come from the game's shape code (``Shapes.rotateHorizontal`` / ``rotateAll`` with
 the ``OctahedralGroup`` rotations below); they decide what the blocks support and that

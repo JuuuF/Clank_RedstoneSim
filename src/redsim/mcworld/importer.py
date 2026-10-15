@@ -225,8 +225,10 @@ def attach_world(document: Any) -> WorldStream | None:
 def stream_chunks(document: Any, center: tuple[int, int], radius: int, budget: float) -> int:
     """Load chunks of the document's world within ``radius`` of ``center`` (nearest
     first) for up to ``budget`` seconds; returns how many were loaded. Their blocks join
-    the document as if they had always been there (``Document.add_world_blocks``);
-    pending ticks of chunks loaded after opening are not imported."""
+    the document as if they had always been there (``Document.add_world_blocks``).
+
+    Not as in the game: pending scheduled ticks of chunks loaded after opening are not
+    imported (the game keeps them in the chunk and runs them once it loads)."""
     stream: WorldStream | None = document.world
     if stream is None:
         return 0

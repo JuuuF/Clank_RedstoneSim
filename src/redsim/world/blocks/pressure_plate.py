@@ -26,9 +26,9 @@ from redsim.world.shape import Shape, SupportType, column
 if TYPE_CHECKING:
     from redsim.sim.level import Level
 
-#: ``BasePressurePlateBlock.SHAPE``; the pressed shape is half a pixel high, which the
-#: whole-pixel shape grid cannot hold. Plates have no collision and nothing rests on them,
-#: so using the same shape changes no outcome.
+#: ``BasePressurePlateBlock.SHAPE``. Not as in the game: the pressed shape is half a pixel
+#: high, which the whole-pixel shape grid cannot hold. Plates have no collision and nothing
+#: rests on them, so using the same shape changes no outcome.
 SHAPE = column(14, 0, 1)
 
 #: ``BlockSetType`` with ``PressurePlateSensitivity.MOBS``; every other plate is EVERYTHING.

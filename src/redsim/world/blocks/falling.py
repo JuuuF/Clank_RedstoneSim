@@ -9,12 +9,22 @@ liquids, replaceable blocks): the block becomes air and the entity falls with gr
 until it lands, where it places the block again (``FallingBlockEntity.tick``).
 
 Concrete powder hardens into concrete where it touches water (``touchesLiquid``, also on
-landing); water itself is not simulated, but water blocks of an opened world and
-waterlogged blocks count. Not modeled: the dragon egg's teleport when used or hit (the
-game's random), the anvil's menu and its random chance to get damaged when it lands after
-falling more than one block (it stays as it is), item drops of blocks that cannot land.
-Suspicious sand and gravel (``BrushableBlock``: loot and brushing) and pointed dripstone
-stay foreign blocks.
+landing): water blocks of an opened world and waterlogged blocks count. Suspicious sand
+and gravel (``BrushableBlock``: loot and brushing) and pointed dripstone stay foreign
+blocks.
+
+Not as in the game (also marked where it happens; all differences: doc/differences.md):
+
+* the anvil's damage on landing: in the game an anvil that fell more than one block may
+  become chipped or damaged (or break), decided by the falling entity's own random; the
+  simulator's anvil always lands unchanged (``AnvilBlock.falling``,
+  ``sim/entities.py`` item 2). The anvil's menu does nothing in the simulator either;
+* the dragon egg's teleport when a player uses it: the game picks a random spot; the
+  editor's "use" on a dragon egg is refused with a message (``DragonEggBlock``). Breaking
+  it in the editor is creative breaking, which removes it as in the game (the teleport on
+  hitting it happens in survival only);
+* a block that cannot land disappears instead of dropping as an item
+  (``sim/entities.py`` item 1).
 """
 
 from __future__ import annotations
@@ -40,7 +50,8 @@ FIRE_OR_LIQUID = frozenset(
 
 
 def is_free(state: BlockState) -> bool:
-    """``FallingBlock.isFree``: air, fire, a liquid or a replaceable block."""
+    """``FallingBlock.isFree``: air, fire, a liquid or a replaceable block (the game's
+    ``replaceable`` flag, as ``BlockStateBase.canBeReplaced()`` reads it)."""
     from redsim.world.blocks.openable import can_be_replaced
 
     return state.is_air or state.block.id in FIRE_OR_LIQUID or can_be_replaced(state)
@@ -188,7 +199,7 @@ ANVIL_SHAPES = {"z": _anvil_shape(False), "x": _anvil_shape(True)}
 
 class AnvilBlock(FallingBlock):
     """``AnvilBlock``: facing the player's clockwise side; hurts entities when falling
-    (``setHurtsEntities``; the random damage to the anvil itself is not simulated)."""
+    (``setHurtsEntities``)."""
 
     properties = (HORIZONTAL_FACING,)
 
@@ -204,17 +215,28 @@ class AnvilBlock(FallingBlock):
         return self.default_state.with_(HORIZONTAL_FACING, facing)
 
     def falling(self, entity: FallingBlockEntity) -> None:
+        # Not as in the game: in the game this also arms the anvil's random damage on
+        # landing (FallingBlockEntity.causeFallDamage: after a fall of more than one block
+        # a 5 % + 5 % per block chance to become chipped, then damaged, then to break).
+        # The simulator keeps no fall distance and lands the anvil unchanged.
         entity.hurt_entities = True
 
 
 class DragonEggBlock(FallingBlock):
-    """``DragonEggBlock``: falls 5 ticks after an update; ``Block.column(14, 0, 16)``.
-    Its teleport (use, attack) is random in the game and not simulated."""
+    """``DragonEggBlock``: falls 5 ticks after an update; ``Block.column(14, 0, 16)``."""
 
     delay_after_place = 5
 
     def __init__(self, block_id: str, spec: tuple[Any, ...] | None = None) -> None:
         super().__init__(block_id, spec, shape=column(14, 0, 16))
+
+    def use_without_item(self, state: BlockState, level: Level, pos: Pos) -> bool:
+        """Not as in the game: ``useWithoutItem`` teleports the egg to a random free spot
+        up to 15 blocks away (the level's random); that cannot be reproduced, so the
+        editor refuses the action instead of guessing a spot."""
+        from redsim.sim.engine import ActionError
+
+        raise ActionError("The dragon egg teleports to a random spot in the game; not simulated.")
 
 
 CONCRETE_POWDERS = tuple(i for i, spec in BLOCKS.items() if spec[0] == "ConcretePowderBlock")

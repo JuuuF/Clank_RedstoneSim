@@ -20,13 +20,37 @@ Ported from the decompiled 26.3 source:
   shape with ``NOCLIP``.
 
 Java's float constants (sizes, drag, offsets) are rounded to float32 exactly as Java widens
-them. Items are not simulated, so falling blocks behave as with the game rule
-``entity_drops`` false (a block that cannot land disappears instead of dropping as an
-item). Not modeled: the anvil's random damage when it lands after falling more than one
-block (the game's per-entity random), entities other than falling blocks (no entity
-collisions), water and fire (falling blocks pass foreign water like air). Collision shapes
-are split into boxes; where a shape's internal grid matters (an entity already inside a
-block), the game's ``VoxelShape`` grid can differ from these boxes.
+them (``f32``). Falling blocks are the only entities; they tick in the entity phase in the
+order they were created (``Level.entities``, like ``EntityTickList``).
+
+Not as in the game (each one is also marked where it happens with "Not as in the game";
+every difference of the simulator is listed in doc/differences.md):
+
+1. **Items.** A falling block that cannot land disappears; the game drops it as an item
+   unless the game rule ``entity_drops`` is false, which is what the simulator does. If
+   placing the block fails, the entity stays, as with ``entity_drops`` false.
+2. **Fall distance.** ``checkFallDamage`` is not run: falling blocks keep no fall distance
+   and ``Block.fallOn`` is never called. In the game this only hurts mobs and decides the
+   anvil's random damage: an anvil that fell more than one block rolls its own random
+   (5 % + 5 % per block) to become chipped or damaged (or break). The simulator's anvil
+   always lands unchanged.
+3. **Collision shapes** come from the simulator's 16³ voxel shapes, split into boxes
+   (``local_boxes``). Fences, walls and closed fence gates are raised to their 1.5-block
+   collision. The piston head's arm where it reaches into the base is left out (no entity
+   fits there). Blocks the simulator does not model (foreign blocks) collide as a full
+   cube if they are one and **not at all otherwise**: falling blocks pass through unmodeled
+   beds, cauldrons, snow layers, scaffolding, … where the game lands them on top.
+   ``VoxelShape.collide`` runs on a grid made from those boxes; the game's shapes can have
+   a finer grid, which changes results only for an entity that already overlaps a block.
+4. **Other entities.** No entity collisions (boats, shulkers), no world border.
+5. **Fluids and slowing blocks.** Water is not simulated. Falling blocks pass water blocks
+   of an opened world like air, as in the game (they are not pushed by water). Concrete
+   powder hardens where it touches water blocks or waterlogged blocks (``_is_water``), but
+   the game's extra ray cast for powder falling faster than one block per tick (water it
+   passed between two positions) is not ported. Cobwebs, berry bushes, powder snow
+   (``stuckSpeedMultiplier``), fire and rain are not modeled (their blocks are foreign).
+6. **Replaceable blocks** follow the game's ``replaceable`` flag; foreign blocks with a
+   ``canBeReplaced`` of their own (snow layers, …) use the flag too.
 """
 
 from __future__ import annotations
@@ -151,7 +175,12 @@ def mth_equal(a: float, b: float) -> bool:
 # =========================================================================== shapes
 class CollisionShape:
     """A block's collision ``VoxelShape`` at its position: grid lines from its boxes,
-    cells full where a box covers them (``VoxelShape.collide`` runs on that grid)."""
+    cells full where a box covers them (``VoxelShape.collide`` runs on that grid).
+
+    Not as in the game: the game's shapes keep their own grids (``CubeVoxelShape`` at a
+    1/2…1/8 resolution, merged grids of ``Shapes.or``), which can have more lines than
+    the box edges used here. ``collide`` gives the same result either way unless the
+    entity already overlaps the shape (doc item 3)."""
 
     __slots__ = ("boxes", "coords", "full")
 
@@ -233,7 +262,13 @@ _LOCAL_BOXES: dict[Any, tuple[Box, ...]] = {}
 
 def local_boxes(state: BlockState) -> tuple[Box, ...]:
     """A block state's collision shape as boxes in block units (cached). Fences, walls
-    and closed fence gates reach 1.5 blocks up (their 24-pixel collision shapes)."""
+    and closed fence gates reach 1.5 blocks up (their 24-pixel collision shapes).
+
+    Not as in the game (doc item 3): the shapes come from the simulator's voxel shapes,
+    which end at the block's cell. The piston head's arm loses the part that reaches into
+    the base (no entity fits there). Foreign blocks (``ForeignBlock``, not modeled) give
+    a full cube or nothing: a non-full foreign block (bed, cauldron, snow layer, …) has
+    no collision here, so falling blocks fall through it."""
     found = _LOCAL_BOXES.get(state)
     if found is not None:
         return found
@@ -623,15 +658,20 @@ class FallingBlockEntity:
         self.delta = (self.delta[0], self.delta[1] - GRAVITY, self.delta[2])
         self.move(level, self.delta, piston=False)
         self.apply_effects_from_blocks(level)
+        # (handlePortal: portals are not simulated.)
         if not self.removed:
             pos = self.block_position
             block = self.state.block
             is_concrete = isinstance(block, ConcretePowderBlock)
             stuck_in_water = is_concrete and _is_water(level.get_block_state(pos))
+            # Not as in the game: for concrete powder moving faster than one block per tick
+            # (motion² > 1) the game also ray casts from the old to the new position and
+            # stops at water it passed (ClipContext SOURCE_ONLY); not ported (doc item 5).
             if not self.on_ground and not stuck_in_water:
                 y = pos[1]
                 if (self.time > 100 and (y <= level.min_y or y > level.max_y)) or self.time > 600:
-                    self.discard(level)  # (the game drops it as an item)
+                    # Not as in the game: with entity_drops it drops as an item (doc item 1).
+                    self.discard(level)
             else:
                 current = level.get_block_state(pos)
                 self.delta = (self.delta[0] * 0.7, self.delta[1] * -0.5, self.delta[2] * 0.7)
@@ -647,13 +687,18 @@ class FallingBlockEntity:
                         would_continue = is_free(below) and (not is_concrete or not stuck_in_water)
                         would_survive = self.state.can_survive(level, pos) and not would_continue
                         if may_replace and would_survive:
+                            # (No gravity block is waterloggable or has block-entity
+                            # data, so those two steps of the game have nothing to do.)
                             if level.set_block_and_update(pos, self.state):
                                 self.discard(level)
                                 on_land(level, pos, self.state, current)
-                            # else: with doEntityDrops it would drop as an item; without
-                            # (items are not simulated) it stays.
+                            # Not as in the game: if placing fails, the game discards it
+                            # and drops an item when entity_drops is on; the simulator
+                            # follows entity_drops false: the entity stays (doc item 1).
                         else:
-                            self.discard(level)  # (the game drops it as an item)
+                            # Not as in the game: with entity_drops it drops as an item
+                            # here (doc item 1).
+                            self.discard(level)
         self.delta = (self.delta[0] * AIR_DRAG, self.delta[1] * AIR_DRAG, self.delta[2] * AIR_DRAG)
 
     # ------------------------------------------------------------------ movement
@@ -663,9 +708,12 @@ class FallingBlockEntity:
             delta = self._limit_piston_movement(level, delta)
             if delta == ZERO:
                 return
+        # Not as in the game: stuckSpeedMultiplier (cobwebs, berry bushes, powder snow) is
+        # left out: those blocks are foreign (doc item 5).
         movement = self._collide(level, delta)
         movement_length = length_sqr(movement)
         if movement_length > EPSILON or length_sqr(delta) - movement_length < EPSILON:
+            # (The game's fall-distance reset by a ray cast belongs to doc item 2.)
             new_position = add(self.position, movement)
             self._add_movement((self.position, new_position, delta))
             self.position = new_position
@@ -680,6 +728,8 @@ class FallingBlockEntity:
         self._check_supporting_block(level, self.on_ground, movement)
         effect_pos = self.on_pos(level, ON_POS_LEGACY)
         effect_state = level.get_block_state(effect_pos)
+        # Not as in the game: checkFallDamage (fall distance, Block.fallOn) is not run; in
+        # the game it only hurts mobs and rolls the anvil's random damage (doc item 2).
         if (moved_vertically and self.vertical_collision) or self.horizontal_collision:
             self._restitute(effect_state, x_collision, z_collision, movement)
         factor = self._block_speed_factor(level)
@@ -709,7 +759,9 @@ class FallingBlockEntity:
         return ZERO
 
     def _collide(self, level: Level, movement: Vec) -> Vec:
-        """``Entity.collide`` (no step-up: falling blocks have ``maxUpStep`` 0)."""
+        """``Entity.collide`` (no step-up: falling blocks have ``maxUpStep`` 0).
+
+        Not as in the game: no entity colliders and no world border (doc item 4)."""
         if length_sqr(movement) == 0.0:
             return movement
         box = self.box
@@ -810,6 +862,8 @@ class FallingBlockEntity:
     def _apply_effects(self, level: Level, movements: list[tuple[Vec, Vec, Vec | None]]) -> None:
         if self.removed:
             return
+        # Not as in the game: fire, freezing, rain and the fluids' entityInside are left
+        # out (fire, powder snow and water are not simulated; doc item 5).
         if self.on_ground:
             effect_pos = self.on_pos(level, ON_POS_LEGACY)
             effect_state = level.get_block_state(effect_pos)
@@ -837,8 +891,9 @@ class FallingBlockEntity:
         self, level: Level, start: Vec, end: Vec, visited: set[Pos], budget: int
     ) -> int:
         """``checkInsideBlocks(from, to, ...)`` L1365: ``entityInside`` of every block the
-        box passes (every block counts as inside: ``getEntityInsideCollisionShape`` is the
-        full block for all simulated blocks)."""
+        box passes. Every block counts as inside, as in the game: only foreign blocks
+        (end portals, cauldrons, powder snow, tripwire) have a smaller
+        ``getEntityInsideCollisionShape``, and foreign blocks do nothing to entities."""
         target = inflate(box_at(end), -DEFLATE, -DEFLATE, -DEFLATE)
         count = [0]
 
@@ -912,10 +967,21 @@ class FallingBlockEntity:
         return f"falling {repr(self.state)} at {x:.3f} {y:.3f} {z:.3f}"
 
 
+#: Blocks whose fluid is always water (``getFluidState``: ``LiquidBlock`` water at any
+#: level, ``BubbleColumnBlock``, ``KelpBlock``, ``KelpPlantBlock``, ``SeagrassBlock``,
+#: ``TallSeagrassBlock``). All are foreign blocks; their water is never simulated.
+WATER_BLOCKS = frozenset(
+    {
+        "minecraft:water", "minecraft:bubble_column", "minecraft:kelp",
+        "minecraft:kelp_plant", "minecraft:seagrass", "minecraft:tall_seagrass",
+    }
+)  # fmt: skip
+
+
 def _is_water(state: BlockState) -> bool:
-    """``getFluidState().is(FluidTags.WATER)`` for the blocks the simulator knows: water
-    itself (a foreign block), and waterlogged blocks."""
-    if state.block.id in ("minecraft:water", "minecraft:bubble_column"):
+    """``getFluidState().is(FluidTags.WATER)``: water blocks and waterlogged blocks
+    (simulated or foreign)."""
+    if state.block.id in WATER_BLOCKS:
         return True
     extra = getattr(state.block, "extra_properties", {})
     if extra.get("waterlogged") == "true":
@@ -948,6 +1014,9 @@ def move_collided_entities(level: Level, pos: Pos, new_progress: float, be: Any)
         )
     else:
         related = be.moved_state
+    # Not as in the game: the game splits the shape with VoxelShape.toAabbs; these boxes
+    # come from local_boxes. For the simulated blocks both give the same outer faces,
+    # which are what pushes entities (doc item 3).
     shape_boxes_local = list(local_boxes(related))
     if not shape_boxes_local:
         return
