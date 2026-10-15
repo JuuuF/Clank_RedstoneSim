@@ -28,8 +28,8 @@ example world: [[tour]].
   wire, repeater, comparator, barrel, lectern, cake, pistons, slime and honey, observers,
   rails (plain, powered, activator), target blocks, hoppers, note blocks, copper bulbs,
   droppers, dispensers, chests (double, trapped), pressure plates, doors, fences, walls
-  and gravity blocks with falling block entities ([[mechanics/index]]).
-- 647 tests pass. A sandboxed 26.3 server confirms 54 of 54 named scenarios and 60 random
+  gravity blocks with falling block entities and campfires ([[mechanics/index]]).
+- 652 tests pass. A sandboxed 26.3 server confirms 55 of 55 named scenarios and 60 random
   circuits tick for tick, including container contents and hopper cooldowns, and opens
   the simulator's written world copies and structure files correctly.
 - The 3D editor (`redsim`): eight rounds of owner feedback are in ([[ui-direction]]): tick

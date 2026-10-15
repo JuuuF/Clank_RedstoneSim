@@ -537,7 +537,7 @@ _register_openable_and_connecting()
 
 
 def _register_falling() -> None:
-    """Gravity blocks (``falling.py``), by their game class."""
+    """Gravity blocks (``falling.py``) and campfires (``campfire.py``), by game class."""
     from redsim.world.blocks import falling
 
     FACTORIES["SandBlock"] = falling.ColoredFallingBlock
@@ -545,6 +545,10 @@ def _register_falling() -> None:
     FACTORIES["ConcretePowderBlock"] = falling.ConcretePowderBlock
     FACTORIES["AnvilBlock"] = falling.AnvilBlock
     FACTORIES["DragonEggBlock"] = falling.DragonEggBlock
+
+    from redsim.world.blocks import campfire
+
+    FACTORIES["CampfireBlock"] = campfire.CampfireBlock
 
 
 _register_falling()

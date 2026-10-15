@@ -1834,7 +1834,72 @@ GRAVITY_PISTONS = Scenario(
     watch_entities=True,
 )
 
+CAMPFIRES = Scenario(
+    name="campfires",
+    description=(
+        "Campfires: a hay bale below makes a signal fire (an observer sees it come and "
+        "go), a piston cannot push a campfire (block entity), a torch below does not power "
+        "a lamp through it, food cooks while lit and leaves at its cooking time, cooking "
+        "progress cools by 2 per tick while unlit, falling sand breaks on a campfire."
+    ),
+    size=(17, 4),
+    setup=[
+        ((1, 2, 1), "minecraft:campfire[facing=east]"),
+        ((1, 2, 2), "minecraft:observer[facing=north]"),
+        ((1, 2, 3), "minecraft:redstone_lamp"),
+        ((4, 1, 1), "minecraft:piston[facing=east]"),
+        ((5, 1, 1), "minecraft:soul_campfire"),
+        ((8, 1, 1), "minecraft:redstone_torch"),
+        ((8, 2, 1), "minecraft:campfire"),
+        ((9, 2, 1), "minecraft:redstone_lamp"),
+        (
+            (11, 1, 1),
+            "minecraft:campfire",
+            {
+                "Items": [
+                    {"Slot": 0, "id": "minecraft:beef", "count": 1},
+                    {"Slot": 2, "id": "minecraft:potato", "count": 1},
+                ],
+                "CookingTotalTimes": [8, 0, 12, 0],
+            },
+        ),
+        (
+            (13, 1, 1),
+            "minecraft:campfire[lit=false]",
+            {
+                "Items": [{"Slot": 1, "id": "minecraft:cod", "count": 1}],
+                "CookingTimes": [0, 9, 0, 0],
+                "CookingTotalTimes": [0, 30, 0, 0],
+            },
+        ),
+        ((15, 1, 1), "minecraft:campfire"),
+        ((15, 6, 1), "minecraft:sand"),
+    ],  # fmt: skip
+    watch=[
+        (1, 2, 1),
+        (1, 2, 2),
+        (1, 2, 3),
+        (4, 1, 1),
+        (5, 1, 1),
+        (6, 1, 1),
+        (8, 2, 1),
+        (9, 2, 1),
+        (11, 1, 1),
+        (13, 1, 1),
+        (15, 1, 1),
+        (15, 2, 1),
+        (15, 6, 1),
+    ],  # fmt: skip
+    ticks=30,
+    inputs={
+        3: [((1, 1, 1), "minecraft:hay_block"), ((3, 1, 1), "minecraft:redstone_block")],
+        12: [((1, 1, 1), "minecraft:stone")],
+    },
+    watch_entities=True,
+)
+
 ALL = [
+    CAMPFIRES,
     GRAVITY_BLOCKS,
     GRAVITY_PISTONS,
     OPENABLES,

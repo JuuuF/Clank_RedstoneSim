@@ -76,7 +76,7 @@ REDSTONE = (
     )),
     ("Movement", (
         "piston", "sticky_piston", "slime_block", "honey_block", "obsidian",
-        "white_glazed_terracotta", "crying_obsidian", "observer",
+        "white_glazed_terracotta", "crying_obsidian", "observer", "campfire", "soul_campfire",
     )),
     ("Read by comparators", (
         "barrel", "chest", "trapped_chest", "hopper", "dropper", "dispenser", "lectern",

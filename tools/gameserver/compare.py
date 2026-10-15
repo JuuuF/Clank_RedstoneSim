@@ -26,6 +26,7 @@ from redsim.core.pos import Pos
 from redsim.sim.engine import Action, Engine
 from redsim.world import blocks
 from redsim.world.block import BlockState
+from redsim.world.blocks.campfire import CAMPFIRE_IDS
 from redsim.world.blocks.container import ContainerBlockEntity
 from tools.gameserver.server import GameServer
 
@@ -227,6 +228,9 @@ def observe_sim(engine: Engine, scenario: Scenario, origin: Pos) -> dict[str, st
             frame[f"{rel}#cooldown"] = str(be.cooldown_time)  # type: ignore[attr-defined]
         elif isinstance(be, ContainerBlockEntity) and scenario.watch_items:
             frame[f"{rel}#items"] = be.contents()  # barrels, chests, droppers, dispensers
+        elif state.block.id in CAMPFIRE_IDS and be is not None:
+            frame[f"{rel}#items"] = be.contents()  # type: ignore[attr-defined]
+            frame[f"{rel}#cooking"] = ",".join(str(v) for v in be.cooking_progress)  # type: ignore[attr-defined]
         elif state.block.id == "minecraft:moving_piston" and be is not None:
             # The saved "progress" tag is progressO (PistonMovingBlockEntity.saveAdditional).
             frame[f"{rel}#progress"] = str(float(be.progress_o))  # type: ignore[attr-defined]
@@ -323,6 +327,7 @@ DATA_PATHS = {
     "progress": "progress",
     "cooldown": "TransferCooldown",
     "items": "Items",
+    "cooking": "CookingTimes",
 }
 
 
@@ -332,6 +337,11 @@ def read_block_data(server: GameServer, pos: Pos, key: str) -> str:
     text = server.command(f"data get block {pos[0]} {pos[1]} {pos[2]} {path}").text
     if path == "Items":
         return _parse_items(text)
+    if path == "CookingTimes":  # an int array: [I; 3, 0, 0, 0]
+        found = re.search(r"\[I;([^\]]*)\]", text)
+        if not found:
+            return f"<no data: {text.strip()[:80]}>"
+        return ",".join(v.strip() for v in found.group(1).split(",") if v.strip())
     match = re.search(r"has the following block data: (-?[\d.]+)([fdbsL]?)", text)
     if not match:
         return f"<no data: {text.strip()[:80]}>"
@@ -421,12 +431,23 @@ class _Byte(int):
     """An NBT byte (``1b``)."""
 
 
+class _IntArray(list):
+    """An NBT int array (``[I; 1, 2]``)."""
+
+
+#: Block-entity keys the game stores as int arrays (campfires).
+INT_ARRAYS = ("CookingTimes", "CookingTotalTimes")
+
+
 def game_nbt(nbt: dict[str, Any]) -> dict[str, Any]:
     """The simulator's block-entity JSON in the game's NBT layout: slot numbers are bytes,
     and a lectern book's page count becomes a ``writable_book_content`` page list."""
     data = json.loads(json.dumps(nbt))
     for item in data.get("Items", []):
         item["Slot"] = _Byte(item["Slot"])
+    for key in INT_ARRAYS:
+        if key in data:
+            data[key] = _IntArray(int(v) for v in data[key])
     book = data.get("Book")
     if book is not None and "pages" in book:
         pages = [str(i + 1) for i in range(book.pop("pages"))]
@@ -442,6 +463,8 @@ def snbt(value: Any) -> str:
             name = key if re.fullmatch(r"[A-Za-z0-9_]+", key) else json.dumps(key)
             items.append(f"{name}:{snbt(item)}")
         return "{" + ",".join(items) + "}"
+    if isinstance(value, _IntArray):
+        return "[I;" + ",".join(str(int(item)) for item in value) + "]"
     if isinstance(value, list):
         return "[" + ",".join(snbt(item) for item in value) + "]"
     if isinstance(value, _Byte):

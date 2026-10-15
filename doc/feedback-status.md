@@ -19,6 +19,11 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **Campfires** (2026-10-15, owner: "campfires are a thing in redstone"): campfire and
+  soul campfire with their block entity (`campfire.py`): signal fire from a hay bale
+  (observers see it), immovable for pistons, not a conductor, food cooking and cooling;
+  EXP-056 matches the real server ([[mechanics/campfire]]). Not modeled: lighting and
+  dousing with items, light, smoke, water.
 - **Gravity blocks** (2026-10-15, owner: "Add gravity blocks as well"): sand, red sand,
   gravel, concrete powders, anvils and the dragon egg, with the game's falling block
   entity ported (`sim/entities.py`: movement, collision, landing, pressure plates, slime,
