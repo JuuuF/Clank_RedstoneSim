@@ -188,6 +188,8 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         self._last_shift = 0.0
         self.build_blocked: Pos | None = None  # target cell where placing is impossible
         self.build_face = Direction.UP  # the face BUILD mode places against
+        #: Where the cursor ray hits that face (world coordinates; the click location).
+        self.build_click: tuple[float, float, float] | None = None
         self.highlight: tuple[Pos, float] | None = None  # flashed block, since when
         #: A block whose coordinates are hovered in a panel (timeline, inspector, …): it
         #: lights up so its place is clear.

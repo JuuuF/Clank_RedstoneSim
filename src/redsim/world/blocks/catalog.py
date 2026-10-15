@@ -28,6 +28,7 @@ TNT, …) stay foreign blocks: drawn and saved, inert in the simulation.
 
 from __future__ import annotations
 
+import functools
 import math
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
@@ -82,24 +83,29 @@ def _conductor(rule: str) -> Conductor:
 
 
 def shape_boxes(shape: Shape) -> list[tuple[tuple[int, int, int], tuple[int, int, int]]]:
-    """Pixel boxes of a shape for drawing without the game's textures: the whole block,
-    the filled eighths (slabs, stairs), or the bounding box."""
+    """Pixel boxes covering a shape exactly, for drawing without the game's textures and
+    for picking: greedy (grow along x, then z, then y), so slabs, stairs, fences and walls
+    come out as a few boxes."""
     if shape.is_full_block():
         return [((0, 0, 0), (N, N, N))]
     if shape.is_empty():
         return []
-    grid = shape.grid
-    half = N // 2
+    left = shape.grid.copy()
     boxes = []
-    for x in (0, half):
-        for y in (0, half):
-            for z in (0, half):
-                part = grid[x : x + half, y : y + half, z : z + half]
-                if part.all():
-                    boxes.append(((x, y, z), (x + half, y + half, z + half)))
-                elif part.any():
-                    x0, y0, z0, x1, y1, z1 = shape.bounds()
-                    return [((x0, y0, z0), (x1, y1, z1))]
+    for x, y, z in np.argwhere(left):
+        if not left[x, y, z]:
+            continue
+        x1 = x + 1
+        while x1 < N and left[x1, y, z]:
+            x1 += 1
+        z1 = z + 1
+        while z1 < N and left[x:x1, y, z1].all():
+            z1 += 1
+        y1 = y + 1
+        while y1 < N and left[x:x1, y1, z:z1].all():
+            y1 += 1
+        left[x:x1, y:y1, z:z1] = False
+        boxes.append(((int(x), int(y), int(z)), (int(x1), int(y1), int(z1))))
     return boxes
 
 
@@ -503,6 +509,31 @@ FACTORIES: dict[str, Callable[[str, tuple[Any, ...]], Block]] = {
     "WoolCarpetBlock": CarpetBlock,
     "CarpetBlock": CarpetBlock,
 }
+
+
+def _by_id(cls: Callable[[str], Block], block_id: str, spec: tuple[Any, ...]) -> Block:
+    return cls(block_id)
+
+
+def _register_openable_and_connecting() -> None:
+    """Doors, trapdoors, fence gates (``openable.py``) and fences, bars, panes, walls
+    (``connecting.py``), by their game class."""
+    from redsim.world.blocks import connecting, openable
+
+    for kinds, cls in (
+        (("DoorBlock",), openable.DoorBlock),
+        (("TrapDoorBlock",), openable.TrapDoorBlock),
+        (("FenceGateBlock",), openable.FenceGateBlock),
+        (("FenceBlock",), connecting.FenceBlock),
+        (("IronBarsBlock", "StainedGlassPaneBlock", "WeatheringCopperBarsBlock"),
+         connecting.IronBarsBlock),
+        (("WallBlock",), connecting.WallBlock),
+    ):  # fmt: skip
+        for kind in kinds:
+            FACTORIES[kind] = functools.partial(_by_id, cls)
+
+
+_register_openable_and_connecting()
 
 
 def catalog_blocks(known: set[str]) -> list[Block]:

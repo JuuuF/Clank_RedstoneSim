@@ -53,6 +53,17 @@ class PlaceRequest:
     yaw: float
     pitch: float
     replace_clicked: bool = False
+    #: Where the click hit, in world coordinates (``BlockPlaceContext.getClickLocation``);
+    #: None: the middle of the clicked face of the cell below/beside the target.
+    click: tuple[float, float, float] | None = None
+
+    def click_in(self, pos: Pos) -> tuple[float, float, float]:
+        """The click location relative to the block at ``pos`` (0..1 inside it). Without
+        a known point: the middle of the face the new block was placed against."""
+        if self.click is not None:
+            return (self.click[0] - pos[0], self.click[1] - pos[1], self.click[2] - pos[2])
+        step = self.clicked_face.opposite.step  # from the new block towards the clicked one
+        return (0.5 + 0.5 * step[0], 0.5 + 0.5 * step[1], 0.5 + 0.5 * step[2])
 
 
 def horizontal_direction(yaw: float) -> Direction:

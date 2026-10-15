@@ -51,10 +51,14 @@ WOODS = (
 )  # fmt: skip
 _WOOD_PARTS = (
     "planks", "stairs", "slab", "log", "stem", "wood", "hyphae", "block", "mosaic",
-    "mosaic_stairs", "mosaic_slab", "leaves", "button", "pressure_plate", "sign",
+    "mosaic_stairs", "mosaic_slab", "leaves", "button", "pressure_plate", "sign", "fence",
+    "fence_gate", "door", "trapdoor",
 )  # fmt: skip
 #: Shape suffixes: what turns a material into its stairs, slab, …
-_SHAPES = ("_stairs", "_slab", "_wall", "_pressure_plate", "_button", "_sign", "_carpet")
+_SHAPES = (
+    "_stairs", "_slab", "_wall", "_pressure_plate", "_button", "_sign", "_carpet",
+    "_fence_gate", "_fence", "_trapdoor", "_door",
+)  # fmt: skip
 
 #: Redstone by role (ids without the namespace; missing ones are skipped).
 REDSTONE = (
@@ -79,6 +83,10 @@ REDSTONE = (
         "cake", "composter",
     )),
     ("Items", ("hopper", "dropper", "dispenser", "chest", "trapped_chest", "barrel")),
+    ("Doors", (
+        "iron_door", "iron_trapdoor", "oak_door", "oak_trapdoor", "oak_fence_gate",
+        "copper_door", "copper_trapdoor",
+    )),
     ("Rails", ("rail", "powered_rail", "activator_rail")),
 )  # fmt: skip
 #: Building materials: category → family names (``material``) matched in order.
@@ -114,7 +122,8 @@ NATURAL_GROUPS = (
                      r"dead_\w+_coral_block|\w+_coral_block|\w+_mushroom_block|sculk"),
 )  # fmt: skip
 GLASS_AND_LIGHT = (
-    "glass", "tinted_glass", "glowstone", "sea_lantern", "shroomlight", "redstone_lamp",
+    "glass", "glass_pane", "iron_bars", "tinted_glass", "glowstone", "sea_lantern",
+    "shroomlight", "redstone_lamp",
     "copper_bulb", "ochre_froglight", "verdant_froglight", "pearlescent_froglight",
     "jack_o_lantern",
 )  # fmt: skip
@@ -122,7 +131,8 @@ GLASS_AND_LIGHT = (
 COLORED_KINDS = (
     ("Wool", "wool"), ("Carpet", "carpet"), ("Concrete", "concrete"),
     ("Terracotta", "terracotta"), ("Glazed terracotta", "glazed_terracotta"),
-    ("Stained glass", "stained_glass"), ("Wool stairs", "wool_stairs"),
+    ("Stained glass", "stained_glass"), ("Glass panes", "stained_glass_pane"),
+    ("Wool stairs", "wool_stairs"),
     ("Wool slabs", "wool_slab"), ("Concrete stairs", "concrete_stairs"),
     ("Concrete slabs", "concrete_slab"),
 )  # fmt: skip
@@ -134,6 +144,17 @@ def _name(block_id: str) -> str:
 
 def _id(name: str) -> str:
     return f"minecraft:{name}"
+
+
+def _leaves_of(name: str) -> str | None:
+    """The wood of a leaves block (``oak_leaves``, ``red_poplar_leaves``), if any."""
+    if not name.endswith("_leaves"):
+        return None
+    stem = name.removesuffix("_leaves")
+    for color in COLORS:
+        if stem.startswith(color + "_") and stem[len(color) + 1 :] in WOODS:
+            return stem[len(color) + 1 :]
+    return stem if stem in WOODS else None
 
 
 def wood_of(block_id: str) -> str | None:
@@ -192,7 +213,10 @@ def _copper_name(prefix: str, base: str) -> str:
 
 
 #: Shape order within a family: the block itself first.
-_SHAPE_ORDER = {"": 0, "_stairs": 1, "_slab": 2, "_wall": 3, "_button": 4, "_pressure_plate": 5}
+_SHAPE_ORDER = {
+    "": 0, "_stairs": 1, "_slab": 2, "_wall": 3, "_fence": 4, "_fence_gate": 5, "_door": 6,
+    "_trapdoor": 7, "_button": 8, "_pressure_plate": 9,
+}  # fmt: skip
 
 
 def _shape_rank(block_id: str) -> tuple[int, str]:
@@ -208,7 +232,8 @@ _TECHNICAL = frozenset({"air", "cave_air", "void_air", "moving_piston", "piston_
 #: Order of a wood's blocks in its folder.
 _WOOD_ORDER = {
     "planks": 0, "stairs": 1, "slab": 2, "log": 3, "stem": 3, "block": 3, "wood": 5,
-    "hyphae": 5, "leaves": 7, "button": 8, "pressure_plate": 9, "sign": 10,
+    "hyphae": 5, "leaves": 7, "door": 8, "trapdoor": 9, "fence": 10, "fence_gate": 11,
+    "button": 12, "pressure_plate": 13, "sign": 14,
 }  # fmt: skip
 
 
@@ -306,7 +331,7 @@ class BlockIndex:
         woods = []
         for wood in WOODS:
             members = [b for b in self.ids if wood_of(b) == wood]
-            leaves = [b for b in self.ids if _name(b).endswith("_leaves") and wood in _name(b)]
+            leaves = [b for b in self.ids if _leaves_of(_name(b)) == wood]
             members += [b for b in leaves if b not in members]
             if members:
                 members.sort(key=functools.partial(_wood_key, wood))
@@ -328,7 +353,8 @@ class BlockIndex:
                 by_color.append(paged(color.replace("_", " ").title(), members))
         copper = []
         bases = ("copper_block", "chiseled_copper", "copper_grate", "cut_copper",
-                 "cut_copper_stairs", "cut_copper_slab", "copper_bulb")  # fmt: skip
+                 "cut_copper_stairs", "cut_copper_slab", "copper_bulb", "copper_door",
+                 "copper_trapdoor", "copper_bars")  # fmt: skip
         stage_names = ("Copper", "Exposed", "Weathered", "Oxidized")
         stages = [
             paged(

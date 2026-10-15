@@ -54,6 +54,7 @@ def test_blocks_sit_in_several_folders_and_have_variants() -> None:
     assert len(ids) == len(set(ids))  # the search lists each block once
     assert BLOCK_INDEX.shape_variants("minecraft:granite_slab") == [
         "minecraft:granite", "minecraft:granite_stairs", "minecraft:granite_slab",
+        "minecraft:granite_wall",
     ]  # fmt: skip
     assert BLOCK_INDEX.shape_variants("minecraft:oak_log")[0] == "minecraft:oak_planks"
     colors = BLOCK_INDEX.color_variants("minecraft:red_concrete")

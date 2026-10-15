@@ -198,8 +198,11 @@ class Document(HistoryOps, SequenceOps):
     def break_block(self, pos: Pos) -> None:
         self._apply(Action("break", pos), f"break {self.state_at(pos).block.name}")
 
-    def use(self, pos: Pos) -> None:
-        self._apply(Action("use", pos), f"use {self.state_at(pos).block.name}")
+    def use(self, pos: Pos, yaw: float | None = None) -> None:
+        """Right-click the block at ``pos``; ``yaw``: where the player looks (fence gates
+        open away from the player)."""
+        payload = {"yaw": round(float(yaw), 3)} if yaw is not None else None
+        self._apply(Action("use", pos, payload=payload), f"use {self.state_at(pos).block.name}")
 
     def place_source(
         self, pos: Pos, kind: str, strength: int, request: PlaceRequest, vary: Vary = None

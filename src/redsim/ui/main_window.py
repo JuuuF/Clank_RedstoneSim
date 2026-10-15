@@ -908,7 +908,9 @@ class MainWindow(
         """A click in BUILD mode: place on the working layer, like a player clicking the top
         of the block below (orientation from the cursor ray)."""
         yaw, pitch = self.viewport.player_view()
-        request = PlaceRequest(self.viewport.build_face, yaw, pitch)
+        request = PlaceRequest(
+            self.viewport.build_face, yaw, pitch, click=self.viewport.build_click
+        )
         kind = sources.PLACED_AS_SOURCE.get(self.current_block.id)
         if kind is not None:
             strength = self.inventory.strength.value()
@@ -932,7 +934,11 @@ class MainWindow(
     def _use(self, pos: Pos) -> None:
         block = self.document.state_at(pos).block
         if Document.is_usable(block):
-            self._edit(self.document.use, pos)
+            from redsim.world.blocks.openable import FenceGateBlock
+
+            # Fence gates open away from the player: the view's yaw goes along.
+            yaw = self.viewport.player_view()[0] if isinstance(block, FenceGateBlock) else None
+            self._edit(self.document.use, pos, yaw)
         else:
             self._message(
                 f"{block_name(block.id)} cannot be used (to place blocks, switch to BUILD mode)."

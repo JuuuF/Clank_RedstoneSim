@@ -1585,8 +1585,168 @@ CATALOG_BLOCKS = Scenario(
     },
 )
 
+#: Doors, trapdoors and fence gates (``world/blocks/openable.py``): opened and closed by
+#: signals at either door half, doors losing support and popped by a piston, observers
+#: watching a door, a lever and dust losing their support when a trapdoor opens, a torch
+#: on a fence gate, a gate between walls (``in_wall``). (Hand use and placement need a
+#: player: unit tests.)
+RB_ = "minecraft:redstone_block"
+OPENABLES = Scenario(
+    name="openables",
+    description=(
+        "Doors, trapdoors, fence gates: redstone opens/closes them, doors pop without support "
+        "or when pushed, an observer sees a door, supports vanish when trapdoors/gates open."
+    ),
+    size=(17, 14),
+    setup=[
+        ((2, 1, 1), "minecraft:oak_door[half=lower,facing=north]"),
+        ((2, 2, 1), "minecraft:oak_door[half=upper,facing=north]"),
+        ((5, 1, 1), "minecraft:iron_door[half=lower,facing=east,hinge=right]"),
+        ((5, 2, 1), "minecraft:iron_door[half=upper,facing=east,hinge=right]"),
+        ((8, 1, 1), "minecraft:spruce_door[half=lower,facing=south]"),
+        ((8, 2, 1), "minecraft:spruce_door[half=upper,facing=south]"),
+        ((11, 1, 3), "minecraft:sticky_piston[facing=north]"),
+        ((11, 1, 2), "minecraft:birch_door[half=lower,facing=west]"),
+        ((11, 2, 2), "minecraft:birch_door[half=upper,facing=west]"),
+        ((14, 1, 1), "minecraft:copper_door[half=lower,facing=north]"),
+        ((14, 2, 1), "minecraft:copper_door[half=upper,facing=north]"),
+        ((14, 2, 2), "minecraft:observer[facing=north]"),
+        ((2, 2, 6), "minecraft:oak_trapdoor[half=top,facing=north]"),
+        ((2, 3, 6), "minecraft:lever[face=floor,facing=north]"),
+        ((5, 1, 6), "minecraft:iron_trapdoor[half=top,facing=south]"),
+        ((5, 2, 6), "minecraft:redstone_wire"),
+        ((8, 1, 6), "minecraft:dark_oak_trapdoor[half=bottom,facing=east]"),
+        ((2, 1, 10), "minecraft:oak_fence_gate[facing=north]"),
+        ((2, 2, 10), "minecraft:redstone_torch"),
+        ((5, 1, 12), "minecraft:birch_fence_gate[facing=north]"),
+        ((9, 1, 10), "minecraft:crimson_fence_gate[facing=east]"),
+    ],
+    watch=[
+        (2, 1, 1),
+        (2, 2, 1),
+        (5, 1, 1),
+        (5, 2, 1),
+        (8, 1, 1),
+        (8, 2, 1),
+        (11, 1, 2),
+        (11, 2, 2),
+        (11, 1, 1),
+        (11, 2, 1),
+        (14, 1, 1),
+        (14, 2, 1),
+        (14, 2, 2),
+        (2, 2, 6),
+        (2, 3, 6),
+        (5, 1, 6),
+        (5, 2, 6),
+        (8, 1, 6),
+        (2, 1, 10),
+        (2, 2, 10),
+        (5, 1, 12),
+        (9, 1, 10),
+    ],  # fmt: skip
+    ticks=14,
+    inputs={
+        1: [((1, 1, 1), RB_), ((1, 2, 6), RB_)],
+        2: [
+            ((4, 2, 1), RB_),
+            ((11, 1, 4), RB_),
+            ((15, 1, 1), RB_),
+            ((4, 1, 6), RB_),
+            ((1, 1, 10), RB_),
+            ((4, 1, 12), "minecraft:cobblestone_wall"),
+            ((6, 1, 12), "minecraft:mossy_cobblestone_wall"),
+        ],
+        3: [((8, 0, 1), "minecraft:air"), ((7, 1, 6), RB_), ((9, 1, 9), RB_)],
+        6: [
+            ((1, 1, 1), "minecraft:air"),
+            ((4, 2, 1), "minecraft:air"),
+            ((15, 1, 1), "minecraft:air"),
+        ],
+        8: [((7, 1, 6), "minecraft:air"), ((9, 1, 9), "minecraft:air")],
+    },  # fmt: skip
+)
+
+#: Fences, bars, panes and walls (``world/blocks/connecting.py``): connections made and
+#: lost through shape updates (an observer sees a fence connect), fences of other kinds
+#: and pumpkins (``isExceptionForConnection``) left alone, gates across a fence, panes
+#: joining walls and bars, wall posts and tall sides from the block above (a stone, a
+#: redstone torch: ``WALL_POST_OVERRIDE``), corners.
+CONNECTIONS = Scenario(
+    name="connections",
+    description=(
+        "Fences, bars, panes and walls connect and disconnect through shape updates; "
+        "exceptions, gates, wall posts and tall sides from the block above."
+    ),
+    size=(16, 14),
+    setup=[
+        ((2, 1, 1), "minecraft:oak_fence"),
+        ((2, 1, 0), "minecraft:observer[facing=south]"),
+        ((5, 1, 1), "minecraft:oak_fence"),
+        ((6, 1, 1), "minecraft:nether_brick_fence"),
+        ((5, 1, 2), "minecraft:spruce_fence"),
+        ((8, 1, 1), "minecraft:oak_fence"),
+        ((8, 1, 2), "minecraft:oak_fence"),
+        ((11, 1, 1), "minecraft:oak_fence"),
+        ((2, 1, 5), "minecraft:glass_pane"),
+        ((2, 1, 6), "minecraft:white_stained_glass_pane"),
+        ((5, 1, 5), "minecraft:iron_bars"),
+        ((7, 1, 5), "minecraft:copper_bars"),
+        ((2, 1, 9), "minecraft:cobblestone_wall"),
+        ((3, 1, 9), "minecraft:cobblestone_wall"),
+        ((4, 1, 9), "minecraft:cobblestone_wall"),
+        ((7, 1, 9), "minecraft:andesite_wall"),
+        ((10, 1, 9), "minecraft:stone_brick_wall"),
+        ((10, 1, 10), "minecraft:glass_pane"),
+    ],
+    watch=[
+        (2, 1, 1),
+        (2, 1, 0),
+        (5, 1, 1),
+        (6, 1, 1),
+        (5, 1, 2),
+        (8, 1, 1),
+        (8, 1, 2),
+        (11, 1, 1),
+        (2, 1, 5),
+        (2, 1, 6),
+        (5, 1, 5),
+        (6, 1, 5),
+        (7, 1, 5),
+        (2, 1, 9),
+        (3, 1, 9),
+        (4, 1, 9),
+        (7, 1, 9),
+        (7, 1, 8),
+        (8, 1, 9),
+        (10, 1, 9),
+        (10, 1, 10),
+        (11, 1, 9),
+    ],  # fmt: skip
+    ticks=10,
+    inputs={
+        1: [
+            ((3, 1, 1), "minecraft:stone"),
+            ((9, 1, 1), "minecraft:oak_fence_gate[facing=north]"),
+            ((9, 1, 2), "minecraft:oak_fence_gate[facing=east]"),
+            ((12, 1, 1), "minecraft:pumpkin"),
+            ((3, 1, 5), "minecraft:stone"),
+            ((1, 1, 5), "minecraft:cobblestone_wall"),
+            ((6, 1, 5), "minecraft:glass_pane"),
+            ((7, 1, 8), "minecraft:andesite_wall"),
+            ((8, 1, 9), "minecraft:andesite_wall"),
+            ((11, 1, 9), "minecraft:iron_bars"),
+        ],
+        2: [((3, 2, 9), "minecraft:stone")],
+        4: [((3, 2, 9), "minecraft:redstone_torch")],
+        6: [((3, 1, 1), "minecraft:air"), ((3, 2, 9), "minecraft:air")],
+    },  # fmt: skip
+)
+
 
 ALL = [
+    OPENABLES,
+    CONNECTIONS,
     CATALOG_BLOCKS,
     MIRRORED_QC_FURNACES,
     LAMP_REDSTONE_BLOCK,

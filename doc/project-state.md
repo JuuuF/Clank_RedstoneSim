@@ -123,6 +123,8 @@ page is the summary to start from.*
 | composter (levels 0–8, a signal source kind) | `composter.py` | level timing, comparator, player/hopper emptying, pistons | EXP-049 |
 | standing and wall signs (12 woods, + block entity with front/back text) | `sign.py` | placement, popping, blocking pistons, text edits, saving, rotation | EXP-048 |
 | the game's ordinary blocks (~580: full cubes, pillars, facing blocks, slabs, stairs, leaves, carpets, all wood/stone buttons, poplar plates and signs) | `catalog.py` + generated `catalog_data.py` | settings from `Blocks.java` (conductor rule, push reaction, destroy time, see-through); stair corners and mirroring, leaves distance (ticked), carpets breaking | `tests/world/test_catalog.py` (not yet checked in the game) |
+| doors (22), trapdoors (22), fence gates (13) | `openable.py` | signals at either door half, hand use (not iron), hinge and click-height placement, creative breaking of door pairs, shapes (support, no conduction), `in_wall` | EXP-052; `tests/world/test_openable_connecting.py` |
+| fences (14), bars and panes (26), walls (32) | `connecting.py` | connections through shape updates (exceptions, fence kinds, gates), wall posts and low/tall sides from the block above, turning and mirroring | EXP-053 |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status

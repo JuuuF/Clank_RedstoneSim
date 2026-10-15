@@ -42,6 +42,11 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
   confirms; then moves, copies, turns, flips and stacks are a pulsing preview (blocks in
   the way marked red) that the next Enter places as one edit, Esc cancels
   (`editor/floating.py`, [[controls]]).
+- **Doors, trapdoors, fence gates, fences, bars, panes, walls** (2026-10-15): ported from
+  their 26.3 classes (`openable.py`, `connecting.py`), registered by game class; placement
+  now gets the click point (door hinge, trapdoor/slab/stair halves); the use action carries
+  the player's yaw (fence gates open away from the player). EXP-052 and EXP-053 on the
+  real server: match. Not modeled: random ticks (copper oxidation), water, wind charges.
 - **Game parity of the new blocks** (2026-10-15, owner: "everything HAS TO work exactly
   like in the game … ALWAYS check against the game code"): every catalog class audited
   against its source. Fixed: snowy (podzol, mycelium, grass) follows the block above;

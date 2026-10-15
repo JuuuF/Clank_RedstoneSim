@@ -76,7 +76,7 @@ class EditTools:
         elif view.mode == BUILD and block is not None and not busy:
             target = view.build_target()
             view._build_cell = target
-            request = PlaceRequest(view.build_face, *view.player_view())
+            request = PlaceRequest(view.build_face, *view.player_view(), click=view.build_click)
             state = None if target is None else view._placed_state(block, request, target)
             if target is not None and state is None:
                 # Cannot be placed here: the preview stays, tinted red (round 9).
@@ -175,9 +175,13 @@ class EditTools:
         )
         if hit is not None and hit.distance <= layer_distance:
             view.build_face = hit.face
+            view.build_click = tuple(float(v) for v in origin + direction * hit.distance)  # type: ignore[assignment]
             step = hit.face.step
             return (hit.pos[0] + step[0], hit.pos[1] + step[1], hit.pos[2] + step[2])
         view.build_face = Direction.UP
+        view.build_click = (
+            tuple(float(v) for v in crossing) if crossing is not None else None  # type: ignore[assignment]
+        )
         return on_layer
 
     def _begin_line(self, point: QPoint) -> bool:

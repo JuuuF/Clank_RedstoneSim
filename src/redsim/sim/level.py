@@ -128,6 +128,9 @@ class Level:
         self.tickers_by_pos: dict[Pos, TickerWrapper] = {}
         self.ticking_block_entities = False
         self.handling_tick = False
+        #: The yaw of the player using a block right now (``Player.getDirection`` for
+        #: fence gates); set by the engine's ``use`` action, south by default.
+        self.player_yaw = 0.0
         #: ``RedstoneTorchBlock.RECENT_TOGGLES`` for this level: (pos, gameTime) entries.
         self.torch_toggles: list[tuple[Pos, int]] = []
         self.trace = trace if trace is not None else Trace()

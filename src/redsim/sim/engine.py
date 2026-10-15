@@ -379,6 +379,7 @@ class Engine:
             elif action.kind == "break":
                 self._break(action.pos)
             elif action.kind == "use":
+                level.player_yaw = float((action.payload or {}).get("yaw", 0.0))
                 state = level.get_block_state(action.pos)
                 if not state.block.use_without_item(state, level, action.pos):
                     info.detail["info"] = "use: no effect"

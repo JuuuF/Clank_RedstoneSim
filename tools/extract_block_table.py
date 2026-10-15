@@ -33,7 +33,11 @@ OUT = ROOT / "src/redsim/world/blocks/catalog_data.py"
 
 WEATHERING = ("", "exposed_", "weathered_", "oxidized_")
 WAXED = ("waxed_", "waxed_exposed_", "waxed_weathered_", "waxed_oxidized_")
-FLAG_NAMES = {"noCollision": 1, "noOcclusion": 2, "forceSolidOn": 4, "forceSolidOff": 8}
+FLAG_NAMES = {
+    "noCollision": 1, "noOcclusion": 2, "forceSolidOn": 4, "forceSolidOff": 8, "replaceable": 32,
+}  # fmt: skip
+#: Block tags the simulated blocks consult (``BlockTags``), written out resolved.
+TAGS = ("walls", "fences", "wooden_fences", "wall_post_override", "bars")
 #: Flag of blocks whose class has a block entity (``EntityBlock``): pistons never move them
 #: (``PistonBaseBlock.isPushable``: ``!state.hasBlockEntity()``).
 BLOCK_ENTITY = 16
@@ -348,12 +352,13 @@ def main() -> None:
     table, missing = extract()
     with zipfile.ZipFile(JAR) as jar:
         keepers = sorted(_tag(jar, "prevents_nearby_leaf_decay"))
+        tags = {name: sorted(_tag(jar, name)) for name in TAGS}
     lines = [
         '"""Every block of the game: its class and the settings the simulator needs',
         "(generated from the decompiled ``Blocks.java`` by ``tools/extract_block_table.py``;",
         "do not edit by hand). Values: class, destroy time, push reaction, redstone-conductor",
         "rule, flags (1 noCollision, 2 noOcclusion, 4 forceSolidOn, 8 forceSolidOff, 16 has a",
-        "block entity), map",
+        "block entity, 32 replaceable), map",
         'color (0xRRGGBB)."""',
         "",
         "BLOCKS: dict[str, tuple[str, float, str, str, int, int]] = {",
@@ -369,6 +374,14 @@ def main() -> None:
         *(
             f'    "{title}": (' + "".join(f'"{i}", ' for i in ids if i in table) + "),"
             for title, ids in creative_tabs().items()
+        ),
+        "}",
+        "",
+        "#: Block tags (``BlockTags``) the simulated blocks consult, resolved.",
+        "TAGS: dict[str, frozenset[str]] = {",
+        *(
+            f'    "{name}": frozenset({{' + "".join(f'"{i}", ' for i in ids) + "}),"
+            for name, ids in tags.items()
         ),
         "}",
         "",
