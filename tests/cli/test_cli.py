@@ -167,7 +167,8 @@ def test_diff_find_ticks_and_info(rs: Run) -> None:
 def test_truth_table_targets_pass_and_failures_explain_themselves(rs: Run) -> None:
     rs.batch(NOT_GATE)
     rs.batch(
-        "target new not 'lamp is the inverse of the lever'; target not truth @A -> @OUT rows 0:1 1:0"
+        "target new not 'lamp is the inverse of the lever'; "
+        "target not truth @A -> @OUT rows 0:1 1:0"
     )
     assert "2 passed, 0 failed" in rs("check")
     rs.batch(

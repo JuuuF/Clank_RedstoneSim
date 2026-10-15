@@ -566,9 +566,9 @@ Run N single engine steps (inside a tick) and show what each did.
 A game tick is a series of steps (doc/mechanics/tick-scheduling.md): the tick start,
 each scheduled tick (in priority order), each block event, each entity, each block
 entity. `step` runs them one at a time and prints each with the blocks it changed, so
-you can see the order things happen in. A tick with nothing to do is a single step. The view is then *inside* a tick: inspection
-commands show the world at that moment; edits still go to the build or `at T`.
-`run` finishes the tick.
+you can see the order things happen in. A tick with nothing to do is a single step.
+The view is then *inside* a tick: inspection commands show the world at that moment;
+edits still go to the build or `at T`. `run` finishes the tick.
 
 Examples:
 
