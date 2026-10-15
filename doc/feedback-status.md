@@ -19,6 +19,12 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **Bug: keyframes deleted when placing blocks** (2026-10-15, owner: "they are supposed to
+  remain where they are"): an edit made inside the recorded history (at tick 0 too) dropped
+  every later recorded edit. Now the later edits stay at their ticks and the simulation is
+  re-run from the edit to the old length (`Document._apply`, `Timeline.continue_with`; a
+  dragged line re-runs once). Later edits that no longer apply (their cell is taken) are
+  dropped with a notice; undo brings them back (ADR-022).
 - **Bigger showcase and a tutorial** (2026-10-14, owner: "make the example world bigger
   and show all the capabilities … create a tutorial"): 8 districts, 44 stations with
   signs and a recorded sequence ([[tour]]); Help → Tutorial with 9 lessons whose steps

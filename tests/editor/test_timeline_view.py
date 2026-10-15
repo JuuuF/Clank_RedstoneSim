@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from redsim.core.direction import Direction
 from redsim.editor.document import Document
+from redsim.editor.placement import PlaceRequest
 from redsim.world import blocks
+
+UP = PlaceRequest(clicked_face=Direction.UP, yaw=0.0, pitch=90.0)
 
 
 def lamp_circuit() -> Document:
@@ -31,14 +35,49 @@ def test_scrub_markers_and_monitor_samples() -> None:
     assert doc.seek_tick(11) and doc.engine.game_time == 11
 
 
-def test_editing_after_a_rewind_forgets_the_old_future() -> None:
+def test_editing_after_a_rewind_keeps_the_later_edits() -> None:
     doc = lamp_circuit()
+    doc.run_ticks(3)
+    doc.setblock((0, 1, 0), blocks.REDSTONE_BLOCK.default_state)  # keyframe at tick 3
     doc.run_ticks(5)
-    doc.seek_tick(2)
+    doc.seek_tick(1)
+    doc.setblock((5, 1, 5), blocks.STONE.default_state)  # an edit before it
+    assert doc.tick == 1 and doc.end_tick == 8
+    assert sorted(doc.edit_ticks.values()) == [1, 3]
+    assert max(doc.tick_steps) == 8
+    assert doc.samples[(1, 1, 0)][8] == 15  # the lamp still lights from the kept edit
+    assert doc.state_at((5, 1, 5)).is_(blocks.STONE)
+    assert doc.undo() and sorted(doc.edit_ticks.values()) == [3]
+
+
+def test_building_at_tick_0_keeps_the_recorded_edits() -> None:
+    doc = lamp_circuit()
+    doc.run_ticks(2)
     doc.setblock((0, 1, 0), blocks.REDSTONE_BLOCK.default_state)
-    assert doc.end_tick == 2
-    assert max(doc.tick_steps) == 2
-    assert max(doc.samples[(1, 1, 0)]) == 2
+    doc.run_ticks(4)
+    assert doc.jump("start")
+    doc.place_many(
+        [(3, 1, x) for x in range(3)],
+        blocks.STONE,
+        UP,
+    )
+    assert doc.tick == 0 and doc.end_tick == 6
+    assert sorted(doc.edit_ticks.values()) == [2]
+    assert doc.seek_tick(6) and doc.state_at((0, 1, 0)).is_(blocks.REDSTONE_BLOCK)
+    assert doc.state_at((3, 1, 2)).is_(blocks.STONE)
+    assert doc.undo() and doc.state_at((3, 1, 2)).is_air  # one undo step for the line
+
+
+def test_a_later_edit_that_no_longer_fits_is_dropped() -> None:
+    doc = lamp_circuit()
+    doc.run_ticks(2)
+    doc.place((0, 1, 0), blocks.REDSTONE_BLOCK, UP)
+    doc.run_ticks(2)
+    doc.seek_tick(1)
+    doc.place((0, 1, 0), blocks.STONE, UP)  # the later placement's cell is now taken
+    assert sorted(doc.edit_ticks.values()) == [1]
+    assert "could not be applied" in doc.notice
+    assert doc.end_tick == 4
 
 
 def test_monitors_are_saved(tmp_path: Path) -> None:

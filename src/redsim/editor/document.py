@@ -7,8 +7,9 @@ possible between ticks, like player input in the game.
 
 History is one linear timeline (``redsim.sim.timeline``): every step and every edit is
 recorded, and the user can seek to any earlier step. Undo rewinds to just before the most
-recent edit; redo replays forward through the next one. Editing at an earlier point starts
-a new branch (the old future is dropped). Section annotations are not part of the timeline.
+recent edit; redo replays forward through the next one. Editing at an earlier point keeps
+the edits recorded later at their ticks: the history is re-run with the new edit in it.
+Section annotations are not part of the timeline.
 """
 
 from __future__ import annotations
@@ -79,6 +80,10 @@ class Document(HistoryOps, SequenceOps):
     _redo: list[HistoryState] = field(default_factory=list)
     _batch_depth: int = 0
     _batch_saved: bool = False
+    #: While edits are made inside the recorded history: the edits recorded after that
+    #: point (tick → actions) and the simulated length, put back once the edit (or the
+    #: batch) is done (``_rerun_future``).
+    _kept_future: tuple[Plan, int] | None = None
 
     def __post_init__(self) -> None:
         if self.timeline is None:
@@ -124,12 +129,15 @@ class Document(HistoryOps, SequenceOps):
     # ------------------------------------------------------------------ edits
     def _apply(self, action: Action, label: str) -> None:
         """Apply an edit. At tick 0 it changes the build state (not recorded, never
-        replayed); later it is recorded at its tick. Edits at one tick form one batch."""
+        replayed); later it is recorded at its tick. Edits at one tick form one batch.
+        Edits recorded later stay at their ticks: the history is re-run after the edit
+        (after the whole batch, in a batch)."""
         if not self.can_edit:
             raise EditError("Finish the current tick before editing (edits happen between ticks).")
         history = self.history
         before = None if self._batch_saved else self._history_state()
-        future = history.end_tick() - self.tick if history.position < history.end else 0
+        if self._kept_future is None and history.position < history.end:
+            self._kept_future = (self._future_plan(), self.end_tick)
         index = history.position
         action = replace(action, label=label)
         try:
@@ -138,18 +146,45 @@ class Document(HistoryOps, SequenceOps):
             else:
                 history.apply(action)
         except ActionError as exc:
+            if not self._batch_depth:
+                self._rerun_future()
             raise EditError(str(exc)) from exc
         if before is not None:
             self._undo.append(replace(before, label=label))
             self._redo.clear()
             self._batch_saved = self._batch_depth > 0
-        if future or history.at_base:
+        if self._kept_future is not None or history.at_base:
             self._forget_after(self.tick)
         if not history.at_base:
             self.edit_ticks[index] = self.tick
-        if future:
-            self.notice = f"Discarded the recorded {future} ticks after this point."
+        if not self._batch_depth:
+            self._rerun_future()
         self._changed()
+
+    def _future_plan(self) -> Plan:
+        """The edits recorded after the current position, by tick."""
+        history = self.history
+        plan: Plan = {}
+        for index in sorted(i for i in history.inputs if i >= history.position):
+            plan.setdefault(self.edit_ticks.get(index, 0), []).append(history.inputs[index])
+        return plan
+
+    def _rerun_future(self) -> None:
+        """Put back the edits recorded after an edit made inside the history (at their
+        ticks) and re-run the simulation to the old length; the view stays at the edit."""
+        kept, self._kept_future = self._kept_future, None
+        if kept is None:
+            return
+        future, end_tick = kept
+        history, here = self.history, self.tick
+        # The history up to here is unchanged: simulate on from the edit.
+        failures = history.continue_with(future, end_tick, self._observe)
+        self.edit_ticks = {i: t - history.base_time for i, t in history.input_times.items()}
+        self.seek_tick(here)
+        if failures:
+            self.notice = (
+                f"{len(failures)} later edits could not be applied anymore and were dropped."
+            )
 
     @contextmanager
     def batch(self) -> Iterator[None]:
@@ -161,6 +196,7 @@ class Document(HistoryOps, SequenceOps):
             self._batch_depth -= 1
             if not self._batch_depth:
                 self._batch_saved = False
+                self._rerun_future()
 
     def place_many(
         self, positions: Iterable[Pos], block: Block, request: PlaceRequest, vary: Vary = None

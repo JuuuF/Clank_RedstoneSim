@@ -174,7 +174,8 @@ applied at each step index, and the indices of tick starts.
 
 - `step()`/`run_tick()` advance; inside the recorded range they re-apply recorded actions.
 - `apply(action)` records a new action; doing so before the recorded end drops the future
-  (a new branch).
+  (a new branch). The editor does not lose it: `Document._apply` keeps the later edits and
+  rebuilds the history with them (`rewrite`), so keyframes stay at their ticks (ADR-022).
 - `seek(i)` restores the nearest keyframe ≤ i and re-executes. `step_back()`, `tick_back()`
   (previous tick boundary), and undo/redo targets (just before / after an action) build on it.
 - On rewind the trace is truncated to steps before the target. Replay regenerates identical

@@ -352,8 +352,12 @@ Short records. Each one states the context, the decision, and its trade-offs.
     color-coded; an action carries an editor label for tooltips.
 - **Trade-offs:** Rewrites re-simulate from the base, which costs time proportional to the
   recorded length (milliseconds per hundred ticks for typical circuits). Undo states keep
-  their base snapshots alive (immutable, shared). Editing the past still drops the recorded
-  future, as before (ADR-004), but undo brings it back.
+  their base snapshots alive (immutable, shared). Editing the past used to drop the recorded
+  future (ADR-004); since 2026-10-15 (owner: keyframes "are supposed to remain where they
+  are") an edit inside the recorded history, at tick 0 too, keeps every later edit at its
+  tick: `Document._apply` puts them back after the edit (after the whole batch, so a dragged
+  line re-runs once) and re-simulates to the old length. Later edits that no longer apply
+  (their cell is taken) are dropped and reported; undo restores them.
 
 ## ADR-023
 

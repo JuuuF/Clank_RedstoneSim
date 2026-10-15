@@ -201,14 +201,20 @@ class Timeline:
                 self.apply_to_base(action)
             except ActionError as exc:
                 failures.append((0, action, str(exc)))
-        if observe is not None:
-            observe()
-        last = max([end_tick, *plan]) if plan else end_tick
-        while self.tick() < last:
-            while True:
-                self.step()
-                if self.engine.at_tick_boundary():
-                    break
+        later = {tick: actions for tick, actions in plan.items() if tick > 0}
+        failures.extend(self.continue_with(later, end_tick, observe))
+        return failures
+
+    def continue_with(
+        self, plan: Plan, end_tick: int, observe: Callable[[], None] | None = None
+    ) -> list[tuple[int, Action, str]]:
+        """From the current tick boundary, record the edits of ``plan`` at their ticks
+        (those of the current tick at once) while simulating up to ``end_tick`` (or the
+        last planned tick). ``observe`` runs at every tick boundary. Returns the edits
+        that failed."""
+        failures: list[tuple[int, Action, str]] = []
+
+        def apply_planned() -> None:
             for action in plan.get(self.tick(), []):
                 try:
                     self.apply(action)
@@ -216,6 +222,15 @@ class Timeline:
                     failures.append((self.tick(), action, str(exc)))
             if observe is not None:
                 observe()
+
+        apply_planned()
+        last = max([end_tick, *plan]) if plan else end_tick
+        while self.tick() < last:
+            while True:
+                self.step()
+                if self.engine.at_tick_boundary():
+                    break
+            apply_planned()
         return failures
 
     def _restore_snapshot(self, snapshot: EngineSnapshot, index: int) -> None:
