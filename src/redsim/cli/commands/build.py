@@ -276,15 +276,20 @@ def clear(session: Session, args: Args) -> Output:
 @command(
     "line",
     group="build",
-    usage="line POS POS BLOCK [PROP=VALUE ...]",
+    usage="line POS POS BLOCK [PROP=VALUE ...] [support BLOCK]",
     summary="Place a straight line of blocks like a player (skips taken spots).",
     help="""
     Places BLOCK like `place` at every position from the first to the second (both
     included); the two must differ along one axis only. Spots that are not air, or where
     the block has no support, are skipped and listed. Use it for lines of wire, solid
-    blocks or repeaters (all with the same properties).
+    blocks or repeaters (all with the same properties). `support BLOCK` first sets BLOCK
+    under every spot of the line that has air below it, so wire can run over a gap.
     """,
-    examples=("line 0 1 0 9 1 0 redstone_wire", "line 0 1 2 0 1 8 stone"),
+    examples=(
+        "line 0 1 0 9 1 0 redstone_wire",
+        "line 0 1 2 0 1 8 stone",
+        "line 0 3 0 6 3 0 redstone_wire support stone   # wire in the air, on stone",
+    ),
     kind="edit",
     data='{"placed": [[x, y, z], ...], "skipped": [{"pos", "reason"}], "tick"}',
 )
@@ -292,6 +297,7 @@ def line(session: Session, args: Args) -> Output:
     a = args.pos("the start")
     b = args.pos("the end")
     state = args.block()
+    support = args.block("a support block") if args.option("support") else None
     args.done()
     differ = [i for i in range(3) if a[i] != b[i]]
     if len(differ) > 1:
@@ -309,6 +315,9 @@ def line(session: Session, args: Args) -> Output:
 
     with session.editing() as doc:
         for pos in positions:
+            under = (pos[0], pos[1] - 1, pos[2])
+            if support is not None and doc.state_at(pos).is_air and doc.state_at(under).is_air:
+                doc.setblock(under, support)
             if not doc.state_at(pos).is_air:
                 skipped.append((pos, f"holds {doc.state_at(pos).block.name}"))
                 continue
@@ -320,7 +329,7 @@ def line(session: Session, args: Args) -> Output:
             placed.append(pos)
     out = Output(
         [
-            f"placed {len(placed)} × {state_text(state)} from {format_pos(a)} "
+            f"placed {len(placed)} × {state.block.name} from {format_pos(a)} "
             f"to {format_pos(b)} ({session.where})"
         ]
     )
@@ -684,3 +693,90 @@ def stack(session: Session, args: Args) -> Output:
             "tick": session.edit_tick,
         },
     )
+
+
+# ---------------------------------------------------------------------------- prefabs
+@command(
+    "prefab",
+    group="build",
+    usage="prefab save NAME POS POS | prefab list | prefab delete NAME",
+    summary="Keep a box of the build as a named prefab (a reusable module).",
+    help="""
+    `prefab save NAME POS POS` captures the box between the corners **from the build**
+    (tick 0; air and block-entity data included) under NAME, saved with the world; the
+    editor lists it under Circuit → Prefabs. `paste NAME at POS` places a copy. Use it to
+    reuse a module that passed its targets (a gate, a memory cell, a door slice).
+    `prefab list` lists them with their sizes, `prefab delete NAME` removes one.
+    """,
+    examples=("prefab save and 0 1 0 4 2 2", "prefab list", "paste and at 0 1 6"),
+    kind="meta",
+    data='{"prefabs": [{"name", "size", "blocks"}]}',
+)
+def prefab(session: Session, args: Args) -> Output:
+    from redsim.editor.clipboard import Prefab, Region
+
+    doc = session.doc
+    verb = args.choice(("save", "list", "delete"), "save, list or delete")
+    if verb == "save":
+        name = args.word("a prefab name")
+        low, high = region(args)
+        args.done()
+        if volume(low, high) > MAX_VOLUME:
+            raise CliError(f"prefab: the box is larger than {MAX_VOLUME} blocks")
+        doc.prefabs[name] = Prefab.capture(doc.history.base.level, Region(low, high), name)
+        doc.dirty = True
+        session.changed = True
+    elif verb == "delete":
+        name = args.word("a prefab name")
+        args.done()
+        if doc.prefabs.pop(name, None) is None:
+            raise CliError(f"prefab: no prefab {name!r}")
+        session.changed = True
+    else:
+        args.done()
+    rows = [{"name": n, "size": list(p.size), "blocks": p.non_air_count}
+            for n, p in sorted(doc.prefabs.items())]  # fmt: skip
+    out = Output([f"  {r['name']:<16} {'×'.join(str(v) for v in r['size'])}  {r['blocks']} blocks"
+                  for r in rows] or ["  (no prefabs: prefab save NAME POS POS)"])  # fmt: skip
+    out.data = {"prefabs": rows}
+    return out
+
+
+@command(
+    "paste",
+    group="build",
+    usage="paste NAME at POS [rotate N] [mirror x|z]",
+    summary="Place a copy of a prefab with its lowest corner at POS.",
+    help="""
+    Places the prefab NAME (see `prefab`) with its lowest corner at POS, turned N quarter
+    turns clockwise seen from above and/or mirrored, like the editor's paste (`/clone …
+    strict`: no block updates, air included). Run `settle` afterwards if the copy sits
+    next to something it should react to.
+    """,
+    examples=("paste and at 0 1 6", "paste door at 10 1 0 rotate 2"),
+    kind="edit",
+    data='{"name", "low", "high", "tick"}',
+)
+def paste(session: Session, args: Args) -> Output:
+    doc = session.doc
+    name = args.word("a prefab name")
+    if name not in doc.prefabs:
+        known = ", ".join(sorted(doc.prefabs)) or "none yet"
+        raise CliError(f"paste: no prefab {name!r} (prefabs: {known})")
+    if not args.option("at"):
+        raise CliError("paste: say where: at POS")
+    pos = args.pos()
+    turns = args.option_int("rotate", 0)
+    axis = args.choice(("x", "z"), "x or z") if args.option("mirror") else None
+    args.done()
+    item = doc.prefabs[name]
+    if turns % 4:
+        item = item.rotated(turns % 4)
+    if axis is not None:
+        item = item.mirrored(axis)
+    with session.editing() as edited:
+        edited.paste(pos, item)
+    high = tuple(pos[i] + item.size[i] - 1 for i in range(3))
+    text = f"pasted {name} at {format_pos(pos)} to {format_pos(high)} ({session.where})"
+    return Output([text], {"name": name, "low": list(pos), "high": list(high),
+                           "tick": session.edit_tick})  # fmt: skip

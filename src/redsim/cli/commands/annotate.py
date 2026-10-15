@@ -129,3 +129,80 @@ def notes(session: Session, args: Args) -> Output:
     out = Output([f"  {i}. {text}" for i, text in enumerate(doc.notes, 1)] or ["  (no notes)"])
     out.data = {"notes": list(doc.notes)}
     return out
+
+
+@command(
+    "group",
+    group="annotate",
+    usage="group NAME POS POS [in POS NAME ...] [out POS NAME ...] | group NAME delete | groups",
+    summary="Mark a box as a named part of the circuit, with input and output ports.",
+    help="""
+    Groups name parts of a larger build ("adder bit 0", "clock") and their ports, the
+    positions where signals enter and leave. The editor shows them under Circuit →
+    Groups with live port readings and draws their boxes; they never change the
+    simulation. `in POS NAME` and `out POS NAME` add ports (repeatable).
+    `group NAME delete` removes a group; `groups` lists them.
+    """,
+    examples=("group and 0 1 0 4 2 2 in @A A in @B B out @OUT OUT", "groups", "group and delete"),
+    kind="meta",
+    data='{"groups": [{"name", "low", "high", "ports": [{"name", "pos", "role"}]}]}',
+)
+def group(session: Session, args: Args) -> Output:
+    from redsim.editor.clipboard import Region
+    from redsim.editor.groups import Group, Port
+
+    doc = session.doc
+    name = args.word("a group name")
+    if args.option("delete"):
+        args.done()
+        if name not in doc.groups.groups:
+            raise CliError(f"group: no group {name!r}")
+        doc.groups.remove(name)
+    else:
+        a, b = args.pos("the first corner"), args.pos("the second corner")
+        ports = []
+        while args.more():
+            role = args.choice(("in", "out"), "in or out")
+            pos = args.pos("the port's position")
+            port_name = args.word("the port's name")
+            ports.append(Port(port_name, pos, "input" if role == "in" else "output"))
+        doc.groups.add(Group(name, Region.from_corners(a, b), ports))
+    doc.dirty = True
+    session.changed = True
+    return _groups_output(doc)
+
+
+@command(
+    "groups",
+    group="annotate",
+    usage="groups",
+    summary="List the groups with their boxes and ports.",
+    help="Lists every group: its box and its ports with what they read now.",
+    examples=("groups",),
+    kind="view",
+    data='{"groups": [{"name", "low", "high", "ports": [{"name", "pos", "role", "reading"}]}]}',
+)
+def groups(session: Session, args: Args) -> Output:
+    args.done()
+    return _groups_output(session.doc)
+
+
+def _groups_output(doc: object) -> Output:
+    from redsim.editor.groups import port_reading
+
+    out = Output()
+    rows = []
+    for g in doc.groups.groups.values():  # type: ignore[attr-defined]
+        out.add(f"  {g.name}: {format_pos(g.region.low)} to {format_pos(g.region.high)}")
+        ports = []
+        for port in g.ports:
+            reading = port_reading(doc.level, port)  # type: ignore[attr-defined]
+            out.add(f"    {port.role:<6} {port.name:<8} {format_pos(port.pos)}  {reading}")
+            ports.append({"name": port.name, "pos": list(port.pos), "role": port.role,
+                          "reading": reading})  # fmt: skip
+        rows.append({"name": g.name, "low": list(g.region.low), "high": list(g.region.high),
+                     "ports": ports})  # fmt: skip
+    if not rows:
+        out.add("  (no groups)")
+    out.data = {"groups": rows}
+    return out

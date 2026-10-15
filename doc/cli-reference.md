@@ -241,20 +241,22 @@ JSON `data`: {"low", "high", "state", "count", "tick"}
 
 ### `line`
 
-`line POS POS BLOCK [PROP=VALUE ...]`
+`line POS POS BLOCK [PROP=VALUE ...] [support BLOCK]`
 
 Place a straight line of blocks like a player (skips taken spots).
 
 Places BLOCK like `place` at every position from the first to the second (both
 included); the two must differ along one axis only. Spots that are not air, or where
 the block has no support, are skipped and listed. Use it for lines of wire, solid
-blocks or repeaters (all with the same properties).
+blocks or repeaters (all with the same properties). `support BLOCK` first sets BLOCK
+under every spot of the line that has air below it, so wire can run over a gap.
 
 Examples:
 
 ```
 line 0 1 0 9 1 0 redstone_wire
 line 0 1 2 0 1 8 stone
+line 0 3 0 6 3 0 redstone_wire support stone   # wire in the air, on stone
 ```
 
 JSON `data`: {"placed": [[x, y, z], ...], "skipped": [{"pos", "reason"}], "tick"}
@@ -469,6 +471,48 @@ stack 0 1 0 0 1 3 up times 3 gap 1
 ```
 
 JSON `data`: {"from": [low, high], "box": [low, high] (all copies), "tick"}
+
+### `prefab`
+
+`prefab save NAME POS POS | prefab list | prefab delete NAME`
+
+Keep a box of the build as a named prefab (a reusable module).
+
+`prefab save NAME POS POS` captures the box between the corners **from the build**
+(tick 0; air and block-entity data included) under NAME, saved with the world; the
+editor lists it under Circuit → Prefabs. `paste NAME at POS` places a copy. Use it to
+reuse a module that passed its targets (a gate, a memory cell, a door slice).
+`prefab list` lists them with their sizes, `prefab delete NAME` removes one.
+
+Examples:
+
+```
+prefab save and 0 1 0 4 2 2
+prefab list
+paste and at 0 1 6
+```
+
+JSON `data`: {"prefabs": [{"name", "size", "blocks"}]}
+
+### `paste`
+
+`paste NAME at POS [rotate N] [mirror x|z]`
+
+Place a copy of a prefab with its lowest corner at POS.
+
+Places the prefab NAME (see `prefab`) with its lowest corner at POS, turned N quarter
+turns clockwise seen from above and/or mirrored, like the editor's paste (`/clone …
+strict`: no block updates, air included). Run `settle` afterwards if the copy sits
+next to something it should react to.
+
+Examples:
+
+```
+paste and at 0 1 6
+paste door at 10 1 0 rotate 2
+```
+
+JSON `data`: {"name", "low", "high", "tick"}
 
 ## Time
 
@@ -1030,6 +1074,27 @@ entities
 
 JSON `data`: {"entities": [{"id", "state", "pos", "motion", "time"}]}
 
+### `delays`
+
+`delays FROM TO [ticks A..B]`
+
+Measure how long a change at FROM takes to show at TO.
+
+Follows the values of FROM and TO (as `waves` shows them) over the range (default:
+the whole simulated history) and, for every change of FROM, reports the first change
+of TO at or after it, and the delay in ticks. Use it to measure a circuit's delay
+(input lever to output lamp), a pulse's length, or how long a piston sequence takes.
+A change of FROM with no later change of TO says "no change".
+
+Examples:
+
+```
+delays @A @OUT
+delays @IN @LAMP ticks 0..60
+```
+
+JSON `data`: {"from", "to", "changes": [{"tick", "value", "to_tick", "to_value", "delay"}]}
+
 ## Annotate
 
 Names and notes that make a world readable: labels, notes, sections.
@@ -1107,6 +1172,44 @@ notes
 ```
 
 JSON `data`: {"notes": [text, ...]}
+
+### `group`
+
+`group NAME POS POS [in POS NAME ...] [out POS NAME ...] | group NAME delete | groups`
+
+Mark a box as a named part of the circuit, with input and output ports.
+
+Groups name parts of a larger build ("adder bit 0", "clock") and their ports, the
+positions where signals enter and leave. The editor shows them under Circuit →
+Groups with live port readings and draws their boxes; they never change the
+simulation. `in POS NAME` and `out POS NAME` add ports (repeatable).
+`group NAME delete` removes a group; `groups` lists them.
+
+Examples:
+
+```
+group and 0 1 0 4 2 2 in @A A in @B B out @OUT OUT
+groups
+group and delete
+```
+
+JSON `data`: {"groups": [{"name", "low", "high", "ports": [{"name", "pos", "role"}]}]}
+
+### `groups`
+
+`groups`
+
+List the groups with their boxes and ports.
+
+Lists every group: its box and its ports with what they read now.
+
+Examples:
+
+```
+groups
+```
+
+JSON `data`: {"groups": [{"name", "low", "high", "ports": [{"name", "pos", "role", "reading"}]}]}
 
 ## Targets
 

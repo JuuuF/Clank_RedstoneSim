@@ -264,12 +264,13 @@ tests, or flip the real input (`at T use @LEVER`) when the input is a lever or b
 | `break POS` | A player breaking it (creative: no drops); neighbors update. |
 | `use POS [look DIR]` | A right click: lever, button, repeater delay, comparator mode, door, … |
 | `fill POS POS BLOCK`, `clear POS POS` | `/fill` over a box (at most 32768 blocks). |
-| `line POS POS BLOCK` | `place` along a straight line, skipping taken spots (listed). |
+| `line POS POS BLOCK [support BLOCK]` | `place` along a straight line, skipping taken spots (listed); `support` first puts a block under every spot that has air below. |
 | `copy`, `move`, `rotate`, `mirror`, `stack` | Box operations like the editor's (no block updates inside: strict). |
 | `source POS KIND STRENGTH` | A comparator source of a strength (barrel, chest, hopper, lectern, cake, composter). |
 | `container`, `sign`, `page` | Container slots, sign text, a lectern's page. |
 | `plate`, `hit` | Mobs or items on a pressure plate, a projectile hitting a target block (editor stand-ins for entities, [[differences]] section 3). |
 | `import FILE at POS` | Paste a schematic or structure file. |
+| `prefab save NAME POS POS`, `paste NAME at POS` | Keep a box of the build as a reusable module (saved with the world, listed in the editor), and place copies of it (turned or mirrored). Save a module once its targets pass, then reuse it. |
 
 Every building command prints the resulting block state and where the edit went:
 `placed 4 2 1: redstone_lamp[lit=false] (the build)` or `… (tick 5)`. Put `at T` in
@@ -409,6 +410,8 @@ it receive anything? from which side?).
   block events.
 - `diff A [B]`: every block that differs between two ticks (`diff 0`: everything that
   changed since the build).
+- `delays FROM TO`: for every change at FROM, when TO changes next and how many ticks
+  later (a circuit's delay, rising and falling separately).
 - `find BLOCK [PROP=VALUE] [in POS POS]`, `entities`, `info`.
 
 ## 8. Labels and notes
@@ -418,7 +421,10 @@ does. Label the inputs and outputs of every contraption first: commands, maps, w
 targets become readable (`@OUT` instead of `4 2 1`), and labeled blocks show up in
 `waves` and after `run` without being named. `labels` lists them, `label NAME delete`
 removes one. `note "TEXT"` adds a note to the world (what it is, how to use it, what is
-left to do); `info` and `notes` show them. Labels and notes never affect the simulation.
+left to do); `info` and `notes` show them. For larger builds, `group NAME POS POS in POS
+NAME out POS NAME` marks a part of the circuit with its input and output ports (the
+editor shows groups under Circuit → Groups with live port readings; `groups` lists
+them). Labels, notes and groups never affect the simulation.
 
 ## 9. Targets: testing a contraption
 

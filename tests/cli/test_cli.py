@@ -254,3 +254,19 @@ def test_the_reference_document_is_generated_from_the_help() -> None:
     assert path.read_text() == render_reference(), (
         "doc/cli-reference.md is out of date: redsim-cli help --markdown > doc/cli-reference.md"
     )
+
+
+def test_prefabs_paste_groups_line_supports_and_delays(rs: Run) -> None:
+    rs.batch(NOT_GATE)
+    assert "6×1×1" in rs("prefab", "save", "not", "0", "1", "0", "5", "1", "0")
+    assert "pasted not at 0 1 4" in rs("paste", "not", "at", "0", "1", "4")
+    assert "2 × redstone_lamp" in rs("find", "redstone_lamp")
+    out = rs("line", "0", "3", "6", "4", "3", "6", "redstone_wire", "support", "stone")
+    assert "placed 5 × redstone_wire" in out
+    assert "5 × stone" in rs("find", "stone", "in", "0", "2", "6", "4", "2", "6")
+    out = rs("group", "not", "0", "1", "0", "5", "1", "0", "in", "@A", "A", "out", "@OUT", "OUT")
+    assert "input  A        0 1 0  lever off" in out
+    assert "output OUT      5 1 0  redstone_lamp ON" in out
+    rs.batch("at 2 use @A; run 12")
+    delays = rs("delays", "@A", "@OUT")
+    assert "tick 2    0 → 15: output 15 → 0 at tick 8 (6 ticks later)" in delays

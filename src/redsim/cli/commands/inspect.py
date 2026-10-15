@@ -725,3 +725,63 @@ def entities(session: Session, args: Args) -> Output:
         ]
     }
     return out
+
+
+@command(
+    "delays",
+    group="inspect",
+    usage="delays FROM TO [ticks A..B]",
+    summary="Measure how long a change at FROM takes to show at TO.",
+    help="""
+    Follows the values of FROM and TO (as `waves` shows them) over the range (default:
+    the whole simulated history) and, for every change of FROM, reports the first change
+    of TO at or after it, and the delay in ticks. Use it to measure a circuit's delay
+    (input lever to output lamp), a pulse's length, or how long a piston sequence takes.
+    A change of FROM with no later change of TO says "no change".
+    """,
+    examples=("delays @A @OUT", "delays @IN @LAMP ticks 0..60"),
+    kind="view",
+    data='{"from", "to", "changes": [{"tick", "value", "to_tick", "to_value", "delay"}]}',
+)
+def delays(session: Session, args: Args) -> Output:
+    from redsim.editor.monitor import monitor_value
+
+    doc = session.doc
+    first = args.pos("the input")
+    second = args.pos("the output")
+    low, high = 0, doc.end_tick
+    if args.option("ticks"):
+        low, high = args.tick_range()
+    args.done()
+    view = session.view_now()
+    a_values, b_values = [], []
+    for tick in range(low, high + 1):
+        session.goto(tick)
+        a_values.append(monitor_value(doc.level, first))
+        b_values.append(monitor_value(doc.level, second))
+    session.goto_view(view)
+    rows = []
+    out = Output([f"{name_of(doc, first)} → {name_of(doc, second)} (ticks {low}..{high}):"])
+    for i in range(1, len(a_values)):
+        if a_values[i] == a_values[i - 1]:
+            continue
+        tick = low + i
+        found = next(
+            (j for j in range(i, len(b_values)) if j and b_values[j] != b_values[j - 1]), None
+        )
+        row: dict[str, Any] = {"tick": tick, "value": a_values[i], "to_tick": None,
+                               "to_value": None, "delay": None}  # fmt: skip
+        change = f"  tick {tick:<4} {a_values[i - 1]} → {a_values[i]}:"
+        if found is None:
+            out.add(f"{change} no change at the output after it")
+        else:
+            row.update(to_tick=low + found, to_value=b_values[found], delay=found - i)
+            out.add(
+                f"{change} output {b_values[found - 1]} → {b_values[found]} "
+                f"at tick {low + found} ({found - i} ticks later)"
+            )
+        rows.append(row)
+    if not rows:
+        out.add("  the input does not change in this range")
+    out.data = {"from": list(first), "to": list(second), "changes": rows}
+    return out
