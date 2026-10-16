@@ -1,0 +1,44 @@
+# Circuit: OR gate (two wires into a block, repeater out). Contract: doc/redstone/circuits.md, "OR gate".
+#
+# Module (box 0 1 0 .. 1 1 2, output east):
+#   @A    0 1 0  input wire: drive it from the north (0 1 -1): lever, torch, repeater or
+#                comparator pointing south, or wire arriving from the north
+#   @B    0 1 2  input wire: drive it from the south (0 1 3)
+#   @X    0 1 1  the block both wires point into (weakly powered)
+#   @OUT  1 1 1  repeater out=east: 15 while A or B is on; isolates the inputs
+# Test harness: levers @LA (0 1 -1) and @LB (0 1 3).
+#   redsim-cli or_gate.redsim.json < examples/circuits/or_gate.cli.txt
+new size 16 force
+note "OR gate: @OUT (repeater) is on while @A or @B is on; 2 ticks each way"
+place 0 1 1 stone
+place 0 1 0 redstone_wire
+place 0 1 2 redstone_wire
+place 1 1 1 repeater out=east
+label A 0 1 0 "input A: wire, driven from the north"
+label B 0 1 2 "input B: wire, driven from the south"
+label X 0 1 1 "the block both inputs power"
+label OUT 1 1 1 "output: repeater"
+group or 0 1 0 1 1 2 in @A A in @B B out @OUT OUT
+prefab save or_gate 0 1 0 1 1 2
+# harness
+place 0 1 -1 lever face=floor
+place 0 1 3 lever face=floor
+label LA 0 1 -1 "test lever A"
+label LB 0 1 3 "test lever B"
+settle
+
+target new truth "OUT = A or B"
+target truth truth @LA @LB -> @OUT rows 00:0 01:1 10:1 11:1
+
+target new timing "2 ticks on and off from either input"
+target timing do at 2 use @LA
+target timing do at 10 use @LB
+target timing do at 20 use @LA
+target timing do at 30 use @LB
+target timing expect @OUT powered=false at 3
+target timing expect @OUT powered=true during 4..31
+target timing expect @OUT powered=false at 32
+target timing expect @A power=15 at 2
+target timing expect @B power=0 at 2
+
+check

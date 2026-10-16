@@ -1,0 +1,40 @@
+# Circuit: NOT gate (torch inverter). Contract: doc/redstone/circuits.md, "NOT gate".
+#
+# Module (box 0 1 0 .. 1 1 0, signal flows east):
+#   @A    0 1 0  input block (stone): power it (attach a lever or button, or point a
+#                repeater, comparator, observer or wire into it)
+#   @OUT  1 1 0  wall torch on @A's east face: on while @A is unpowered
+# Test harness: lever @L on @A's west face, lamp @LAMP east of the torch.
+#   redsim-cli not_gate.redsim.json < examples/circuits/not_gate.cli.txt
+new size 16 force
+note "NOT gate: @OUT (torch) is on while the input block @A is unpowered; 2 ticks each way"
+place 0 1 0 stone
+place 1 1 0 redstone_wall_torch facing=east
+label A 0 1 0 "input block"
+label OUT 1 1 0 "output: wall torch"
+group not 0 1 0 1 1 0 in @A A out @OUT OUT
+prefab save not_gate 0 1 0 1 1 0
+# harness
+place -1 1 0 lever face=wall facing=west
+place 2 1 0 redstone_lamp
+label L -1 1 0 "test lever on @A"
+label LAMP 2 1 0 "test lamp"
+settle
+
+target new truth "OUT = not A"
+target truth truth @L -> @OUT rows 0:1 1:0
+
+target new timing "2 ticks each way; a 1-tick input pulse is ignored, a 2-tick one passes"
+target timing do at 2 use @L
+target timing do at 20 use @L
+target timing do at 30 use @L
+target timing do at 31 use @L
+target timing do at 40 use @L
+target timing do at 42 use @L
+target timing expect @OUT lit=true at 3
+target timing expect @OUT lit=false during 4..21
+target timing expect @OUT lit=true during 22..41
+target timing expect @OUT lit=false during 42..43
+target timing expect @OUT lit=true at 44
+
+check

@@ -1,0 +1,48 @@
+# Circuit: NAND gate (two torches). Contract: doc/redstone/circuits.md, "NAND gate".
+#
+# Module (box 0 1 0 .. 1 2 2, inputs west, output east at y=2):
+#   @A    0 1 0  input block A: power it (attach a lever, or point a repeater,
+#                comparator or wire into it)
+#   @B    0 1 2  input block B: the same
+#   @OUT  1 2 1  wire on the stone 1 1 1: power 14 unless both inputs are on; it points
+#                east into 2 2 1 (put a block, repeater or component there)
+# Inside: torches on top of A and B, wire 0 2 1 between them (on the stone 0 1 1).
+# Test harness: levers on the input blocks' west faces; a repeater reading @OUT.
+#   redsim-cli nand_gate.redsim.json < examples/circuits/nand_gate.cli.txt
+new size 16 force
+note "NAND gate: wire @OUT (y=2) is on unless blocks @A and @B are both powered; 2 ticks each way"
+fill 0 1 0 0 1 2 stone
+place 0 2 0 redstone_torch
+place 0 2 2 redstone_torch
+place 1 1 1 stone
+place 0 2 1 redstone_wire
+place 1 2 1 redstone_wire
+label A 0 1 0 "input block A"
+label B 0 1 2 "input block B"
+label OUT 1 2 1 "output: wire pointing east"
+group nand 0 1 0 1 2 2 in @A A in @B B out @OUT OUT
+prefab save nand_gate 0 1 0 1 2 2
+# harness
+place -1 1 0 lever face=wall facing=west
+place -1 1 2 lever face=wall facing=west
+place 2 1 1 stone
+place 2 2 1 repeater out=east
+label LA -1 1 0 "test lever A"
+label LB -1 1 2 "test lever B"
+label PROBE 2 2 1 "test repeater reading @OUT"
+settle
+
+target new truth "OUT = not (A and B)"
+target truth truth @LA @LB -> @OUT rows 00:1 01:1 10:1 11:0
+
+target new timing "2 ticks off and on; the probe repeater 2 more"
+target timing do at 2 use @LA
+target timing do at 10 use @LB
+target timing do at 20 use @LB
+target timing expect @OUT power=14 at 11
+target timing expect @OUT power=0 during 12..21
+target timing expect @OUT power=14 at 22
+target timing expect @PROBE powered=false during 14..23
+target timing expect @PROBE powered=true at 24
+
+check

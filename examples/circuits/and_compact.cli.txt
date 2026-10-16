@@ -1,0 +1,55 @@
+# Circuit: compact AND (subtracting comparator). Contract: doc/redstone/circuits.md, "Compact AND".
+#
+# Module (box 0 1 0 .. 1 1 3, output east):
+#   @A    0 1 0  input wire A (comparator rear): drive it from the west (-1 1 0)
+#   @B    1 1 3  input block B: power it (attach a lever on its south face, or point a
+#                repeater, comparator or wire into it from the south or east/west)
+#   @OUT  1 1 0  comparator out=east, subtract: 15 while A and B are on
+# Inside: a wall torch 1 1 2 on @B (facing north) powers the wire 1 1 1 at the
+# comparator's side: side = not B, OUT = A - side.
+# Test harness: lever @LA west of @A, lever @LB on @B's south face.
+#   redsim-cli and_compact.redsim.json < examples/circuits/and_compact.cli.txt
+new size 16 force
+note "Compact AND: comparator @OUT = A minus (not B); A path 2 ticks, B path 4; glitches when A rises as B falls"
+place 0 1 0 redstone_wire
+place 1 1 0 comparator out=east mode=subtract
+place 1 1 3 stone
+place 1 1 2 redstone_wall_torch facing=north
+place 1 1 1 redstone_wire
+label A 0 1 0 "input A: wire (comparator rear)"
+label B 1 1 3 "input block B"
+label NB 1 1 2 "torch: not B"
+label OUT 1 1 0 "output: comparator"
+group and_compact 0 1 0 1 1 3 in @A A in @B B out @OUT OUT
+prefab save and_compact 0 1 0 1 1 3
+# harness
+place -1 1 0 lever face=floor
+place 1 1 4 lever face=wall facing=south
+label LA -1 1 0 "test lever A"
+label LB 1 1 4 "test lever B"
+settle
+
+target new truth "OUT = A and B"
+target truth truth @LA @LB -> @OUT rows 00:0 01:0 10:0 11:1
+
+target new timing "A: 2 ticks each way; B: 4 ticks each way"
+target timing do at 2 use @LA
+target timing do at 10 use @LB
+target timing do at 20 use @LB
+target timing do at 30 use @LB
+target timing do at 40 use @LA
+target timing expect @OUT power=0 at 13
+target timing expect @OUT power=15 during 14..23
+target timing expect @OUT power=0 during 24..33
+target timing expect @OUT power=15 during 34..41
+target timing expect @OUT power=0 at 42
+
+target new hazard "failure case: A rising while B falls in the same tick gives a 2-tick glitch"
+target hazard do at 2 use @LB
+target hazard do at 10 use @LA
+target hazard do at 10 use @LB
+target hazard expect @OUT power=0 during 0..11
+target hazard expect @OUT power=15 during 12..13
+target hazard expect @OUT power=0 during 14..30
+
+check

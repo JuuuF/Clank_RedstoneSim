@@ -1,0 +1,52 @@
+# Circuit: AND gate (three torches). Contract: doc/redstone/circuits.md, "AND gate".
+#
+# Module (box 0 1 0 .. 3 2 2, inputs west, output east at y=2):
+#   @A     0 1 0  input block A: power it (attach a lever or button on its west face, or
+#                 point a repeater, comparator or wire into it from the west)
+#   @B     0 1 2  input block B: the same
+#   @NAND  1 2 1  wire on top: on (14) unless both inputs are on: a NAND output
+#   @OUT   3 2 1  wall torch on the block 2 2 1: on while A and B are on
+# Inside: torches on top of A and B (not A, not B), wire 0 2 1 and 1 2 1 joining them
+# (on stones 0 1 1 and 1 1 1) into the block 2 2 1.
+# Test harness: levers @LA, @LB on the input blocks' west faces.
+#   redsim-cli and_gate.redsim.json < examples/circuits/and_gate.cli.txt
+new size 16 force
+note "AND gate: @OUT (torch, y=2) is on while blocks @A and @B are both powered; 4 ticks each way"
+fill 0 1 0 0 1 2 stone
+place 0 2 0 redstone_torch
+place 0 2 2 redstone_torch
+place 1 1 1 stone
+place 0 2 1 redstone_wire
+place 1 2 1 redstone_wire
+place 2 2 1 stone
+place 3 2 1 redstone_wall_torch facing=east
+label A 0 1 0 "input block A"
+label B 0 1 2 "input block B"
+label NAND 1 2 1 "NAND output (wire)"
+label OUT 3 2 1 "output: wall torch"
+group and 0 1 0 3 2 2 in @A A in @B B out @OUT OUT out @NAND NAND
+prefab save and_gate 0 1 0 3 2 2
+# harness
+place -1 1 0 lever face=wall facing=west
+place -1 1 2 lever face=wall facing=west
+label LA -1 1 0 "test lever A"
+label LB -1 1 2 "test lever B"
+settle
+
+target new truth "OUT = A and B; NAND = not (A and B)"
+target truth truth @LA @LB -> @OUT @NAND rows 00:01 01:01 10:01 11:10
+
+target new timing "4 ticks on and off from either input (NAND: 2); no glitch when the inputs swap"
+target timing do at 2 use @LA
+target timing do at 10 use @LB
+target timing do at 20 use @LA
+target timing do at 30 use @LA
+target timing do at 30 use @LB
+target timing expect @OUT lit=false at 13
+target timing expect @OUT lit=true during 14..23
+target timing expect @OUT lit=false during 24..40
+target timing expect @NAND power=14 at 11
+target timing expect @NAND power=0 during 12..21
+target timing expect @NAND power=14 during 22..40
+
+check
