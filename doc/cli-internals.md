@@ -168,11 +168,14 @@ Both read the simulation trace (`redsim.sim.trace`: one record per block change,
 update, scheduled tick, block event and engine step, each with a `parent` record) through
 `redsim.sim.causes`. `why` (`causes.why`) walks from the block's last change back along
 `parent` links; where a link ends at an engine step, `_origin` finds the record that
-queued it (the `schedule_tick` for a scheduled tick, the queued block event), so the
-chain crosses ticks. `effects` (`causes.effects`) does the same forwards: starting from
+queued it (the `schedule_tick` for a scheduled tick, the queued block event, and for a
+moving piston's block-entity tick the change that placed the moving piston), so the
+chain crosses ticks and piston movements. `effects` (`causes.effects`) does the same forwards: starting from
 the change it collects every later record whose parent is already collected, every
 scheduled tick and block event step that a collected record queued (matched by position,
-trigger tick and sub-tick, or position and event numbers), and neighbor updates sent in
+trigger tick and sub-tick, or position and event numbers), the block-entity ticks of
+moving pistons a collected change placed (until that moving piston is gone), and
+neighbor updates sent in
 the same engine step from the position of a collected change, or from a position next to
 it that names the changed block as the update's source. Both cases are blocks that change
 first and update afterwards, so the updates are not child records of the change: wire

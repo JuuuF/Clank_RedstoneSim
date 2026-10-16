@@ -138,3 +138,25 @@ def test_effects_follow_a_change_forwards() -> None:
     assert found[0] == ((1, 1, 0), "redstone wall torch: lit true → false")
     assert ((2, 1, 0), "redstone lamp: lit true → false") in found  # 4 ticks after the torch
     assert all(r.game_time >= press.game_time for r in effects(trace, press))
+
+
+def test_chains_cross_a_moving_piston() -> None:
+    """The pushed block arrives in the moving piston's block-entity tick; that tick goes
+    back to the change that placed the moving piston."""
+    doc = Document.new_flat()
+    doc.setblock((0, 1, 0), P("sticky_piston[facing=east]"))
+    doc.setblock((1, 1, 0), P("stone"))
+    doc.setblock((-1, 1, 0), P("lever[face=floor]"))
+    doc.run_ticks(2)
+    doc.use((-1, 1, 0))
+    doc.run_ticks(6)
+    texts = [c.text for c in why(doc.level.trace, (2, 1, 0))]
+    assert texts[0] == "moving piston → stone"
+    assert texts[1:3] == ["block entity tick", "moving piston placed"]
+    assert "edit or player action: use" in texts
+    trace = doc.level.trace
+    lever = last_change(trace, (-1, 1, 0))
+    assert lever is not None
+    found = [(r.pos, describe(r)) for r in effects(trace, lever)]
+    assert ((2, 1, 0), "moving piston → stone") in found
+    assert ((1, 1, 0), "moving piston → piston head") in found

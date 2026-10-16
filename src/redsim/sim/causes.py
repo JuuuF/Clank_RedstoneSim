@@ -132,17 +132,27 @@ def last_change(trace: Trace, pos: Pos, before: int | None = None) -> TraceRecor
     return None
 
 
+MOVING_PISTON = "minecraft:moving_piston"
+
+
 def _origin(trace: Trace, step: TraceRecord) -> TraceRecord | None:
-    """What led to a step: the scheduling of its tick or the queuing of its event."""
+    """What led to a step: the scheduling of its tick, the queuing of its event, or for
+    a moving piston's block-entity tick, the change that put the moving piston there (it
+    only exists because a piston started moving; other block entities, like hoppers,
+    tick on their own and have no origin)."""
     d = step.detail
     kind = d.get("kind")
-    if kind not in ("scheduled_tick", "block_event"):
+    if kind not in ("scheduled_tick", "block_event", "block_entity"):
         return None
     end = step.id - trace.base_id
     for record in reversed(trace.records[: max(0, end)]):
         if record.pos != step.pos:
             continue
         r = record.detail
+        if kind == "block_entity":
+            if record.kind == tr.SET_BLOCK and r.get("old") != r.get("new"):
+                return record if str(r.get("new")).startswith(MOVING_PISTON) else None
+            continue
         if (
             kind == "scheduled_tick"
             and record.kind == tr.SCHEDULE_TICK
@@ -284,7 +294,8 @@ MAX_EFFECTS = 200
 def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list[TraceRecord]:
     """The block changes that ``record`` (a block change) caused, oldest first: through
     the updates it sent, the scheduled ticks and block events those queued (in later
-    ticks too), and their own updates — ``chain`` read forwards. Neighbor updates sent in
+    ticks too), the block-entity ticks of moving pistons it placed, and their own updates
+    — ``chain`` read forwards. Neighbor updates sent in
     the same engine step from the position of a caused change, or from next to it naming
     the changed block as their source, count as caused too (blocks that change first and
     update around themselves afterwards, see ``_source_change``)."""
@@ -295,9 +306,13 @@ def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list
     }
     scheduled: set[tuple[Any, Any, Any]] = set()
     queued: set[tuple[Any, Any, Any]] = set()
+    #: Positions of moving pistons a caused change placed (their block entity ticks).
+    moving: set[Any] = set()
     out: list[TraceRecord] = []
     for r in trace.after(record.id):
         d = r.detail
+        if r.kind == tr.SET_BLOCK and r.pos in moving and d.get("old") != d.get("new"):
+            moving.discard(r.pos)  # the moving piston is gone (or replaced)
         inside = r.parent in caused
         if not inside and r.kind == tr.NEIGHBOR_UPDATE and d.get("source_pos") is not None:
             x, y, z = d["source_pos"]
@@ -312,12 +327,16 @@ def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list
                 inside = (r.pos, r.game_time, d.get("sub_tick")) in scheduled
             elif kind == "block_event":
                 inside = (r.pos, d.get("b0"), d.get("b1")) in queued
+            elif kind == "block_entity":
+                inside = r.pos in moving
         if not inside:
             continue
         caused.add(r.id)
         if r.kind == tr.SET_BLOCK and d.get("old") != d.get("new"):
             out.append(r)
             changed[(r.step, r.pos)] = _block_name(d.get("new"))
+            if str(d.get("new")).startswith(MOVING_PISTON):
+                moving.add(r.pos)
             if len(out) >= limit:
                 break
         elif r.kind == tr.SCHEDULE_TICK and d.get("accepted"):
