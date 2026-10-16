@@ -40,7 +40,7 @@ with the record that answered it.
    - [x] hopper clock (long periods, stop input)
    - [x] analog adder (three subtracting comparators)
    - [ ] signal strength decoder (1-of-16), multiplexer
-5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [ ] a flush door, a timed door (monostable + door).
+5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a flush door.
 
 ## Open questions
 

@@ -38,7 +38,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 |---|---|
 | a button that toggles something (lever-like) | [[#T flip-flop]] ([[#Toggle door]] shows it wired) |
 | on for a fixed time after a press | [[#Monostable]] (any length), a stone/oak button (20/30 ticks) |
-| on while things keep happening, off a while after the last one | [[#Fade timer]] (retriggerable) |
+| on while things keep happening, off a while after the last one | [[#Fade timer]] (retriggerable); a door that way: [[#Timed door]] |
 | a short pulse from a long signal | [[#Rising-edge detector]] / [[#Falling-edge detector]] / [[#Both-edge detector]] |
 | remember set/reset | [[#RS latch]]; sample-and-hold: [[#D latch]] |
 | a repeating signal | [[#Clock]] (2–20 ticks period, enable), [[#Hopper clock]] (long), [[#Observer clock]] (6, free) |
@@ -94,6 +94,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Flying machine]] | moves itself 1 block / 10 ticks, either way, until blocked | 5×2×1 | — | `flying_machine` |
 | [[#Double piston extender]] | pushes a block 2 out and brings it back | 11×2×10 | out 10, home 24 | `double_piston_extender` |
 | [[#Item sorter]] | takes one item type out of a hopper line | 7×3×4 | — | `item_sorter` |
+| [[#Timed door]] | two buttons; closes ~5 s after the last press | 12×2×10 | open 18, close 102 | `timed_door` |
 
 ## Gates
 
@@ -741,6 +742,25 @@ bottom hopper drain every extra item into a chest (here a barrel).
   there are no renamed items, so the filler is a stack-1 item instead of the usual
   renamed ones, which changes the counts (classic sorters use 41 + four renamed items).
 
+### Timed door
+
+The worked requirement of [[workflow]]: either of two buttons opens the [[#2x2 piston
+door]]; it closes about 5 s after the last press. A [[#Fade timer]] (retriggerable)
+plus a 24-tick off-delay drive the door bus. `timed_door.cli.txt` (lowest corner −2 1 0
+in the script). **Verified.**
+
+| Port | Script position | Kind |
+|---|---|---|
+| B1, B2 | −2 1 10, −2 1 4 | floor buttons beside the input wire (x = −1) |
+| DOOR | 4..5 1..2 0 | the door cells |
+
+- **Behavior:** a press opens the door after **18 ticks**; closing starts **102 ticks
+  after the last press** (solid at 104). A press while open (either button) restarts the
+  time (tested: presses at 2 and 60 → open until 161). Reopens normally after closing.
+- **Bugs found while building it** (see [[workflow]]): a tap on a wire that joined the
+  door bus let the bus feed itself back (door never closed); a two-timer cascade closed
+  after 134 ticks. Both are composition rules now.
+
 ## Composition rules
 
 To be filled as primitives are combined: how far apart modules must be, which outputs
@@ -765,6 +785,9 @@ may drive which inputs, timing budgets. Known so far:
 - **Do not put components in a wire line** you want to stay one net: torches, repeaters
   and comparators split it (the combination lock's bus).
 - **Mind wire length:** 15 wires from a 15 source; put a repeater right before long buses.
+- **Tap a signal before it joins a shared wire**, through a repeater: a tap on a wire
+  that also feeds a bus receives the bus's power too (the timed door's first build
+  latched itself on).
 - **Check what else an input powers:** a block powered to drive one component powers
   every component touching it (the first piston door: the torch's input block also
   powered a piston). Keep input blocks away from components they must not drive.

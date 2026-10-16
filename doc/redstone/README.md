@@ -18,6 +18,7 @@ then pick building blocks from [[circuits]].
 | [[signals]] | How power travels: sources, strong and weak power, wire, conductors, what activates components |
 | [[components]] | Per component: inputs, outputs, state, timing, edge cases (rules extracted from the records) |
 | [[circuits]] | The circuit library: validated primitives with their contracts (inputs, outputs, latency, reset, failure cases) |
+| [[workflow]] | From a natural-language requirement to a verified contraption (worked example) |
 | [[backlog]] | Open questions, hypotheses, the research roadmap |
 | `records/R-NNN-*.md` | One record per experiment: question, hypothesis, setup, observations, conclusion ([[#Experiment records]]) |
 
