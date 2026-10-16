@@ -625,6 +625,9 @@ may drive which inputs, timing budgets. Known so far:
 - **Check what else an input powers:** a block powered to drive one component powers
   every component touching it (the first piston door: the torch's input block also
   powered a piston). Keep input blocks away from components they must not drive.
+- **Never rely on the order in which one wire change reaches several components**
+  (pistons racing, ties between equal-priority ticks): it depends on the position of the
+  build ([[R-017-wire-order]]). Give the paths different delays instead.
 - **Balance path delays** into any gate whose inputs may change in the same tick: an
   input that arrives 2 ticks early makes a 2-tick glitch (a false 1 or a dropout). Add
   delay-1 repeaters to the faster paths ([[R-010-hazards]]).

@@ -1,0 +1,99 @@
+# R-017: races decided by wire update order depend on where the build stands (doc/redstone/records/R-017-wire-order.md)
+#
+# Six copies of one build at different positions: two pistons facing each other across
+# a cell M (the west one pushing a stone, the east one a wool block), each standing on a
+# stone that one wire network powers from a single lever; both get power from the same
+# wire change, so their block events are queued in the order the wire's updates reach
+# them. The copies differ only in where they are.
+#   redsim-cli r017.redsim.json < experiments/redstone/R-017-wire-order.cli.txt
+new size 112 force
+note "R-017: two pistons fed by one wire race for a cell; the winner depends on the build's position (Java hash order of wire updates)"
+place -42 1 -26 stone
+place -38 1 -26 stone
+place -42 2 -26 piston facing=east
+place -38 2 -26 piston facing=west
+set -41 2 -26 stone
+set -39 2 -26 white_wool
+place -42 1 -25 redstone_wire
+place -38 1 -25 redstone_wire
+line -42 1 -24 to -38 1 -24 redstone_wire
+place -40 1 -23 lever face=floor
+label L0 -40 1 -23 "lever of copy 0 (-40, -26)"
+label M0 -40 2 -26 "the contested cell of copy 0"
+place -26 1 -3 stone
+place -22 1 -3 stone
+place -26 2 -3 piston facing=east
+place -22 2 -3 piston facing=west
+set -25 2 -3 stone
+set -23 2 -3 white_wool
+place -26 1 -2 redstone_wire
+place -22 1 -2 redstone_wire
+line -26 1 -1 to -22 1 -1 redstone_wire
+place -24 1 0 lever face=floor
+label L1 -24 1 0 "lever of copy 1 (-24, -3)"
+label M1 -24 2 -3 "the contested cell of copy 1"
+place -18 1 -2 stone
+place -14 1 -2 stone
+place -18 2 -2 piston facing=east
+place -14 2 -2 piston facing=west
+set -17 2 -2 stone
+set -15 2 -2 white_wool
+place -18 1 -1 redstone_wire
+place -14 1 -1 redstone_wire
+line -18 1 0 to -14 1 0 redstone_wire
+place -16 1 1 lever face=floor
+label L2 -16 1 1 "lever of copy 2 (-16, -2)"
+label M2 -16 2 -2 "the contested cell of copy 2"
+place -2 1 26 stone
+place 2 1 26 stone
+place -2 2 26 piston facing=east
+place 2 2 26 piston facing=west
+set -1 2 26 stone
+set 1 2 26 white_wool
+place -2 1 27 redstone_wire
+place 2 1 27 redstone_wire
+line -2 1 28 to 2 1 28 redstone_wire
+place 0 1 29 lever face=floor
+label L3 0 1 29 "lever of copy 3 (0, 26)"
+label M3 0 2 26 "the contested cell of copy 3"
+place 22 1 -26 stone
+place 26 1 -26 stone
+place 22 2 -26 piston facing=east
+place 26 2 -26 piston facing=west
+set 23 2 -26 stone
+set 25 2 -26 white_wool
+place 22 1 -25 redstone_wire
+place 26 1 -25 redstone_wire
+line 22 1 -24 to 26 1 -24 redstone_wire
+place 24 1 -23 lever face=floor
+label L4 24 1 -23 "lever of copy 4 (24, -26)"
+label M4 24 2 -26 "the contested cell of copy 4"
+place 30 1 26 stone
+place 34 1 26 stone
+place 30 2 26 piston facing=east
+place 34 2 26 piston facing=west
+set 31 2 26 stone
+set 33 2 26 white_wool
+place 30 1 27 redstone_wire
+place 34 1 27 redstone_wire
+line 30 1 28 to 34 1 28 redstone_wire
+place 32 1 29 lever face=floor
+label L5 32 1 29 "lever of copy 5 (32, 26)"
+label M5 32 2 26 "the contested cell of copy 5"
+settle
+
+target new race "east piston (wool) wins where the wire bus row is at z < 0, west piston (stone) where it is at z >= 0"
+target race do at 2 use @L0
+target race do at 2 use @L1
+target race do at 2 use @L2
+target race do at 2 use @L3
+target race do at 2 use @L4
+target race do at 2 use @L5
+target race expect @M0 block=white_wool during 5..20
+target race expect @M1 block=white_wool during 5..20
+target race expect @M2 block=stone during 5..20
+target race expect @M3 block=stone during 5..20
+target race expect @M4 block=white_wool during 5..20
+target race expect @M5 block=stone during 5..20
+
+check

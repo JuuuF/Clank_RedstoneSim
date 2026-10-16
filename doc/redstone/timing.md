@@ -82,7 +82,9 @@ same tick run by priority — repeater −3 (front is a diode not facing back), 
 off), −1 (turning on); comparator −1 (front is a diode not facing back) or 0; torch,
 observer, lamp, buttons 0 — then in the order they were scheduled. Then block events
 (pistons) in the order queued: two pistons pushing into one cell in the same tick, the
-one powered first wins and the other does not move.
+one powered first wins and the other does not move. **Several components fed by one
+wire change** get their updates in a coordinate-dependent order (Java hash order): the
+same build can race differently when moved ([[R-017-wire-order]]); never rely on it.
 
 **Design rules:**
 
