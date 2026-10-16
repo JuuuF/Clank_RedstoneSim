@@ -290,7 +290,7 @@ def inspect(session: Session, args: Args) -> Output:
 @command(
     "why",
     group="inspect",
-    usage="why POS",
+    usage="why POS [max N]",
     summary="Why did this block last change? The chain of causes, back to its origin.",
     help="""
     Finds the last change of the block at POS (up to the view tick) and follows its causes
@@ -298,26 +298,37 @@ def inspect(session: Session, args: Args) -> Output:
     the scheduled tick or block event behind that, back across ticks to the edit, pulse or
     build that started it. For a piston that extended it also says where its power came
     from (quasi-connectivity included) and why that is on. Newest first; each line shows
-    the tick and position. Use `at T why POS` to ask about an earlier moment.
+    the tick and position. Use `at T why POS` to ask about an earlier moment. The chain
+    shows at most N links (default 60); a long one (a signal through many repeaters)
+    ends with a line saying it goes on: ask `why` about the block it stopped at, or give
+    a larger N.
     """,
-    examples=("why @OUT", "at 9 why 3 1 0"),
+    examples=("why @OUT", "at 9 why 3 1 0", "why @END max 400"),
     kind="view",
-    data='{"pos", "causes": [{"tick", "pos", "text", "branch"}], "tick"}',
+    data='{"pos", "causes": [{"tick", "pos", "text", "branch"}], "complete", "tick"}',
 )
 def why(session: Session, args: Args) -> Output:
+    from redsim.sim.causes import MAX_LINKS
     from redsim.sim.causes import why as find_causes
 
     pos = args.pos()
+    limit = args.option_int("max", MAX_LINKS)
     args.done()
     doc = session.doc
     base = doc.history.base_time
-    causes = find_causes(doc.level.trace, pos)
+    view = session.view_now()
+    if doc.can_edit:
+        doc.trace_through(doc.tick)  # a trace without gaps back to the build
+    causes = find_causes(doc.level.trace, pos, limit=max(2, limit))
+    session.goto_view(view)
+    complete = sum(1 for c in causes if not c.branch) < max(2, limit)
     out = Output()
     if not causes:
         out.add(f"{named(doc, pos)} has not changed since the build (up to {tick_line(session)})")
-        out.data = {"pos": list(pos), "causes": [], **view_data(session)}
+        out.data = {"pos": list(pos), "causes": [], "complete": True, **view_data(session)}
         return out
     first = causes[0]
+    main = [c for c in causes if not c.branch]
     out.add(f"{named(doc, pos)} last changed at tick {first.tick - base}: {first.text}")
     branch_shown = False
     for cause in causes[1:]:
@@ -326,8 +337,12 @@ def why(session: Session, args: Args) -> Output:
             branch_shown = True
         where = name_of(doc, cause.pos) if cause.pos is not None else "-"
         out.add(f"  ← tick {cause.tick - base:<4} {where:<12} {cause.text}")
+        if not complete and cause is main[-1]:
+            out.add(f"  … the chain goes on before this (shown: {len(main)} links; more "
+                    "with max N, or ask why about that block)")  # fmt: skip
     out.data = {
         "pos": list(pos),
+        "complete": complete,
         **view_data(session),
         "causes": [
             {
@@ -373,7 +388,7 @@ def effects(session: Session, args: Args) -> Output:
     base = doc.history.base_time
     view = session.view_now()
     upto = doc.tick
-    session.goto(doc.end_tick)  # the trace of the whole history
+    doc.trace_through(doc.end_tick)  # the trace of the whole history, without gaps
     trace = doc.level.trace
     boundary = next((r.id for r in trace.records if r.game_time > upto + base), None)
     change = last_change(trace, pos, before=boundary)

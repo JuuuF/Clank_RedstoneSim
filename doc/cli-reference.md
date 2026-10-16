@@ -614,7 +614,7 @@ JSON `data`: {"tick", "end_tick", "inside_tick", "values"}
 
 `step [N] | step back [N]`
 
-Run N single engine steps (inside a tick) and show what each did.
+Run N single engine steps (inside a tick) and show what each did, or go back.
 
 A game tick is a series of steps (doc/mechanics/tick-scheduling.md): the tick start,
 each scheduled tick (in priority order), each block event, each entity, each block
@@ -909,7 +909,7 @@ JSON `data`: {"blocks": [{"pos", "state", "label", "signals": {side: {"in", "in_
 
 ### `why`
 
-`why POS`
+`why POS [max N]`
 
 Why did this block last change? The chain of causes, back to its origin.
 
@@ -918,16 +918,20 @@ backwards: the update that made it change, the block change that sent that updat
 the scheduled tick or block event behind that, back across ticks to the edit, pulse or
 build that started it. For a piston that extended it also says where its power came
 from (quasi-connectivity included) and why that is on. Newest first; each line shows
-the tick and position. Use `at T why POS` to ask about an earlier moment.
+the tick and position. Use `at T why POS` to ask about an earlier moment. The chain
+shows at most N links (default 60); a long one (a signal through many repeaters)
+ends with a line saying it goes on: ask `why` about the block it stopped at, or give
+a larger N.
 
 Examples:
 
 ```
 why @OUT
 at 9 why 3 1 0
+why @END max 400
 ```
 
-JSON `data`: {"pos", "causes": [{"tick", "pos", "text", "branch"}], "tick"}
+JSON `data`: {"pos", "causes": [{"tick", "pos", "text", "branch"}], "complete", "tick"}
 
 ### `effects`
 

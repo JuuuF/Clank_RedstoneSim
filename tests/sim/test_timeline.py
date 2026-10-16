@@ -64,6 +64,25 @@ def test_replay_after_rewind_produces_the_same_trace() -> None:
     assert [(r.step, r.summary()) for r in trace.records] == original
 
 
+def test_a_traced_seek_leaves_no_gap_in_the_trace() -> None:
+    """``seek`` jumps to a keyframe when the target is far ahead (the steps in between are
+    not traced); ``seek_traced`` replays them, so cause chains are complete."""
+    timeline, scenario = scenario_timeline("piston_door", 5)
+    record_run(timeline, scenario)
+    end = timeline.end
+    trace = timeline.engine.level.trace
+    original = [(r.step, r.summary()) for r in trace.records]
+    timeline.seek(timeline.start + 1)
+    timeline.seek(end)  # a jump: the trace now has a gap
+    assert {r.step for r in trace.records} != {step for step, _ in original}
+    assert not timeline._trace_complete(end)
+    timeline.seek_traced(end)
+    assert [(r.step, r.summary()) for r in trace.records] == original
+    assert timeline._trace_complete(end)
+    timeline.seek_traced(end // 2)  # backwards keeps what is before the restored keyframe
+    assert timeline._trace_complete(end // 2)
+
+
 def test_editing_after_rewind_truncates_the_future() -> None:
     timeline, scenario = scenario_timeline("lamp_redstone_block", 200)
     record_run(timeline, scenario)

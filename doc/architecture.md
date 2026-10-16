@@ -179,7 +179,12 @@ applied at each step index, and the indices of tick starts.
 - `seek(i)` restores the nearest keyframe ≤ i and re-executes. `step_back()`, `tick_back()`
   (previous tick boundary), and undo/redo targets (just before / after an action) build on it.
 - On rewind the trace is truncated to steps before the target. Replay regenerates identical
-  records with identical ids.
+  records with identical ids. A forward `seek` of more than `keyframe_interval` steps
+  jumps to a keyframe and does not trace the steps it skips, so the trace then has a gap;
+  `seek_traced(i)` replays without jumping (and from the start if the kept records already
+  have a gap), for cause chains (`Document.trace_through`, used by `redsim-cli why` and
+  `effects`; the editor's Why? panel uses the trace as it is, which is complete after
+  playing or stepping and may stop early after a long scrub).
 
 Tested: seeking to random points reproduces the recorded world state exactly (keyframe
 intervals 1, 7, 200), and replay after rewind reproduces the trace.
@@ -210,10 +215,12 @@ its update.
 
 `sim/causes.py` reads a block's last change back to its origin (Diagnostics → Why?):
 parent links within a step; a scheduled tick or block event continues at the record that
-scheduled or queued it (an earlier step or tick); a neighbor update from a block that
-changed earlier in the same step (wire sets its power, then updates around it) continues
-at that change. The chain ends at an action (edit, lever, pulse) or where the kept trace
-ends. `editor/heat.py` computes the signal heat view (sources with their output, blocks
+scheduled or queued it (an earlier step or tick), a moving piston's block-entity tick at
+the change that placed the moving piston; a neighbor update from a block that changed
+earlier in the same step continues at that change (wire sets its power, then updates
+around it; buttons, levers, torches, repeaters and observers change, then update around
+the block next to them). The chain ends at an action (edit, lever, pulse) or where the
+kept trace ends. `effects` reads the same links forwards (`redsim-cli effects`). `editor/heat.py` computes the signal heat view (sources with their output, blocks
 around them and around powered conductors with the strongest signal they receive).
 
 ## Verification architecture

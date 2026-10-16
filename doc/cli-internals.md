@@ -182,8 +182,10 @@ first and update afterwards, so the updates are not child records of the change:
 sets its power, then updates around itself; buttons, levers, torches, repeaters and
 observers change, then update around the block they are attached to or point into
 (`_source_change` applies the same rule backwards for `why`). `effects` merges a block's
-changes within one tick into one line. The commands first simulate the whole history
-(`goto(end_tick)`) so the trace is complete, and return to the view afterwards.
+changes within one tick into one line. `effects` first goes to the end of the history
+and `why` to the view with `Document.trace_through` (`Timeline.seek_traced`), which
+replays every step instead of jumping to keyframes, so the trace has no gap; both return
+to the view afterwards.
 
 ## 9. Tests and documentation
 

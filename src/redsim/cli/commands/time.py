@@ -155,7 +155,7 @@ def back(session: Session, args: Args) -> Output:
     "step",
     group="time",
     usage="step [N] | step back [N]",
-    summary="Run N single engine steps (inside a tick) and show what each did.",
+    summary="Run N single engine steps (inside a tick) and show what each did, or go back.",
     help="""
     A game tick is a series of steps (doc/mechanics/tick-scheduling.md): the tick start,
     each scheduled tick (in priority order), each block event, each entity, each block

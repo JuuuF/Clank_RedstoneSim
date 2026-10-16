@@ -297,6 +297,37 @@ class Timeline:
             else:
                 self.engine.step()
 
+    def seek_traced(self, target: int) -> None:
+        """Like ``seek``, but afterwards the trace holds every step from the start of the
+        history to ``target``: ``seek`` jumps to the nearest keyframe and skips the steps in
+        between, which leaves a gap in the trace (cause chains then stop at it). Replays
+        from the start if the kept records have a gap, and forward in keyframe-sized pieces
+        so no jump happens. Costs a replay; used by ``why``/``effects`` in redsim-cli."""
+        target = max(self.start, min(target, self.end))
+        if not self._trace_complete(min(target, self.position)):
+            self._restore(self.start)
+        elif target < self.position:
+            self.seek(target)  # back: the records before the keyframe it restores are kept
+        while self.position < target:
+            self.seek(min(target, self.position + self.keyframe_interval))
+
+    def _trace_complete(self, upto: int) -> bool:
+        """Whether the trace has a record of every step from the start to ``upto`` (or of
+        every step since its oldest record, when it was trimmed for size)."""
+        trace = self.engine.level.trace
+        if not trace.enabled:
+            return True
+        expected = self.start if trace.base_id == 0 else None
+        for record in trace.records:
+            if record.kind != "step":
+                continue
+            if record.step >= upto:
+                return expected is None or expected >= upto
+            if expected is not None and record.step != expected:
+                return False
+            expected = record.step + 1
+        return expected is not None and expected >= upto
+
     def _restore(self, index: int) -> None:
         self.engine.restore(self.keyframes[index])
         self.engine.level.trace.truncate_from_step(index)

@@ -362,6 +362,15 @@ class HistoryOps:
             for stale in [t for t in values if t > tick]:
                 del values[stale]
 
+    def trace_through(self, tick: int) -> None:
+        """Go to the boundary after ``tick`` (at most the recorded end) with a trace of
+        every step from the start (``Timeline.seek_traced``): for cause chains."""
+        view = cast("Document", self)
+        known = [t for t in view.tick_steps if t <= tick]
+        if known:
+            view.history.seek_traced(view.tick_steps[max(known)])
+            view._changed()
+
     def seek_tick(self, tick: int) -> bool:
         """Scrub to a tick boundary of the recorded history (after that moment's edits)."""
         view = cast("Document", self)

@@ -456,7 +456,9 @@ from (including quasi-connectivity). Newest first:
 
 `at T why POS` asks about an earlier moment. When something does *not* happen, `why` the
 block that should have caused it, and `inspect` the block that should have reacted (does
-it receive anything? from which side?).
+it receive anything? from which side?). A chain shows at most 60 links (`why POS max N`
+for more); a longer one, a signal through many repeaters, ends with `… the chain goes on
+before this`.
 
 `effects POS` is the same chain read forwards: where a signal goes. It takes the block's
 last change (up to the view tick) and lists every block change that followed from it,

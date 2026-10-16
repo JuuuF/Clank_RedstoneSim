@@ -344,3 +344,15 @@ def test_comparator_readings_in_inspect_and_targets(rs: Run) -> None:
     assert "side inputs from the north and south" in rs.batch(
         "place 1 1 0 comparator out=east; inspect 1 1 0"
     )
+
+
+def test_why_and_effects_over_a_long_history(rs: Run) -> None:
+    """Longer than the keyframe interval: seeking jumps, the commands replay the trace."""
+    rs.batch("place -7 1 0 lever face=floor; line -6 1 0 to 6 1 0 repeater out=east delay=4")
+    rs.batch("place 7 1 0 redstone_lamp; label IN -7 1 0; label END 7 1 0; at 2 use @IN; run 150")
+    out = rs("at", "2", "effects", "@IN")
+    assert "it caused 14 changes" in out and "@END" in out
+    out = rs("why", "@END", "max", "6")
+    assert "the chain goes on before this" in out
+    out = rs("why", "@END", "max", "500")
+    assert "edit or player action: use" in out and "goes on" not in out
