@@ -1,0 +1,35 @@
+# Circuit: observer clock (two observers watching each other). Contract: doc/redstone/circuits.md, "Observer clock".
+#
+# Module (box 0 1 0 .. 1 1 0):
+#   @OUT  0 1 0  observer watching east (facing=east), output west into -1 1 0
+#   @OUT2 1 1 0  observer watching west, output east into 2 1 0
+# Each observer pulses 2 ticks every 6 ticks; @OUT2 runs 2 ticks after @OUT. It starts
+# by itself (placing the pair is the first change) and never stops; to stop it, move or
+# break one observer (or build it with a piston that can push one away).
+# Test harness: repeaters @P1 and @P2 reading the two outputs.
+#   redsim-cli observer_clock.redsim.json < examples/circuits/observer_clock.cli.txt
+new size 16 force
+note "Observer clock: @OUT pulses 2 ticks every 6 ticks, free-running; @OUT2 the same 2 ticks later"
+place 0 1 0 observer facing=east
+place 1 1 0 observer facing=west
+label OUT 0 1 0 "observer, output west"
+label OUT2 1 1 0 "observer, output east"
+group observer_clock 0 1 0 1 1 0 out @OUT OUT out @OUT2 OUT2
+prefab save observer_clock 0 1 0 1 1 0
+# harness
+place -1 1 0 repeater out=west
+place 2 1 0 repeater out=east
+label P1 -1 1 0 "test repeater after @OUT"
+label P2 2 1 0 "test repeater after @OUT2"
+
+target new run "2 ticks on, 4 off, forever; the second observer 2 ticks later"
+target run expect @OUT powered=true during 2..3
+target run expect @OUT powered=false during 4..7
+target run expect @OUT powered=true during 8..9
+target run expect @OUT powered=true during 50..51
+target run expect @OUT powered=false during 52..55
+target run expect @OUT2 powered=true during 4..5
+target run expect @OUT2 powered=false during 6..9
+target run expect @P1 powered=true during 4..5
+
+check

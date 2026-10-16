@@ -1,0 +1,35 @@
+# Circuit: T flip-flop (copper bulb). Contract: doc/redstone/circuits.md, "T flip-flop".
+#
+# Module (box 0 1 0 .. 1 1 0, output east):
+#   @T    0 1 0  copper bulb: toggles on every rising edge of its power (lever, wire,
+#                repeater or powered block next to it)
+#   @Q    1 1 0  comparator out=east reading the bulb: 15 while it is lit
+# Test harness: lever @L west of the bulb.
+#   redsim-cli t_flipflop.redsim.json < examples/circuits/t_flipflop.cli.txt
+new size 16 force
+note "T flip-flop: copper bulb @T toggles on each rising edge; comparator @Q gives 15 while lit (2 ticks later)"
+place 0 1 0 copper_bulb
+place 1 1 0 comparator out=east
+label T 0 1 0 "the copper bulb: power it to toggle"
+label Q 1 1 0 "output: comparator reading the bulb"
+group t_flipflop 0 1 0 1 1 0 in @T T out @Q Q
+prefab save t_flipflop 0 1 0 1 1 0
+# harness
+place -1 1 0 lever face=floor
+label L -1 1 0 "test lever"
+settle
+
+target new toggle "each rising edge toggles Q (2 ticks later); falling edges do nothing; a 1-tick pulse toggles too"
+target toggle do at 2 use @L
+target toggle do at 6 use @L
+target toggle do at 12 use @L
+target toggle do at 13 use @L
+target toggle do at 20 use @L
+target toggle do at 22 use @L
+target toggle expect @T lit=true at 2
+target toggle expect @Q power=0 at 3
+target toggle expect @Q power=15 during 4..13
+target toggle expect @Q power=0 during 14..21
+target toggle expect @Q power=15 during 22..40
+
+check

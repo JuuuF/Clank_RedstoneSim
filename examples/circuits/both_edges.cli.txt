@@ -1,0 +1,44 @@
+# Circuit: both-edge detector (observer). Contract: doc/redstone/circuits.md, "Both-edge detector".
+#
+# Module (box 0 1 0 .. 1 1 0, output east):
+#   @A    0 1 0  input wire: drive it from the west (-1 1 0) (any change of its power fires)
+#   @OUT  1 1 0  observer out=east watching @A: a 2-tick pulse 2 ticks after each change
+# Test harness: lever @L west of @A, a repeater @PROBE reading the observer's output.
+#   redsim-cli both_edges.redsim.json < examples/circuits/both_edges.cli.txt
+new size 16 force
+note "Both-edge detector: observer @OUT pulses 2 ticks, 2 ticks after every change of wire @A"
+place 0 1 0 redstone_wire
+place 1 1 0 observer out=east
+label A 0 1 0 "input: wire"
+label OUT 1 1 0 "output: observer"
+group both_edges 0 1 0 1 1 0 in @A A out @OUT OUT
+prefab save both_edges 0 1 0 1 1 0
+# harness
+place -1 1 0 lever face=floor
+place 2 1 0 repeater out=east
+label L -1 1 0 "test lever"
+label PROBE 2 1 0 "test repeater after the observer"
+settle
+
+target new edges "a 2-tick pulse 2 ticks after A turns on and after it turns off"
+target edges do at 2 use @L
+target edges do at 20 use @L
+target edges expect @OUT powered=false at 3
+target edges expect @OUT powered=true during 4..5
+target edges expect @OUT powered=false during 6..21
+target edges expect @OUT powered=true during 22..23
+target edges expect @OUT powered=false during 24..40
+target edges expect @PROBE powered=true during 6..7
+
+target new merge "changes closer than 4 ticks merge into one pulse; 4 ticks apart give two"
+target merge do at 2 use @L
+target merge do at 3 use @L
+target merge do at 20 use @L
+target merge do at 24 use @L
+target merge expect @OUT powered=true during 4..5
+target merge expect @OUT powered=false during 6..21
+target merge expect @OUT powered=true during 22..23
+target merge expect @OUT powered=false during 24..25
+target merge expect @OUT powered=true during 26..27
+
+check

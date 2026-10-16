@@ -1,0 +1,51 @@
+# Circuit: clock with enable (subtracting comparator + repeater loop). Contract: doc/redstone/circuits.md, "Clock".
+#
+# Module (box 0 1 0 .. 2 1 2, output east):
+#   @EN    0 1 0  enable input: wire into the comparator's rear; drive it from the west
+#   @OUT   1 1 0  comparator out=east, subtract: on 2*d+2 ticks, off 2*d+2 ticks
+#   @DELAY 1 1 1  repeater out=north into the comparator's side; delay d sets the
+#                 period 4*d+4 (d=1: 8, 2: 12, 3: 16, 4: 20)
+# Wires 2 1 0 .. 2 1 2 and 1 1 2 bring the output back to the repeater. No torch, so
+# it never burns out.
+# Test harness: lever @L west of @EN.
+#   redsim-cli clock.redsim.json < examples/circuits/clock.cli.txt
+new size 16 force
+note "Clock: while @EN is on, comparator @OUT is on 4 ticks and off 4 (period 8 = 4*d+4 for @DELAY's delay d)"
+place 0 1 0 redstone_wire
+place 1 1 0 comparator out=east mode=subtract
+line 2 1 0 to 2 1 2 redstone_wire
+place 1 1 2 redstone_wire
+place 1 1 1 repeater out=north delay=1
+label EN 0 1 0 "enable input: wire, driven from the west"
+label OUT 1 1 0 "output: comparator"
+label DELAY 1 1 1 "loop repeater: period 4*delay+4"
+group clock 0 1 0 2 1 2 in @EN EN out @OUT OUT
+prefab save clock 0 1 0 2 1 2
+# harness
+place -1 1 0 lever face=floor
+label L -1 1 0 "test lever: enable"
+settle
+
+target new run "period 8 (4 on, 4 off) from 2 ticks after enable; stops 2 ticks after enable goes off"
+target run do at 2 use @L
+target run do at 30 use @L
+target run expect @OUT power=0 during 0..3
+target run expect @OUT power=15 during 4..7
+target run expect @OUT power=0 during 8..11
+target run expect @OUT power=15 during 12..15
+target run expect @OUT power=0 during 16..19
+target run expect @OUT power=15 during 20..23
+target run expect @OUT power=0 during 24..27
+target run expect @OUT power=15 during 28..31
+target run expect @OUT power=0 during 32..60
+
+target new slow "delay 4 on the loop repeater: period 20 (10 on, 10 off)"
+target slow do use @DELAY
+target slow do use @DELAY
+target slow do use @DELAY
+target slow do at 2 use @L
+target slow expect @OUT power=15 during 4..13
+target slow expect @OUT power=0 during 14..23
+target slow expect @OUT power=15 during 24..33
+
+check

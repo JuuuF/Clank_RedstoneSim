@@ -1,0 +1,44 @@
+# Circuit: falling-edge detector (pulse on A turning off). Contract: doc/redstone/circuits.md, "Falling-edge detector".
+#
+# Module (box 0 1 0 .. 2 1 2, output east):
+#   @A     0 1 0  input wire: drive it from the west (-1 1 0)
+#   @REAR  1 1 0  repeater out=east, delay D = 3: the comparator's rear is A delayed
+#   @OUT   2 1 0  comparator out=east, subtract
+#   @SIDE  2 1 1  repeater out=north, delay 1, into the comparator's side: A
+# Wires 0 1 1, 0 1 2, 1 1 2, 2 1 2 carry A to the side repeater.
+# Test harness: lever @L west of @A.
+#   redsim-cli falling_edge.redsim.json < examples/circuits/falling_edge.cli.txt
+new size 16 force
+note "Falling-edge detector: @OUT pulses 4 ticks (2*D-2) starting 4 ticks after @A turns off (A on for at least 6 ticks)"
+place 0 1 0 redstone_wire
+place 1 1 0 repeater out=east delay=3
+place 2 1 0 comparator out=east mode=subtract
+line 0 1 1 to 0 1 2 redstone_wire
+line 1 1 2 to 2 1 2 redstone_wire
+place 2 1 1 repeater out=north delay=1
+label A 0 1 0 "input: wire, driven from the west"
+label REAR 1 1 0 "rear repeater: delay D (pulse 2*D-2, D >= 3)"
+label OUT 2 1 0 "output: comparator"
+label SIDE 2 1 1 "side repeater, delay 1"
+group falling_edge 0 1 0 2 1 2 in @A A out @OUT OUT
+prefab save falling_edge 0 1 0 2 1 2
+# harness
+place -1 1 0 lever face=floor
+label L -1 1 0 "test lever"
+settle
+
+target new edge "nothing when A turns on; a 4-tick pulse 4 ticks after it turns off"
+target edge do at 2 use @L
+target edge do at 20 use @L
+target edge expect @OUT power=0 during 0..23
+target edge expect @OUT power=15 during 24..27
+target edge expect @OUT power=0 during 28..40
+
+target new short "failure case: an input pulse shorter than 2*D (6 ticks) gives a 6-tick pulse 8 ticks after the rise"
+target short do at 2 use @L
+target short do at 4 use @L
+target short expect @OUT power=0 during 0..9
+target short expect @OUT power=15 during 10..15
+target short expect @OUT power=0 during 16..30
+
+check

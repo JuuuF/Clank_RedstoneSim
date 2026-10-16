@@ -1,0 +1,58 @@
+# Circuit: rising-edge detector (pulse on A turning on). Contract: doc/redstone/circuits.md, "Rising-edge detector".
+#
+# Module (box 0 1 0 .. 1 1 2, output east):
+#   @A    0 1 0  input wire: drive it from the west (-1 1 0)
+#   @OUT  1 1 0  comparator out=east, subtract: rear = A, side = A delayed by @DELAY
+#   @DELAY 1 1 1 repeater out=north into the comparator's side; delay d >= 2 sets the
+#                pulse length 2*d (click it: delay 2 -> 4 ticks, 3 -> 6, 4 -> 8)
+# Wires 0 1 1, 0 1 2, 1 1 2 carry A to the repeater.
+# Test harness: lever @L west of @A.
+#   redsim-cli rising_edge.redsim.json < examples/circuits/rising_edge.cli.txt
+new size 16 force
+note "Rising-edge detector: @OUT pulses 4 ticks (2*delay of @DELAY) starting 2 ticks after @A turns on"
+place 0 1 0 redstone_wire
+place 1 1 0 comparator out=east mode=subtract
+line 0 1 1 to 0 1 2 redstone_wire
+place 1 1 2 redstone_wire
+place 1 1 1 repeater out=north delay=2
+label A 0 1 0 "input: wire, driven from the west"
+label OUT 1 1 0 "output: comparator"
+label DELAY 1 1 1 "side repeater: pulse length = 2 * delay"
+group rising_edge 0 1 0 1 1 2 in @A A out @OUT OUT
+prefab save rising_edge 0 1 0 1 1 2
+# harness
+place -1 1 0 lever face=floor
+label L -1 1 0 "test lever"
+settle
+
+target new edge "a 4-tick pulse 2 ticks after A turns on; nothing when it turns off"
+target edge do at 2 use @L
+target edge do at 20 use @L
+target edge expect @OUT power=0 at 3
+target edge expect @OUT power=15 during 4..7
+target edge expect @OUT power=0 during 8..40
+
+target new short "short inputs: 1 tick is lost, 2 or 3 ticks give 2 or 3, 4 and more give 4"
+target short do at 2 use @L
+target short do at 3 use @L
+target short do at 10 use @L
+target short do at 13 use @L
+target short do at 30 use @L
+target short do at 40 use @L
+target short expect @OUT power=0 during 0..11
+target short expect @OUT power=15 during 12..14
+target short expect @OUT power=0 during 15..31
+target short expect @OUT power=15 during 32..35
+target short expect @OUT power=0 during 36..50
+
+target new retrigger "failure case: A back on within 4 ticks (2*delay) of turning off gives no new pulse"
+target retrigger do at 2 use @L
+target retrigger do at 10 use @L
+target retrigger do at 13 use @L
+target retrigger do at 30 use @L
+target retrigger do at 40 use @L
+target retrigger expect @OUT power=15 during 4..7
+target retrigger expect @OUT power=0 during 8..41
+target retrigger expect @OUT power=15 during 42..45
+
+check

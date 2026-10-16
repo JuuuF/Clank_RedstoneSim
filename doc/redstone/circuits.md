@@ -41,6 +41,14 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#AND gate]] | OUT = A ∧ B (also NAND) | 4×2×3 | 4 / 4 | `and_gate` |
 | [[#NAND gate]] | OUT = ¬(A ∧ B) | 2×2×3 | 2 / 2 | `nand_gate` |
 | [[#Compact AND]] | OUT = A ∧ B with one comparator | 2×1×4 | A 2, B 4 | `and_compact` |
+| [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
+| [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
+| [[#Both-edge detector]] | 2-tick pulse on every change of A | 2×1×1 | 2 | `both_edges` |
+| [[#T flip-flop]] | toggles on each rising edge | 2×1×1 | 2 | `t_flipflop` |
+| [[#RS latch]] | set / reset memory | 3×1×4 | set 4, reset 2 | `rs_latch` |
+| [[#D latch]] | Q follows D, holds while E is on | 2×1×3 | 2 | `d_latch` |
+| [[#Clock]] | period 4d+4 with enable, no burnout | 3×1×3 | 2 from enable | `clock` |
+| [[#Observer clock]] | free-running, 2 on / 4 off | 2×1×1 | — | `observer_clock` |
 
 ## Gates
 
@@ -150,6 +158,154 @@ the comparator's side). `and_compact.cli.txt`. **Verified, with a hazard.**
 - **Constraints:** A's strength passes through: A at strength N gives OUT N (R-005).
 - **Tested:** truth table; A on 2, B on 10 → on 14; B off 20 → off 24; B on 30 → on 34;
   A off 40 → off 42; the glitch above.
+
+## Pulse shapers
+
+### Rising-edge detector
+
+A subtracting comparator: rear = A, side = A delayed by a repeater. While the delayed copy
+has not arrived, the comparator outputs A. `rising_edge.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A | 0 0 0 | wire; drive it from the west |
+| OUT | 1 0 0 | comparator facing east, subtract |
+| DELAY | 1 0 1 | repeater facing north into the comparator's side; delay d ≥ 2 |
+
+- **Behavior:** when A turns on, OUT gives a pulse of **2·d ticks** (4 at the built
+  delay 2) starting **2 ticks** later, with A's strength. Nothing when A turns off.
+- **Tuning:** click DELAY: d = 2, 3, 4 → 4, 6, 8 ticks. d = 1 gives **no pulse** (the side
+  repeater switches in the same tick as the comparator, before it). V for d = 1…4.
+- **Short inputs:** A on for n ticks gives min(n, 2·d); n = 1 is lost (comparator,
+  R-003).
+- **Failure case:** A turning on again less than 2·d ticks after it turned off gives no
+  new pulse (the side repeater fills the gap).
+- **Output** is a circuit-made pulse of 2·d ≥ 4 ticks: torches and comparators see it.
+
+### Falling-edge detector
+
+Rear = A delayed by D (repeater, D = 3), side = A through a delay-1 repeater.
+`falling_edge.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A | 0 0 0 | wire; drive it from the west |
+| REAR | 1 0 0 | repeater facing east, delay D |
+| OUT | 2 0 0 | comparator facing east, subtract |
+| SIDE | 2 0 1 | repeater facing north, delay 1 |
+
+- **Behavior:** when A turns off, OUT gives a pulse of **2·D − 2 ticks** (4 at D = 3)
+  starting **4 ticks** later. Nothing when A turns on. D = 1, 2 give no pulse; D = 4 gives
+  6 ticks.
+- **Failure case:** A on for fewer than 2·D ticks: the rear repeater stretches it, and OUT
+  gives a 6-tick pulse 8 ticks after the rise instead (tested: a 2-tick input).
+- Why the side goes through a repeater: a wire side input loses strength with distance,
+  and the comparator would leak rear − side (3) while A is on (seen in the first build).
+
+### Both-edge detector
+
+An observer watching the input wire. `both_edges.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A | 0 0 0 | wire; drive it from the west |
+| OUT | 1 0 0 | observer watching A, output east |
+
+- **Behavior:** a 2-tick pulse starting 2 ticks after every change of A (on and off; also
+  a change of A's power level).
+- **Merging:** changes less than 4 ticks apart give one pulse; 4 ticks apart give two.
+- **Output** is a circuit-made 2-tick pulse: repeaters, pistons, lamps, bulbs see it,
+  **torches and comparators do not** (R-003); stretch it with a repeater of delay ≥ 2.
+
+## Memory
+
+### T flip-flop
+
+A copper bulb toggles on every rising edge of its power; a comparator reads it.
+`t_flipflop.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| T | 0 0 0 | copper bulb: power it (lever, wire, repeater, powered block) |
+| Q | 1 0 0 | comparator facing east reading the bulb: 15 while lit |
+
+- **Behavior:** each rising edge of T toggles Q; falling edges do nothing.
+- **Latency:** bulb 0, Q 2 ticks.
+- **Pulses:** any pulse toggles it once, even 1 tick long and circuit-made (R-003).
+- **State:** the bulb's `lit`; built unlit. Reset: none (toggle it).
+
+### RS latch
+
+Two torches, each on a block the other's wire powers. `rs_latch.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| R | 0 0 0 | reset input block (power it from the west or north) |
+| Q | 1 0 0 | wall torch facing east: Q (powers 1 0 −1 and the block above) |
+| S | 2 0 3 | set input block (power it from the east or south) |
+| NQ | 1 0 3 | wall torch facing west: ¬Q (powers 1 0 4) |
+
+- **Behavior:** power S → Q on (NQ off after 2, Q on after 4); power R → Q off after 2
+  (NQ on after 4). It holds when both inputs are off. Built reset (Q off).
+- **Pulses:** a 2-tick lever pulse switches it; a 1-tick pulse does not (torch).
+  Circuit-made pulses need 3+ ticks.
+- **Failure case:** S and R both on turn **both** torches off; when they are released
+  the result depends on the order (avoid it).
+
+### D latch
+
+A repeater locked by a second repeater at its side. `d_latch.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| D | 0 0 0 | data: wire, drive it from the west |
+| Q | 1 0 0 | repeater facing east (delay 1) |
+| LOCK | 1 0 1 | repeater facing north into Q's side |
+| E | 1 0 2 | enable: wire, drive it from the south; **on = hold** |
+
+- **Behavior:** E off: Q follows D after 2 ticks. E on: Q is locked 2 ticks later and
+  holds. E off again: Q follows D 4 ticks after E fell.
+- **Setup time:** D must change **at least 1 tick before** E rises to be captured
+  (tested: D at E−1 is captured; D in the same tick as E is not).
+- **Locking:** only repeaters and comparators pointing into a repeater's side lock it
+  (R-004: wire beside it does not).
+
+## Clocks
+
+### Clock
+
+A subtracting comparator whose output loops back through a repeater into its side.
+`clock.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| EN | 0 0 0 | enable: wire into the comparator's rear; drive it from the west |
+| OUT | 1 0 0 | comparator facing east, subtract |
+| DELAY | 1 0 1 | loop repeater facing north; delay d |
+
+- **Behavior:** while EN is on: OUT on 2d+2 ticks, off 2d+2 (period **4d+4**: 8, 12, 16,
+  20), starting 2 ticks after EN. Stops (output 0) 2 ticks after EN goes off.
+- **No burnout:** no torch. The same loop with a torch instead (torch clock) has the same
+  period but burns out at d = 1 (8 turn-offs within 60 ticks; it relights 160 ticks
+  later and burns out again; seen in the clock experiment, R-007 in [[backlog]]).
+- **Tested:** d = 1 (period 8, on at 4..7, 12..15, …; off from 32 when EN falls at 30);
+  d = 4 (period 20).
+
+### Observer clock
+
+Two observers watching each other. `observer_clock.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| OUT | 0 0 0 | observer facing east (watches the other), output west |
+| OUT2 | 1 0 0 | observer facing west, output east |
+
+- **Behavior:** each output is on 2 ticks, off 4 (period **6**), OUT2 2 ticks after OUT.
+  Free-running: no enable.
+- **Starting:** built in a world, it starts by itself; **pasted from the .nbt it does
+  not** (structure files carry no scheduled ticks): break and place one observer again
+  to start it (tested).
+- **Output** is a circuit-made 2-tick pulse (torches and comparators ignore it).
 
 ## Composition rules
 

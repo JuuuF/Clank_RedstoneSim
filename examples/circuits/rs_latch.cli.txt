@@ -1,0 +1,65 @@
+# Circuit: RS NOR latch (two torches). Contract: doc/redstone/circuits.md, "RS latch".
+#
+# Module (box 0 1 0 .. 2 1 3):
+#   @R   0 1 0  reset input block: power it (lever or button on its west face, a
+#               repeater or wire pointing into it from the west or north)
+#   @Q   1 1 0  wall torch on @R facing east: Q (powers 1 1 -1 and the block above it)
+#   @S   2 1 3  set input block: power it (from the east or south)
+#   @NQ  1 1 3  wall torch on @S facing west: not Q (powers 1 1 4)
+# Inside: wire 2 1 0 .. 2 1 2 from Q's torch into @S, wire 0 1 3 .. 0 1 1 from NQ's
+# torch into @R: each torch holds the other off.
+# Built reset (Q off): the reset lever is switched on and off while settling.
+# Test harness: levers @LR (on @R's west face) and @LS (on @S's east face).
+#   redsim-cli rs_latch.redsim.json < examples/circuits/rs_latch.cli.txt
+new size 16 force
+note "RS latch: power @S to set (Q on after 4 ticks), @R to reset (Q off after 2); it holds"
+place 0 1 0 stone
+place 1 1 0 redstone_wall_torch facing=east
+line 2 1 0 to 2 1 2 redstone_wire
+place 2 1 3 stone
+place 1 1 3 redstone_wall_torch facing=west
+line 0 1 3 to 0 1 1 redstone_wire
+label R 0 1 0 "reset input block"
+label Q 1 1 0 "output Q: wall torch"
+label S 2 1 3 "set input block"
+label NQ 1 1 3 "output not Q: wall torch"
+group rs_latch 0 1 0 2 1 3 in @R R in @S S out @Q Q out @NQ NQ
+# harness
+place -1 1 0 lever face=wall facing=west
+place 3 1 3 lever face=wall facing=east
+label LR -1 1 0 "test lever: reset"
+label LS 3 1 3 "test lever: set"
+use @LR
+settle
+use @LR
+settle
+prefab save rs_latch 0 1 0 2 1 3
+
+target new latch "starts reset; S sets Q after 4 ticks, R resets it after 2; both states hold"
+target latch expect @Q lit=false during 0..1
+target latch expect @NQ lit=true during 0..1
+target latch do at 2 use @LS
+target latch do at 8 use @LS
+target latch expect @NQ lit=false at 4
+target latch expect @Q lit=false at 5
+target latch expect @Q lit=true during 6..29
+target latch do at 30 use @LR
+target latch do at 36 use @LR
+target latch expect @Q lit=false during 32..60
+target latch expect @NQ lit=true during 34..60
+
+target new pulses "a 2-tick input pulse switches it, a 1-tick pulse does not"
+target pulses do at 2 use @LS
+target pulses do at 3 use @LS
+target pulses expect @Q lit=false during 0..20
+target pulses do at 20 use @LS
+target pulses do at 22 use @LS
+target pulses expect @Q lit=true during 24..40
+
+target new both "failure case: S and R both on turn both torches off; Q is undefined"
+target both do at 2 use @LS
+target both do at 10 use @LR
+target both expect @Q lit=false during 12..20
+target both expect @NQ lit=false during 12..20
+
+check
