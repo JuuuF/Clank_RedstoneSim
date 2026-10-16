@@ -51,6 +51,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | two signal paths must cross | [[#Crossing]] |
 | move a structure by itself | [[#Flying machine]] |
 | push a block two cells and pull it back | [[#Double piston extender]] |
+| sort items out of a hopper line | [[#Item sorter]] |
 
 ## Index
 
@@ -92,6 +93,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
 | [[#Flying machine]] | moves itself 1 block / 10 ticks, either way, until blocked | 5×2×1 | — | `flying_machine` |
 | [[#Double piston extender]] | pushes a block 2 out and brings it back | 11×2×10 | out 10, home 24 | `double_piston_extender` |
+| [[#Item sorter]] | takes one item type out of a hopper line | 7×3×4 | — | `item_sorter` |
 
 ## Gates
 
@@ -708,6 +710,36 @@ build; the input limit below was found afterwards).
   starts, A's power has a gap, A pulls B back mid-way and X never gets two out (it
   still ends at home). General lesson: an OR of a signal and its delayed copy has a gap
   when the signal is shorter than the delay.
+
+### Item sorter
+
+A filter hopper under a hopper line takes only one item type; a comparator lock lets a
+bottom hopper drain every extra item into a chest (here a barrel).
+`item_sorter.cli.txt`. **Verified** (designed from [[R-011-hoppers]] and
+[[R-005-signal-strength]]).
+
+| Part | Script position | Role |
+|---|---|---|
+| LINE0 … LAST | −3 3 0 … 2 3 0 | the hopper line (facing east); put items into LINE0 |
+| F | 0 2 0 | filter hopper, facing north into air (it never pushes): 18 stone + 4 swords (stack 1) |
+| G | 0 1 0 | bottom hopper facing the output; locked at rest |
+| CF, L | 1 2 0, 2 2 0 | comparator reading F (12; 13 with one extra stone); subtracting comparator with 13 behind it: the lock = 13 − reading |
+| OUT, END | −1 1 0, 3 3 0 | sorted items; everything else |
+
+- **Behavior:** tested with 40 stone and 30 dirt at full line rate (one item per 8
+  ticks): all stone left the line into OUT (one topped the filter up), all dirt reached
+  END, nothing escaped (a control case without F jams the line, so the check is real).
+- **Why the parts are where they are:** F must **pull** (from the line above) and
+  **never push**, so it faces into air; a hopper locked to keep its stack would not pull
+  either. G **pulls** from F only while unlocked. A locked hopper does not push either,
+  so G keeps one item in it between unlock windows. The filter count 18 sits just below
+  the reading's next step (with four stack-1 swords: 18 → 12, 19 → 13; [[signals]]
+  container formula), so one extra stone flips the lock.
+- **Start-up:** while the lock is being built G pulls one stone; F settles at 17 and the
+  first sorted stone brings it to 18.
+- **Simulator note:** items in containers only (no item entities, [[differences]]);
+  there are no renamed items, so the filler is a stack-1 item instead of the usual
+  renamed ones, which changes the counts (classic sorters use 41 + four renamed items).
 
 ## Composition rules
 

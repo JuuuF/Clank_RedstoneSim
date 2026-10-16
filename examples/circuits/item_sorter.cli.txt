@@ -1,0 +1,86 @@
+# Contraption: hopper item sorter (one item type out of a hopper line). Contract: doc/redstone/circuits.md, "Item sorter".
+#
+# A hopper line at y=3 (-3 3 0 -> 2 3 0, facing east) carries mixed items. Under the line
+# hopper 0 3 0 sits the filter hopper @F (0 2 0, facing north into air, so it never pushes)
+# holding 18 stone + one wooden sword (stack size 1) in each other slot: it can only take
+# stone, and a comparator reads 12 from it (13 at 19 stone). The bottom hopper @G (0 1 0,
+# facing west into the output barrel @OUT) pulls from F when unlocked. The lock: comparator
+# @L (subtract) with a barrel of 13 behind it and F's comparator at its side outputs
+# 13 - reading: 1 at rest (locked), 0 when F has an extra stone. A repeater, a stone, the
+# wire under it and the stone 1 1 0 next to G carry the lock.
+# The line's end @END (3 3 0) is a hopper that only takes dirt: a stone that escaped the
+# filter would jam the last line hopper @LAST, which the targets check.
+# Start-up (built here, then settled): G pulls one stone before the lock is up: F starts
+# with 17 and G holds one stone; the first sorted stone tops F up to 18.
+#   redsim-cli item_sorter.redsim.json < examples/circuits/item_sorter.cli.txt
+new size 32 force
+note "Item sorter: stone from the hopper line @LINE0 goes to @OUT, everything else on to @END"
+# line at y=3 flowing east; its end is a hopper (facing the floor) that only takes dirt
+place -3 3 0 hopper facing=east
+place -2 3 0 hopper facing=east
+place -1 3 0 hopper facing=east
+place 0 3 0 hopper facing=east
+place 1 3 0 hopper facing=east
+place 2 3 0 hopper facing=east
+place 3 3 0 hopper facing=down
+container 3 3 0 0 dirt 1
+container 3 3 0 1 wooden_sword 1
+container 3 3 0 2 wooden_sword 1
+container 3 3 0 3 wooden_sword 1
+container 3 3 0 4 wooden_sword 1
+# filter hopper F under H_d, facing north into air; bottom hopper G facing west into a barrel
+place 0 2 0 hopper facing=north
+container 0 2 0 0 stone 18
+container 0 2 0 1 wooden_sword 1
+container 0 2 0 2 wooden_sword 1
+container 0 2 0 3 wooden_sword 1
+container 0 2 0 4 wooden_sword 1
+set 0 1 0 hopper[facing=west,enabled=false]
+place -1 1 0 barrel
+place 1 1 0 stone
+place 2 1 0 stone
+place 2 1 1 stone
+# comparator reading F, lock comparator L (13 - s), repeater, block, wire down to K beside G
+place 1 2 0 comparator out=east
+place 2 2 0 comparator out=south mode=subtract
+source 2 2 -1 barrel 13
+place 2 2 1 repeater out=south
+place 2 2 2 stone
+place 2 1 2 redstone_wire
+place 1 1 2 redstone_wire
+place 1 1 1 redstone_wire
+label LINE0 -3 3 0 "first line hopper: put items here"
+label LAST 2 3 0 "last line hopper"
+label F 0 2 0 "filter hopper (18 stone + 4 swords)"
+label G 0 1 0 "bottom hopper (locked at rest)"
+label OUT -1 1 0 "sorted stone"
+label END 3 3 0 "the rest (a dirt-only hopper)"
+label CF 1 2 0 "comparator reading F (12 at rest)"
+label L 2 2 0 "13 minus F: the lock"
+group item_sorter -3 1 -1 3 3 2 in @LINE0 IN out @OUT SORTED out @END REST
+settle
+prefab save item_sorter -3 1 -1 3 3 2
+
+target new rest "at rest: F reads 12, the lock is 1, G is locked"
+target rest expect @CF power=12 during 0..20
+target rest expect @L power=1 during 0..20
+target rest expect @G enabled=false during 0..20
+
+target new sort "40 stone and 30 dirt put into the line at tick 2: stone ends in OUT, dirt in END, nothing jams; F back at rest"
+target sort do at 2 container @LINE0 0 stone 30
+target sort do at 2 container @LINE0 1 dirt 30
+target sort do at 2 container @LINE0 2 stone 10
+target sort expect @OUT analog=0 at 2
+target sort expect @OUT analog>=1 at 800
+target sort expect @END analog=13 at 800
+target sort expect @LAST analog=0 at 800
+target sort expect @CF power=12 at 800
+target sort expect @G enabled=false at 800
+
+target new control "control: without the filter hopper the stone reaches the end, which refuses it: the last line hopper jams (so the sort case's empty LAST means no stone escaped)"
+target control do break @F
+target control do at 2 container @LINE0 0 stone 30
+target control do at 2 container @LINE0 1 dirt 30
+target control expect @LAST analog>=1 at 800
+
+check
