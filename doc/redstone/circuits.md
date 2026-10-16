@@ -40,7 +40,8 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#NOR gate]] | OUT = ¬(A ∨ B) | 2×1×3 | 2 / 2 | `nor_gate` |
 | [[#AND gate]] | OUT = A ∧ B (also NAND) | 4×2×3 | 4 / 4 | `and_gate` |
 | [[#NAND gate]] | OUT = ¬(A ∧ B) | 2×2×3 | 2 / 2 | `nand_gate` |
-| [[#Compact AND]] | OUT = A ∧ B with one comparator | 2×1×4 | A 2, B 4 | `and_compact` |
+| [[#Compact AND]] | OUT = A ∧ B with one comparator | 2×1×4 | 4 / 4 | `and_compact` |
+| [[#XOR gate]] | OUT = A ⊕ B, glitch-free | 7×3×6 | 4 / 4 | `xor_gate` |
 | [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
 | [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
 | [[#Both-edge detector]] | 2-tick pulse on every change of A | 2×1×1 | 2 | `both_edges` |
@@ -141,24 +142,46 @@ The AND gate without its output torch. `nand_gate.cli.txt`. **Verified.**
 
 ### Compact AND
 
-One subtracting comparator: rear = A, side = ¬B (a torch on B's block powers a wire at
-the comparator's side). `and_compact.cli.txt`. **Verified, with a hazard.**
+One subtracting comparator: rear = A (through a delay-1 repeater), side = ¬B (a torch
+on B's block powers a wire at the comparator's side). `and_compact.cli.txt`. **Verified.**
 
 | Port | Offset | Kind |
 |---|---|---|
-| A | 0 0 0 | wire into the comparator's rear; drive it from the west |
+| A | 0 0 0 | repeater facing east into the comparator's rear; drive it from the west |
 | B | 1 0 3 | input block (a torch on its north face) |
 | OUT | 1 0 0 | comparator facing east, subtract mode, output 15 |
 
-- **Behavior:** OUT = A − ¬B = A ∧ B (with full-strength A).
-- **Latency:** from A 2 ticks each way; from B 4 ticks each way (torch + comparator).
-- **Hazard (failure case):** if A turns on and B turns off in the same tick, OUT gives a
-  **2-tick glitch** (ticks +2, +3) before settling to 0: the A path is 2 ticks faster.
-  Use the torch [[#AND gate]] where inputs can change together, or delay A by a delay-1
-  repeater to balance the paths (H, not tested).
-- **Constraints:** A's strength passes through: A at strength N gives OUT N (R-005).
+- **Behavior:** OUT = A − ¬B = A ∧ B.
+- **Latency:** 4 ticks each way from either input.
+- **No glitches:** the repeater on A makes both paths 4 ticks long. Without it (A by
+  wire, 2 ticks) OUT gave a 2-tick false 1 when A rose as B fell ([[R-010-hazards]]).
 - **Tested:** truth table; A on 2, B on 10 → on 14; B off 20 → off 24; B on 30 → on 34;
-  A off 40 → off 42; the glitch above.
+  A off 40 → off 44; one input rising as the other falls, both ways: no glitch.
+
+### XOR gate
+
+Two subtracting comparators facing each other into one stone: C1 = A − B, C2 = B − A.
+A enters at the west end, B at the east end; each loops around one side (A south, B
+north) to the other comparator's side, so the inputs never cross; the output climbs out
+over B's loop on a stone stair. `xor_gate.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A | 0 0 3 | wire; drive it from the west (script: 0 1 0) |
+| B | 6 0 3 | wire; drive it from the east (script: 6 1 0) |
+| OUT | 3 2 0 | wire at the top (power 12) pointing north into 3 2 −1 (script: 3 3 −3) |
+
+(Offsets from the module's lowest corner, which is at 0 1 −3 in the script.)
+
+- **Behavior:** OUT = A ⊕ B, power 12.
+- **Latency:** 4 ticks on every edge of either input.
+- **No glitches:** all four paths (rears and sides) go through one delay-1 repeater. The
+  first version, with the rears by wire, dropped OUT for 2 ticks whenever A and B swapped
+  in one tick ([[R-010-hazards]]).
+- **XNOR:** put a [[#NOT gate]] after OUT (or a torch on the stone the comparators point
+  into: off while either comparator is on).
+- **Tested:** truth table; A on 2 → on 6, B on 10 → off 14, A off 20 → on 24, B off 30 →
+  off 34; both on and off together; swapped twice: OUT continuous.
 
 ## Pulse shapers
 
@@ -355,3 +378,6 @@ may drive which inputs, timing budgets. Known so far:
   initial glitch: check the first ticks after pasting.
 - Free-running modules (the [[#Observer clock]]) do not start after a paste: no scheduled
   ticks are pasted.
+- **Balance path delays** into any gate whose inputs may change in the same tick: an
+  input that arrives 2 ticks early makes a 2-tick glitch (a false 1 or a dropout). Add
+  delay-1 repeaters to the faster paths ([[R-010-hazards]]).

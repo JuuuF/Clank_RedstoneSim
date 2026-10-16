@@ -17,14 +17,16 @@ with the record that answered it.
    - [x] R-007 torch burnout thresholds and recovery
    - [x] R-008 observers: what they see (state changes only), chains
    - [x] R-009 pistons: push limit, immovable blocks, slime and honey, QC and BUD, same-tick start
-   - [ ] R-010 copper bulb, dropper/hopper and note block as circuit elements
+   - [ ] R-011 copper bulb, dropper/hopper and note block as circuit elements (hopper
+     clocks, item counters)
 3. **Interactions and timing inside a tick**
-   - [ ] R-011 races: two signals arriving in the same tick (repeater priorities, piston
+   - [x] R-010 glitches from unequal path delays; balancing
+   - [ ] R-012 races: two signals arriving in the same tick (repeater priorities, piston
      block-event order)
-   - [ ] R-012 0-tick pulses: what makes them and what reacts to them
+   - [ ] R-013 0-tick pulses: what makes them and what reacts to them
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
-   - [ ] XOR, XNOR (need a signal crossing)
+   - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
    - [x] edge detectors (rising, falling, both)
    - [ ] pulse extender (long pulses), monostable with long delay lines
    - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
@@ -36,13 +38,11 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
-| Q3 | Does a comparator pass a 0-tick pulse? | edge detectors | R-012 |
-| Q5 | Which circuit-made 2-tick pulses end *after* a torch's tick (and so pass)? Block events, block entities, lower-priority sources? | pulse design | R-011 |
+| Q3 | Does a comparator pass a 0-tick pulse? | edge detectors | R-013 |
+| Q5 | Which circuit-made 2-tick pulses end *after* a torch's tick (and so pass)? Block events, block entities, lower-priority sources? | pulse design | R-012 |
 
 ## Hypotheses waiting for a test
 
-- H3: delaying the compact AND's A input by a delay-1 repeater removes its glitch
-  ([[circuits]] Compact AND).
 - H4: the 4-bit counter counts input edges as close as 4 ticks apart.
 
 ## Done
@@ -59,3 +59,4 @@ with the record that answered it.
 | Torch burnout: 8 turn-offs in 60 ticks; recovery after 160 unless self-unpowered | [[components]] | [[R-007-torch-burnout]] |
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
+| H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |

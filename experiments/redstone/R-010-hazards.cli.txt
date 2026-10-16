@@ -1,0 +1,131 @@
+# R-010: glitches from unequal path delays, and balancing them away (doc/redstone/records/R-010-hazards.md)
+#
+# Four gates, inputs on levers: the compact AND (comparator subtract: rear A, side = a
+# torch inverting B) with A by wire (unbalanced: A 2 ticks, B 4) and with A through a
+# delay-1 repeater (balanced: 4 and 4); the comparator XOR (two subtracting comparators
+# facing each other) with rears by wire (unbalanced: rear 2, side 4) and through
+# repeaters (balanced). Each gets two inputs that change in the same tick.
+#   redsim-cli r010.redsim.json < experiments/redstone/R-010-hazards.cli.txt
+new size 48 force
+note "R-010: equal path delays remove glitches: a compact AND and an XOR, unbalanced and balanced, with inputs changing in the same tick"
+# unbalanced compact AND (A by wire, 2 ticks; B through a torch, 4 ticks) at z=-20
+place -10 1 -20 redstone_wire
+place -9 1 -20 comparator out=east mode=subtract
+place -9 1 -17 stone
+place -9 1 -18 redstone_wall_torch facing=north
+place -9 1 -19 redstone_wire
+place -11 1 -20 lever face=floor
+place -9 1 -16 lever face=wall facing=south
+label ANDU_LA -11 1 -20
+label ANDU_LB -9 1 -16
+label ANDU_OUT -9 1 -20
+# balanced compact AND (A through a delay-1 repeater) at z=-20, x=0
+place 0 1 -20 repeater out=east
+place 1 1 -20 comparator out=east mode=subtract
+place 1 1 -17 stone
+place 1 1 -18 redstone_wall_torch facing=north
+place 1 1 -19 redstone_wire
+place -1 1 -20 lever face=floor
+place 1 1 -16 lever face=wall facing=south
+label ANDB_LA -1 1 -20
+label ANDB_LB 1 1 -16
+label ANDB_OUT 1 1 -20
+# unbalanced XOR (rears by wire, sides through repeaters) at z=-8
+place -9 1 -8 comparator out=east mode=subtract
+place -7 1 -8 comparator out=west mode=subtract
+place -8 1 -8 stone
+place -10 1 -8 redstone_wire
+line -10 1 -7 to -10 1 -6 redstone_wire
+line -9 1 -6 to -7 1 -6 redstone_wire
+place -7 1 -7 repeater out=north
+place -6 1 -8 redstone_wire
+line -6 1 -9 to -6 1 -10 redstone_wire
+line -7 1 -10 to -9 1 -10 redstone_wire
+place -9 1 -9 repeater out=south
+place -8 2 -8 redstone_wire
+set -8 2 -9 stone
+set -8 2 -10 stone
+set -8 2 -11 stone
+place -8 3 -9 redstone_wire
+place -8 3 -10 redstone_wire
+place -8 3 -11 redstone_wire
+label XORU_A -10 1 -8
+label XORU_B -6 1 -8
+label XORU_OUT -8 3 -11
+place -11 1 -8 lever face=floor
+place -5 1 -8 lever face=floor
+label XORU_LA -11 1 -8
+label XORU_LB -5 1 -8
+# balanced XOR (rears through repeaters too) at z=-8, x=4
+place 5 1 -8 comparator out=east mode=subtract
+place 7 1 -8 comparator out=west mode=subtract
+place 6 1 -8 stone
+place 3 1 -8 redstone_wire
+place 4 1 -8 repeater out=east
+line 3 1 -7 to 3 1 -6 redstone_wire
+line 4 1 -6 to 7 1 -6 redstone_wire
+place 7 1 -7 repeater out=north
+place 9 1 -8 redstone_wire
+place 8 1 -8 repeater out=west
+line 9 1 -9 to 9 1 -10 redstone_wire
+line 8 1 -10 to 5 1 -10 redstone_wire
+place 5 1 -9 repeater out=south
+place 6 2 -8 redstone_wire
+set 6 2 -9 stone
+set 6 2 -10 stone
+set 6 2 -11 stone
+place 6 3 -9 redstone_wire
+place 6 3 -10 redstone_wire
+place 6 3 -11 redstone_wire
+label XORB_A 3 1 -8
+label XORB_B 9 1 -8
+label XORB_OUT 6 3 -11
+place 2 1 -8 lever face=floor
+place 10 1 -8 lever face=floor
+label XORB_LA 2 1 -8
+label XORB_LB 10 1 -8
+settle
+
+target new andswap "compact AND, A rising as B falls: the unbalanced gate outputs a 2-tick glitch, the balanced one does not"
+target andswap do at 2 use @ANDU_LB
+target andswap do at 10 use @ANDU_LA
+target andswap do at 10 use @ANDU_LB
+target andswap do at 2 use @ANDB_LB
+target andswap do at 10 use @ANDB_LA
+target andswap do at 10 use @ANDB_LB
+target andswap expect @ANDU_OUT power=0 during 0..11
+target andswap expect @ANDU_OUT power=15 during 12..13
+target andswap expect @ANDU_OUT power=0 during 14..30
+target andswap expect @ANDB_OUT power=0 during 0..30
+
+target new xorswap "XOR, A and B swapping (output should stay on): the unbalanced gate drops out for 2 ticks each time, the balanced one does not"
+target xorswap do at 2 use @XORU_LA
+target xorswap do at 12 use @XORU_LA
+target xorswap do at 12 use @XORU_LB
+target xorswap do at 22 use @XORU_LA
+target xorswap do at 22 use @XORU_LB
+target xorswap do at 2 use @XORB_LA
+target xorswap do at 12 use @XORB_LA
+target xorswap do at 12 use @XORB_LB
+target xorswap do at 22 use @XORB_LA
+target xorswap do at 22 use @XORB_LB
+target xorswap expect @XORU_OUT power>=1 during 4..13
+target xorswap expect @XORU_OUT power=0 during 14..15
+target xorswap expect @XORU_OUT power>=1 during 16..23
+target xorswap expect @XORU_OUT power=0 during 24..25
+target xorswap expect @XORU_OUT power>=1 during 26..40
+target xorswap expect @XORB_OUT power>=1 during 6..40
+
+target new xorboth "XOR, both inputs on and off together: no glitch in either version"
+target xorboth do at 2 use @XORU_LA
+target xorboth do at 2 use @XORU_LB
+target xorboth do at 12 use @XORU_LA
+target xorboth do at 12 use @XORU_LB
+target xorboth do at 2 use @XORB_LA
+target xorboth do at 2 use @XORB_LB
+target xorboth do at 12 use @XORB_LA
+target xorboth do at 12 use @XORB_LB
+target xorboth expect @XORU_OUT power=0 during 0..30
+target xorboth expect @XORB_OUT power=0 during 0..30
+
+check
