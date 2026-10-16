@@ -13,9 +13,10 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
   with its lowest corner at X Y Z (paths are relative to the directory you run
   `redsim-cli` in; run it from the repository root). Then `settle`. Rebuild the files
   after changing a script: `PYTHONPATH=src python -m tools.make_circuits`.
-- **Ports** are given as offsets from the module's lowest corner (the scripts build every
-  module with that corner at `0 1 0`, so the offsets are the script's coordinates minus
-  `0 1 0`). Every module's signal flows **east** (+x) unless said otherwise.
+- **Ports** are given as offsets from the module's lowest corner. Most scripts build the
+  module with that corner at `0 1 0` (offset = script coordinate minus `0 1 0`); where a
+  script uses another corner (`xor_gate`, `monostable`) its section says so. Every
+  module's signal flows **east** (+x) unless said otherwise.
 - **Rotating:** `rotate N` turns the module N quarter turns clockwise seen from above
   (flow east → south → west → north). A port at offset (dx, dy, dz) of a module that is
   D blocks deep along z moves to (D − 1 − dz, dy, dx) for one turn. (V: `not_gate`
@@ -31,10 +32,26 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
   torch or comparator needs input pulses of **3+ ticks** from other circuits (2+ from a
   player).
 
+## Which module for what
+
+| Need | Use |
+|---|---|
+| a button that toggles something (lever-like) | [[#T flip-flop]] ([[#Toggle door]] shows it wired) |
+| on for a fixed time after a press | [[#Monostable]] (any length), a stone/oak button (20/30 ticks) |
+| a short pulse from a long signal | [[#Rising-edge detector]] / [[#Falling-edge detector]] / [[#Both-edge detector]] |
+| remember set/reset | [[#RS latch]]; sample-and-hold: [[#D latch]] |
+| a repeating signal | [[#Clock]] (2–20 ticks period, enable), [[#Hopper clock]] (long), [[#Observer clock]] (6, free) |
+| actions in order | [[#Sequencer]] |
+| combine signals | gates; glitch-free when inputs change together: [[#XOR gate]], [[#Compact AND]], [[#AND gate]] |
+| count events | [[#4-bit counter]] |
+| react to a container's fill level | [[#Threshold detector]] |
+| two signal paths must cross | [[#Crossing]] |
+
 ## Index
 
 | Module | Function | Size (x×y×z) | Latency | Script |
 |---|---|---|---|---|
+| **Gates** | | | | |
 | [[#NOT gate]] | OUT = ¬A | 2×1×1 | 2 / 2 | `not_gate` |
 | [[#OR gate]] | OUT = A ∨ B, isolated | 2×1×3 | 2 / 2 | `or_gate` |
 | [[#NOR gate]] | OUT = ¬(A ∨ B) | 2×1×3 | 2 / 2 | `nor_gate` |
@@ -42,23 +59,29 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#NAND gate]] | OUT = ¬(A ∧ B) | 2×2×3 | 2 / 2 | `nand_gate` |
 | [[#Compact AND]] | OUT = A ∧ B with one comparator | 2×1×4 | 4 / 4 | `and_compact` |
 | [[#XOR gate]] | OUT = A ⊕ B, glitch-free | 7×3×6 | 4 / 4 | `xor_gate` |
+| **Analog** | | | | |
 | [[#Threshold detector]] | on while an analog signal (a container's fill) ≥ k | 3×1×3 | 4 | `threshold` |
+| **Wiring** | | | | |
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
 | [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
+| **Pulse shapers** | | | | |
 | [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
 | [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
 | [[#Both-edge detector]] | 2-tick pulse on every change of A | 2×1×1 | 2 | `both_edges` |
+| **Memory** | | | | |
 | [[#T flip-flop]] | toggles on each rising edge | 2×1×1 | 2 | `t_flipflop` |
 | [[#RS latch]] | set / reset memory | 3×1×4 | set 4, reset 2 | `rs_latch` |
 | [[#D latch]] | Q follows D, holds while E is on | 2×1×3 | 2 | `d_latch` |
+| **Clocks** | | | | |
 | [[#Clock]] | period 4d+4 with enable, no burnout | 3×1×3 | 2 from enable | `clock` |
 | [[#Observer clock]] | free-running, 2 on / 4 off | 2×1×1 | — | `observer_clock` |
 | [[#Hopper clock]] | long periods: 16·N − 2 ticks for N items, with stop | 10×2×5 | — | `hopper_clock` |
+| **Contraptions and compositions** | | | | |
 | [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
-| [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
 | [[#Monostable]] | one edge → output on for exactly D ticks (64) | 5×1×8 | 4 | `monostable` |
-| [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
+| [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
 | [[#Toggle door]] | a button toggles the 2x2 door | 10×2×6 | open 6, closed 8 | `toggle_door` |
+| [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
 
 ## Gates
 
