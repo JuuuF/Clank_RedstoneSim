@@ -185,7 +185,9 @@ observers change, then update around the block they are attached to or point int
 changes within one tick into one line. `effects` first goes to the end of the history
 and `why` to the view with `Document.trace_through` (`Timeline.seek_traced`), which
 replays every step instead of jumping to keyframes, so the trace has no gap; both return
-to the view afterwards.
+to the view afterwards. `trace T` needs only tick T: `Document.trace_tick` replays it
+from the boundary before it, and the steps of tick T are those between the boundaries
+after T-1 and T (`Document.tick_steps`).
 
 ## 9. Tests and documentation
 

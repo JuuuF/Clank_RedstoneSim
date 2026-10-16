@@ -484,7 +484,9 @@ neighbors). `max N` limits the list (default 200 lines).
 
 ### 7.6 Step by step: `trace`, `step`, `ticks`, `diff`
 
-- `trace T [near POS]`: every engine step of tick T in order, with the blocks each changed.
+- `trace T [near POS]`: every engine step of tick T in order, with the blocks each changed:
+  its tick start, scheduled ticks, block events, entities, block entities, and at the end
+  the edits recorded at tick T (the tick is replayed for this; the view does not move).
 - `step [N]`, `step back [N]`: walk through the current tick step by step, forwards and
   backwards (section 5.3).
 - `ticks`: pending scheduled ticks (with the tick they run at and their priority) and

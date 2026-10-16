@@ -966,8 +966,9 @@ What happened during tick T, step by step (default: the view tick).
 
 Lists the engine steps of tick T in the order they ran (tick start, scheduled ticks,
 block events, entities, block entities, edits) and under each step the blocks it
-changed. `near POS` keeps only changes within R blocks (default 3) of POS. The
-simulator keeps the most recent 200 000 trace records; older ticks may be gone.
+changed. `near POS` keeps only changes within R blocks (default 3) of POS. The tick
+is replayed for this (simulated first if it is past the end of the history); the
+view stays where it is.
 
 Examples:
 

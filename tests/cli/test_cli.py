@@ -356,3 +356,12 @@ def test_why_and_effects_over_a_long_history(rs: Run) -> None:
     assert "the chain goes on before this" in out
     out = rs("why", "@END", "max", "500")
     assert "edit or player action: use" in out and "goes on" not in out
+
+
+def test_trace_replays_its_tick_after_a_jump(rs: Run) -> None:
+    rs.batch(NOT_GATE + "; at 3 use @A; run 150; seek 0; seek 140")  # the seek jumps
+    out = rs("trace", "5")
+    assert out.startswith("tick 5: 2 steps") and "step" in out and "tick start" in out
+    assert "redstone_wall_torch[facing=east,lit=true] → " in out
+    assert "action at @A" in rs("trace", "3")  # the edit made at tick 3 ends tick 3
+    assert "view at tick 140" in rs("where")

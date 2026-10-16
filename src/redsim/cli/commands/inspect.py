@@ -437,8 +437,9 @@ def effects(session: Session, args: Args) -> Output:
     help="""
     Lists the engine steps of tick T in the order they ran (tick start, scheduled ticks,
     block events, entities, block entities, edits) and under each step the blocks it
-    changed. `near POS` keeps only changes within R blocks (default 3) of POS. The
-    simulator keeps the most recent 200 000 trace records; older ticks may be gone.
+    changed. `near POS` keeps only changes within R blocks (default 3) of POS. The tick
+    is replayed for this (simulated first if it is past the end of the history); the
+    view stays where it is.
     """,
     examples=("trace", "trace 7", "trace 7 near @OUT"),
     kind="view",
@@ -455,10 +456,19 @@ def trace(session: Session, args: Args) -> Output:
         near = args.pos()
         radius = args.option_int("radius", 3)
     args.done()
+    view = session.view_now()
+    if doc.can_edit and not doc.trace_tick(tick) and tick > doc.end_tick:
+        session.goto(tick)  # simulate up to it (traced as it runs)
     game_time = tick + doc.history.base_time
+    # Tick T's steps run between the boundaries after T-1 and T (the tick start of T is
+    # recorded with game time T-1: the time advances inside it).
+    low, high = doc.tick_steps.get(tick - 1), doc.tick_steps.get(tick)
     steps: dict[int, dict[str, Any]] = {}
     for record in doc.level.trace.records:
-        if record.game_time != game_time:
+        if low is not None and high is not None:
+            if not low <= record.step < high:
+                continue
+        elif record.game_time != game_time:
             continue
         if record.kind == tr.STEP:
             steps[record.step] = {
@@ -482,7 +492,8 @@ def trace(session: Session, args: Args) -> Output:
                 )
     shown = [s for s in steps.values() if near is None or s["changes"]]
     near_text = f", {len(shown)} of them changed blocks near {format_pos(near)}" if near else ""
-    out = Output([f"tick {tick}: {len(steps)} steps{near_text}"])
+    count = f"{len(steps)} step{'' if len(steps) == 1 else 's'}"
+    out = Output([f"tick {tick}: {count}{near_text}"])
     for entry in shown:
         where = f" at {name_of(doc, tuple(entry['pos']))}" if entry["pos"] else ""
         out.add(
@@ -493,8 +504,13 @@ def trace(session: Session, args: Args) -> Output:
             out.add(
                 f"      {name_of(doc, tuple(change['pos'])):<12} {change['from']} → {change['to']}"
             )
+    session.goto_view(view)
     if not steps:
-        out.add("  (no trace for that tick: not simulated yet, or too long ago)")
+        out.add(
+            "  (tick 0 is the build: nothing runs in it)"
+            if tick == 0
+            else "  (no trace for that tick)"
+        )
     out.data = {"tick": tick, "steps": shown}
     return out
 

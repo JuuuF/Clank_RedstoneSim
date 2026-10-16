@@ -371,6 +371,23 @@ class HistoryOps:
             view.history.seek_traced(view.tick_steps[max(known)])
             view._changed()
 
+    def trace_tick(self, tick: int) -> bool:
+        """Replay tick ``tick`` step by step, so the trace holds its records (a ``seek`` may
+        have jumped over them), ending at the boundary after it. False when the tick is not
+        in the recorded history."""
+        view = cast("Document", self)
+        history = view.history
+        if tick not in view.tick_steps:
+            return False
+        earlier = [t for t in view.tick_steps if t < tick]
+        if earlier:
+            history.seek(view.tick_steps[max(earlier)])
+        target = view.tick_steps[tick]
+        while history.position < target:
+            history.seek(min(target, history.position + history.keyframe_interval))
+        view._changed()
+        return True
+
     def seek_tick(self, tick: int) -> bool:
         """Scrub to a tick boundary of the recorded history (after that moment's edits)."""
         view = cast("Document", self)
