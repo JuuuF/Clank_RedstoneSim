@@ -150,7 +150,15 @@ class ExpectationResult:
     problem: str = ""
 
     def failing_ticks(self) -> list[int]:
+        """The ticks that make it fail (none when it passed: a ``within`` may not hold at
+        every tick)."""
+        if self.passed:
+            return []
         return [t for t, v in self.observed.items() if not self.expectation.holds(v)]
+
+    def first_held(self) -> int | None:
+        """The first tick it held at (for ``within``: when the expected state arrived)."""
+        return next((t for t, v in self.observed.items() if self.expectation.holds(v)), None)
 
 
 @dataclass

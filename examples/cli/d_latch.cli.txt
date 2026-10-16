@@ -1,0 +1,26 @@
+# A D latch from a locked repeater: the lamp follows the data lever while the enable
+# lever is off, and holds its state while it is on.
+#   redsim-cli examples/cli/d_latch.redsim.json new force
+#   redsim-cli examples/cli/d_latch.redsim.json < examples/cli/d_latch.cli.txt
+# A repeater powered from its side by another repeater is locked: it keeps its output.
+note "D latch: @Q follows @D while @E is off and holds while @E is on"
+place 0 1 0 lever face=floor
+place 1 1 0 repeater out=east
+place 2 1 0 redstone_lamp
+place 1 1 1 repeater out=north
+place 1 1 2 lever face=floor
+label D 0 1 0 "data lever"
+label E 1 1 2 "enable lever: on = hold"
+label LATCH 1 1 0 "the repeater that is locked"
+label Q 2 1 0 "output lamp"
+inspect @LATCH
+target new dlatch "Q follows D while E is off and holds while E is on"
+target dlatch do at 2 use @D
+target dlatch expect @Q lit=true at 6
+target dlatch do at 8 use @E
+target dlatch expect @LATCH locked=true at 11
+target dlatch do at 12 use @D
+target dlatch expect @Q lit=true during 13..20
+target dlatch do at 22 use @E
+target dlatch expect @Q lit=false within 23..30
+check verbose

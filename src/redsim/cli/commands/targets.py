@@ -259,15 +259,17 @@ def targets(session: Session, args: Args) -> Output:
     evaluates each expectation at its ticks. Prints PASS or FAIL per case; for a failing
     expectation the ticks where it failed and the values seen there, plus the block's
     values over the expectation's range (as `waves` would show them). `verbose` lists
-    passing expectations too. The world itself is not changed.
+    passing expectations too, a passing `within` with the tick it was first met (how
+    fast the contraption reacted). The world itself is not changed.
 
     The exit code is 1 when any case fails, so scripts can stop on it.
     """,
     examples=("check", "check and clock", "check and verbose"),
     kind="view",
     data="""{"passed": cases passed, "failed": cases failed, "cases": [{"target", "case",
-    "passed", "error", "expectations": [{"line", "passed", "failing_ticks", "observed":
-    {tick: value}, "problem"}]}]}""",
+    "passed", "error", "expectations": [{"line", "passed", "failing_ticks" (empty when
+    passed), "first_held" (first tick it held, or null), "observed": {tick: value},
+    "problem"}]}]}""",
 )
 def check(session: Session, args: Args) -> Output:
     doc = session.doc
@@ -294,7 +296,10 @@ def check(session: Session, args: Args) -> Output:
             if e.passed and not verbose:
                 continue
             mark = "ok  " if e.passed else "fail"
-            out.add(f"      {mark} {e.expectation.text}")
+            when = ""
+            if e.passed and e.expectation.when == "within":
+                when = f"  (from tick {e.first_held()})"
+            out.add(f"      {mark} {e.expectation.text}{when}")
             if e.problem:
                 out.add(f"           {e.problem}")
             elif not e.passed:
@@ -328,6 +333,7 @@ def check(session: Session, args: Args) -> Output:
                         "line": e.expectation.text,
                         "passed": e.passed,
                         "failing_ticks": e.failing_ticks(),
+                        "first_held": e.first_held(),
                         "observed": {str(t): v for t, v in e.observed.items()},
                         "problem": e.problem,
                     }

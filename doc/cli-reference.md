@@ -1312,7 +1312,8 @@ build (tick 0), with the case's stimuli instead of the world's own timeline, and
 evaluates each expectation at its ticks. Prints PASS or FAIL per case; for a failing
 expectation the ticks where it failed and the values seen there, plus the block's
 values over the expectation's range (as `waves` would show them). `verbose` lists
-passing expectations too. The world itself is not changed.
+passing expectations too, a passing `within` with the tick it was first met (how
+fast the contraption reacted). The world itself is not changed.
 
 The exit code is 1 when any case fails, so scripts can stop on it.
 
@@ -1325,8 +1326,9 @@ check and verbose
 ```
 
 JSON `data`: {"passed": cases passed, "failed": cases failed, "cases": [{"target", "case",
-    "passed", "error", "expectations": [{"line", "passed", "failing_ticks", "observed":
-    {tick: value}, "problem"}]}]}
+    "passed", "error", "expectations": [{"line", "passed", "failing_ticks" (empty when
+    passed), "first_held" (first tick it held, or null), "observed": {tick: value},
+    "problem"}]}]}
 
 ## Io
 

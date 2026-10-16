@@ -307,3 +307,14 @@ def test_two_corners_may_be_written_with_to(rs: Run) -> None:
     out = rs("find", "stone", "in", "2", "1", "0", "to", "3", "1", "1")
     assert "3 × stone" in out
     assert "4 × redstone_wire" in rs("find", "redstone_wire")
+
+
+def test_check_reports_when_a_within_was_met(rs: Run) -> None:
+    rs.batch(
+        "place 0 1 0 lever face=floor; place 1 1 0 redstone_lamp; label A 0 1 0; label L 1 1 0"
+    )
+    rs.batch("target new t; target t do at 2 use @A; target t expect @L lit=true within 1..6")
+    assert "ok   expect @L lit=true within 1..6  (from tick 2)" in rs("check", "verbose")
+    data = json.loads(rs("--json", "check").splitlines()[0])["data"]
+    expectation = data["cases"][0]["expectations"][0]
+    assert expectation["failing_ticks"] == [] and expectation["first_held"] == 2

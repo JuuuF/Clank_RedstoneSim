@@ -555,13 +555,25 @@ hint: 'target NAME load CASE' puts a case on the timeline; then waves, why, show
 
 A failing expectation shows the ticks it failed at and what it saw, and for numbers the
 values over its range in `waves` style. `check NAME …` runs some targets; `check …
-verbose` also lists the expectations that passed. The exit code is 1 when a case fails.
+verbose` also lists the expectations that passed, a `within` with the tick it was first
+met (how fast the contraption reacted; here a repeater-locking latch letting go):
+
+```
+check: 1 case, 1 passed, 0 failed
+PASS  dlatch
+      ok   expect @Q lit=true at 6
+      ok   expect @Q lit=true during 13..20
+      ok   expect @Q lit=false within 23..30  (from tick 30)
+```
+
+The exit code is 1 when a case fails. With `--json`, each expectation has `failing_ticks`
+(empty when it passed) and `first_held` (the first tick it held, or null).
 
 ### 9.4 Debugging a failing case
 
 `target NAME load CASE` replaces the world's timeline with that case's stimuli (undo
 brings the old timeline back). Then the whole toolbox works on exactly that run: `run`,
-`waves`, `show`, `why`, `trace`, `step`.
+`waves`, `show`, `why`, `effects`, `trace`, `step`.
 
 ## 10. Workflows
 
@@ -659,6 +671,7 @@ to each is the result, to open in the editor or to inspect with `redsim-cli`.
 | `piston_door.cli.txt` | a sequence on the timeline, block movement, `changes` |
 | `observer_clock.cli.txt` | a clock, `waves`, timing with `within` |
 | `rs_latch.cli.txt` | memory: a target with stimuli at two ticks and `during` expectations |
+| `d_latch.cli.txt` | a locked repeater, `out=`, the `faces` line of `inspect`, `check verbose` |
 
 ### 10.6 Handing a world over
 
