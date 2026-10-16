@@ -25,6 +25,7 @@ with the record that answered it.
    - [x] R-014 rails, doors, gates, target blocks, lecterns
    - [x] R-015 observers moved by pistons; pulling across a gap (flying machines)
    - [ ] R-016 making 0-tick pulses with pistons (block dropping, redstone block pushes)
+   - [ ] R-017 wire update order: position-dependent races (Q6)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
@@ -41,6 +42,10 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
+| Q6 | Wire update order is coordinate dependent (Java `HashSet` order, Q-WIRE-HASH): when one wire net powers two components that race (two pistons into one cell), does the winner change with position? | designs must not depend on it | R-017 |
+| Q7 | Fastest input rate the 4-bit counter and the T flip-flop follow (H4) | counters on clocks | counter |
+| Q8 | Can a monostable be made retriggerable (restart its time on a new edge)? | timed doors that stay open while people pass | circuits |
+| Q9 | Double piston extender: the shortest sequence and a controller from library parts | hidden doors, block placement | circuits |
 
 ## Hypotheses waiting for a test
 
@@ -58,6 +63,8 @@ with the record that answered it.
 | Q1: a block powered with N by a comparator gives wire beside it N | [[signals]] | [[R-005-signal-strength]] |
 | Which neighbors lock a repeater; inputs while locked are dropped | [[components]] | [[R-006-repeater-locking]] |
 | Torch burnout: 8 turn-offs in 60 ticks; recovery after 160 unless self-unpowered | [[components]] | [[R-007-torch-burnout]] |
+| Observers pulse 2 ticks after being moved (not if moved while powered); sticky pistons pull across a gap on 2-tick pulses | [[components]] | [[R-015-moving-observers]] |
+| Rails reach 8 past the powered one; doors from either half; target, lectern sources | [[components]] | [[R-014-other-components]] |
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |

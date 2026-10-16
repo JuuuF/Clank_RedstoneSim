@@ -142,5 +142,14 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 
 ## Status
 
-*2026-10-16:* knowledge base started: method, timing table, power rules. Next steps are
-in [[backlog]].
+*2026-10-16 (first session):* 15 experiment records (R-001…R-015), all reproducible and
+re-checked by `tests/cli/test_research.py`; the timing, signal and component references
+built from them; a circuit library of 27 contracted modules and contraptions (gates,
+analog threshold, wiring, pulse shapers, memory, clocks, counter, monostable, piston
+doors, combination lock, flying machine), each pasteable from its `.nbt`. Open questions
+and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,
+water, randomness) is listed in [[differences]].
+
+**Resuming:** read [[backlog]] (roadmap, open questions, hypotheses), pick the top open
+item, follow [[#How to run and record an experiment]], and keep the "Done" table, this
+index and the reference pages in step.

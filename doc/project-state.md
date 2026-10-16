@@ -66,6 +66,12 @@ page is the summary to start from.*
   (targets, truth tables) contraptions in the editor's world files, which the editor's
   World tab shows; reference [[cli-reference]], internals [[cli-internals]], agents'
   entry point `AGENTS.md`, five example scripts with targets in `examples/cli/`.
+- **Redstone engineering knowledge base** ([[redstone/README]], 2026-10-16): experiments
+  run with `redsim-cli` that establish how redstone behaves for builders (R-001…R-015:
+  timings, power rules, wire shapes, signal strength, locking, burnout, observers,
+  pistons, hazards, hoppers, order inside a tick, 0-ticks, moving observers) and a
+  library of 27 contracted circuits in `examples/circuits/` (scripts, worlds and `.nbt`
+  modules; `tools/make_circuits.py`). `tests/cli/test_research.py` re-runs all of it.
 - **Minecraft worlds:** File → Open Minecraft world… opens a Java 26.x save around the
   player and streams further chunks in around the camera up to a view distance; blocks the
   simulator does not model come in as inert "foreign" blocks drawn with their real model
