@@ -42,6 +42,8 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#NAND gate]] | OUT = ¬(A ∧ B) | 2×2×3 | 2 / 2 | `nand_gate` |
 | [[#Compact AND]] | OUT = A ∧ B with one comparator | 2×1×4 | 4 / 4 | `and_compact` |
 | [[#XOR gate]] | OUT = A ⊕ B, glitch-free | 7×3×6 | 4 / 4 | `xor_gate` |
+| [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
+| [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
 | [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
 | [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
 | [[#Both-edge detector]] | 2-tick pulse on every change of A | 2×1×1 | 2 | `both_edges` |
@@ -187,6 +189,40 @@ over B's loop on a stone stair. `xor_gate.cli.txt`. **Verified.**
   into: off while either comparator is on).
 - **Tested:** truth table; A on 2 → on 6, B on 10 → off 14, A off 20 → on 24, B off 30 →
   off 34; both on and off together; swapped twice: OUT continuous.
+
+## Wiring
+
+### Crossing
+
+Two signals cross: A runs west→east on the floor; B climbs a stair of stones, runs over a
+stone set right on top of A's wire, and comes down again. `crossing.cli.txt`.
+**Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A_IN, A_OUT | 0 0 3, 2 0 3 | A's ends (wire) |
+| B_IN, B_OUT | 1 0 0, 1 0 6 | B's ends (wire), B passes over A at y = 3 (offset 2) |
+
+- **Behavior:** A and B never affect each other (all four combinations checked). No
+  delay; B loses 6 strength on the bridge (in 15 → out 9), A 2 (15 → 13).
+- **Why it works:** B's wire on the stone above A powers that stone only weakly, and wire
+  ignores weakly powered blocks; the stone also stops A's wire from stepping up; wire
+  never powers the block above it (R-002, R-004).
+
+### Sequencer
+
+A tapped delay line: repeaters (delay 4) alternate with tap blocks. `sequencer.cli.txt`.
+**Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| IN | 0 0 0 | wire; drive it from the west |
+| S1…S4 | 2, 4, 6, 8 (x) | tap blocks, strongly powered; put the driven components beside them |
+
+- **Behavior:** tap k follows IN with a delay of **8·k ticks** (on and off). A short
+  input becomes an 8-tick pulse at the first repeater and walks down the taps.
+- **Tuning:** each repeater's delay sets its stage (2/4/6/8 ticks).
+- **Use:** piston sequences (one tap per piston), staggered lamps.
 
 ## Pulse shapers
 

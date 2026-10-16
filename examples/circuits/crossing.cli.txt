@@ -1,0 +1,49 @@
+# Circuit: signal crossing (wire bridge). Contract: doc/redstone/circuits.md, "Crossing".
+#
+# Module (box 0 1 0 .. 2 3 6): signal A runs west -> east along z=3 at y=1, signal B
+# north -> south along x=1 and climbs over A on a stair of stones (y=2..3).
+#   @A_IN   0 1 3   A's west end (wire)      @A_OUT  2 1 3   A's east end (wire)
+#   @B_IN   1 1 0   B's north end (wire)     @B_OUT  1 1 6   B's south end (wire)
+# The stone 1 2 3 right over A's wire carries B's wire (1 3 3) and cuts A off from any
+# step up; B's wire powers that stone only weakly, which wire ignores (R-002, R-004).
+# B loses 6 strength over the bridge (7 wires), A 2 over its 3 wires.
+# Test harness: levers @LA (west of A_IN) and @LB (north of B_IN).
+#   redsim-cli crossing.redsim.json < examples/circuits/crossing.cli.txt
+new size 16 force
+note "Crossing: A (west-east, y=1) and B (north-south, over a stone bridge) do not interfere"
+line 0 1 3 to 2 1 3 redstone_wire
+place 1 1 0 redstone_wire
+place 1 1 1 stone
+place 1 2 1 redstone_wire
+set 1 2 2 stone
+place 1 3 2 redstone_wire
+set 1 2 3 stone
+place 1 3 3 redstone_wire
+set 1 2 4 stone
+place 1 3 4 redstone_wire
+place 1 1 5 stone
+place 1 2 5 redstone_wire
+place 1 1 6 redstone_wire
+label A_IN 0 1 3 "A in (west)"
+label A_OUT 2 1 3 "A out (east)"
+label B_IN 1 1 0 "B in (north)"
+label B_OUT 1 1 6 "B out (south)"
+group crossing 0 1 0 2 3 6 in @A_IN A in @B_IN B out @A_OUT A out @B_OUT B
+prefab save crossing 0 1 0 2 3 6
+# harness
+place -1 1 3 lever face=floor
+place 1 1 -1 lever face=floor
+label LA -1 1 3 "test lever A"
+label LB 1 1 -1 "test lever B"
+settle
+
+target new independent "A reaches only A_OUT, B only B_OUT, also both at once"
+target independent truth @LA @LB -> @A_OUT @B_OUT rows 00:00 01:01 10:10 11:11
+
+target new strength "A arrives with 13, B with 9 (15 at the inputs)"
+target strength do at 2 use @LA
+target strength do at 2 use @LB
+target strength expect @A_OUT power=13 at 2
+target strength expect @B_OUT power=9 at 2
+
+check

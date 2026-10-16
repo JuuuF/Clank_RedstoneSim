@@ -1,0 +1,65 @@
+# Circuit: sequencer (tapped delay line). Contract: doc/redstone/circuits.md, "Sequencer".
+#
+# Module (box 0 1 0 .. 8 1 0, signal flows east):
+#   @IN   0 1 0          input wire: drive it from the west
+#   @S1..@S4  2, 4, 6, 8 (x) 1 0   tap blocks: each is strongly powered 8, 16, 24, 32
+#                        ticks after IN turns on (and off the same delays after it turns
+#                        off); anything beside a tap (north or south: a piston, lamp,
+#                        door, wire) is driven by it
+# Between taps: repeaters (1, 3, 5, 7 x) facing east, delay 4 (8 ticks each): click one
+# to change its stage (2, 4, 6 or 8 ticks).
+# Test harness: lever @L west of IN, lamps @O1..@O4 south of the taps.
+#   redsim-cli sequencer.redsim.json < examples/circuits/sequencer.cli.txt
+new size 32 force
+note "Sequencer: taps @S1..@S4 follow @IN 8, 16, 24, 32 ticks later (delay-4 repeaters between them)"
+place 0 1 0 redstone_wire
+place 1 1 0 repeater out=east delay=4
+place 2 1 0 stone
+place 3 1 0 repeater out=east delay=4
+place 4 1 0 stone
+place 5 1 0 repeater out=east delay=4
+place 6 1 0 stone
+place 7 1 0 repeater out=east delay=4
+place 8 1 0 stone
+label IN 0 1 0 "input: wire, driven from the west"
+label S1 2 1 0 "tap 1 (+8)"
+label S2 4 1 0 "tap 2 (+16)"
+label S3 6 1 0 "tap 3 (+24)"
+label S4 8 1 0 "tap 4 (+32)"
+group sequencer 0 1 0 8 1 0 in @IN IN out @S1 S1 out @S2 S2 out @S3 S3 out @S4 S4
+prefab save sequencer 0 1 0 8 1 0
+# harness
+place -1 1 0 lever face=floor
+place 2 1 1 redstone_lamp
+place 4 1 1 redstone_lamp
+place 6 1 1 redstone_lamp
+place 8 1 1 redstone_lamp
+label L -1 1 0 "test lever"
+label O1 2 1 1 "lamp at tap 1"
+label O2 4 1 1 "lamp at tap 2"
+label O3 6 1 1 "lamp at tap 3"
+label O4 8 1 1 "lamp at tap 4"
+settle
+
+target new sequence "lever on at 2: taps on at 10, 18, 26, 34; lever off at 50: taps off at 58, 66, 74, 82"
+target sequence do at 2 use @L
+target sequence do at 50 use @L
+target sequence expect @S1 direct=0 at 9
+target sequence expect @S1 direct=15 during 10..57
+target sequence expect @S2 direct=15 during 18..65
+target sequence expect @S3 direct=15 during 26..73
+target sequence expect @S4 direct=0 at 33
+target sequence expect @S4 direct=15 during 34..81
+target sequence expect @S4 direct=0 at 82
+target sequence expect @O4 lit=true during 34..85
+target sequence expect @O4 lit=false at 86
+
+target new short "a 1-tick input becomes an 8-tick pulse that walks down the taps"
+target short do at 2 use @L
+target short do at 3 use @L
+target short expect @S1 direct=15 during 10..17
+target short expect @S1 direct=0 at 18
+target short expect @S4 direct=15 during 34..41
+target short expect @S4 direct=0 at 42
+
+check

@@ -34,7 +34,7 @@ with the record that answered it.
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
    - [ ] signal strength encoders/decoders, multiplexers
-5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [ ] a sequencer, a flush door, a timed door.
+5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [ ] a flush door, a timed door.
 
 ## Open questions
 
