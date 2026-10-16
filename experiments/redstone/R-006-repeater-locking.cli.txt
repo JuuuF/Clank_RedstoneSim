@@ -1,0 +1,113 @@
+# R-006: what locks a repeater, and what happens to inputs while locked (doc/redstone/records/R-006-repeater-locking.md)
+#
+# Rows 5 blocks apart: a data lever D_x west of a repeater Q_x (out=east), and at Q_x's
+# south side: a repeater (REP, PEND), a comparator reading a barrel of strength 1 (COMP1),
+# wire, a wall torch, a stone with a lever on top, a redstone block (set at tick 2), an
+# observer watching a lever (OBS).
+#   redsim-cli r006.redsim.json < experiments/redstone/R-006-repeater-locking.cli.txt
+new size 48 force
+note "R-006: what locks a repeater (side repeaters and comparators only) and what a locked repeater does with its input"
+place -1 1 -20 lever face=floor
+label D_REP -1 1 -20
+place 0 1 -20 repeater out=east
+label Q_REP 0 1 -20
+place 0 1 -19 repeater out=north
+place 0 1 -18 lever face=floor
+label S_REP 0 1 -18
+place -1 1 -15 lever face=floor
+label D_COMP1 -1 1 -15
+place 0 1 -15 repeater out=east
+label Q_COMP1 0 1 -15
+place 0 1 -14 comparator out=north
+source 0 1 -13 barrel 1
+label S_COMP1 0 1 -13
+place -1 1 -10 lever face=floor
+label D_WIRE -1 1 -10
+place 0 1 -10 repeater out=east
+label Q_WIRE 0 1 -10
+place 0 1 -9 redstone_wire
+place 0 1 -8 lever face=floor
+label S_WIRE 0 1 -8
+place -1 1 -5 lever face=floor
+label D_TORCH -1 1 -5
+place 0 1 -5 repeater out=east
+label Q_TORCH 0 1 -5
+place 0 1 -3 stone
+place 0 1 -4 redstone_wall_torch facing=north
+label S_TORCH 0 1 -3
+place -1 1 0 lever face=floor
+label D_BLOCK -1 1 0
+place 0 1 0 repeater out=east
+label Q_BLOCK 0 1 0
+place 0 1 1 stone
+place 0 2 1 lever face=floor
+label S_BLOCK 0 2 1
+place -1 1 5 lever face=floor
+label D_RBLOCK -1 1 5
+place 0 1 5 repeater out=east
+label Q_RBLOCK 0 1 5
+label S_RBLOCK 0 1 6
+place -1 1 10 lever face=floor
+label D_OBS -1 1 10
+place 0 1 10 repeater out=east
+label Q_OBS 0 1 10
+place 0 1 11 observer out=north
+place 0 1 12 lever face=floor
+label S_OBS 0 1 12
+place -1 1 15 lever face=floor
+label D_PEND -1 1 15
+place 0 1 15 repeater out=east
+label Q_PEND 0 1 15
+place 0 1 16 repeater out=north
+place 0 1 17 lever face=floor
+label S_PEND 0 1 17
+settle
+
+target new lockers "a repeater or a comparator (even at strength 1) at the side locks; wire, a torch, a powered block, a redstone block, an observer do not"
+target lockers do at 2 use @S_REP
+target lockers do at 2 use @S_WIRE
+target lockers do at 2 use @S_BLOCK
+target lockers do at 2 set @S_RBLOCK redstone_block
+target lockers do at 10 use @D_REP
+target lockers do at 10 use @D_COMP1
+target lockers do at 10 use @D_WIRE
+target lockers do at 10 use @D_TORCH
+target lockers do at 10 use @D_BLOCK
+target lockers do at 10 use @D_RBLOCK
+target lockers expect @Q_REP locked=true at 4
+target lockers expect @Q_REP powered=false during 0..30
+target lockers expect @Q_COMP1 locked=true at 0
+target lockers expect @Q_COMP1 powered=false during 0..30
+target lockers expect @Q_WIRE locked=false during 0..30
+target lockers expect @Q_WIRE powered=true at 12
+target lockers expect @Q_TORCH locked=false during 0..30
+target lockers expect @Q_TORCH powered=true at 12
+target lockers expect @Q_BLOCK locked=false during 0..30
+target lockers expect @Q_BLOCK powered=true at 12
+target lockers expect @Q_RBLOCK locked=false during 0..30
+target lockers expect @Q_RBLOCK powered=true at 12
+
+target new observer "an observer pulsing into the side does not lock"
+target observer do at 2 use @S_OBS
+target observer do at 3 use @D_OBS
+target observer expect @Q_OBS locked=false during 0..20
+target observer expect @Q_OBS powered=true at 5
+
+target new unlock "input changes while locked are ignored; after unlocking the repeater catches up after its delay"
+target unlock do at 2 use @S_REP
+target unlock do at 10 use @D_REP
+target unlock do at 20 use @S_REP
+target unlock expect @Q_REP locked=true at 21
+target unlock expect @Q_REP locked=false at 22
+target unlock expect @Q_REP powered=false at 23
+target unlock expect @Q_REP powered=true at 24
+
+target new pending "locking while a tick is pending cancels it: the change is not delayed, it is dropped until unlock"
+target pending do at 1 use @S_PEND
+target pending do at 2 use @D_PEND
+target pending do at 20 use @S_PEND
+target pending expect @Q_PEND locked=true at 3
+target pending expect @Q_PEND powered=false during 0..23
+target pending expect @Q_PEND powered=true at 24
+
+check

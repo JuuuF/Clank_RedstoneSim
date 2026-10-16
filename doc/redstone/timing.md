@@ -71,6 +71,14 @@ first: higher priority or scheduled earlier). Details: R-003.
 - A sticky piston needs a pulse of **3 ticks or more** to bring its block back.
 - A repeater with delay D is also a *pulse extender to D* and a *gap filler below D*.
 
+## Torch burnout (R-007)
+
+A torch burns out on its **8th turn-off within 60 ticks**: switching it off every 8 ticks
+or faster burns it out (a period-4 loop after 30 ticks, a period-8 loop after 59), every 9
+ticks or slower never. A burnt-out torch relights 160 ticks later if unpowered, unless its
+own turn-off unpowered its block at once (then it waits for a neighbor change). V
+[[R-007-torch-burnout]], G EXP-005, 006.
+
 ## To be measured
 
 Inputs through blocks and wire, and update-order races inside a tick are open:

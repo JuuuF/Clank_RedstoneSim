@@ -1,0 +1,111 @@
+# R-007: torch burnout: when it happens and how a torch recovers (doc/redstone/records/R-007-torch-burnout.md)
+#
+# Rows: P8 and P9: a wall torch on a stone whose lever (on top) switches the stone on
+# for 4 ticks every 8 (P8, 8 times) or every 9 (P9, 10 times) ticks. INST and KICK: a
+# torch whose own wire (10 wires) loops straight back into its block (it turns itself off
+# 2 ticks after it turns on: period 4); KICK gets a stone placed beside its torch at tick
+# 200. DELAY: a torch whose loop runs through a delay-1 repeater (period 8). The loops
+# start by themselves from the build.
+#   redsim-cli r007.redsim.json < experiments/redstone/R-007-torch-burnout.cli.txt
+new size 48 force
+note "R-007: torch burnout (8 turn-offs within 60 ticks) and recovery (160 ticks later, unless its own turn-off unpowers its block)"
+place 0 1 -20 stone
+place 0 2 -20 lever face=floor
+place 1 1 -20 redstone_wall_torch facing=east
+label L_P8 0 2 -20
+label T_P8 1 1 -20
+place 0 1 -16 stone
+place 0 2 -16 lever face=floor
+place 1 1 -16 redstone_wall_torch facing=east
+label L_P9 0 2 -16
+label T_P9 1 1 -16
+place 0 1 -10 stone
+place 1 1 -10 redstone_wall_torch facing=east
+label T_INST 1 1 -10
+place 2 1 -10 redstone_wire
+place 2 1 -9 redstone_wire
+place 2 1 -8 redstone_wire
+place 1 1 -8 redstone_wire
+place 0 1 -8 redstone_wire
+place -1 1 -8 redstone_wire
+place -2 1 -8 redstone_wire
+place -2 1 -9 redstone_wire
+place -2 1 -10 redstone_wire
+place -1 1 -10 redstone_wire
+place 0 1 -2 stone
+place 1 1 -2 redstone_wall_torch facing=east
+label T_KICK 1 1 -2
+place 2 1 -2 redstone_wire
+place 2 1 -1 redstone_wire
+place 2 1 0 redstone_wire
+place 1 1 0 redstone_wire
+place 0 1 0 redstone_wire
+place -1 1 0 redstone_wire
+place -2 1 0 redstone_wire
+place -2 1 -1 redstone_wire
+place -2 1 -2 redstone_wire
+place -1 1 -2 redstone_wire
+label KICK 1 1 -3
+place 0 1 6 stone
+place 1 1 6 redstone_wall_torch facing=east
+label T_DELAY 1 1 6
+line 2 1 6 to 2 1 8 redstone_wire
+line 1 1 8 to 0 1 8 redstone_wire
+place 0 1 7 repeater out=north delay=1
+
+target new period "turned off every 8 ticks the torch burns out at the 8th turn-off (tick 60) and relights 160 ticks later; every 9 ticks it never burns out"
+target period do at 2 use @L_P8
+target period do at 6 use @L_P8
+target period do at 10 use @L_P8
+target period do at 14 use @L_P8
+target period do at 18 use @L_P8
+target period do at 22 use @L_P8
+target period do at 26 use @L_P8
+target period do at 30 use @L_P8
+target period do at 34 use @L_P8
+target period do at 38 use @L_P8
+target period do at 42 use @L_P8
+target period do at 46 use @L_P8
+target period do at 50 use @L_P8
+target period do at 54 use @L_P8
+target period do at 58 use @L_P8
+target period do at 62 use @L_P8
+target period do at 2 use @L_P9
+target period do at 6 use @L_P9
+target period do at 11 use @L_P9
+target period do at 15 use @L_P9
+target period do at 20 use @L_P9
+target period do at 24 use @L_P9
+target period do at 29 use @L_P9
+target period do at 33 use @L_P9
+target period do at 38 use @L_P9
+target period do at 42 use @L_P9
+target period do at 47 use @L_P9
+target period do at 51 use @L_P9
+target period do at 56 use @L_P9
+target period do at 60 use @L_P9
+target period do at 65 use @L_P9
+target period do at 69 use @L_P9
+target period do at 74 use @L_P9
+target period do at 78 use @L_P9
+target period do at 83 use @L_P9
+target period do at 87 use @L_P9
+target period expect @T_P8 lit=true during 56..59
+target period expect @T_P8 lit=false during 60..219
+target period expect @T_P8 lit=true during 220..240
+target period expect @T_P9 lit=false during 85..88
+target period expect @T_P9 lit=true during 89..240
+
+target new loops "a torch that unpowers itself at once stays out after burning out; one fed back through a repeater relights every 160 ticks; an update wakes the stuck one"
+target loops do at 200 place @KICK stone
+target loops expect @T_INST lit=true at 28
+target loops expect @T_INST lit=false during 30..300
+target loops expect @T_KICK lit=false during 30..201
+target loops expect @T_KICK lit=true at 202
+target loops expect @T_KICK lit=false during 232..300
+target loops expect @T_DELAY lit=true during 55..58
+target loops expect @T_DELAY lit=false during 59..218
+target loops expect @T_DELAY lit=true during 219..222
+target loops expect @T_DELAY lit=false during 279..300
+
+check

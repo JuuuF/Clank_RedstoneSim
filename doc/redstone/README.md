@@ -127,6 +127,8 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-003-short-pulses]] | Short pulses and short gaps into each component | [[timing]] short-pulse table | verified |
 | [[R-004-wire-geometry]] | Wire shapes and what they power; steps up and down | [[signals]] wire rules | verified |
 | [[R-005-signal-strength]] | Signal strength through blocks and components; comparator modes, side inputs, container levels | [[signals]] strength rules | verified |
+| [[R-006-repeater-locking]] | What locks a repeater; inputs while locked | [[components]] Repeater | verified |
+| [[R-007-torch-burnout]] | Torch burnout limit and recovery | [[components]] Redstone torch, [[timing]] | verified |
 
 ## Status
 

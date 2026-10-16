@@ -30,6 +30,11 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - Short pulses: ignores 1-tick pulses and circuit-made 2-tick pulses (observer,
   repeater); fills 1-tick gaps; anything of 3+ ticks passes with its length.
   V [[R-003-short-pulses]]
+- **Burnout:** the 8th turn-off within 60 ticks burns it out (off, input ignored).
+  Turned off every 8 ticks or faster it burns out; every 9 or slower never. It relights
+  160 ticks after burning out if its block is unpowered then, except when its own
+  turn-off unpowered its block at once (a pure wire loop): then it stays off until some
+  block next to it changes. V [[R-007-torch-burnout]]
 
 ## Repeater
 
@@ -40,6 +45,11 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - Short pulses: once it sees a change it ignores the input until its tick runs: pulses
   and gaps shorter than its delay D come out exactly D long. Sees every pulse, also
   1-tick and circuit-made ones. V R-003
+- **Locking:** a repeater or comparator pointing into its side (strength ≥ 1) locks it
+  in the same tick; nothing else does (wire, torches, powered or redstone blocks,
+  observers). Locked, it holds its output and ignores input changes (a change already
+  waiting is dropped); unlocked, it re-reads the input and switches after its delay.
+  V [[R-006-repeater-locking]]
 
 ## Comparator
 
