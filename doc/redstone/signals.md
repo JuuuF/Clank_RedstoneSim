@@ -48,9 +48,22 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 
 - Power drops by 1 per wire: a lever's 15 reaches 15 wires (the 15th has power 1). V R-001.
 - Wire changes in the same tick as its source (no delay). V R-001.
-- A wire beside a strongly powered block takes power 15 from it. V R-002.
-- Shapes (dot, line, cross), stepping up and down, and what a wire points into: R-004
-  ([[backlog]]).
+- A wire beside, on or under a strongly powered block takes power 15 from it. V R-002,
+  [[R-004-wire-geometry]].
+- **What a wire powers:** the block under it and every neighbor its shape **points
+  into**. V R-004
+  - a lone wire placed by a player is a **cross**: it points into all four sides;
+  - right-clicked (`use`) it becomes a **dot**: it powers only the block under it;
+    `use` again turns it back into a cross;
+  - a wire with one connection is a **line** pointing on through its far end;
+  - a **corner** points into its two arms only, not the other two sides;
+  - a wire running past a block or component (beside it, not pointing in) does not
+    power it.
+- **Steps:** wire connects one block up onto a solid block beside it, and down from one,
+  unless a solid block sits directly over the lower wire (it cuts the step). Over
+  **glass** and **top slabs** (non-conductors that hold wire) power climbs **up but never
+  down**. V R-004, G EXP-007
+- Wire passing along a repeater's side does not power or lock it. V R-004
 
 ## Open
 

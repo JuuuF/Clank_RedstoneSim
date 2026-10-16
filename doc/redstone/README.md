@@ -125,6 +125,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-001-response-times]] | Response times of the basic components | [[timing]] base table | verified |
 | [[R-002-what-powers-a-block]] | Which sources power a block, strongly or weakly | [[signals]] power rules | verified |
 | [[R-003-short-pulses]] | Short pulses and short gaps into each component | [[timing]] short-pulse table | verified |
+| [[R-004-wire-geometry]] | Wire shapes and what they power; steps up and down | [[signals]] wire rules | verified |
 
 ## Status
 

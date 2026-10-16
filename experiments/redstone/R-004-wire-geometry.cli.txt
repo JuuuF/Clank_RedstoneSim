@@ -1,0 +1,206 @@
+# R-004: wire shapes and what they power; steps up and down (doc/redstone/records/R-004-wire-geometry.md)
+#
+# Rows 6 blocks apart in two columns (x=-12 and x=8), each lit by a lever flipped at
+# tick 2 (`@IN_…`); lamps are the probes. A lone wire placed on a powered stone (a
+# cross) and the same wire right-clicked into a dot, with lamps on all four sides; the end
+# and the sides of a straight line; a corner; steps up and down over stone, glass and a
+# top slab; a step cut by a stone over the lower wire; wire passing a repeater's side;
+# wire under a strongly powered block.
+#   redsim-cli r004.redsim.json < experiments/redstone/R-004-wire-geometry.cli.txt
+new size 48 force
+note "R-004: wire shapes (cross, dot, line, corner), steps up and down over stone, glass and a top slab"
+place -12 1 -20 stone
+place -14 1 -20 lever face=floor
+place -13 1 -20 repeater out=east
+place -12 2 -20 redstone_wire
+set -11 2 -20 redstone_lamp
+label CROSS_E -11 2 -20
+set -13 2 -20 redstone_lamp
+label CROSS_W -13 2 -20
+set -12 2 -21 redstone_lamp
+label CROSS_N -12 2 -21
+set -12 2 -19 redstone_lamp
+label CROSS_S -12 2 -19
+label IN_CROSS -14 1 -20
+label CROSS -12 2 -20
+place -12 1 -14 stone
+place -14 1 -14 lever face=floor
+place -13 1 -14 repeater out=east
+place -12 2 -14 redstone_wire
+use -12 2 -14
+set -11 2 -14 redstone_lamp
+label DOT_E -11 2 -14
+set -13 2 -14 redstone_lamp
+label DOT_W -13 2 -14
+set -12 2 -15 redstone_lamp
+label DOT_N -12 2 -15
+set -12 2 -13 redstone_lamp
+label DOT_S -12 2 -13
+label IN_DOT -14 1 -14
+label DOT -12 2 -14
+place -15 1 -8 lever face=floor
+line -14 1 -8 to -12 1 -8 redstone_wire
+place -12 1 -9 redstone_lamp
+place -12 1 -7 redstone_lamp
+place -11 1 -8 redstone_lamp
+label IN_LINE -15 1 -8
+label LINE_END -12 1 -8
+label LINE_SIDE_N -12 1 -9
+label LINE_SIDE_S -12 1 -7
+label LINE_FRONT -11 1 -8
+place -15 1 -3 lever face=floor
+place -14 1 -3 redstone_wire
+place -13 1 -3 redstone_wire
+place -13 1 -2 redstone_wire
+place -12 1 -3 redstone_lamp
+place -13 1 -4 redstone_lamp
+place -13 1 -1 redstone_lamp
+label IN_CORNER -15 1 -3
+label CORNER -13 1 -3
+label CORNER_E -12 1 -3
+label CORNER_N -13 1 -4
+label CORNER_END -13 1 -1
+place -15 1 4 lever face=floor
+place -14 1 4 redstone_wire
+place -13 1 4 stone
+place -13 2 4 redstone_wire
+set -12 2 4 redstone_lamp
+label IN_STEPUP -15 1 4
+label STEPUP_LOW -14 1 4
+label STEPUP_HIGH -13 2 4
+label STEPUP_LAMP -12 2 4
+place -15 1 10 stone
+place -15 2 10 lever face=floor
+place -14 1 10 stone
+place -14 2 10 redstone_wire
+place -13 1 10 redstone_wire
+place -12 1 10 redstone_lamp
+label IN_STEPDOWN -15 2 10
+label STEPDOWN_HIGH -14 2 10
+label STEPDOWN_LOW -13 1 10
+label STEPDOWN_LAMP -12 1 10
+place -15 1 16 lever face=floor
+place -14 1 16 redstone_wire
+set -14 2 16 stone
+place -13 1 16 stone
+place -13 2 16 redstone_wire
+set -12 2 16 redstone_lamp
+label IN_CUT -15 1 16
+label CUT_LOW -14 1 16
+label CUT_HIGH -13 2 16
+label CUT_LAMP -12 2 16
+place 5 1 -20 lever face=floor
+place 6 1 -20 redstone_wire
+place 7 1 -20 glass
+place 7 2 -20 redstone_wire
+set 8 2 -20 redstone_lamp
+label IN_GLASSUP 5 1 -20
+label GLASSUP_HIGH 7 2 -20
+label GLASSUP_LAMP 8 2 -20
+place 5 1 -14 stone
+place 5 2 -14 lever face=floor
+place 6 1 -14 glass
+place 6 2 -14 redstone_wire
+place 7 1 -14 redstone_wire
+place 8 1 -14 redstone_lamp
+label IN_GLASSDOWN 5 2 -14
+label GLASSDOWN_HIGH 6 2 -14
+label GLASSDOWN_LOW 7 1 -14
+label GLASSDOWN_LAMP 8 1 -14
+place 5 1 -8 lever face=floor
+place 6 1 -8 redstone_wire
+place 7 1 -8 smooth_stone_slab type=top
+place 7 2 -8 redstone_wire
+set 8 2 -8 redstone_lamp
+label IN_SLABUP 5 1 -8
+label SLABUP_HIGH 7 2 -8
+label SLABUP_LAMP 8 2 -8
+place 5 1 -2 stone
+place 5 2 -2 lever face=floor
+place 6 1 -2 smooth_stone_slab type=top
+place 6 2 -2 redstone_wire
+place 7 1 -2 redstone_wire
+place 8 1 -2 redstone_lamp
+label IN_SLABDOWN 5 2 -2
+label SLABDOWN_HIGH 6 2 -2
+label SLABDOWN_LOW 7 1 -2
+label SLABDOWN_LAMP 8 1 -2
+place 6 1 3 lever face=floor
+line 7 1 3 to 9 1 3 redstone_wire
+place 8 1 4 repeater out=east
+label IN_REPSIDE 6 1 3
+label REPSIDE 8 1 4
+label REPSIDE_WIRE 8 1 3
+set 8 2 10 stone
+place 8 3 10 lever face=floor
+place 8 1 10 redstone_wire
+place 9 1 10 redstone_lamp
+label IN_UNDER 8 3 10
+label UNDER 8 1 10
+label UNDER_LAMP 9 1 10
+settle
+
+target new shapes "a lone placed wire (a cross) powers all four sides; a dot none; a line its two ends, not its sides; a corner its two arms"
+target shapes do at 2 use @IN_CROSS
+target shapes do at 2 use @IN_DOT
+target shapes do at 2 use @IN_LINE
+target shapes do at 2 use @IN_CORNER
+target shapes expect @CROSS power=15 at 4
+target shapes expect @CROSS_E lit=true at 4
+target shapes expect @CROSS_W lit=true at 4
+target shapes expect @CROSS_N lit=true at 4
+target shapes expect @CROSS_S lit=true at 4
+target shapes expect @DOT power=15 at 4
+target shapes expect @DOT_E lit=false during 0..10
+target shapes expect @DOT_W lit=false during 0..10
+target shapes expect @DOT_N lit=false during 0..10
+target shapes expect @DOT_S lit=false during 0..10
+target shapes expect @LINE_END power=13 at 2
+target shapes expect @LINE_FRONT lit=true at 2
+target shapes expect @LINE_SIDE_N lit=false during 0..10
+target shapes expect @LINE_SIDE_S lit=false during 0..10
+target shapes expect @CORNER power=14 at 2
+target shapes expect @CORNER_E lit=false during 0..10
+target shapes expect @CORNER_N lit=false during 0..10
+target shapes expect @CORNER_END lit=true at 2
+
+target new steps "wire steps up and down over a stone (-1 per wire as usual); a solid block over the lower wire cuts the step"
+target steps do at 2 use @IN_STEPUP
+target steps do at 2 use @IN_STEPDOWN
+target steps do at 2 use @IN_CUT
+target steps expect @STEPUP_LOW power=15 at 2
+target steps expect @STEPUP_HIGH power=14 at 2
+target steps expect @STEPUP_LAMP lit=true at 2
+target steps expect @STEPDOWN_HIGH power=15 at 2
+target steps expect @STEPDOWN_LOW power=14 at 2
+target steps expect @STEPDOWN_LAMP lit=true at 2
+target steps expect @CUT_LOW power=15 at 2
+target steps expect @CUT_HIGH power=0 during 0..10
+target steps expect @CUT_LAMP lit=false during 0..10
+
+target new transparent "over glass and a top slab, signals go up but not down"
+target transparent do at 2 use @IN_GLASSUP
+target transparent do at 2 use @IN_GLASSDOWN
+target transparent do at 2 use @IN_SLABUP
+target transparent do at 2 use @IN_SLABDOWN
+target transparent expect @GLASSUP_HIGH power=14 at 2
+target transparent expect @GLASSUP_LAMP lit=true at 2
+target transparent expect @GLASSDOWN_HIGH power=15 at 2
+target transparent expect @GLASSDOWN_LOW power=0 during 0..10
+target transparent expect @GLASSDOWN_LAMP lit=false during 0..10
+target transparent expect @SLABUP_HIGH power=14 at 2
+target transparent expect @SLABUP_LAMP lit=true at 2
+target transparent expect @SLABDOWN_HIGH power=15 at 2
+target transparent expect @SLABDOWN_LOW power=0 during 0..10
+target transparent expect @SLABDOWN_LAMP lit=false during 0..10
+
+target new neighbors "wire passing a repeater's side does not power it; wire under a strongly powered block gets 15"
+target neighbors do at 2 use @IN_REPSIDE
+target neighbors do at 2 use @IN_UNDER
+target neighbors expect @REPSIDE_WIRE power=14 at 2
+target neighbors expect @REPSIDE powered=false during 0..10
+target neighbors expect @REPSIDE locked=false during 0..10
+target neighbors expect @UNDER power=15 at 2
+target neighbors expect @UNDER_LAMP lit=true at 2
+
+check
