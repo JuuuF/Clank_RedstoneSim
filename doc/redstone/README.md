@@ -99,6 +99,8 @@ Pitfalls found while doing this (also in [[cli]] section 13):
   (or a repeater) as the probe.
 - `waves` shows a redstone block as 0 (it shows what a block *receives*); probe what it
   powers instead.
+- Two labels on one position made `waves` print a doubled, shifted row (fixed
+  2026-10-16); give each position one label anyway.
 
 ### Record template
 
@@ -129,6 +131,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-005-signal-strength]] | Signal strength through blocks and components; comparator modes, side inputs, container levels | [[signals]] strength rules | verified |
 | [[R-006-repeater-locking]] | What locks a repeater; inputs while locked | [[components]] Repeater | verified |
 | [[R-007-torch-burnout]] | Torch burnout limit and recovery | [[components]] Redstone torch, [[timing]] | verified |
+| [[R-008-observers]] | What an observer sees | [[components]] Observer | verified |
 
 ## Status
 

@@ -15,7 +15,7 @@ with the record that answered it.
 2. **Components in depth**
    - [x] R-006 repeater locking (who locks, timing of lock/unlock, held state)
    - [x] R-007 torch burnout thresholds and recovery
-   - [ ] R-008 observers: what they see (wire power levels, piston movement), chains
+   - [x] R-008 observers: what they see (state changes only), chains
    - [ ] R-009 pistons: push limit, immovable blocks, slime and honey, spitting blocks,
      quasi-connectivity and budding
    - [ ] R-010 copper bulb, dropper/hopper and note block as circuit elements
@@ -58,3 +58,4 @@ with the record that answered it.
 | Q1: a block powered with N by a comparator gives wire beside it N | [[signals]] | [[R-005-signal-strength]] |
 | Which neighbors lock a repeater; inputs while locked are dropped | [[components]] | [[R-006-repeater-locking]] |
 | Torch burnout: 8 turn-offs in 60 ticks; recovery after 160 unless self-unpowered | [[components]] | [[R-007-torch-burnout]] |
+| Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |

@@ -1,0 +1,112 @@
+# R-008: what an observer sees (doc/redstone/records/R-008-observers.md)
+#
+# Rows 4 blocks apart, an observer O_x at (0,1,z) watching west (out=east) the cell
+# W_x at (-1,1,z): a wire whose power changes level (WIRELVL), a wire fed by a comparator
+# whose strength changes 3 -> 7 (COMPSTR), the comparator itself (COMPD), a barrel getting
+# items (BARREL), a repeater being clicked (REPDELAY), air where a stone is placed and
+# broken (PLACE), the cell in front of a piston (PISTON), a stone beside a lamp that turns
+# on (NOCHANGE); and a chain of three observers each watching the previous (CHAIN).
+#   redsim-cli r008.redsim.json < experiments/redstone/R-008-observers.cli.txt
+new size 48 force
+note "R-008: what observers see: block state changes only (not block-entity data), 2 ticks per observer in a chain"
+place 0 1 -22 observer out=east
+label O_WIRELVL 0 1 -22
+label W_WIRELVL -1 1 -22
+place -1 1 -22 redstone_wire
+place -2 1 -22 redstone_wire
+place -3 1 -22 lever face=floor
+place -1 1 -23 lever face=floor
+label LA_WIRELVL -3 1 -22
+label LB_WIRELVL -1 1 -23
+source -3 1 -18 barrel 3
+label SRC_COMPSTR -3 1 -18
+place -2 1 -18 comparator out=east
+label C_COMPSTR -2 1 -18
+place 0 1 -18 observer facing=west
+label O_COMPSTR 0 1 -18
+place -1 1 -18 redstone_wire
+label W_COMPSTR -1 1 -18
+source -2 1 -14 barrel 3
+label SRC_COMPD -2 1 -14
+place -1 1 -14 comparator out=east
+label C_COMPD -1 1 -14
+place 0 1 -14 observer out=east
+label O_COMPD 0 1 -14
+place 0 1 -10 observer out=east
+label O_BARREL 0 1 -10
+label W_BARREL -1 1 -10
+place -1 1 -10 barrel
+place 0 1 -6 observer out=east
+label O_REPDELAY 0 1 -6
+label W_REPDELAY -1 1 -6
+place -1 1 -6 repeater out=north
+place 0 1 -2 observer out=east
+label O_PLACE 0 1 -2
+label W_PLACE -1 1 -2
+place 0 1 2 observer out=east
+label O_PISTON 0 1 2
+label W_PISTON -1 1 2
+place -2 1 2 piston facing=east
+place -3 1 2 lever face=floor
+label L_PISTON -3 1 2
+place -1 1 6 redstone_wire
+place -2 1 6 lever face=floor
+label L_CHAIN -2 1 6
+place 0 1 6 observer out=east
+place 1 1 6 observer out=east
+place 2 1 6 observer out=east
+label O_CHAIN1 0 1 6
+label O_CHAIN2 1 1 6
+label O_CHAIN3 2 1 6
+place 0 1 10 observer out=east
+label O_NOCHANGE 0 1 10
+label W_NOCHANGE -1 1 10
+place -1 1 10 stone
+place -2 1 10 redstone_lamp
+place -3 1 10 lever face=floor
+label L_NOCHANGE -3 1 10
+settle
+
+target new sees "state changes fire it: wire power levels (also from a comparator), a repeater's delay, a block placed or broken, a piston head appearing and leaving"
+target sees do at 2 use @LA_WIRELVL
+target sees do at 10 use @LB_WIRELVL
+target sees do at 20 use @LB_WIRELVL
+target sees do at 10 source @SRC_COMPSTR barrel 7
+target sees do at 10 use @W_REPDELAY
+target sees do at 10 place @W_PLACE stone
+target sees do at 20 break @W_PLACE
+target sees do at 10 use @L_PISTON
+target sees do at 30 use @L_PISTON
+target sees expect @W_WIRELVL power=14 at 2
+target sees expect @W_WIRELVL power=15 at 10
+target sees expect @O_WIRELVL powered=true during 4..5
+target sees expect @O_WIRELVL powered=true during 12..13
+target sees expect @O_WIRELVL powered=true during 22..23
+target sees expect @W_COMPSTR power=7 at 12
+target sees expect @O_COMPSTR powered=true during 14..15
+target sees expect @O_REPDELAY powered=true during 12..13
+target sees expect @O_PLACE powered=true during 12..13
+target sees expect @O_PLACE powered=true during 22..23
+target sees expect @O_PISTON powered=false at 12
+target sees expect @O_PISTON powered=true during 13..14
+target sees expect @O_PISTON powered=false during 15..32
+target sees expect @O_PISTON powered=true during 33..34
+
+target new blind "no state change, no pulse: a comparator's strength (3 -> 7, still powered), a barrel's contents, a stone whose neighbor lamp lights"
+target blind do at 10 source @SRC_COMPD barrel 7
+target blind do at 10 container @W_BARREL 0 stone 64
+target blind do at 10 use @L_NOCHANGE
+target blind expect @C_COMPD power=7 at 12
+target blind expect @W_BARREL analog=1 at 10
+target blind expect @O_COMPD powered=false during 0..30
+target blind expect @O_BARREL powered=false during 0..30
+target blind expect @O_NOCHANGE powered=false during 0..30
+
+target new chain "each observer in a chain adds 2 ticks"
+target chain do at 2 use @L_CHAIN
+target chain expect @O_CHAIN1 powered=true during 4..5
+target chain expect @O_CHAIN2 powered=true during 6..7
+target chain expect @O_CHAIN3 powered=true during 8..9
+target chain expect @O_CHAIN3 powered=false during 10..20
+
+check

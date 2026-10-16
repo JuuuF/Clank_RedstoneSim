@@ -64,8 +64,13 @@ Evidence labels: [[redstone/README#Scope and trust]].
 
 ## Observer
 
-- Reads: changes of the block it watches (its `facing` side). Any change, also a lever
-  turning off. V R-001
+- Reads: changes of the block it watches (its `facing` side): any **state** change (a
+  lever turning off, wire power 15 → 14, a repeater's delay, a block placed or broken, a
+  piston head arriving or leaving). Not block-entity data (a comparator's strength while
+  it stays powered, container contents) and not updates without a state change.
+  V R-001, [[R-008-observers]]
+- Chains of observers: 2 ticks each. Changes less than 4 ticks apart merge into one
+  pulse (the [[circuits]] both-edge detector). V R-008
 - Gives: a 2-tick pulse from its back (output) side, 2 ticks after the change, strongly
   into a block there. V R-001, R-002
 - Its pulse is a *circuit-made 2-tick pulse*: repeaters, pistons, lamps, copper bulbs,
