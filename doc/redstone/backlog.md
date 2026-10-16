@@ -37,13 +37,12 @@ with the record that answered it.
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
    - [ ] signal strength encoders/decoders, multiplexers, an analog adder (strength arithmetic)
-5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [ ] a flush door, a timed door, a double piston extender.
+5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [ ] a flush door, a timed door (monostable + door).
 
 ## Open questions
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
-| Q9 | Double piston extender: the shortest sequence and a controller from library parts | hidden doors, block placement | circuits |
 
 ## Hypotheses waiting for a test
 
@@ -66,6 +65,7 @@ with the record that answered it.
 | Q6: yes, a race fed by one wire change flips with the build's position (z sign here) | [[timing]] | [[R-017-wire-order]] |
 | Q7/H4: the counter follows lever edges every 2 ticks and an observer clock | [[circuits]] | `counter4` targets |
 | Q8: a retriggerable timer: comparator fade ring; inputs must last a lap | [[circuits]] | `fade_timer` |
+| Q9: double piston extender: three timed control blocks; inputs ≥ 8 ticks | [[circuits]] | `double_piston_extender` |
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |

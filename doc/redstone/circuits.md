@@ -49,6 +49,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | remember a strength (0–15) | [[#Peak-hold register]] |
 | two signal paths must cross | [[#Crossing]] |
 | move a structure by itself | [[#Flying machine]] |
+| push a block two cells and pull it back | [[#Double piston extender]] |
 
 ## Index
 
@@ -88,6 +89,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Toggle door]] | a button toggles the 2x2 door | 10×2×6 | open 6, closed 8 | `toggle_door` |
 | [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
 | [[#Flying machine]] | moves itself 1 block / 10 ticks, either way, until blocked | 5×2×1 | — | `flying_machine` |
+| [[#Double piston extender]] | pushes a block 2 out and brings it back | 11×2×10 | out 10, home 24 | `double_piston_extender` |
 
 ## Gates
 
@@ -655,6 +657,36 @@ other. `flying_machine.cli.txt` (built in a world without floor). **Verified.**
   powered, which killed its pulse. Building it closed (no gap) and running `settle`
   leaves it at rest with the gaps open; the pasted `.nbt` is in that rest state.
 
+### Double piston extender
+
+Two sticky pistons in a row (A behind B) push a block two cells and bring it back, run
+by three timed control signals from one lever. `double_piston_extender.cli.txt`
+(lowest corner −4 1 0 in the script). **Verified** (it worked as designed on the first
+build; the input limit below was found afterwards).
+
+| Port | Script position | Kind |
+|---|---|---|
+| IN | the wire bus 1 1 9 (z = 9, x −4…6) | any power on the bus; the test lever is at 1 1 10 |
+| A, B | 0 2 0, 1 2 0 | sticky pistons facing east (B is moved by A) |
+| X | 2 2 0 → 4 2 0 | the moved block (home, two out) |
+
+- **Sequence (lever at r, off at f):** A extends at r+4 (B and X move one out, X at 3
+  by r+6); B's out-position block is powered at r+8 and B pushes X to 4 by **r+10**.
+  Back: B retracts at f+8 (X back to 3 by f+10); A retracts at f+12 and pulls B home
+  (X stays at 3: a retracted piston's face does not pull when it is moved); a pulse at
+  B's home block (f+18) makes B extend into the gap and pull X home by **f+24**.
+- **How the timing is made:** B's power block sits under B's *out* position, so B is
+  only powered once A has moved it there (and the pull pulse sits under B's *home*).
+  A's power is the input OR a 10-tick delayed copy (a block fed by two repeaters), so A
+  holds until B is back. The pull pulse is a [[#Falling-edge detector]] fed 12 ticks
+  late. Rules behind it: same-tick piston start ([[R-009-pistons]]), extended pistons
+  cannot be pushed, pulling across a gap ([[R-015-moving-observers]]).
+- **Input:** hold it at least **8 ticks** (a lever, a button: 20). **Failure case:**
+  with a 4-tick input the direct path into A's block ends before the delayed copy
+  starts, A's power has a gap, A pulls B back mid-way and X never gets two out (it
+  still ends at home). General lesson: an OR of a signal and its delayed copy has a gap
+  when the signal is shorter than the delay.
+
 ## Composition rules
 
 To be filled as primitives are combined: how far apart modules must be, which outputs
@@ -682,6 +714,11 @@ may drive which inputs, timing budgets. Known so far:
 - **Check what else an input powers:** a block powered to drive one component powers
   every component touching it (the first piston door: the torch's input block also
   powered a piston). Keep input blocks away from components they must not drive.
+- **An OR of a signal and its delayed copy has a gap** when the signal is shorter than
+  the delay (the double piston extender with a 4-tick input). Stretch the input first
+  or state a minimum input length.
+- **Rings hold moving patterns:** anything that should change a ring's (loop's) whole
+  contents must last at least one lap (fade timer, peak-hold register).
 - **Never rely on the order in which one wire change reaches several components**
   (pistons racing, ties between equal-priority ticks): it depends on the position of the
   build ([[R-017-wire-order]]). Give the paths different delays instead.

@@ -1,0 +1,87 @@
+# Contraption: double piston extender. Contract: doc/redstone/circuits.md, "Double piston extender".
+#
+# Two sticky pistons in a row push a block two cells out and bring it back:
+#   A 0 2 0 and B 1 2 0 (both facing east), the block X starting at 2 2 0; out: 4 2 0.
+# Control blocks under the pistons (y=1): 0 1 0 powers A, 2 1 0 powers B when B has been
+# pushed out to 2 2 0, 1 1 0 powers B at home (1 2 0) for the final pull. One lever bus
+# (z=9) feeds three paths:
+#   S_B (x=6, east): repeater delay 3 + feed repeater: B's out-position block on at +8 and
+#     off at +8: B extends after A has moved it, and retracts first.
+#   S_A (x=-2/-4, west): block K powered by a direct path (+2) OR a delayed path (+10);
+#     its feed repeater powers A's block from +4 until 12 ticks after the input falls,
+#     so A pulls B home only after B has pulled X back to 3 2 0.
+#   S_P (x=1): the input delayed 12 into a falling-edge detector (rear repeater delay 3,
+#     side repeater at 2 1 3): a 4-tick pulse 16 ticks after the input falls, through
+#     the feed repeater 1 1 1: B (home again) extends into the gap and pulls X back to
+#     2 2 0 (a sticky piston extending into air pulls on a short pulse, R-015).
+#   redsim-cli double_piston_extender.redsim.json < examples/circuits/double_piston_extender.cli.txt
+new size 32 force
+note "Double piston extender: lever @L on: the wool goes 2 blocks out (at +10); off: it comes back (home at +24). Hold the input at least 8 ticks"
+# pistons and the moved block
+place 0 2 0 sticky_piston facing=east
+place 1 2 0 sticky_piston facing=east
+set 2 2 0 white_wool
+# control blocks under A, B-home, B-out
+place 0 1 0 stone
+place 1 1 0 stone
+place 2 1 0 stone
+# S_A: block K at (-2,1,0) -> repeater (-1,1,0) out=east -> (0,1,0)
+place -2 1 0 stone
+place -1 1 0 repeater out=east
+place -2 1 1 repeater out=north
+line -2 1 2 to -2 1 8 redstone_wire
+place -3 1 0 repeater out=east
+line -4 1 0 to -4 1 7 redstone_wire
+place -4 1 8 repeater out=north delay=4
+# S_B: (6,1,8) repeater delay 3, wires north and west, feed repeater (3,1,0) out=west
+place 6 1 8 repeater out=north delay=3
+line 6 1 0 to 6 1 7 redstone_wire
+line 4 1 0 to 5 1 0 redstone_wire
+place 3 1 0 repeater out=west
+# S_P: delayed falling edge at x=1
+place 1 1 8 repeater out=north delay=4
+place 1 1 7 repeater out=north delay=2
+line 1 1 5 to 1 1 6 redstone_wire
+place 1 1 4 repeater out=north delay=3
+place 1 1 3 comparator out=north mode=subtract
+place 1 1 2 redstone_wire
+place 1 1 1 repeater out=north
+place 2 1 5 redstone_wire
+line 3 1 3 to 3 1 5 redstone_wire
+place 2 1 3 repeater out=west
+# bus and lever
+line -4 1 9 to 6 1 9 redstone_wire
+place 1 1 10 lever face=floor
+label L 1 1 10 "the input lever"
+label A 0 2 0 "sticky piston A"
+label B 1 2 0 "sticky piston B (moves)"
+label X0 2 2 0 "X at home"
+label X1 3 2 0 "X one out"
+label X2 4 2 0 "X two out"
+group double_piston_extender -4 1 0 6 2 9 in 1 1 9 IN out @X2 OUT
+settle
+prefab save double_piston_extender -4 1 0 6 2 9
+
+target new cycle "lever on at 2: X one out at 8, two out at 12; off at 40: X back to one out at 50 and home at 64"
+target cycle do at 2 use @L
+target cycle do at 40 use @L
+target cycle expect @X0 block=white_wool during 0..5
+target cycle expect @X1 block=white_wool during 8..9
+target cycle expect @X2 block=white_wool during 12..47
+target cycle expect @X1 block=white_wool during 50..61
+target cycle expect @X0 block=white_wool during 64..90
+target cycle expect @X2 block=air during 48..90
+
+target new hold8 "the shortest clean input: 8 ticks (lever 2..9): out at 12, home at 34"
+target hold8 do at 2 use @L
+target hold8 do at 10 use @L
+target hold8 expect @X2 block=white_wool during 12..17
+target hold8 expect @X0 block=white_wool during 34..60
+
+target new short "failure case: a 4-tick input leaves a gap in A's power (the direct path ends before the delayed one starts): A pulls B back mid-way and X never gets two out; it does end at home"
+target short do at 2 use @L
+target short do at 6 use @L
+target short expect @X2 block=air during 0..60
+target short expect @X0 block=white_wool during 34..60
+
+check
