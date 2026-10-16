@@ -56,7 +56,7 @@ OPS: dict[str, Callable[[Any, Any], bool]] = {
 }
 _CONDITION = re.compile(r"([a-z_]+)(!=|<=|>=|=|<|>)(.+)$")
 #: Keys that are not block properties.
-PSEUDO_KEYS = ("block", "power", "signal", "direct")
+PSEUDO_KEYS = ("block", "power", "signal", "direct", "analog")
 DEFAULT_SETTLE = 10
 
 
@@ -95,7 +95,7 @@ def parse_expectation(words: list[str], document: Document | None) -> Expectatio
     key, op, value = match[1], match[2], match[3]
     if (
         op not in ("=", "!=")
-        and key not in ("power", "signal", "direct")
+        and key not in ("power", "signal", "direct", "analog")
         and not value.lstrip("-").isdigit()
     ):
         raise CliError(f"expect: {op} compares numbers; {key}={value} is not a number")
@@ -187,6 +187,12 @@ def observe(level: Any, pos: Pos, key: str) -> Any:
         return level.get_best_neighbor_signal(pos)
     if key == "direct":
         return level.get_direct_signal_to(pos)
+    if key == "analog":
+        from redsim.core.direction import Direction
+
+        if not state.has_analog_output_signal():
+            return None
+        return state.get_analog_output_signal(level, pos, Direction.NORTH)
     value = prop(state, key)
     if value is None:
         return None

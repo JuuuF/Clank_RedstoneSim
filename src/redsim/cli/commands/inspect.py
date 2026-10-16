@@ -173,8 +173,9 @@ def show(session: Session, args: Args) -> Output:
     For each position: its full block state, its label and note, which way it works (for
     directional blocks: "input from the east, output to the west"), what signal it receives
     from each side and what it gives to each side, whether it is a solid block that
-    conducts and how much power it has, its monitor value, its pending scheduled ticks,
-    its block-entity data (container items, comparator output, …) and its neighbors.
+    conducts and how much power it has, its monitor value, what a comparator reads from
+    it (containers, cauldrons, lecterns, …: `analog`), its pending scheduled ticks, its
+    block-entity data (container items, comparator output, …) and its neighbors.
 
     Signals, as the game computes them (doc/mechanics/power-queries.md):
 
@@ -195,11 +196,12 @@ def show(session: Session, args: Args) -> Output:
     kind="view",
     data="""{"blocks": [{"pos", "state", "label", "signals": {side: {"in", "in_direct",
     "out", "out_direct"}}, "orientation", "conductor", "direct_power", "best_signal", "monitor",
+    "analog" (comparator reading or null),
     "scheduled": [{"block", "tick", "priority"}], "block_entity", "neighbors":
     {side: state}}], "tick"}""",
 )
 def inspect(session: Session, args: Args) -> Output:
-    from redsim.core.direction import ALL
+    from redsim.core.direction import ALL, Direction
     from redsim.core.pos import offset
     from redsim.editor.monitor import monitor_value
 
@@ -232,6 +234,10 @@ def inspect(session: Session, args: Args) -> Output:
             out.add("  conducts  no")
         value = monitor_value(level, pos)
         out.add(f"  value     {value}  (what the monitor and waves show)")
+        analog = None
+        if state.has_analog_output_signal():  # no simulated block reads the direction
+            analog = state.get_analog_output_signal(level, pos, Direction.NORTH)
+            out.add(f"  analog    {analog}  (what a comparator reads from it)")
         scheduled = [
             {
                 "block": t.block_id.removeprefix("minecraft:"),
@@ -267,6 +273,7 @@ def inspect(session: Session, args: Args) -> Output:
                 "best_signal": best,
                 "orientation": orientation,
                 "monitor": value,
+                "analog": analog,
                 "scheduled": scheduled,
                 "block_entity": data,
                 "neighbors": {

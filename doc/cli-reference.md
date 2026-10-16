@@ -874,8 +874,9 @@ Everything about a block: state, signals in and out, pending ticks, data.
 For each position: its full block state, its label and note, which way it works (for
 directional blocks: "input from the east, output to the west"), what signal it receives
 from each side and what it gives to each side, whether it is a solid block that
-conducts and how much power it has, its monitor value, its pending scheduled ticks,
-its block-entity data (container items, comparator output, …) and its neighbors.
+conducts and how much power it has, its monitor value, what a comparator reads from
+it (containers, cauldrons, lecterns, …: `analog`), its pending scheduled ticks, its
+block-entity data (container items, comparator output, …) and its neighbors.
 
 Signals, as the game computes them (doc/mechanics/power-queries.md):
 
@@ -902,6 +903,7 @@ at 7 inspect @OUT
 
 JSON `data`: {"blocks": [{"pos", "state", "label", "signals": {side: {"in", "in_direct",
     "out", "out_direct"}}, "orientation", "conductor", "direct_power", "best_signal", "monitor",
+    "analog" (comparator reading or null),
     "scheduled": [{"block", "tick", "priority"}], "block_entity", "neighbors":
     {side: state}}], "tick"}
 
@@ -1268,8 +1270,9 @@ A target says what a contraption must do; `check` runs it. Build it up line by l
 - `target NAME expect POS CONDITION WHEN`: CONDITION is `KEY=VALUE` (also `!=`, `<`,
   `<=`, `>`, `>=` for numbers), KEY a block property (`lit`, `powered`, `extended`,
   `power`, …) or `block` (the block id), `power` (the value `waves` shows), `signal`
-  (strongest signal received) or `direct` (how much a solid block is powered). WHEN is `at T`,
-  `during A..B` (every tick) or `within A..B` (some tick).
+  (strongest signal received), `direct` (how much a solid block is powered) or
+  `analog` (what a comparator reads from it: a container's fullness, …). WHEN is `at
+  T`, `during A..B` (every tick) or `within A..B` (some tick).
 - `target NAME truth @IN1 @IN2 -> @OUT rows 00:0 01:0 10:0 11:1 [settle N]`: one case
   per row (input bits, `:`, output bits). Inputs that are 1 switch on at tick 1 (a
   lever is flipped, anything else gets a power pulse that lasts the run); each output

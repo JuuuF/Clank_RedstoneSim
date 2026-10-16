@@ -34,8 +34,9 @@ from redsim.cli.views import wave_row
     - `target NAME expect POS CONDITION WHEN`: CONDITION is `KEY=VALUE` (also `!=`, `<`,
       `<=`, `>`, `>=` for numbers), KEY a block property (`lit`, `powered`, `extended`,
       `power`, …) or `block` (the block id), `power` (the value `waves` shows), `signal`
-      (strongest signal received) or `direct` (how much a solid block is powered). WHEN is `at T`,
-      `during A..B` (every tick) or `within A..B` (some tick).
+      (strongest signal received), `direct` (how much a solid block is powered) or
+      `analog` (what a comparator reads from it: a container's fullness, …). WHEN is `at
+      T`, `during A..B` (every tick) or `within A..B` (some tick).
     - `target NAME truth @IN1 @IN2 -> @OUT rows 00:0 01:0 10:0 11:1 [settle N]`: one case
       per row (input bits, `:`, output bits). Inputs that are 1 switch on at tick 1 (a
       lever is flipped, anything else gets a power pulse that lasts the run); each output

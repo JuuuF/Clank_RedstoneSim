@@ -404,10 +404,14 @@ def orientation_text(state: BlockState) -> str | None:
         return None
     f, o = facing.serialized, facing.opposite.serialized
     if bid in ("repeater", "comparator"):
+        # The side inputs are getControlInputSignal: diodes only for a repeater; wire,
+        # redstone blocks and components (not powered blocks) for a comparator.
         sides = f"{facing.clockwise().serialized} and {facing.counter_clockwise().serialized}"
-        what = "lock it" if bid == "repeater" else "are its side inputs"
-        return (f"input from the {f}, output to the {o}; repeaters and comparators at the "
-                f"{sides} {what} (facing={f})")  # fmt: skip
+        if bid == "repeater":
+            side = f"repeaters and comparators at the {sides} lock it"
+        else:
+            side = f"side inputs from the {sides} (wire, redstone blocks, components)"
+        return f"input from the {f}, output to the {o}; {side} (facing={f})"
     if bid == "observer":
         return f"watches the block to its {f}, outputs to the {o} (facing={f})"
     if bid in ("piston", "sticky_piston"):

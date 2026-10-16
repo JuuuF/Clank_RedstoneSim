@@ -405,6 +405,9 @@ receives, `.` for none), `at T show …`.
   gives *weak* power (the block then powers lamps, pistons and repeaters next to it, but
   not other wire). Both show as "direct" here, because that is what the game's code
   computes; wire is what ignores blocks powered only by wire.
+- **analog N**: for blocks a comparator can read (containers, cauldrons, lecterns,
+  composters, cakes, …), the value it reads (`getAnalogOutputSignal`): a chest with four
+  full stacks of 64 gives 3.
 - Sides are always listed in the game's order: down, up, north, south, west, east.
 - Also listed: pending scheduled ticks at the block, block events, block-entity data
   (container items, a comparator's output) and the neighbors.
@@ -526,7 +529,8 @@ target door expect @OUT block=air at 13
   - KEY is a block property (`lit`, `powered`, `extended`, `power`, `delay`, …), or
     `block` (the block id without `minecraft:`), or `power` (the value `waves` shows, for
     any block), `signal` (the strongest signal it receives), `direct` (how much a solid
-    block is powered). Note that the property `power` (wire) and the key `power` agree.
+    block is powered), `analog` (what a comparator reads from it: a container's fullness,
+    a lectern's page, …). Note that the property `power` (wire) and the key `power` agree.
   - WHEN is `at T` (that tick), `during A..B` (every tick of the range) or `within A..B`
     (at least one tick of it).
 - `target NAME show` lists the lines (numbered), `target NAME remove N` deletes one,

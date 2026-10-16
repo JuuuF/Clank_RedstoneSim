@@ -333,3 +333,14 @@ def test_place_right_clicks_for_delay_mode_and_open_and_notes_the_rest(rs: Run) 
     out = rs("place", "5", "1", "3", "redstone_lamp", "lit=true")
     assert "note: lit=false, not true" in out
     assert "lit=true" in rs("set", "6", "1", "3", "redstone_lamp", "lit=true")  # set: exact
+
+
+def test_comparator_readings_in_inspect_and_targets(rs: Run) -> None:
+    rs.batch("place 0 1 0 chest; label C 0 1 0")
+    rs.batch("; ".join(f"container @C {slot} cobblestone 64" for slot in range(4)))
+    assert "analog    3  (what a comparator reads from it)" in rs("inspect", "@C")
+    rs.batch("target new full; target full expect @C analog=3 at 1")
+    assert "1 passed" in rs("check")
+    assert "side inputs from the north and south" in rs.batch(
+        "place 1 1 0 comparator out=east; inspect 1 1 0"
+    )
