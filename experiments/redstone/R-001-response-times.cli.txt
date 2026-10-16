@@ -1,0 +1,240 @@
+# R-001: response times of the basic components (doc/redstone/records/R-001-response-times.md)
+#
+# One row per component, each driven by its own lever (or a button) from the west. Every
+# lever is flipped on at tick 2 and off at tick 40 (buttons are pressed once at tick 2).
+# The targets hold what was observed; `check` must pass.
+#   redsim-cli r001.redsim.json < experiments/redstone/R-001-response-times.cli.txt
+new size 48 force
+note "R-001: response times of the basic components; every lever on at tick 2, off at 40"
+
+# Lamp: lever beside it
+place -14 1 -20 lever face=floor
+place -13 1 -20 redstone_lamp
+label IN_LAMP -14 1 -20
+label LAMP -13 1 -20
+# 15 wires and a lamp behind them
+place -14 1 -18 lever face=floor
+line -13 1 -18 to 1 1 -18 redstone_wire
+place 2 1 -18 redstone_lamp
+label IN_WIRE -14 1 -18
+label WIRE1 -13 1 -18 "first wire"
+label WIRE15 1 1 -18 "15th wire"
+label WIRELAMP 2 1 -18 "lamp after 15 wires"
+# Wall torch on a stone that a lever on top powers
+place -13 1 -16 stone
+place -13 2 -16 lever face=floor
+place -12 1 -16 redstone_wall_torch facing=east
+label IN_TORCH -13 2 -16
+label TORCH -12 1 -16
+# Repeaters with delays 1..4, lever directly at the input
+place -14 1 -14 lever face=floor
+place -13 1 -14 repeater out=east delay=1
+place -14 1 -12 lever face=floor
+place -13 1 -12 repeater out=east delay=2
+place -14 1 -10 lever face=floor
+place -13 1 -10 repeater out=east delay=3
+place -14 1 -8 lever face=floor
+place -13 1 -8 repeater out=east delay=4
+label IN_REP1 -14 1 -14
+label REP1 -13 1 -14
+label IN_REP2 -14 1 -12
+label REP2 -13 1 -12
+label IN_REP3 -14 1 -10
+label REP3 -13 1 -10
+label IN_REP4 -14 1 -8
+label REP4 -13 1 -8
+# Comparator (compare mode)
+place -14 1 -6 lever face=floor
+place -13 1 -6 comparator out=east
+label IN_COMP -14 1 -6
+label COMP -13 1 -6
+# Observer watching the lever
+place -14 1 -4 lever face=floor
+place -13 1 -4 observer out=east
+label IN_OBS -14 1 -4
+label OBS -13 1 -4
+# Piston and sticky piston pushing a stone east
+place -14 1 -2 lever face=floor
+place -13 1 -2 piston facing=east
+place -12 1 -2 stone
+label IN_PIST -14 1 -2
+label PIST -13 1 -2
+label PIST_F1 -12 1 -2 "in front of the piston"
+label PIST_F2 -11 1 -2 "where the stone goes"
+place -14 1 0 lever face=floor
+place -13 1 0 sticky_piston facing=east
+place -12 1 0 stone
+label IN_STICKY -14 1 0
+label STICKY -13 1 0
+label STICKY_F1 -12 1 0
+label STICKY_F2 -11 1 0
+# Dropper with one item, dropping into a barrel
+place -14 1 2 lever face=floor
+place -13 1 2 dropper facing=east
+place -12 1 2 barrel
+container -13 1 2 0 stone 1
+label IN_DROP -14 1 2
+label DROP -13 1 2
+label DROP_BARREL -12 1 2
+# Note block, copper bulb
+place -14 1 4 lever face=floor
+place -13 1 4 note_block
+label IN_NOTE -14 1 4
+label NOTE -13 1 4
+place -14 1 6 lever face=floor
+place -13 1 6 copper_bulb
+label IN_BULB -14 1 6
+label BULB -13 1 6
+# Buttons on the floor beside a lamp
+place -14 1 8 stone_button face=floor
+place -13 1 8 redstone_lamp
+label STONEBTN -14 1 8
+label STONEBTN_LAMP -13 1 8
+place -14 1 10 oak_button face=floor
+place -13 1 10 redstone_lamp
+label OAKBTN -14 1 10
+label OAKBTN_LAMP -13 1 10
+# Iron trapdoor, powered rail, hopper
+place -14 1 12 lever face=floor
+place -13 1 12 iron_trapdoor
+label IN_TRAP -14 1 12
+label TRAP -13 1 12
+place -14 1 14 lever face=floor
+place -13 1 14 powered_rail
+label IN_RAIL -14 1 14
+label RAIL -13 1 14
+place -14 1 16 lever face=floor
+place -13 1 16 hopper
+label IN_HOP -14 1 16
+label HOP -13 1 16
+settle
+
+target new lamp "lamp: on at once, off 4 ticks after its power goes"
+target lamp do at 2 use @IN_LAMP
+target lamp do at 40 use @IN_LAMP
+target lamp expect @LAMP lit=false at 1
+target lamp expect @LAMP lit=true at 2
+target lamp expect @LAMP lit=true during 40..43
+target lamp expect @LAMP lit=false at 44
+
+target new wire "wire: instant, loses 1 per block; 15 wires reach a lamp with power 1"
+target wire do at 2 use @IN_WIRE
+target wire do at 40 use @IN_WIRE
+target wire expect @WIRE1 power=15 at 2
+target wire expect @WIRE15 power=1 at 2
+target wire expect @WIRELAMP lit=true at 2
+target wire expect @WIRE15 power=0 at 40
+target wire expect @WIRELAMP lit=false at 44
+
+target new torch "torch: turns off 2 ticks after its block is powered, on 2 ticks after"
+target torch do at 2 use @IN_TORCH
+target torch do at 40 use @IN_TORCH
+target torch expect @TORCH lit=true at 3
+target torch expect @TORCH lit=false at 4
+target torch expect @TORCH lit=false at 41
+target torch expect @TORCH lit=true at 42
+
+target new repeater "repeater: 2 ticks per delay step, on and off"
+target repeater do at 2 use @IN_REP1
+target repeater do at 2 use @IN_REP2
+target repeater do at 2 use @IN_REP3
+target repeater do at 2 use @IN_REP4
+target repeater do at 40 use @IN_REP1
+target repeater do at 40 use @IN_REP2
+target repeater do at 40 use @IN_REP3
+target repeater do at 40 use @IN_REP4
+target repeater expect @REP1 powered=false at 3
+target repeater expect @REP1 powered=true at 4
+target repeater expect @REP2 powered=false at 5
+target repeater expect @REP2 powered=true at 6
+target repeater expect @REP3 powered=false at 7
+target repeater expect @REP3 powered=true at 8
+target repeater expect @REP4 powered=false at 9
+target repeater expect @REP4 powered=true at 10
+target repeater expect @REP1 powered=true at 41
+target repeater expect @REP1 powered=false at 42
+target repeater expect @REP2 powered=false at 44
+target repeater expect @REP3 powered=false at 46
+target repeater expect @REP4 powered=true at 47
+target repeater expect @REP4 powered=false at 48
+
+target new comparator "comparator: 2 ticks on and off"
+target comparator do at 2 use @IN_COMP
+target comparator do at 40 use @IN_COMP
+target comparator expect @COMP power=0 at 3
+target comparator expect @COMP power=15 at 4
+target comparator expect @COMP power=15 at 41
+target comparator expect @COMP power=0 at 42
+
+target new observer "observer: a 2-tick pulse starting 2 ticks after each change it sees"
+target observer do at 2 use @IN_OBS
+target observer do at 40 use @IN_OBS
+target observer expect @OBS powered=false during 2..3
+target observer expect @OBS powered=true during 4..5
+target observer expect @OBS powered=false during 6..41
+target observer expect @OBS powered=true during 42..43
+target observer expect @OBS powered=false at 44
+
+target new piston "piston: extended 1 tick after power, block in place after 3; retracts in 3"
+target piston do at 2 use @IN_PIST
+target piston do at 2 use @IN_STICKY
+target piston do at 40 use @IN_PIST
+target piston do at 40 use @IN_STICKY
+target piston expect @PIST extended=false at 2
+target piston expect @PIST extended=true at 3
+target piston expect @PIST_F1 block=moving_piston during 3..4
+target piston expect @PIST_F2 block=moving_piston during 3..4
+target piston expect @PIST_F2 block=stone at 5
+target piston expect @PIST_F1 block=piston_head at 5
+target piston expect @PIST block=moving_piston during 41..42
+target piston expect @PIST_F1 block=air at 41
+target piston expect @PIST extended=false at 43
+target piston expect @PIST_F2 block=stone at 60
+target piston expect @STICKY_F2 block=stone at 5
+target piston expect @STICKY_F2 block=air at 41
+target piston expect @STICKY_F1 block=moving_piston during 41..42
+target piston expect @STICKY_F1 block=stone at 43
+
+target new dropper "dropper: triggered at once, drops 4 ticks later"
+target dropper do at 2 use @IN_DROP
+target dropper do at 40 use @IN_DROP
+target dropper expect @DROP triggered=true at 2
+target dropper expect @DROP_BARREL analog=0 at 5
+target dropper expect @DROP_BARREL analog=1 at 6
+target dropper expect @DROP triggered=false at 40
+
+target new instant "note block, copper bulb, iron trapdoor, powered rail, hopper: react at once"
+target instant do at 2 use @IN_NOTE
+target instant do at 2 use @IN_BULB
+target instant do at 2 use @IN_TRAP
+target instant do at 2 use @IN_RAIL
+target instant do at 2 use @IN_HOP
+target instant do at 40 use @IN_NOTE
+target instant do at 40 use @IN_BULB
+target instant do at 40 use @IN_TRAP
+target instant do at 40 use @IN_RAIL
+target instant do at 40 use @IN_HOP
+target instant expect @NOTE powered=true at 2
+target instant expect @NOTE powered=false at 40
+target instant expect @BULB lit=true at 2
+target instant expect @BULB lit=true during 40..60
+target instant expect @BULB powered=false at 40
+target instant expect @TRAP open=true at 2
+target instant expect @TRAP open=false at 40
+target instant expect @RAIL powered=true at 2
+target instant expect @RAIL powered=false at 40
+target instant expect @HOP enabled=false at 2
+target instant expect @HOP enabled=true at 40
+
+target new buttons "stone button: 20 ticks on; oak button: 30 ticks on"
+target buttons do at 2 use @STONEBTN
+target buttons do at 2 use @OAKBTN
+target buttons expect @STONEBTN powered=true during 2..21
+target buttons expect @STONEBTN powered=false at 22
+target buttons expect @STONEBTN_LAMP lit=true at 25
+target buttons expect @STONEBTN_LAMP lit=false at 26
+target buttons expect @OAKBTN powered=true during 2..31
+target buttons expect @OAKBTN powered=false at 32
+target buttons expect @OAKBTN_LAMP lit=false at 36
+
+check

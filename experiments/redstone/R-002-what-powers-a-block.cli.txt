@@ -1,0 +1,238 @@
+# R-002: which sources power a solid block, strongly or weakly (doc/redstone/records/R-002-what-powers-a-block.md)
+#
+# Each row has a stone block B, a source next to it, and two probes: a lamp beside B
+# (lit = B is powered at all) and a wire beside B (powered = B is strongly powered: only
+# strong power reaches wire through a block). Column x=0 tests the sources; column x=12
+# tests what does not chain or power B, and what a wire-powered block still does.
+# Sources switch on at tick 2 (levers flipped, the button pressed, a redstone block set).
+#   redsim-cli r002.redsim.json < experiments/redstone/R-002-what-powers-a-block.cli.txt
+new size 48 force
+note "R-002: which sources power a solid block (lamp probe) and strongly (wire probe)"
+# Column A (x=0): source rows; B is the stone at (0,1,z), probes: lamp south (0,1,z+1), wire east (1,1,z)
+# r1 lever on top of B
+place 0 1 -20 stone
+place 0 2 -20 lever face=floor
+place 0 1 -19 redstone_lamp
+place 1 1 -20 redstone_wire
+label IN_LEVER_TOP 0 2 -20
+label LAMP_LEVER_TOP 0 1 -19
+label WIRE_LEVER_TOP 1 1 -20
+# r2 lever on the west face of B
+place 0 1 -16 stone
+place -1 1 -16 lever face=wall facing=west
+place 0 1 -15 redstone_lamp
+place 1 1 -16 redstone_wire
+label IN_LEVER_WALL -1 1 -16
+label LAMP_LEVER_WALL 0 1 -15
+label WIRE_LEVER_WALL 1 1 -16
+# r3 lever on the floor beside B (attached to the floor, not to B)
+place 0 1 -12 stone
+place -1 1 -12 lever face=floor
+place 0 1 -11 redstone_lamp
+place 1 1 -12 redstone_wire
+label IN_LEVER_NEAR -1 1 -12
+label LAMP_LEVER_NEAR 0 1 -11
+label WIRE_LEVER_NEAR 1 1 -12
+# r4 stone button on the west face of B
+place 0 1 -8 stone
+place -1 1 -8 stone_button face=wall facing=west
+place 0 1 -7 redstone_lamp
+place 1 1 -8 redstone_wire
+label IN_BUTTON -1 1 -8
+label LAMP_BUTTON 0 1 -7
+label WIRE_BUTTON 1 1 -8
+# r5 torch below B (B at y=2), probes at y=2, the probe wire on glass
+place 0 1 -4 redstone_torch
+set 0 2 -4 stone
+set 0 2 -3 redstone_lamp
+place 1 1 -4 glass
+place 1 2 -4 redstone_wire
+label TORCH_BELOW 0 1 -4
+label LAMP_TORCH_BELOW 0 2 -3
+label WIRE_TORCH_BELOW 1 2 -4
+# r6 torch standing beside B
+place 0 1 0 stone
+place -1 1 0 redstone_torch
+place 0 1 1 redstone_lamp
+place 1 1 0 redstone_wire
+label TORCH_BESIDE -1 1 0
+label LAMP_TORCH_BESIDE 0 1 1
+label WIRE_TORCH_BESIDE 1 1 0
+# r7 repeater pointing into B
+place 0 1 4 stone
+place -2 1 4 lever face=floor
+place -1 1 4 repeater out=east
+place 0 1 5 redstone_lamp
+place 1 1 4 redstone_wire
+label IN_REPEATER -2 1 4
+label LAMP_REPEATER 0 1 5
+label WIRE_REPEATER 1 1 4
+# r8 comparator pointing into B
+place 0 1 8 stone
+place -2 1 8 lever face=floor
+place -1 1 8 comparator out=east
+place 0 1 9 redstone_lamp
+place 1 1 8 redstone_wire
+label IN_COMPARATOR -2 1 8
+label LAMP_COMPARATOR 0 1 9
+label WIRE_COMPARATOR 1 1 8
+# r9 observer output into B (it watches a lever)
+place 0 1 12 stone
+place -2 1 12 lever face=floor
+place -1 1 12 observer out=east
+place 0 1 13 redstone_lamp
+place 1 1 12 redstone_wire
+label IN_OBSERVER -2 1 12
+label LAMP_OBSERVER 0 1 13
+label WIRE_OBSERVER 1 1 12
+# r10 wire pointing into B
+place 0 1 16 stone
+place -3 1 16 lever face=floor
+line -2 1 16 to -1 1 16 redstone_wire
+place 0 1 17 redstone_lamp
+place 1 1 16 redstone_wire
+label IN_WIRE_INTO -3 1 16
+label LAMP_WIRE_INTO 0 1 17
+label WIRE_WIRE_INTO 1 1 16
+# r11 wire running past B's west face (not pointing into it)
+place 0 1 20 stone
+place -1 1 18 lever face=floor
+line -1 1 19 to -1 1 20 redstone_wire
+place 0 1 21 redstone_lamp
+place 1 1 20 redstone_wire
+label IN_WIRE_BESIDE -1 1 18
+label LAMP_WIRE_BESIDE 0 1 21
+label WIRE_WIRE_BESIDE 1 1 20
+
+# Column B (x=12)
+# r12 wire on top of B, fed by a lever hanging on a floating stone; probe wire west under a stone
+place 12 1 -20 stone
+place 12 2 -20 redstone_wire
+set 12 2 -22 stone
+place 12 2 -21 lever face=wall facing=south
+place 12 1 -19 redstone_lamp
+set 11 2 -20 stone
+place 11 1 -20 redstone_wire
+label IN_WIRE_TOP 12 2 -21
+label TOPWIRE 12 2 -20
+label LAMP_WIRE_TOP 12 1 -19
+label WIRE_WIRE_TOP 11 1 -20
+# r13 a strongly powered block does not power the next block
+place 12 1 -16 stone
+place 12 2 -16 lever face=floor
+place 12 1 -15 redstone_lamp
+place 13 1 -16 stone
+place 14 1 -16 redstone_lamp
+place 13 1 -15 redstone_wire
+label IN_NO_CHAIN 12 2 -16
+label LAMP_NO_CHAIN_B 12 1 -15
+label LAMP_NO_CHAIN_C 14 1 -16
+label WIRE_NO_CHAIN_C 13 1 -15
+# r14 redstone block beside B (set at tick 2)
+place 12 1 -12 stone
+place 12 1 -11 redstone_lamp
+place 13 1 -12 redstone_wire
+place 11 1 -11 redstone_lamp
+label RBLOCK 11 1 -12
+label LAMP_RBLOCK 12 1 -11
+label WIRE_RBLOCK 13 1 -12
+label LAMP_RBLOCK_CONTROL 11 1 -11
+# r15 a wall torch hanging on B does not power B
+place 12 1 -8 stone
+place 13 1 -8 redstone_wall_torch facing=east
+place 12 1 -7 redstone_lamp
+place 11 1 -8 redstone_wire
+place 14 1 -8 redstone_lamp
+label TORCH_ON_B 13 1 -8
+label LAMP_TORCH_ON_B 12 1 -7
+label WIRE_TORCH_ON_B 11 1 -8
+label LAMP_TORCH_CONTROL 14 1 -8
+# r16 a block powered only by wire turns off a torch on it
+place 9 1 0 lever face=floor
+line 10 1 0 to 11 1 0 redstone_wire
+place 12 1 0 stone
+place 13 1 0 redstone_wall_torch facing=east
+label IN_WEAK_TORCH 9 1 0
+label WEAK_TORCH 13 1 0
+# r17 a block powered only by wire powers a repeater facing away from it
+place 9 1 4 lever face=floor
+line 10 1 4 to 11 1 4 redstone_wire
+place 12 1 4 stone
+place 13 1 4 repeater out=east
+label IN_WEAK_REPEATER 9 1 4
+label WEAK_REPEATER 13 1 4
+# r18 a block powered only by wire powers a piston beside it
+place 9 1 8 lever face=floor
+line 10 1 8 to 11 1 8 redstone_wire
+place 12 1 8 stone
+place 12 1 9 piston facing=south
+label IN_WEAK_PISTON 9 1 8
+label WEAK_PISTON 12 1 9
+settle
+
+target new strong "levers and buttons power the block they are attached to strongly; torches the block above; repeaters, comparators and observers the block they point into"
+target strong do at 2 use @IN_LEVER_TOP
+target strong do at 2 use @IN_LEVER_WALL
+target strong do at 2 use @IN_BUTTON
+target strong do at 2 use @IN_REPEATER
+target strong do at 2 use @IN_COMPARATOR
+target strong do at 2 use @IN_OBSERVER
+target strong expect @LAMP_LEVER_TOP lit=true at 2
+target strong expect @WIRE_LEVER_TOP power=15 at 2
+target strong expect @LAMP_LEVER_WALL lit=true at 2
+target strong expect @WIRE_LEVER_WALL power=15 at 2
+target strong expect @LAMP_BUTTON lit=true at 2
+target strong expect @WIRE_BUTTON power=15 at 2
+target strong expect @LAMP_TORCH_BELOW lit=true during 0..12
+target strong expect @WIRE_TORCH_BELOW power=15 during 0..12
+target strong expect @LAMP_REPEATER lit=true at 4
+target strong expect @WIRE_REPEATER power=15 at 4
+target strong expect @LAMP_COMPARATOR lit=true at 4
+target strong expect @WIRE_COMPARATOR power=15 at 4
+target strong expect @LAMP_OBSERVER lit=true at 4
+target strong expect @WIRE_OBSERVER power=15 during 4..5
+target strong expect @WIRE_OBSERVER power=0 at 6
+
+target new weak "wire powers the block it points into and the block under it weakly: lamps light, wire beside the block stays off"
+target weak do at 2 use @IN_WIRE_INTO
+target weak do at 2 use @IN_WIRE_TOP
+target weak expect @LAMP_WIRE_INTO lit=true at 2
+target weak expect @WIRE_WIRE_INTO power=0 during 0..12
+target weak expect @TOPWIRE power=15 at 2
+target weak expect @LAMP_WIRE_TOP lit=true at 2
+target weak expect @WIRE_WIRE_TOP power=0 during 0..12
+
+target new unpowered "not powering B: a lever on the floor beside it, a torch beside it, a torch hanging on it, wire running past it, a redstone block beside it"
+target unpowered do at 2 use @IN_LEVER_NEAR
+target unpowered do at 2 use @IN_WIRE_BESIDE
+target unpowered do at 2 set @RBLOCK redstone_block
+target unpowered expect @LAMP_LEVER_NEAR lit=false during 0..12
+target unpowered expect @WIRE_LEVER_NEAR power=0 during 0..12
+target unpowered expect @TORCH_BESIDE lit=true during 0..12
+target unpowered expect @LAMP_TORCH_BESIDE lit=false during 0..12
+target unpowered expect @WIRE_TORCH_BESIDE power=0 during 0..12
+target unpowered expect @TORCH_ON_B lit=true during 0..12
+target unpowered expect @LAMP_TORCH_ON_B lit=false during 0..12
+target unpowered expect @WIRE_TORCH_ON_B power=0 during 0..12
+target unpowered expect @LAMP_TORCH_CONTROL lit=true during 0..12
+target unpowered expect @LAMP_WIRE_BESIDE lit=false during 0..12
+target unpowered expect @WIRE_WIRE_BESIDE power=0 during 0..12
+target unpowered expect @LAMP_RBLOCK_CONTROL lit=true at 2
+target unpowered expect @LAMP_RBLOCK lit=false during 0..12
+target unpowered expect @WIRE_RBLOCK power=0 during 0..12
+
+target new nochain "a strongly powered block does not power the block next to it"
+target nochain do at 2 use @IN_NO_CHAIN
+target nochain expect @LAMP_NO_CHAIN_B lit=true at 2
+target nochain expect @LAMP_NO_CHAIN_C lit=false during 0..12
+target nochain expect @WIRE_NO_CHAIN_C power=0 during 0..12
+
+target new weakdrives "a block powered only by wire still turns off a torch on it, drives a repeater and a piston"
+target weakdrives do at 2 use @IN_WEAK_TORCH
+target weakdrives do at 2 use @IN_WEAK_REPEATER
+target weakdrives do at 2 use @IN_WEAK_PISTON
+target weakdrives expect @WEAK_TORCH lit=false at 4
+target weakdrives expect @WEAK_REPEATER powered=true at 4
+target weakdrives expect @WEAK_PISTON extended=true at 3
+
+check
