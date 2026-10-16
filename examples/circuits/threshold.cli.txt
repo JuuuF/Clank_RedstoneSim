@@ -1,0 +1,39 @@
+# Circuit: threshold detector (analog >= k). Contract: doc/redstone/circuits.md, "Threshold detector".
+#
+# Module (box 0 1 0 .. 2 1 2, output east):
+#   @X    0 1 0  the analog input: a container or other analog block here (the comparator
+#                reads it), or wire / a powered block carrying a strength
+#   @K    1 1 2  the threshold: a barrel of reading k (`source 1 1 2 barrel k`), read by
+#                the comparator 1 1 1 that points north into the main comparator's side
+#   @CMP  1 1 0  comparator, compare mode: passes X when X >= k, else 0
+#   @OUT  2 1 0  repeater out=east: 15 while X >= k
+# Built with k = 6. Test: X is a barrel whose reading the timeline changes.
+#   redsim-cli threshold.redsim.json < examples/circuits/threshold.cli.txt
+new size 16 force
+note "Threshold detector: @OUT is on while the analog input @X reads at least k (barrel @K, built with 6)"
+source 0 1 0 barrel 3
+place 1 1 0 comparator out=east
+place 1 1 1 comparator out=north
+source 1 1 2 barrel 6
+place 2 1 0 repeater out=east
+label X 0 1 0 "analog input (here a barrel)"
+label K 1 1 2 "threshold k: a barrel of reading k"
+label CMP 1 1 0 "compare: X if X >= k"
+label OUT 2 1 0 "output: repeater, 15 while X >= k"
+group threshold 0 1 0 2 1 2 in @X X out @OUT OUT
+settle
+prefab save threshold 0 1 0 2 1 2
+
+target new levels "k = 6: X = 3, 5 off; 6, 7, 15 on; 4 off"
+target levels do at 10 source @X barrel 5
+target levels do at 20 source @X barrel 6
+target levels do at 30 source @X barrel 7
+target levels do at 40 source @X barrel 15
+target levels do at 50 source @X barrel 4
+target levels expect @OUT powered=false during 0..23
+target levels expect @CMP power=6 at 22
+target levels expect @OUT powered=true during 24..53
+target levels expect @CMP power=15 at 42
+target levels expect @OUT powered=false during 54..60
+
+check

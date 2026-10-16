@@ -42,6 +42,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#NAND gate]] | OUT = ¬(A ∧ B) | 2×2×3 | 2 / 2 | `nand_gate` |
 | [[#Compact AND]] | OUT = A ∧ B with one comparator | 2×1×4 | 4 / 4 | `and_compact` |
 | [[#XOR gate]] | OUT = A ⊕ B, glitch-free | 7×3×6 | 4 / 4 | `xor_gate` |
+| [[#Threshold detector]] | on while an analog signal (a container's fill) ≥ k | 3×1×3 | 4 | `threshold` |
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
 | [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
 | [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
@@ -189,6 +190,25 @@ over B's loop on a stone stair. `xor_gate.cli.txt`. **Verified.**
   into: off while either comparator is on).
 - **Tested:** truth table; A on 2 → on 6, B on 10 → off 14, A off 20 → on 24, B off 30 →
   off 34; both on and off together; swapped twice: OUT continuous.
+
+## Analog
+
+### Threshold detector
+
+A comparator in compare mode with a constant k at its side passes the analog input only
+when it is ≥ k; a repeater turns that into a clean 15. `threshold.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| X | 0 0 0 | the analog input: a container or analog block here, or wire / a powered block carrying a strength |
+| K | 1 0 2 | a barrel of reading k (`source … barrel k`), read by a comparator pointing into the side |
+| OUT | 2 0 0 | repeater facing east: 15 while X ≥ k |
+
+- **Behavior:** OUT on while X ≥ k (built with k = 6: X = 3, 5 off; 6, 7, 15 on; 4 off).
+  **Latency 4** (comparator 2 + repeater 2) after X changes.
+- **Uses:** "chest at least this full" (k from the [[signals]] fill table), analog
+  combination locks, level sensors. For "X ≥ k" with k = 1 a plain comparator does it.
+- Rules behind it: [[R-005-signal-strength]] (compare mode: rear ≥ side passes).
 
 ## Wiring
 
