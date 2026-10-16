@@ -141,10 +141,11 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-015-moving-observers]] | Observers moved by pistons; pulling across a gap | [[components]], flying machine | verified |
 | [[R-016-falling-blocks]] | Falling blocks as timers and triggers | [[timing]], [[components]] | verified (one L) |
 | [[R-017-wire-order]] | Races decided by wire update order depend on position | [[timing]], composition rules | verified |
+| [[R-019-wire-supports-and-dropper-qc]] | Wire on partial blocks; dropper quasi-connectivity | [[signals]] | verified |
 
 ## Status
 
-*2026-10-16 (first session):* 17 experiment records (R-001…R-017), all reproducible and
+*2026-10-16 (first session):* 18 experiment records (R-001…R-017, R-019), all reproducible and
 re-checked by `tests/cli/test_research.py`; the timing, signal and component references
 built from them; a circuit library of 27 contracted modules and contraptions (gates,
 analog threshold, wiring, pulse shapers, memory, clocks, counter, monostable, piston

@@ -67,6 +67,13 @@ neighbors, and how solid blocks pass it on. Evidence labels:
   **glass** and **top slabs** (non-conductors that hold wire) power climbs **up but never
   down**. V R-004, G EXP-007
 - Wire passing along a repeater's side does not power or lock it. V R-004
+- **Which blocks hold wire, and which pass power down** ([[R-019-wire-supports-and-dropper-qc]]):
+  wire lies on full blocks, top slabs, upside-down stairs, closed top trapdoors, hoppers,
+  observers, pistons, glass, glowstone, lamps, copper bulbs, target blocks, barrels; not on
+  bottom slabs or stairs, bottom trapdoors, fences, composters. Power climbs onto all of
+  them but steps **down** only from conductors (stone, lamps, target blocks, barrels…);
+  glass, glowstone, top slabs, upside-down stairs, hoppers, observers and copper bulbs
+  pass it up only. V
 
 ## Signal strength (R-005)
 
@@ -108,10 +115,9 @@ The CLI's `source POS barrel N` builds a barrel of reading N directly.
 Pistons (and, by the source, droppers and dispensers) also count power next to the space
 **above** them, but only check when they get a neighbor update: they can sit powered but
 unmoved, or stay out after the power is gone, until the next update. A repeater pointing
-into that space updates the piston, so it reacts at once. V [[R-009-pistons]] (pistons);
-droppers S only, G EXP-044.
+into that space updates the piston, so it reacts at once. V [[R-009-pistons]] (pistons),
+[[R-019-wire-supports-and-dropper-qc]] (droppers), G EXP-044.
 
 ## Open
 
-Dropper quasi-connectivity in a circuit, wire onto stairs and other partial blocks:
-[[backlog]].
+See [[backlog]].

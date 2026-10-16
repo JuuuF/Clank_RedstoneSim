@@ -1,0 +1,163 @@
+# R-019: wire on partial and special blocks; dropper quasi-connectivity (doc/redstone/records/R-019-wire-supports-and-dropper-qc.md)
+#
+# Rows 4 blocks apart (x = 10..12): a lever on a stone powers a wire lying on block X; a
+# second wire on the floor east of X can only get power by stepping down from the first.
+# X = stone, top slab, upside-down stairs, hopper, observer (facing up), glass, glowstone,
+# lamp, copper bulb, target block, barrel. And a dropper (5 stone, facing a barrel) whose
+# only power is a redstone block set next to the space above it at tick 2; a stone is
+# placed beside the dropper at tick 10.
+#   redsim-cli r019.redsim.json < experiments/redstone/R-019-wire-supports-and-dropper-qc.cli.txt
+new size 64 force
+note "R-019: power steps down only from wire lying on conductors; droppers are quasi-connected like pistons"
+place 9 1 -24 stone
+place 9 2 -24 lever face=floor
+set 10 1 -24 stone
+place 10 2 -24 redstone_wire
+place 11 1 -24 redstone_wire
+place 12 1 -24 redstone_lamp
+label L_STONE 9 2 -24
+label UP_STONE 10 2 -24 "wire on stone"
+label LOW_STONE 11 1 -24
+place 9 1 -20 stone
+place 9 2 -20 lever face=floor
+set 10 1 -20 smooth_stone_slab[type=top]
+place 10 2 -20 redstone_wire
+place 11 1 -20 redstone_wire
+place 12 1 -20 redstone_lamp
+label L_TOPSLAB 9 2 -20
+label UP_TOPSLAB 10 2 -20 "wire on smooth_stone_slab"
+label LOW_TOPSLAB 11 1 -20
+place 9 1 -16 stone
+place 9 2 -16 lever face=floor
+set 10 1 -16 stone_stairs[half=top,facing=east]
+place 10 2 -16 redstone_wire
+place 11 1 -16 redstone_wire
+place 12 1 -16 redstone_lamp
+label L_TOPSTAIRS 9 2 -16
+label UP_TOPSTAIRS 10 2 -16 "wire on stone_stairs"
+label LOW_TOPSTAIRS 11 1 -16
+place 9 1 -12 stone
+place 9 2 -12 lever face=floor
+set 10 1 -12 hopper
+place 10 2 -12 redstone_wire
+place 11 1 -12 redstone_wire
+place 12 1 -12 redstone_lamp
+label L_HOPPER 9 2 -12
+label UP_HOPPER 10 2 -12 "wire on hopper"
+label LOW_HOPPER 11 1 -12
+place 9 1 -8 stone
+place 9 2 -8 lever face=floor
+set 10 1 -8 observer[facing=up]
+place 10 2 -8 redstone_wire
+place 11 1 -8 redstone_wire
+place 12 1 -8 redstone_lamp
+label L_OBSERVER 9 2 -8
+label UP_OBSERVER 10 2 -8 "wire on observer"
+label LOW_OBSERVER 11 1 -8
+place 9 1 -4 stone
+place 9 2 -4 lever face=floor
+set 10 1 -4 glass
+place 10 2 -4 redstone_wire
+place 11 1 -4 redstone_wire
+place 12 1 -4 redstone_lamp
+label L_GLASS 9 2 -4
+label UP_GLASS 10 2 -4 "wire on glass"
+label LOW_GLASS 11 1 -4
+place 9 1 0 stone
+place 9 2 0 lever face=floor
+set 10 1 0 glowstone
+place 10 2 0 redstone_wire
+place 11 1 0 redstone_wire
+place 12 1 0 redstone_lamp
+label L_GLOWSTONE 9 2 0
+label UP_GLOWSTONE 10 2 0 "wire on glowstone"
+label LOW_GLOWSTONE 11 1 0
+place 9 1 4 stone
+place 9 2 4 lever face=floor
+set 10 1 4 redstone_lamp
+place 10 2 4 redstone_wire
+place 11 1 4 redstone_wire
+place 12 1 4 redstone_lamp
+label L_LAMP 9 2 4
+label UP_LAMP 10 2 4 "wire on redstone_lamp"
+label LOW_LAMP 11 1 4
+place 9 1 8 stone
+place 9 2 8 lever face=floor
+set 10 1 8 copper_bulb
+place 10 2 8 redstone_wire
+place 11 1 8 redstone_wire
+place 12 1 8 redstone_lamp
+label L_BULB 9 2 8
+label UP_BULB 10 2 8 "wire on copper_bulb"
+label LOW_BULB 11 1 8
+place 9 1 12 stone
+place 9 2 12 lever face=floor
+set 10 1 12 target
+place 10 2 12 redstone_wire
+place 11 1 12 redstone_wire
+place 12 1 12 redstone_lamp
+label L_TARGET 9 2 12
+label UP_TARGET 10 2 12 "wire on target"
+label LOW_TARGET 11 1 12
+place 9 1 16 stone
+place 9 2 16 lever face=floor
+set 10 1 16 barrel
+place 10 2 16 redstone_wire
+place 11 1 16 redstone_wire
+place 12 1 16 redstone_lamp
+label L_BARREL 9 2 16
+label UP_BARREL 10 2 16 "wire on barrel"
+label LOW_BARREL 11 1 16
+place 0 1 0 dropper facing=east
+container 0 1 0 0 stone 5
+place 1 1 0 barrel
+label D 0 1 0 "dropper"
+label DB 1 1 0 "barrel in front of the dropper"
+label QC 0 2 1 "beside the space above the dropper"
+label NB 0 1 -1 "beside the dropper"
+settle
+
+target new steps "power climbs onto every one of these blocks; it comes down only from stone, lamp, target block and barrel (conductors)"
+target steps do at 2 use @L_STONE
+target steps do at 2 use @L_TOPSLAB
+target steps do at 2 use @L_TOPSTAIRS
+target steps do at 2 use @L_HOPPER
+target steps do at 2 use @L_OBSERVER
+target steps do at 2 use @L_GLASS
+target steps do at 2 use @L_GLOWSTONE
+target steps do at 2 use @L_LAMP
+target steps do at 2 use @L_BULB
+target steps do at 2 use @L_TARGET
+target steps do at 2 use @L_BARREL
+target steps expect @UP_STONE power=15 at 2
+target steps expect @LOW_STONE power=14 at 4
+target steps expect @UP_TOPSLAB power=15 at 2
+target steps expect @LOW_TOPSLAB power=0 at 4
+target steps expect @UP_TOPSTAIRS power=15 at 2
+target steps expect @LOW_TOPSTAIRS power=0 at 4
+target steps expect @UP_HOPPER power=15 at 2
+target steps expect @LOW_HOPPER power=0 at 4
+target steps expect @UP_OBSERVER power=15 at 2
+target steps expect @LOW_OBSERVER power=0 at 4
+target steps expect @UP_GLASS power=15 at 2
+target steps expect @LOW_GLASS power=0 at 4
+target steps expect @UP_GLOWSTONE power=15 at 2
+target steps expect @LOW_GLOWSTONE power=0 at 4
+target steps expect @UP_LAMP power=15 at 2
+target steps expect @LOW_LAMP power=14 at 4
+target steps expect @UP_BULB power=15 at 2
+target steps expect @LOW_BULB power=0 at 4
+target steps expect @UP_TARGET power=15 at 2
+target steps expect @LOW_TARGET power=14 at 4
+target steps expect @UP_BARREL power=15 at 2
+target steps expect @LOW_BARREL power=14 at 4
+
+target new dropperqc "a redstone block next to the space above a dropper powers it, but it fires only on the next update (tick 10): the item arrives at 14"
+target dropperqc do at 2 set @QC redstone_block
+target dropperqc do at 10 place @NB stone
+target dropperqc expect @D triggered=false during 0..9
+target dropperqc expect @D triggered=true at 10
+target dropperqc expect @DB analog=0 at 13
+target dropperqc expect @DB analog=1 at 14
+
+check

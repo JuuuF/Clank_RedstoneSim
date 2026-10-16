@@ -26,7 +26,7 @@ with the record that answered it.
    - [x] R-015 observers moved by pistons; pulling across a gap (flying machines)
    - [x] R-016 falling blocks as timers and triggers
    - [ ] R-018 making 0-tick pulses with pistons (block dropping, redstone block pushes)
-   - [ ] R-019 dropper/dispenser quasi-connectivity in circuits; wire on stairs and partial blocks
+   - [x] R-019 wire on partial blocks (supports, one-way steps); dropper quasi-connectivity
    - [x] R-017 wire update order: position-dependent races (Q6)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
