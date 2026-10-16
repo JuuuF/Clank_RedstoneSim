@@ -86,6 +86,18 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - Short pulses: a sticky piston powered for 1 or 2 ticks (by a lever or a circuit)
   pushes its block and leaves it there; 3 ticks or more and it pulls the block back.
   V R-003
+- Starts moving in the **same tick** when its power comes from a component switching
+  during the scheduled ticks (repeater, torch, comparator, observer); one tick later from
+  a lever or button. V [[R-009-pistons]]
+- Pushes up to 12 blocks; not at all if a 13th, an immovable block (obsidian, bedrock)
+  or a block with a block entity (barrel, chest, …) is in the line. Torches in the line
+  break. V R-009
+- Sticky: pulls the block in front back, but not push-only blocks (glazed terracotta).
+  Slime moves everything touching it except honey, **including the floor under it** (a
+  slime block on a long stone floor cannot be pushed: stand it on obsidian). V R-009
+- Quasi-connectivity: power next to the space above it powers it, but it only checks on
+  a neighbor update (BUD): it can stay retracted while powered, and extended after the
+  power is gone, until the next update. V R-009
 
 ## Dropper, dispenser
 

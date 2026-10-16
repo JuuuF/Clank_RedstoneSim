@@ -39,9 +39,11 @@ labels: [[redstone/README#Scope and trust]].
   delay-4 repeater adds 8.
 - A lamp shows a signal **4 ticks longer** than it lasts. Do not read short pulses off a
   lamp; probe with wire, a repeater, or the component itself (`waves`).
-- Even delays everywhere except pistons (1 to start moving, 3 to finish) and observers
-  (2 + 2). Odd timings come from pistons, from player actions (between ticks) and from
-  0-tick tricks.
+- Even delays everywhere except pistons and observers (2 + 2). A piston starts moving
+  in the block-event phase: **in the same tick** when a component powers it during the
+  scheduled ticks (repeater, torch, comparator, observer), **one tick later** when a player
+  flips a lever or presses a button (between ticks); the pushed block is solid 2 ticks
+  after the start. So in a circuit, piston = +0 to start, +2 to finish (V [[R-009-pistons]]).
 
 ## Short pulses and short gaps (R-003)
 

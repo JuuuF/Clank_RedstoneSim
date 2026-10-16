@@ -16,8 +16,7 @@ with the record that answered it.
    - [x] R-006 repeater locking (who locks, timing of lock/unlock, held state)
    - [x] R-007 torch burnout thresholds and recovery
    - [x] R-008 observers: what they see (state changes only), chains
-   - [ ] R-009 pistons: push limit, immovable blocks, slime and honey, spitting blocks,
-     quasi-connectivity and budding
+   - [x] R-009 pistons: push limit, immovable blocks, slime and honey, QC and BUD, same-tick start
    - [ ] R-010 copper bulb, dropper/hopper and note block as circuit elements
 3. **Interactions and timing inside a tick**
    - [ ] R-011 races: two signals arriving in the same tick (repeater priorities, piston
@@ -59,3 +58,4 @@ with the record that answered it.
 | Which neighbors lock a repeater; inputs while locked are dropped | [[components]] | [[R-006-repeater-locking]] |
 | Torch burnout: 8 turn-offs in 60 ticks; recovery after 160 unless self-unpowered | [[components]] | [[R-007-torch-burnout]] |
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
+| Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |

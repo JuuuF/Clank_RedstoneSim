@@ -132,6 +132,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-006-repeater-locking]] | What locks a repeater; inputs while locked | [[components]] Repeater | verified |
 | [[R-007-torch-burnout]] | Torch burnout limit and recovery | [[components]] Redstone torch, [[timing]] | verified |
 | [[R-008-observers]] | What an observer sees | [[components]] Observer | verified |
+| [[R-009-pistons]] | Pistons: limits, sticky and slime, quasi-connectivity, same-tick start | [[components]] Piston, [[timing]] | verified |
 
 ## Status
 
