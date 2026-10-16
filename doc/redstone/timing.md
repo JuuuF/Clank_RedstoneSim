@@ -25,6 +25,14 @@ labels: [[redstone/README#Scope and trust]].
 | Powered rail | Δ 0 | Δ 0 | | V R-001, G EXP-036 |
 | Hopper | `enabled=false` (locked) Δ 0 | unlocked Δ 0 | | V R-001, G EXP-039 |
 
+## 0-tick pulses (R-013)
+
+Power on and off at one moment (two block changes between ticks): a **repeater** turns it
+into a full pulse of its delay (2 ticks later), a **lamp** flashes 4 ticks, a **copper
+bulb** toggles, a **dropper** fires (4 ticks later), an observer watching the changing
+block pulses once. **Comparators, torches, pistons** ignore it; wire shows nothing. V
+[[R-013-zero-tick]], G EXP-027.
+
 ## Durations of manual sources
 
 | Source | On for | Evidence |

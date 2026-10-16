@@ -110,7 +110,7 @@ Evidence labels: [[redstone/README#Scope and trust]].
   keeps it when power goes (a T flip-flop); the hopper locks while powered.
   V R-001
 - The copper bulb toggles once for every pulse, even a 1-tick one; a dropper fires once
-  per pulse of any length. V R-003
+  per pulse of any length. Both react even to a 0-tick pulse. V R-003, [[R-013-zero-tick]]
 
 ## Hopper
 

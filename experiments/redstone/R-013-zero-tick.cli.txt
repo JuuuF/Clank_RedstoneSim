@@ -1,0 +1,95 @@
+# R-013: 0-tick pulses: power on and off at one moment (doc/redstone/records/R-013-zero-tick.md)
+#
+# Rows 4 blocks apart; at tick 2 a redstone block is set west of each component and
+# removed again at the same moment (two edits at tick 2, like two /setblock commands
+# between ticks): a repeater, a comparator, a torch on a stone, a lamp, three wires, a
+# piston and a sticky piston with a stone in front, a copper bulb, a dropper with stone
+# into a barrel, a note block, and an observer watching a wire.
+#   redsim-cli r013.redsim.json < experiments/redstone/R-013-zero-tick.cli.txt
+new size 48 force
+note "R-013: 0-tick pulses: repeaters, lamps, copper bulbs, droppers and observers react; comparators, torches, pistons and wire do not"
+label S_REP -1 1 -22
+place 0 1 -22 repeater out=east
+label X_REP 0 1 -22
+label S_COMP -1 1 -18
+place 0 1 -18 comparator out=east
+label X_COMP 0 1 -18
+label S_TORCH -1 1 -14
+place 0 1 -14 stone
+place 1 1 -14 redstone_wall_torch facing=east
+label X_TORCH 1 1 -14
+label S_LAMP -1 1 -10
+place 0 1 -10 redstone_lamp
+label X_LAMP 0 1 -10
+label S_WIRE -1 1 -6
+line 0 1 -6 to 2 1 -6 redstone_wire
+label X_WIRE 2 1 -6
+label S_PISTON -1 1 -2
+place 0 1 -2 piston facing=east
+place 1 1 -2 stone
+label X_PISTON 0 1 -2
+label F_PISTON 2 1 -2
+label S_STICKY -1 1 2
+place 0 1 2 sticky_piston facing=east
+place 1 1 2 stone
+label X_STICKY 0 1 2
+label F_STICKY 2 1 2
+label S_BULB -1 1 6
+place 0 1 6 copper_bulb
+label X_BULB 0 1 6
+label S_DROP -1 1 10
+place 0 1 10 dropper facing=east
+container 0 1 10 0 stone 64
+place 1 1 10 barrel
+label X_DROP 0 1 10
+label B_DROP 1 1 10
+label S_NOTE -1 1 14
+place 0 1 14 note_block
+label X_NOTE 0 1 14
+label S_OBSW -1 1 18
+place 0 1 18 redstone_wire
+place 1 1 18 observer out=east
+label X_OBSW 1 1 18
+settle
+
+target new zero "a 0-tick pulse: repeater stretches it to its delay, lamp flashes 4 ticks, bulb toggles, dropper fires, an observer of the wire fires; comparator, torch, wire, pistons show nothing"
+target zero do at 2 set @S_REP redstone_block
+target zero do at 2 set @S_REP air
+target zero do at 2 set @S_COMP redstone_block
+target zero do at 2 set @S_COMP air
+target zero do at 2 set @S_TORCH redstone_block
+target zero do at 2 set @S_TORCH air
+target zero do at 2 set @S_LAMP redstone_block
+target zero do at 2 set @S_LAMP air
+target zero do at 2 set @S_WIRE redstone_block
+target zero do at 2 set @S_WIRE air
+target zero do at 2 set @S_PISTON redstone_block
+target zero do at 2 set @S_PISTON air
+target zero do at 2 set @S_STICKY redstone_block
+target zero do at 2 set @S_STICKY air
+target zero do at 2 set @S_BULB redstone_block
+target zero do at 2 set @S_BULB air
+target zero do at 2 set @S_DROP redstone_block
+target zero do at 2 set @S_DROP air
+target zero do at 2 set @S_NOTE redstone_block
+target zero do at 2 set @S_NOTE air
+target zero do at 2 set @S_OBSW redstone_block
+target zero do at 2 set @S_OBSW air
+target zero expect @X_REP powered=true during 4..5
+target zero expect @X_REP powered=false at 6
+target zero expect @X_COMP power=0 during 0..20
+target zero expect @X_TORCH lit=true during 0..20
+target zero expect @X_LAMP lit=true during 2..5
+target zero expect @X_LAMP lit=false at 6
+target zero expect @X_WIRE power=0 during 0..20
+target zero expect @X_PISTON extended=false during 0..20
+target zero expect @F_PISTON block=air during 0..20
+target zero expect @X_STICKY extended=false during 0..20
+target zero expect @F_STICKY block=air during 0..20
+target zero expect @X_BULB lit=true during 2..20
+target zero expect @B_DROP analog=0 at 5
+target zero expect @B_DROP analog=1 at 6
+target zero expect @X_NOTE powered=false during 0..20
+target zero expect @X_OBSW powered=true during 4..5
+
+check

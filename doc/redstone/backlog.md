@@ -21,7 +21,8 @@ with the record that answered it.
 3. **Interactions and timing inside a tick**
    - [x] R-010 glitches from unequal path delays; balancing
    - [x] R-012 order inside a tick: which 2-tick pulses pass; piston races
-   - [ ] R-013 0-tick pulses: what makes them and what reacts to them
+   - [x] R-013 0-tick pulses: what reacts to them
+   - [ ] R-014 making 0-tick pulses with pistons (block dropping, redstone block pushes)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
@@ -37,7 +38,6 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
-| Q3 | Does a comparator pass a 0-tick pulse? | edge detectors | R-013 |
 
 ## Hypotheses waiting for a test
 
@@ -60,3 +60,4 @@ with the record that answered it.
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |
 | Hopper drain 1+8(N-1) ticks, 7 ticks per hop, lock pauses | [[timing]] | [[R-011-hoppers]] |
 | Q5: a 2-tick pulse passes iff the receiver's tick runs first (priority, then order); piston races: first powered wins | [[timing]] | [[R-012-same-tick-order]] |
+| Q3: comparators (and torches, pistons) ignore 0-tick pulses; repeaters, lamps, bulbs, droppers react | [[timing]] | [[R-013-zero-tick]] |
