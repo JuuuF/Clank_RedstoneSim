@@ -19,8 +19,10 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
   module's signal flows **east** (+x) unless said otherwise.
 - **Rotating:** `rotate N` turns the module N quarter turns clockwise seen from above
   (flow east → south → west → north). A port at offset (dx, dy, dz) of a module that is
-  D blocks deep along z moves to (D − 1 − dz, dy, dx) for one turn. (V: `not_gate`
-  imported with `rotate 1` worked with its torch on the south face.)
+  D blocks deep along z moves to (D − 1 − dz, dy, dx) for one turn (code in
+  [[R-022-rotated-modules]]); inputs "from the west" come from the north, east, south
+  after 1, 2, 3 turns. V: the clock in all four rotations, the XOR gate turned 1 and 3,
+  the piston door turned 1, the NOT gate turned 1 all kept their contracts.
 - **Driving inputs:** an input port is either a **block** (power it: attach a lever or
   button, or point a repeater, comparator, observer or wire into it; [[signals]]) or a
   **wire/repeater** (drive it from the side the contract names). A wire input only works

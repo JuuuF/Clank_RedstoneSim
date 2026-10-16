@@ -1,0 +1,77 @@
+# R-022: modules pasted in any rotation behave the same (doc/redstone/records/R-022-rotated-modules.md)
+#
+# The library's structure files pasted with `import … rotate N`: the clock in all four
+# rotations, the XOR gate turned 1 and 3 quarter turns, the 2x2 piston door turned once.
+# Each port's position is computed with the rule in doc/redstone/circuits.md ("Rotating")
+# and driven by a lever on the side the contract names, turned with the module.
+#   redsim-cli r022.redsim.json < experiments/redstone/R-022-rotated-modules.cli.txt
+new size 112 force
+note "R-022: rotated pastes of the clock, XOR gate and piston door keep their contracts"
+import examples/circuits/clock.nbt at -40 1 -40 rotate 0
+place -41 1 -40 lever face=floor
+label CLK_EN0 -41 1 -40
+label CLK_OUT0 -39 1 -40
+import examples/circuits/clock.nbt at -28 1 -40 rotate 1
+place -26 1 -41 lever face=floor
+label CLK_EN1 -26 1 -41
+label CLK_OUT1 -26 1 -39
+import examples/circuits/clock.nbt at -16 1 -40 rotate 2
+place -13 1 -38 lever face=floor
+label CLK_EN2 -13 1 -38
+label CLK_OUT2 -15 1 -38
+import examples/circuits/clock.nbt at -4 1 -40 rotate 3
+place -4 1 -37 lever face=floor
+label CLK_EN3 -4 1 -37
+label CLK_OUT3 -4 1 -39
+import examples/circuits/xor_gate.nbt at -40 1 0 rotate 1
+place -38 1 -1 lever face=floor
+place -38 1 7 lever face=floor
+label XA1 -38 1 -1
+label XB1 -38 1 7
+label XOUT1 -35 3 3
+import examples/circuits/xor_gate.nbt at -10 1 0 rotate 3
+place -7 1 7 lever face=floor
+place -7 1 -1 lever face=floor
+label XA3 -7 1 7
+label XB3 -7 1 -1
+label XOUT3 -10 3 3
+import examples/circuits/piston_door_2x2.nbt at 20 1 -40 rotate 1
+place 19 1 -36 lever face=floor
+label DOOR_L 19 1 -36
+label DOOR_C1 22 1 -36
+label DOOR_C2 22 2 -35
+settle
+
+target new clocks "the clock in each rotation: period 8 from 2 ticks after enable"
+target clocks do at 2 use @CLK_EN0
+target clocks expect @CLK_OUT0 power=15 during 4..7
+target clocks expect @CLK_OUT0 power=0 during 8..11
+target clocks expect @CLK_OUT0 power=15 during 12..15
+target clocks do at 2 use @CLK_EN1
+target clocks expect @CLK_OUT1 power=15 during 4..7
+target clocks expect @CLK_OUT1 power=0 during 8..11
+target clocks expect @CLK_OUT1 power=15 during 12..15
+target clocks do at 2 use @CLK_EN2
+target clocks expect @CLK_OUT2 power=15 during 4..7
+target clocks expect @CLK_OUT2 power=0 during 8..11
+target clocks expect @CLK_OUT2 power=15 during 12..15
+target clocks do at 2 use @CLK_EN3
+target clocks expect @CLK_OUT3 power=15 during 4..7
+target clocks expect @CLK_OUT3 power=0 during 8..11
+target clocks expect @CLK_OUT3 power=15 during 12..15
+
+target new xor1 "XOR turned 1: truth table"
+target xor1 truth @XA1 @XB1 -> @XOUT1 rows 00:0 01:1 10:1 11:0
+
+target new xor3 "XOR turned 3: truth table"
+target xor3 truth @XA3 @XB3 -> @XOUT3 rows 00:0 01:1 10:1 11:0
+
+target new door "the door turned once: open from 6 to 33 for a lever on 2..30"
+target door do at 2 use @DOOR_L
+target door do at 30 use @DOOR_L
+target door expect @DOOR_C1 block=stone at 5
+target door expect @DOOR_C1 block=air during 6..33
+target door expect @DOOR_C2 block=air during 6..33
+target door expect @DOOR_C1 block=stone during 36..50
+
+check

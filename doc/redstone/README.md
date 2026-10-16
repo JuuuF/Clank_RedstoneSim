@@ -145,10 +145,11 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-019-wire-supports-and-dropper-qc]] | Wire on partial blocks; dropper quasi-connectivity | [[signals]] | verified |
 | [[R-020-vertical-signals]] | Sending a signal up: stairs, ladders, torch towers, observer columns | [[signals]] | verified |
 | [[R-021-unlock-window]] | How long a chain of latches may be unlocked (shift registers) | [[components]], [[circuits]] | verified |
+| [[R-022-rotated-modules]] | Library modules pasted in any rotation keep their contracts | [[circuits]] | verified |
 
 ## Status
 
-*2026-10-16 (first session):* 20 experiment records (R-001…R-017, R-019…R-021), all reproducible and
+*2026-10-16 (first session):* 21 experiment records (R-001…R-017, R-019…R-022), all reproducible and
 re-checked by `tests/cli/test_research.py`; the timing, signal and component references
 built from them; a circuit library of 27 contracted modules and contraptions (gates,
 analog threshold, wiring, pulse shapers, memory, clocks, counter, monostable, piston
