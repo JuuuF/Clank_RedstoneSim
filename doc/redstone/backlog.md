@@ -20,8 +20,7 @@ with the record that answered it.
    - [x] R-011 hoppers and droppers as timing elements (drain, travel, locking)
 3. **Interactions and timing inside a tick**
    - [x] R-010 glitches from unequal path delays; balancing
-   - [ ] R-012 races: two signals arriving in the same tick (repeater priorities, piston
-     block-event order)
+   - [x] R-012 order inside a tick: which 2-tick pulses pass; piston races
    - [ ] R-013 0-tick pulses: what makes them and what reacts to them
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
@@ -39,7 +38,6 @@ with the record that answered it.
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
 | Q3 | Does a comparator pass a 0-tick pulse? | edge detectors | R-013 |
-| Q5 | Which circuit-made 2-tick pulses end *after* a torch's tick (and so pass)? Block events, block entities, lower-priority sources? | pulse design | R-012 |
 
 ## Hypotheses waiting for a test
 
@@ -61,3 +59,4 @@ with the record that answered it.
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |
 | Hopper drain 1+8(N-1) ticks, 7 ticks per hop, lock pauses | [[timing]] | [[R-011-hoppers]] |
+| Q5: a 2-tick pulse passes iff the receiver's tick runs first (priority, then order); piston races: first powered wins | [[timing]] | [[R-012-same-tick-order]] |

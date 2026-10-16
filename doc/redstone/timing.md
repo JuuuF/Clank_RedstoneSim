@@ -63,8 +63,18 @@ scheduled-tick phase (made by observers and repeaters).
 
 Why: repeaters latch any change and re-check only when their tick runs; torches and
 comparators re-check their input when their tick runs 2 ticks later, and a circuit-made
-2-tick pulse has already ended earlier in that same phase (the source's tick runs
-first: higher priority or scheduled earlier). Details: R-003.
+2-tick pulse has usually ended earlier in that same phase (the source's tick runs first:
+higher priority or scheduled earlier). Details: R-003. **Exceptions** ([[R-012-same-tick-order]]):
+an observer's pulse *does* pass a comparator whose front is a repeater or comparator (its
+tick then has priority −1, before the observer's 0), and a 2-tick pulse from a torch
+whose switch-back was triggered late (by a player) passes torches and comparators.
+
+**Order inside one tick** (V R-012, S [[tick-scheduling]]): scheduled ticks due in the
+same tick run by priority — repeater −3 (front is a diode not facing back), −2 (turning
+off), −1 (turning on); comparator −1 (front is a diode not facing back) or 0; torch,
+observer, lamp, buttons 0 — then in the order they were scheduled. Then block events
+(pistons) in the order queued: two pistons pushing into one cell in the same tick, the
+one powered first wins and the other does not move.
 
 **Design rules:**
 

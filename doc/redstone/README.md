@@ -135,6 +135,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-009-pistons]] | Pistons: limits, sticky and slime, quasi-connectivity, same-tick start | [[components]] Piston, [[timing]] | verified |
 | [[R-010-hazards]] | Glitches from unequal path delays; balancing | [[circuits]] composition rules | verified |
 | [[R-011-hoppers]] | Hoppers and droppers as timing elements | [[timing]] items, [[components]] Hopper | verified |
+| [[R-012-same-tick-order]] | Order inside a tick: which 2-tick pulses pass; piston races | [[timing]] | verified |
 
 ## Status
 

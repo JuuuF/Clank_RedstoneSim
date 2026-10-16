@@ -1,0 +1,131 @@
+# R-012: which circuit-made 2-tick pulses get through torches and comparators; pistons
+# racing for one cell (doc/redstone/records/R-012-same-tick-order.md)
+#
+# Rows (inputs on levers at tick 2): a: a torch made to go out for 2 ticks (its lever on
+# at 2, off at 4) under the block of a second torch RA; b, c, f, g, h: an observer pulse
+# into a comparator whose front is a repeater (b), a lamp (c), a comparator (f), wire
+# (g), a repeater facing back into it (h); d: a repeater-made 2-tick pulse into a
+# comparator whose front is a repeater; e: a torch out for 2 ticks into a comparator
+# (front: a lamp). i, j: two pistons pushing a stone and a wool block into one cell, the
+# levers flipped in the same tick, west first (i) or east first (j).
+#   redsim-cli r012.redsim.json < experiments/redstone/R-012-same-tick-order.cli.txt
+new size 48 force
+note "R-012: inside a tick, scheduled ticks run by priority, then scheduling order; that decides which 2-tick pulses pass"
+# a: torch-made 2-tick pulse (torch S off 2 ticks) -> S's block above? use S standing on block X with lever; S powers block Y above it; torch R on Y's side
+place 0 1 -20 stone
+place -1 1 -20 lever face=wall facing=west
+place 1 1 -20 redstone_wall_torch facing=east
+set 1 2 -20 stone
+place 2 2 -20 redstone_wall_torch facing=east
+label LA -1 1 -20
+label SA 1 1 -20
+label RA 2 2 -20
+# b: observer pulse -> comparator whose front is a repeater (comparator ticks at HIGH)
+place -1 1 -16 lever face=floor
+place 0 1 -16 observer out=east
+place 1 1 -16 comparator out=east
+place 2 1 -16 repeater out=east
+label LB -1 1 -16
+label CB 1 1 -16
+label PB 2 1 -16
+# c: observer pulse -> comparator whose front is a lamp
+place -1 1 -12 lever face=floor
+place 0 1 -12 observer out=east
+place 1 1 -12 comparator out=east
+place 2 1 -12 redstone_lamp
+label LC -1 1 -12
+label CC 1 1 -12
+# d: repeater-made 2-tick pulse -> comparator whose front is a repeater
+place -1 1 -8 lever face=floor
+place 0 1 -8 repeater out=east
+place 1 1 -8 comparator out=east
+place 2 1 -8 repeater out=east
+label LD -1 1 -8
+label CD 1 1 -8
+# e: observer pulse -> repeater -> torch? no: observer pulse -> torch whose block... (already lost in R-003); torch-made pulse -> comparator (front lamp)
+place 0 1 -4 stone
+place -1 1 -4 lever face=wall facing=west
+place 1 1 -4 redstone_wall_torch facing=east
+place 2 1 -4 comparator out=east
+place 3 1 -4 redstone_lamp
+label LE -1 1 -4
+label SE 1 1 -4
+label CE 2 1 -4
+# f: observer pulse -> comparator whose front is a comparator
+place -1 1 0 lever face=floor
+place 0 1 0 observer out=east
+place 1 1 0 comparator out=east
+place 2 1 0 comparator out=east
+label LF -1 1 0
+label CF 1 1 0
+# g: observer pulse -> comparator whose front is wire
+place -1 1 4 lever face=floor
+place 0 1 4 observer out=east
+place 1 1 4 comparator out=east
+place 2 1 4 redstone_wire
+label LG -1 1 4
+label CG 1 1 4
+# h: observer pulse -> comparator whose front is a repeater facing back into it
+place -1 1 8 lever face=floor
+place 0 1 8 observer out=east
+place 1 1 8 comparator out=east
+place 2 1 8 repeater out=west
+label LH -1 1 8
+label CH 1 1 8
+# i/j: two pistons pushing into one cell M in the same tick; levers flipped in order west, east (i) or east, west (j)
+place 10 1 -20 lever face=floor
+place 11 1 -20 piston facing=east
+place 12 1 -20 stone
+place 14 1 -20 white_wool
+place 15 1 -20 piston facing=west
+place 16 1 -20 lever face=floor
+label LIW 10 1 -20
+label LIE 16 1 -20
+label MI 13 1 -20
+place 10 1 -16 lever face=floor
+place 11 1 -16 piston facing=east
+place 12 1 -16 stone
+place 14 1 -16 white_wool
+place 15 1 -16 piston facing=west
+place 16 1 -16 lever face=floor
+label LJW 10 1 -16
+label LJE 16 1 -16
+label MJ 13 1 -16
+settle
+
+target new pulses "a 2-tick pulse passes a torch or comparator only if the receiver's tick runs before the pulse source's end in the same tick"
+target pulses do at 2 use @LA
+target pulses do at 4 use @LA
+target pulses do at 2 use @LB
+target pulses do at 2 use @LC
+target pulses do at 2 use @LD
+target pulses do at 3 use @LD
+target pulses do at 2 use @LE
+target pulses do at 4 use @LE
+target pulses do at 2 use @LF
+target pulses do at 2 use @LG
+target pulses do at 2 use @LH
+target pulses expect @SA lit=false during 4..5
+target pulses expect @RA lit=true during 6..7
+target pulses expect @RA lit=false at 8
+target pulses expect @CB power=15 during 6..7
+target pulses expect @PB powered=true during 8..9
+target pulses expect @CC power=0 during 0..16
+target pulses expect @CD power=0 during 0..16
+target pulses expect @CE power=0 during 6..7
+target pulses expect @CE power=15 at 8
+target pulses expect @CF power=15 during 6..7
+target pulses expect @CG power=0 during 0..16
+target pulses expect @CH power=0 during 0..16
+
+target new race "two pistons pushing into one cell in the same tick: the one powered first wins, the other does not move"
+target race do at 2 use @LIW
+target race do at 2 use @LIE
+target race do at 2 use @LJE
+target race do at 2 use @LJW
+target race expect @MI block=stone at 5
+target race expect 15 1 -20 extended=false during 0..16
+target race expect @MJ block=white_wool at 5
+target race expect 11 1 -16 extended=false during 0..16
+
+check
