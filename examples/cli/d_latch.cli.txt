@@ -1,6 +1,6 @@
 # A D latch from a locked repeater: the lamp follows the data lever while the enable
 # lever is off, and holds its state while it is on.
-#   redsim-cli examples/cli/d_latch.redsim.json new force
+#   redsim-cli examples/cli/d_latch.redsim.json new size 16 force
 #   redsim-cli examples/cli/d_latch.redsim.json < examples/cli/d_latch.cli.txt
 # A repeater powered from its side by another repeater is locked: it keeps its output.
 note "D latch: @Q follows @D while @E is off and holds while @E is on"

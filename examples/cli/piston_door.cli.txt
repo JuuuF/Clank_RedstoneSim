@@ -1,6 +1,6 @@
 # A sticky piston moves a block out and back on a schedule (timeline edits), with a
 # target that checks where the block is at which tick.
-#   redsim-cli examples/cli/piston_door.redsim.json new force
+#   redsim-cli examples/cli/piston_door.redsim.json new size 16 force
 #   redsim-cli examples/cli/piston_door.redsim.json < examples/cli/piston_door.cli.txt
 place 0 1 0 sticky_piston facing=east
 place 1 1 0 stone

@@ -1,5 +1,5 @@
 # Two observers watching each other make a clock; a lamp shows it.
-#   redsim-cli examples/cli/observer_clock.redsim.json new force
+#   redsim-cli examples/cli/observer_clock.redsim.json new size 16 force
 #   redsim-cli examples/cli/observer_clock.redsim.json < examples/cli/observer_clock.cli.txt
 place 0 1 0 observer facing=east
 place 1 1 0 observer facing=west

@@ -1,5 +1,5 @@
 # An AND gate (two levers → one lamp), built and tested with redsim-cli.
-#   redsim-cli examples/cli/and_gate.redsim.json new force
+#   redsim-cli examples/cli/and_gate.redsim.json new size 16 force
 #   redsim-cli examples/cli/and_gate.redsim.json < examples/cli/and_gate.cli.txt
 # Layout (from above, y=1 and y=2): levers on the west sides of two stones, a torch
 # on each stone, wire joining the torches (the NOR of the inputs), the wire into a

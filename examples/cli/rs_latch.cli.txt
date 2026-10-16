@@ -1,5 +1,5 @@
 # An RS NOR latch from two torches: S sets Q, R resets it, and it remembers.
-#   redsim-cli examples/cli/rs_latch.redsim.json new force
+#   redsim-cli examples/cli/rs_latch.redsim.json new size 16 force
 #   redsim-cli examples/cli/rs_latch.redsim.json < examples/cli/rs_latch.cli.txt
 # Two blocks, each with a torch; each torch's wire runs into the other block, so exactly
 # one torch is on. A button on a block turns its torch off and so the other one on.
