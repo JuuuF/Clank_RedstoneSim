@@ -1,0 +1,77 @@
+# Circuit: 4-bit shift register (repeater latches, one clock). Contract: doc/redstone/circuits.md, "Shift register".
+#
+# Data latches Q0..Q3: repeaters facing east at 10, 12, 14, 16 (x) 1 0, wires between,
+# the data input wire @D at 9 1 0 (drive it from the west). Each latch has a lock
+# repeater on its north side (x 1 -1, facing south), all fed by one lock bus (wire,
+# z=-2, x 4..16): bus on = all latches hold.
+# Clock: @CLK wire at 0 1 -2 is the input of rising_edge.nbt (pasted at 0 1 -2); its
+# 4-tick pulse powers the stone 2 1 -2, whose torch (3 1 -2) normally powers the lock
+# bus: each rising clock edge unlocks every latch for exactly 4 ticks. In that window
+# each latch copies its left neighbor's *old* value: the neighbor's new value arrives 2
+# ticks after it switched, when the lock is back (the lock repeaters' ticks run first,
+# R-012), so the change is dropped (R-006). Measured: a 2-tick window moves nothing, 3
+# or 4 ticks shift one stage, 5 ticks let data race through two stages.
+# Test harness: levers @LD (data) and @LC (clock).
+#   redsim-cli shift_register.redsim.json < examples/circuits/shift_register.cli.txt
+new size 48 force
+note "Shift register: each rising edge at @CLK shifts @D into Q0 and every Qk into Qk+1 (8 ticks after the edge)"
+import examples/circuits/rising_edge.nbt at 0 1 -2
+place 2 1 -2 stone
+place 3 1 -2 redstone_wall_torch facing=east
+line 4 1 -2 to 16 1 -2 redstone_wire
+place 9 1 0 redstone_wire
+place 10 1 0 repeater out=east
+place 11 1 0 redstone_wire
+place 12 1 0 repeater out=east
+place 13 1 0 redstone_wire
+place 14 1 0 repeater out=east
+place 15 1 0 redstone_wire
+place 16 1 0 repeater out=east
+place 10 1 -1 repeater out=south
+place 12 1 -1 repeater out=south
+place 14 1 -1 repeater out=south
+place 16 1 -1 repeater out=south
+label CLK 0 1 -2 "clock input: wire, driven from the west"
+label D 9 1 0 "data input: wire, driven from the west"
+label Q0 10 1 0 "bit 0 (newest)"
+label Q1 12 1 0 "bit 1"
+label Q2 14 1 0 "bit 2"
+label Q3 16 1 0 "bit 3 (oldest)"
+label LOCK 4 1 -2 "lock bus (on = hold)"
+group shift_register 0 1 -2 16 1 0 in @CLK CLK in @D D out @Q0 Q0 out @Q1 Q1 out @Q2 Q2 out @Q3 Q3
+# harness
+place -1 1 -2 lever face=floor
+place 8 1 0 lever face=floor
+label LC -1 1 -2 "test lever: clock"
+label LD 8 1 0 "test lever: data"
+settle
+prefab save shift_register 0 1 -2 16 1 0
+
+target new pattern "shift in 1, 0, 1, 1 (clock edges at 10, 30, 50, 70): afterwards Q0..Q3 = 1, 1, 0, 1"
+target pattern do at 4 use @LD
+target pattern do at 10 use @LC
+target pattern do at 20 use @LC
+target pattern do at 24 use @LD
+target pattern do at 30 use @LC
+target pattern do at 40 use @LC
+target pattern do at 44 use @LD
+target pattern do at 50 use @LC
+target pattern do at 60 use @LC
+target pattern do at 70 use @LC
+target pattern do at 80 use @LC
+target pattern expect @Q0 powered=false at 17
+target pattern expect @Q0 powered=true during 18..37
+target pattern expect @Q0 powered=false during 38..57
+target pattern expect @Q1 powered=true during 38..57
+target pattern expect @Q3 powered=true during 78..100
+target pattern expect @Q2 powered=false during 78..100
+target pattern expect @Q1 powered=true during 78..100
+target pattern expect @Q0 powered=true during 78..100
+
+target new hold "data changes between clock edges do not get in"
+target hold do at 4 use @LD
+target hold do at 6 use @LD
+target hold do at 30 use @LD
+target hold expect @Q0 powered=false during 0..60
+
+check

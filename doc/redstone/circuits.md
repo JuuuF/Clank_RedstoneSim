@@ -40,7 +40,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | on for a fixed time after a press | [[#Monostable]] (any length), a stone/oak button (20/30 ticks) |
 | on while things keep happening, off a while after the last one | [[#Fade timer]] (retriggerable); a door that way: [[#Timed door]] |
 | a short pulse from a long signal | [[#Rising-edge detector]] / [[#Falling-edge detector]] / [[#Both-edge detector]] |
-| remember set/reset | [[#RS latch]]; sample-and-hold: [[#D latch]] |
+| remember set/reset | [[#RS latch]]; sample-and-hold: [[#D latch]]; a sequence of bits: [[#Shift register]] |
 | a repeating signal | [[#Clock]] (2–20 ticks period, enable), [[#Hopper clock]] (long), [[#Observer clock]] (6, free) |
 | actions in order | [[#Sequencer]] |
 | combine signals | gates; glitch-free when inputs change together: [[#XOR gate]], [[#Compact AND]], [[#AND gate]] |
@@ -81,6 +81,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#T flip-flop]] | toggles on each rising edge | 2×1×1 | 2 | `t_flipflop` |
 | [[#RS latch]] | set / reset memory | 3×1×4 | set 4, reset 2 | `rs_latch` |
 | [[#D latch]] | Q follows D, holds while E is on | 2×1×3 | 2 | `d_latch` |
+| [[#Shift register]] | 4 bits, shifts on each clock edge | 17×1×3 | 8 | `shift_register` |
 | **Clocks** | | | | |
 | [[#Clock]] | period 4d+4 with enable, no burnout | 3×1×3 | 2 from enable | `clock` |
 | [[#Observer clock]] | free-running, 2 on / 4 off | 2×1×1 | — | `observer_clock` |
@@ -463,6 +464,32 @@ A repeater locked by a second repeater at its side. `d_latch.cli.txt`. **Verifie
   (tested: D at E−1 is captured; D in the same tick as E is not).
 - **Locking:** only repeaters and comparators pointing into a repeater's side lock it
   (R-004: wire beside it does not).
+
+### Shift register
+
+Four repeater latches in a row share one lock bus; each clock edge opens all of them for
+exactly 4 ticks. `shift_register.cli.txt` (pastes `rising_edge.nbt` for the clock).
+**Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| CLK | 0 0 0 | clock input wire (rising edges count); drive it from the west |
+| D | 9 0 2 | data input wire; drive it from the west |
+| Q0…Q3 | 10, 12, 14, 16 (x), 0 2 | the latches (repeaters facing east): Q0 newest |
+
+(Offsets from the lowest corner, 0 1 −2 in the script.)
+
+- **Behavior:** each rising clock edge shifts D into Q0 and Qk into Qk+1, **8 ticks**
+  after the edge (tested: 1, 0, 1, 1 shifted in → Q0..Q3 = 1, 1, 0, 1). Data changes
+  between edges do not get in.
+- **Why exactly one step:** the unlock window is 4 ticks. A latch switches 2 ticks
+  after unlocking; its right neighbor would switch 2 ticks after that, but by then the
+  lock is back: the lock repeaters turn on before the latches' ticks in the same tick
+  (priority −3, [[R-012-same-tick-order]]) and a locked repeater drops a waiting change
+  ([[R-006-repeater-locking]]). Measured on a test bench: windows of **2 ticks shift
+  nothing, 3–4 ticks one stage, 5 ticks two stages** (race-through).
+- **Timing:** D must be stable during the window (6–8 ticks after the clock edge); clock
+  edges at least 20 ticks apart tested.
 
 ## Clocks
 

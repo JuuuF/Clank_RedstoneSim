@@ -36,7 +36,7 @@ with the record that answered it.
    - [x] monostable (exact duration from a delay line and a copper bulb)
    - [x] retriggerable timer (comparator fade ring)
    - [x] analog memory: peak-hold register (comparator ring without wire)
-   - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
+   - [x] memory: RS latch, D latch, T flip-flop (copper bulb), shift register (unlock-window timing)
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
    - [x] analog adder (three subtracting comparators)
