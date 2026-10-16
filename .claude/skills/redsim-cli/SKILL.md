@@ -18,7 +18,9 @@ Workflow:
    (`target new NAME "…"`, then `target NAME truth @A @B -> @OUT rows 00:0 …` or
    `target NAME do …` / `target NAME expect @OUT lit=true at 7`).
 3. Build with `place` (components; `out=DIRECTION` for repeaters, comparators, observers)
-   and `fill`/`set` (structure), in one script: `redsim-cli W < build.cli.txt`.
+   and `fill`/`set` (structure), in one script: `redsim-cli W < build.cli.txt`. Read
+   each output line: it is the state the block really got (a `note:` line means
+   placement changed what you wrote).
 4. `settle`, then `show` (text maps: upper case = on; legend under the map), `check`.
 5. Debug failing cases: `target NAME load CASE`, `run N`, `waves`, `inspect POS`
    (`faces`: which way it works), `effects @INPUT` (where the signal goes and where it

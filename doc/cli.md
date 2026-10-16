@@ -435,7 +435,7 @@ block, when a repeater locked):
   tick 11   air
 ```
 
-### 7.5 Why did it change? `why`
+### 7.5 Where a change came from and where it goes: `why`, `effects`
 
 `why POS` follows the causes of the block's last change (up to the view tick) back to
 where they started: the update that made it change, the block change that sent that
@@ -575,12 +575,15 @@ hint: 'target NAME load CASE' puts a case on the timeline; then waves, why, show
 A failing expectation shows the ticks it failed at and what it saw, and for numbers the
 values over its range in `waves` style. `check NAME …` runs some targets; `check …
 verbose` also lists the expectations that passed, a `within` with the tick it was first
-met (how fast the contraption reacted; here a repeater-locking latch letting go):
+met (how fast the contraption reacted). For `examples/cli/d_latch.cli.txt`, a latch
+made of a locked repeater, the last line says the lamp went off 8 ticks after the enable
+lever was switched off at tick 22:
 
 ```
 check: 1 case, 1 passed, 0 failed
 PASS  dlatch
       ok   expect @Q lit=true at 6
+      ok   expect @LATCH locked=true at 11
       ok   expect @Q lit=true during 13..20
       ok   expect @Q lit=false within 23..30  (from tick 30)
 ```
@@ -632,8 +635,9 @@ The steps, as a habit:
 2. **Build** with `place` (components) and `fill`/`set` (structure). Read every output
    line: it says what state the block really got.
 3. **`settle`**, then **`show`** to see it, **`check`** to test it.
-4. When a case fails: `target NAME load CASE`, `waves`, `why` the output, `inspect` the
-   blocks along the path, `step` through the tick where it goes wrong.
+4. When a case fails: `target NAME load CASE`, `waves`, `effects` the input and `why`
+   the output, `inspect` the blocks along the path, `step` through the tick where it goes
+   wrong (section 10.2).
 5. **Leave it readable**: labels, a `note` saying what it is and how to use it.
 
 ### 10.2 Find out why something does not work
@@ -702,7 +706,7 @@ A person: `redsim WORLD` opens it in the editor with everything. An agent: `info
 With `--json` each command prints exactly one line of JSON:
 
 ```json
-{"command": "place 0 1 0 stone", "ok": true, "data": {"pos": [0, 1, 0], "state": "stone", "tick": 0}}
+{"command": "place 0 1 0 stone", "ok": true, "data": {"pos": [0, 1, 0], "state": "stone", "tick": 0, "clicks": 0, "notes": []}}
 {"command": "place 0 1 0 stone", "ok": false, "error": "place: 0 1 0 holds stone; break it first or use set"}
 ```
 
@@ -730,7 +734,9 @@ see [[world-import]] and [[differences]].
   to record an edit during a run.
 - **`settle` after building**, before testing or reading results.
 - **`place` for components, `set` for structure.** `set` does not apply placement rules:
-  a lamp set next to power stays off until something updates it.
+  a lamp set next to power stays off until something updates it. `place` cannot give
+  every state: it right-clicks for `delay`, `mode`, `open`, `powered` (lever) and `note`,
+  and a `note:` line says when placement changed another property you wrote.
 - **Facing**: repeaters, comparators and observers face their input (write `out=`);
   wall torches face away from their wall.
 - **Wire needs a block below**, torches and levers a block to stand on or hang from;
