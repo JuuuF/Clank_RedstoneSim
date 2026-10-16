@@ -117,7 +117,15 @@ ticks or slower never. A burnt-out torch relights 160 ticks later if unpowered, 
 own turn-off unpowered its block at once (then it waits for a neighbor change). V
 [[R-007-torch-burnout]], G EXP-005, 006.
 
-## To be measured
+## Loops
 
-Inputs through blocks and wire, and update-order races inside a tick are open:
+A loop (ring) of components holds a moving pattern: a comparator ring of n comparators
+has a lap of 2·n ticks. A signal must last at least one lap to change the whole ring
+(otherwise a "packet" keeps circulating), and every wire in a ring takes 1 strength per
+lap. Used by the [[circuits]] Fade timer, Peak-hold register and Clock.
+
+## Not measured yet
+
+Making 0-tick pulses with pistons (R-018), and timings of blocks the knowledge base has
+not used in circuits yet (composters, campfires, lecterns' page turns by circuits):
 [[backlog]].

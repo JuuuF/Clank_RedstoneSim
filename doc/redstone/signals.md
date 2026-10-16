@@ -48,8 +48,11 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 
 - Power drops by 1 per wire: a lever's 15 reaches 15 wires (the 15th has power 1). V R-001.
 - Wire changes in the same tick as its source (no delay). V R-001.
-- A wire beside, on or under a strongly powered block takes power 15 from it. V R-002,
-  [[R-004-wire-geometry]].
+- A wire beside, on or under a strongly powered block takes that block's power (15 from
+  a lever or torch, a comparator's value from a comparator, R-005). V R-002,
+  [[R-004-wire-geometry]], [[R-005-signal-strength]]. This also happens when you did not
+  mean it: a wire routed past another circuit's input block picks up its power
+  ([[circuits]] combination lock).
 - **What a wire powers:** the block under it and every neighbor its shape **points
   into**. V R-004
   - a lone wire placed by a player is a **cross**: it points into all four sides;
@@ -79,7 +82,9 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 **Comparator side inputs** (the larger of the two sides counts): wire beside it (at its
 power), a redstone block, a repeater or comparator pointing into the side. **Not** side
 inputs: torches, levers, buttons, powered solid blocks. An observer's 2-tick pulse at a
-side is lost, as it is at the rear (R-003). V R-005, G EXP-014
+side was lost (comparator with nothing in front, R-005), as it is at the rear (R-003; it
+passes the rear of a comparator that feeds a repeater or comparator, R-012).
+V R-005, G EXP-014
 
 **Comparator rear input:** a container or other analog block directly behind, or behind
 one solid block (unless that block has power 15: then 15). V R-005, G EXP-013
@@ -98,6 +103,15 @@ computed with the simulator's own float32 formula, I):
 
 The CLI's `source POS barrel N` builds a barrel of reading N directly.
 
+## Quasi-connectivity
+
+Pistons (and, by the source, droppers and dispensers) also count power next to the space
+**above** them, but only check when they get a neighbor update: they can sit powered but
+unmoved, or stay out after the power is gone, until the next update. A repeater pointing
+into that space updates the piston, so it reacts at once. V [[R-009-pistons]] (pistons);
+droppers S only, G EXP-044.
+
 ## Open
 
-Quasi-connectivity (pistons, droppers powered from the block above): [[backlog]].
+Dropper quasi-connectivity in a circuit, wire onto stairs and other partial blocks:
+[[backlog]].
