@@ -468,9 +468,13 @@ k+1's bulb, so bit k+1 toggles when bit k falls. `counter4.cli.txt`. **Verified.
 - **Latency:** bit k settles **2 + 4k** ticks after the edge (ripple: 4 ticks per bit:
   comparator 2 + torch 2). Read all four bits at least 14 ticks after an edge.
 - **Rate:** tested with one edge every 20 ticks (16 edges, every count checked; the 7 → 8
-  ripple checked tick by tick). Bit k is high for ≥ 20·2^k ticks, far above the torch's
-  3-tick minimum; faster input is not tested (H: the limit is the first bit: input edges
-  at least 4 ticks apart, R-003's merging does not apply to bulbs).
+  ripple checked tick by tick), with lever edges **every 2 ticks** (11 edges → 1011),
+  and driven by an [[#Observer clock]] (2-tick pulses every 6 ticks: bit k has period
+  12·2^k). The 2-tick case works although bit 0's comparator then makes 2-tick pulses
+  into bit 1's torch: its switch-off was scheduled after the torch's tick (the player's
+  edge comes after the tick's scheduled ticks), the [[R-012-same-tick-order]] exception.
+  Faster than one edge per 2 ticks is not possible with levers; read the count at least
+  14 ticks after the last edge.
 - **Integration findings:** the pasted modules keep their states, so later bulbs sit
   unlit and unpowered next to lit torches and only react when those torches change: the
   counter starts at 0 with no reset step. The NOT gate's input block takes the comparator

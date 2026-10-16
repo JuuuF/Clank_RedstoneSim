@@ -42,13 +42,12 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
-| Q7 | Fastest input rate the 4-bit counter and the T flip-flop follow (H4) | counters on clocks | counter |
 | Q8 | Can a monostable be made retriggerable (restart its time on a new edge)? | timed doors that stay open while people pass | circuits |
 | Q9 | Double piston extender: the shortest sequence and a controller from library parts | hidden doors, block placement | circuits |
 
 ## Hypotheses waiting for a test
 
-- H4: the 4-bit counter counts input edges as close as 4 ticks apart.
+- (none open)
 
 ## Done
 
@@ -65,6 +64,7 @@ with the record that answered it.
 | Observers pulse 2 ticks after being moved (not if moved while powered); sticky pistons pull across a gap on 2-tick pulses | [[components]] | [[R-015-moving-observers]] |
 | Rails reach 8 past the powered one; doors from either half; target, lectern sources | [[components]] | [[R-014-other-components]] |
 | Q6: yes, a race fed by one wire change flips with the build's position (z sign here) | [[timing]] | [[R-017-wire-order]] |
+| Q7/H4: the counter follows lever edges every 2 ticks and an observer clock | [[circuits]] | `counter4` targets |
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |

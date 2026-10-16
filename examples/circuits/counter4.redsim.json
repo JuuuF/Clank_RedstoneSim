@@ -6479,7 +6479,44 @@
     "target ripple expect @Q2 power=15 at 151",
     "target ripple expect @Q2 power=0 at 152",
     "target ripple expect @Q3 power=0 at 155",
-    "target ripple expect @Q3 power=15 at 156"
+    "target ripple expect @Q3 power=15 at 156",
+    "target new fast '11 lever edges 2 ticks apart (on 1 tick, off 1) still count to 11 (1011)'",
+    "target fast do at 2 use @IN",
+    "target fast do at 3 use @IN",
+    "target fast do at 4 use @IN",
+    "target fast do at 5 use @IN",
+    "target fast do at 6 use @IN",
+    "target fast do at 7 use @IN",
+    "target fast do at 8 use @IN",
+    "target fast do at 9 use @IN",
+    "target fast do at 10 use @IN",
+    "target fast do at 11 use @IN",
+    "target fast do at 12 use @IN",
+    "target fast do at 13 use @IN",
+    "target fast do at 14 use @IN",
+    "target fast do at 15 use @IN",
+    "target fast do at 16 use @IN",
+    "target fast do at 17 use @IN",
+    "target fast do at 18 use @IN",
+    "target fast do at 19 use @IN",
+    "target fast do at 20 use @IN",
+    "target fast do at 21 use @IN",
+    "target fast do at 22 use @IN",
+    "target fast do at 23 use @IN",
+    "target fast expect @Q0 power=15 at 80",
+    "target fast expect @Q1 power=15 at 80",
+    "target fast expect @Q2 power=0 at 80",
+    "target fast expect @Q3 power=15 at 80",
+    "target new clocked 'driven by an observer clock (2-tick pulses every 6 ticks) in place of the lever: bit k has period 12 * 2^k'",
+    "target clocked do break @IN",
+    "target clocked do set -1 1 0 observer[facing=west]",
+    "target clocked do set -2 1 0 observer[facing=east]",
+    "target clocked expect @Q0 power=15 during 4..9",
+    "target clocked expect @Q0 power=0 during 10..15",
+    "target clocked expect @Q1 power=15 during 14..25",
+    "target clocked expect @Q1 power=0 during 26..37",
+    "target clocked expect @Q3 power=15 during 58..105",
+    "target clocked expect @Q3 power=0 during 106..120"
    ],
    "view": [
     0,
@@ -6872,6 +6909,63 @@
        "expect @Q2 power=0 at 152",
        "expect @Q3 power=0 at 155",
        "expect @Q3 power=15 at 156"
+      ]
+     }
+    ]
+   },
+   {
+    "name": "fast",
+    "description": "11 lever edges 2 ticks apart (on 1 tick, off 1) still count to 11 (1011)",
+    "cases": [
+     {
+      "name": "main",
+      "lines": [
+       "at 2 use @IN",
+       "at 3 use @IN",
+       "at 4 use @IN",
+       "at 5 use @IN",
+       "at 6 use @IN",
+       "at 7 use @IN",
+       "at 8 use @IN",
+       "at 9 use @IN",
+       "at 10 use @IN",
+       "at 11 use @IN",
+       "at 12 use @IN",
+       "at 13 use @IN",
+       "at 14 use @IN",
+       "at 15 use @IN",
+       "at 16 use @IN",
+       "at 17 use @IN",
+       "at 18 use @IN",
+       "at 19 use @IN",
+       "at 20 use @IN",
+       "at 21 use @IN",
+       "at 22 use @IN",
+       "at 23 use @IN",
+       "expect @Q0 power=15 at 80",
+       "expect @Q1 power=15 at 80",
+       "expect @Q2 power=0 at 80",
+       "expect @Q3 power=15 at 80"
+      ]
+     }
+    ]
+   },
+   {
+    "name": "clocked",
+    "description": "driven by an observer clock (2-tick pulses every 6 ticks) in place of the lever: bit k has period 12 * 2^k",
+    "cases": [
+     {
+      "name": "main",
+      "lines": [
+       "break @IN",
+       "set -1 1 0 observer[facing=west]",
+       "set -2 1 0 observer[facing=east]",
+       "expect @Q0 power=15 during 4..9",
+       "expect @Q0 power=0 during 10..15",
+       "expect @Q1 power=15 during 14..25",
+       "expect @Q1 power=0 during 26..37",
+       "expect @Q3 power=15 during 58..105",
+       "expect @Q3 power=0 during 106..120"
       ]
      }
     ]
