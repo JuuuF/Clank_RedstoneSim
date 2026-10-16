@@ -27,6 +27,7 @@ with the record that answered it.
    - [x] R-016 falling blocks as timers and triggers
    - [ ] R-018 making 0-tick pulses with pistons (block dropping, redstone block pushes)
    - [x] R-019 wire on partial blocks (supports, one-way steps); dropper quasi-connectivity
+   - [x] R-020 vertical signal transmission compared
    - [x] R-017 wire update order: position-dependent races (Q6)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND

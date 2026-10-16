@@ -75,6 +75,17 @@ neighbors, and how solid blocks pass it on. Evidence labels:
   glass, glowstone, top slabs, upside-down stairs, hoppers, observers and copper bulbs
   pass it up only. V
 
+## Going up and down (R-020)
+
+| Method | Delay | What arrives | Direction |
+|---|---|---|---|
+| Wire staircase on solid blocks | 0 | the level, −1 per step | up and down |
+| Wire ladder on glass, glowstone, top slabs | 0 | the level, −1 per step | **up only** |
+| Torch tower (block, torch, block, torch …) | 1 tick per block | the level, inverted at each torch | up |
+| Observer column | 2 ticks per block | one 2-tick pulse per change | either (face the observers) |
+
+V [[R-020-vertical-signals]]
+
 ## Signal strength (R-005)
 
 | Through | Strength out | Evidence |

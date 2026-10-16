@@ -1,0 +1,93 @@
+# R-020: sending a signal up (doc/redstone/records/R-020-vertical-signals.md)
+#
+# Four ways up, each from a lever on at tick 2 and off at 30: a wire staircase on stone
+# (6 steps, lamp at the top), a torch tower (stone and standing torches stacked, 4
+# torches over 8 blocks), an observer column (6 observers facing down, each watching the
+# one below, the lowest watching a wire), a wire staircase on glass (4 steps).
+#   redsim-cli r020.redsim.json < experiments/redstone/R-020-vertical-signals.cli.txt
+new size 48 force
+note "R-020: wire stairs and glass ladders are instant (glass: up only), torch towers 1 tick per block and invert, observer columns 2 ticks per block and pulse"
+# A: wire staircase up 6 (east), lever at bottom; probe lamp at top
+place -20 1 -10 lever face=floor
+place -19 1 -10 redstone_wire
+place -18 1 -10 stone
+place -18 2 -10 redstone_wire
+set -17 2 -10 stone
+place -17 3 -10 redstone_wire
+set -16 3 -10 stone
+place -16 4 -10 redstone_wire
+set -15 4 -10 stone
+place -15 5 -10 redstone_wire
+set -14 5 -10 stone
+place -14 6 -10 redstone_wire
+set -13 6 -10 stone
+place -13 7 -10 redstone_wire
+set -12 7 -10 redstone_lamp
+label LA -20 1 -10
+label TOPA -13 7 -10
+# B: torch tower: stone, torch on top, stone, torch ... (each torch powers the block above it)
+place 0 1 -10 stone
+place -1 1 -10 lever face=wall facing=west
+place 0 2 -10 redstone_torch
+set 0 3 -10 stone
+place 0 4 -10 redstone_torch
+set 0 5 -10 stone
+place 0 6 -10 redstone_torch
+set 0 7 -10 stone
+place 0 8 -10 redstone_torch
+label LB -1 1 -10
+label T1 0 2 -10
+label T2 0 4 -10
+label T3 0 6 -10
+label T4 0 8 -10
+# C: observer column facing down (each watches the one below), lever-driven wire at the bottom
+place 10 1 -10 lever face=floor
+place 11 1 -10 redstone_wire
+set 11 2 -10 observer[facing=down,powered=false]
+set 11 3 -10 observer[facing=down,powered=false]
+set 11 4 -10 observer[facing=down,powered=false]
+set 11 5 -10 observer[facing=down,powered=false]
+set 11 6 -10 observer[facing=down,powered=false]
+set 11 7 -10 observer[facing=down,powered=false]
+label LC 10 1 -10
+label OTOP 11 7 -10
+# D: glass "ladder" (wire on glass blocks rising diagonally) up 4
+place -20 1 0 lever face=floor
+place -19 1 0 redstone_wire
+place -18 1 0 glass
+place -18 2 0 redstone_wire
+set -17 2 0 glass
+place -17 3 0 redstone_wire
+set -16 3 0 glass
+place -16 4 0 redstone_wire
+set -15 4 0 glass
+place -15 5 0 redstone_wire
+label LD -20 1 0
+label TOPD -15 5 0
+settle
+
+target new up "wire stairs: instant, 9 left after 6 steps; glass ladder: instant, 11 after 4; torch tower: T1..T4 switch at 4, 6, 8, 10 (alternating); observer column: top pulses at 14..15 and 42..43"
+target up do at 2 use @LA
+target up do at 2 use @LB
+target up do at 2 use @LC
+target up do at 2 use @LD
+target up do at 30 use @LA
+target up do at 30 use @LB
+target up do at 30 use @LC
+target up do at 30 use @LD
+target up expect @TOPA power=9 at 2
+target up expect -12 7 -10 lit=true at 2
+target up expect @TOPA power=0 at 30
+target up expect @TOPD power=11 at 2
+target up expect @T1 lit=false at 4
+target up expect @T2 lit=true at 6
+target up expect @T3 lit=false at 8
+target up expect @T4 lit=false at 9
+target up expect @T4 lit=true at 10
+target up expect @T4 lit=false at 38
+target up expect @OTOP powered=false at 13
+target up expect @OTOP powered=true during 14..15
+target up expect @OTOP powered=false during 16..41
+target up expect @OTOP powered=true during 42..43
+
+check
