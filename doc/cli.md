@@ -700,6 +700,14 @@ to each is the result, to open in the editor or to inspect with `redsim-cli`.
 | `rs_latch.cli.txt` | memory: a target with stimuli at two ticks and `during` expectations |
 | `d_latch.cli.txt` | a locked repeater, `out=`, the `faces` line of `inspect`, `check verbose` |
 
+More scripts in the same style: `experiments/redstone/R-NNN-*.cli.txt` (one per
+experiment of the redstone knowledge base, [[redstone/README]]) and
+`examples/circuits/*.cli.txt` (the circuit library, [[circuits]]: gates, edge
+detectors, latches, clocks, a counter, a piston door). These start with `new size N
+force`, so a script makes its own world: `redsim-cli w.redsim.json < SCRIPT`. The library
+modules are also saved as structure files (`examples/circuits/NAME.nbt`) to paste with
+`import` (run from the repository root; `tools/make_circuits.py` rebuilds them).
+
 ### 10.6 Handing a world over
 
 A person: `redsim WORLD` opens it in the editor with everything. An agent: `info`,
@@ -752,6 +760,18 @@ see [[world-import]] and [[differences]].
 - Read the **legend** under each map; letters are only fixed for redstone components.
 - What the simulator does not do (water, items, mobs, random outcomes) is in
   [[differences]]; designs relying on those cannot be tested here.
+- **`place` is a player placing:** a copper bulb placed next to something that already
+  powers it lights at once (placement counts as a rising edge), a lamp lights, a repeater
+  locks. To build a state placement would not give, `set` it (`set POS
+  copper_bulb[lit=false,powered=true]`).
+- **`import` and `paste` are strict pastes:** no updates, states and block-entity data
+  kept exactly, no scheduled ticks. A pasted part that disagrees with its new neighbors
+  stays so until something next to it changes; a pasted observer clock does not start
+  (break and place one observer). Check the first ticks after pasting.
+- **Probe with the right block:** a wire beside a block shows only *strong* power, a lamp
+  stretches every pulse by 4 ticks, `waves` shows a redstone block as 0 (what it
+  receives). Probe signals with the component itself, a repeater or wire
+  ([[redstone/README]], experiment method).
 
 ## 14. Glossary
 
