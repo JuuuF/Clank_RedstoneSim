@@ -15,7 +15,7 @@ labels: [[redstone/README#Scope and trust]].
 | Repeater, delay d | on, Δ 2·d | off, Δ 2·d | d = 1…4 gives 2, 4, 6, 8 | V R-001, G EXP-008 |
 | Comparator | Δ 2 | Δ 2 | compare mode, full-strength input | V R-001, G EXP-012 |
 | Observer | pulse starts Δ 2 after the change it sees | — | the pulse is 2 ticks long; any change of the watched block (on *or* off) fires it | V R-001, G EXP-032 |
-| Piston, sticky piston (extend) | `extended=true` Δ 1; front cell `moving_piston` Δ 1; pushed block solid at its new place Δ 3 | — | the block event runs in the next tick, then the move takes 2 ticks | V R-001, G EXP-015 |
+| Piston, sticky piston (extend) | `extended=true` Δ 1; front cell `moving_piston` Δ 1; pushed block solid at its new place Δ 3 | — | from a lever; powered by a repeater, torch, comparator or observer it starts in the **same** tick (Δ 0) and the block lands at Δ 2 (R-009) | V R-001, [[R-009-pistons]], G EXP-015 |
 | Piston (retract) | — | base `moving_piston` Δ 1, head gone Δ 1, `extended=false` Δ 3 | | V R-001, G EXP-015 |
 | Sticky piston (retract) | — | pulled block back in place Δ 3 (`moving_piston` at Δ 1, 2) | | V R-001, G EXP-015 |
 | Dropper (and dispenser) | `triggered` Δ 0; the item leaves Δ 4 | `triggered=false` Δ 0 | a rising edge only; empty → nothing happens | V R-001, G EXP-044 |
