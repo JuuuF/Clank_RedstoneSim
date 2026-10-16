@@ -11,6 +11,12 @@ world, acts and saves it. Read **doc/cli.md** (the guide) before building and
 same text). Run it as `redsim-cli WORLD …` (installed) or
 `PYTHONPATH=src python -m redsim.cli WORLD …` from the repository root.
 
+Before designing, use the redstone knowledge base **doc/redstone/** (README.md first):
+measured timings (`timing.md`), power rules (`signals.md`), component behavior
+(`components.md`), and a library of verified modules with contracts (`circuits.md`;
+paste them with `import examples/circuits/NAME.nbt at X Y Z`). `workflow.md` shows how
+to go from a requirement in words to a tested contraption. Record new findings there.
+
 Workflow:
 
 1. `redsim-cli W new` (a stone floor at y=0; build from y=1).
