@@ -11,8 +11,7 @@ with the record that answered it.
    - [x] R-002 what powers a block, strongly or weakly
    - [x] R-003 short pulses and gaps into each component; lever vs circuit-made pulses
    - [x] R-004 wire geometry: cross, dot, line, corner; steps; glass and slabs
-   - [ ] R-005 signal strength: through blocks, into comparators and their side inputs,
-     subtraction, container fill levels
+   - [x] R-005 signal strength: through blocks, comparator modes and side inputs, containers
 2. **Components in depth**
    - [ ] R-006 repeater locking (who locks, timing of lock/unlock, held state)
    - [ ] R-007 torch burnout thresholds as a design limit (fastest safe torch clock)
@@ -36,7 +35,6 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
-| Q1 | Does a block powered by a comparator with output N < 15 give wire beside it N? | analog signals through blocks | R-005 |
 | Q3 | Does a comparator pass a 0-tick pulse? | edge detectors | R-012 |
 | Q5 | Which circuit-made 2-tick pulses end *after* a torch's tick (and so pass)? Block events, block entities, lower-priority sources? | pulse design | R-011 |
 
@@ -53,3 +51,4 @@ with the record that answered it.
 | Q2: does a repeater fill short gaps? Yes, below its delay | [[timing]] | [[R-003-short-pulses]] |
 | Comparators and torches lose 1-tick and circuit-made 2-tick pulses; sticky pistons need 3 ticks | [[timing]] | [[R-003-short-pulses]] |
 | Q4: a lone placed wire is a cross (powers 4 sides), a dot powers only below | [[signals]] | [[R-004-wire-geometry]] |
+| Q1: a block powered with N by a comparator gives wire beside it N | [[signals]] | [[R-005-signal-strength]] |

@@ -65,7 +65,39 @@ neighbors, and how solid blocks pass it on. Evidence labels:
   down**. V R-004, G EXP-007
 - Wire passing along a repeater's side does not power or lock it. V R-004
 
+## Signal strength (R-005)
+
+| Through | Strength out | Evidence |
+|---|---|---|
+| Wire | −1 per wire | V R-001, [[R-005-signal-strength]] |
+| A solid block | the strongest signal powering it (a comparator's 7 → wire beside the block gets 7; wire at 10 into a block → a comparator behind it reads 10) | V R-005 |
+| Repeater | always 15 | V R-005 |
+| Comparator, compare mode | rear if rear ≥ side, else 0 | V R-005, G EXP-012 |
+| Comparator, subtract mode | max(rear − side, 0) | V R-005, G EXP-012 |
+| Comparator → comparator | unchanged | V R-005 |
+
+**Comparator side inputs** (the larger of the two sides counts): wire beside it (at its
+power), a redstone block, a repeater or comparator pointing into the side. **Not** side
+inputs: torches, levers, buttons, powered solid blocks. An observer's 2-tick pulse at a
+side is lost, as it is at the rear (R-003). V R-005, G EXP-014
+
+**Comparator rear input:** a container or other analog block directly behind, or behind
+one solid block (unless that block has power 15: then 15). V R-005, G EXP-013
+
+**Container readings:** 1 + ⌊14 × fullness⌋, 0 when empty; fullness = Σ(count / max stack
+size) / slots, so a 16-stack item (ender pearl) counts 4× a 64-stack item. Items of a
+64-stack item needed for each reading (thresholds 1, 2, 14, 15 tested, V R-005; the rest
+computed with the simulator's own float32 formula, I):
+
+| Reading | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Hopper (5 slots) | 1 | 23 | 46 | 69 | 92 | 115 | 138 | 160 | 183 | 206 | 229 | 252 | 275 | 298 | 320 |
+| Dropper, dispenser (9) | 1 | 42 | 83 | 124 | 165 | 206 | 247 | 288 | 330 | 371 | 412 | 453 | 494 | 535 | 576 |
+| Barrel, chest (27) | 1 | 124 | 247 | 371 | 494 | 618 | 741 | 864 | 988 | 1111 | 1235 | 1358 | 1482 | 1605 | 1728 |
+| Double chest (54) | 1 | 247 | 494 | 741 | 988 | 1235 | 1482 | 1728 | 1975 | 2222 | 2469 | 2716 | 2963 | 3210 | 3456 |
+
+The CLI's `source POS barrel N` builds a barrel of reading N directly.
+
 ## Open
 
-Signal strength through blocks (a comparator with output 7 into a block: does wire beside
-it get 7?), wire shapes, quasi-connectivity: [[backlog]].
+Quasi-connectivity (pistons, droppers powered from the block above): [[backlog]].

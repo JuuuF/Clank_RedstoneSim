@@ -43,8 +43,12 @@ Evidence labels: [[redstone/README#Scope and trust]].
 
 ## Comparator
 
-- Reads: its back side (and side inputs, R-005). Timing 2 ticks. V R-001
-- Gives: its output strength to the component or block in front, strongly. V R-002
+- Reads: its back side: a signal (wire, a powered block, a source), or a container or
+  other analog block directly behind or behind one solid block. Side inputs: wire,
+  redstone blocks, repeaters and comparators pointing in (not torches, levers or powered
+  blocks). Timing 2 ticks. V R-001, [[R-005-signal-strength]]
+- Gives: compare mode: the rear strength if it is ≥ the side, else 0; subtract mode:
+  rear − side (at least 0); strongly into a block in front. V R-002, R-005
 - Short pulses: like a torch: loses 1-tick pulses and circuit-made 2-tick pulses, fills
   1-tick gaps. V R-003
 

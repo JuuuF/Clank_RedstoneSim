@@ -1,0 +1,377 @@
+# R-005: signal strength: through blocks, wire, repeaters and comparators; comparator
+# modes and side inputs; container fill levels (doc/redstone/records/R-005-signal-strength.md)
+#
+# Column x=-28: a comparator reading a barrel of strength 7 (or 1, 9) into a block, wire,
+# a repeater or another comparator; wire at power 10 into a block read by a comparator;
+# reading a barrel through a block, and through a block a lever powers.
+# Column x=-12: compare and subtract with a rear barrel and a side comparator (barrel)
+# pointing into the main comparator's south side.
+# Column x=4: side inputs of a subtracting comparator whose rear is a redstone block (15):
+# wire 15, two side comparators (5 and 9), a standing torch, a redstone block (set at 2),
+# a floor lever, a repeater, a stone a lever powers, wire at 5, an observer's pulse.
+# Column x=20: barrels, hoppers and droppers with item counts at the fill thresholds.
+#   redsim-cli r005.redsim.json < experiments/redstone/R-005-signal-strength.cli.txt
+new size 64 force
+note "R-005: signal strength through blocks, wire, repeaters, comparators; comparator modes and side inputs; container fill levels"
+source -28 1 -28 barrel 7
+place -27 1 -28 comparator out=east
+place -26 1 -28 stone
+line -25 1 -28 to -24 1 -28 redstone_wire
+label A1_COMP -27 1 -28
+label A1_W1 -25 1 -28
+label A1_W2 -24 1 -28
+source -28 1 -24 barrel 7
+place -27 1 -24 comparator out=east
+line -26 1 -24 to -25 1 -24 redstone_wire
+label A2_W1 -26 1 -24
+label A2_W2 -25 1 -24
+source -28 1 -20 barrel 1
+place -27 1 -20 comparator out=east
+place -26 1 -20 repeater out=east
+place -25 1 -20 redstone_wire
+label A3_COMP -27 1 -20
+label A3_W -25 1 -20
+source -28 1 -16 barrel 7
+place -27 1 -16 comparator out=east
+place -26 1 -16 comparator out=east
+place -25 1 -16 redstone_wire
+label A4_COMP2 -26 1 -16
+label A4_W -25 1 -16
+source -28 1 -12 barrel 7
+place -27 1 -12 comparator out=east
+place -26 1 -12 stone
+place -25 1 -12 comparator out=east
+label A5_COMP2 -25 1 -12
+place -32 1 -8 lever face=floor
+line -31 1 -8 to -26 1 -8 redstone_wire
+place -25 1 -8 stone
+place -24 1 -8 comparator out=east
+label IN_A6 -32 1 -8
+label A6_WEND -26 1 -8
+label A6_COMP -24 1 -8
+source -28 1 -4 barrel 9
+place -27 1 -4 stone
+place -26 1 -4 comparator out=east
+label A7_COMP -26 1 -4
+source -28 1 0 barrel 9
+place -27 1 0 stone
+place -27 2 0 lever face=floor
+place -26 1 0 comparator out=east
+label IN_A8 -27 2 0
+label A8_COMP -26 1 0
+source -12 1 -28 barrel 12
+place -11 1 -28 comparator out=east mode=subtract
+place -11 1 -27 comparator out=north
+source -11 1 -26 barrel 5
+place -10 1 -28 redstone_wire
+label B1 -11 1 -28
+source -12 1 -23 barrel 12
+place -11 1 -23 comparator out=east mode=compare
+place -11 1 -22 comparator out=north
+source -11 1 -21 barrel 5
+place -10 1 -23 redstone_wire
+label B2 -11 1 -23
+source -12 1 -18 barrel 5
+place -11 1 -18 comparator out=east mode=compare
+place -11 1 -17 comparator out=north
+source -11 1 -16 barrel 12
+place -10 1 -18 redstone_wire
+label B3 -11 1 -18
+source -12 1 -13 barrel 7
+place -11 1 -13 comparator out=east mode=compare
+place -11 1 -12 comparator out=north
+source -11 1 -11 barrel 7
+place -10 1 -13 redstone_wire
+label B4 -11 1 -13
+source -12 1 -8 barrel 7
+place -11 1 -8 comparator out=east mode=subtract
+place -11 1 -7 comparator out=north
+source -11 1 -6 barrel 7
+place -10 1 -8 redstone_wire
+label B5 -11 1 -8
+source -12 1 -3 barrel 5
+place -11 1 -3 comparator out=east mode=subtract
+place -11 1 -2 comparator out=north
+source -11 1 -1 barrel 12
+place -10 1 -3 redstone_wire
+label B6 -11 1 -3
+set 4 1 -28 redstone_block
+place 5 1 -28 comparator out=east mode=subtract
+label C1 5 1 -28
+place 5 1 -26 lever face=floor
+place 5 1 -27 redstone_wire
+label IN_C1 5 1 -26
+label C1_WIRE 5 1 -27
+set 4 1 -23 redstone_block
+place 5 1 -23 comparator out=east mode=subtract
+label C2 5 1 -23
+place 5 1 -22 comparator out=north
+source 5 1 -21 barrel 5
+place 5 1 -24 comparator out=south
+source 5 1 -25 barrel 9
+set 4 1 -18 redstone_block
+place 5 1 -18 comparator out=east mode=subtract
+label C3 5 1 -18
+place 5 1 -17 redstone_torch
+label C3_TORCH 5 1 -17
+set 4 1 -13 redstone_block
+place 5 1 -13 comparator out=east mode=subtract
+label C4 5 1 -13
+label C4_RBLOCK 5 1 -12
+set 4 1 -8 redstone_block
+place 5 1 -8 comparator out=east mode=subtract
+label C5 5 1 -8
+place 5 1 -7 lever face=floor
+label IN_C5 5 1 -7
+set 4 1 -3 redstone_block
+place 5 1 -3 comparator out=east mode=subtract
+label C6 5 1 -3
+place 5 1 -1 lever face=floor
+place 5 1 -2 repeater out=north
+label IN_C6 5 1 -1
+set 4 1 2 redstone_block
+place 5 1 2 comparator out=east mode=subtract
+label C7 5 1 2
+place 5 1 3 stone
+place 5 2 3 lever face=floor
+label IN_C7 5 2 3
+set 4 1 7 redstone_block
+place 5 1 7 comparator out=east mode=subtract
+label C8 5 1 7
+place 5 1 8 redstone_wire
+place 5 1 9 comparator out=north
+source 5 1 10 barrel 5
+label C8_WIRE 5 1 8
+set 4 1 13 redstone_block
+place 5 1 13 comparator out=east mode=subtract
+label C9 5 1 13
+place 5 1 15 lever face=floor
+place 5 1 14 observer out=north
+label IN_C9 5 1 15
+place 20 1 -28 barrel
+container 20 1 -28 0 stone 1
+place 21 1 -28 comparator out=east
+label D_BARREL_1 20 1 -28
+label D_BARREL_1_COMP 21 1 -28
+place 20 1 -25 barrel
+container 20 1 -25 0 stone 64
+place 21 1 -25 comparator out=east
+label D_BARREL_64 20 1 -25
+label D_BARREL_64_COMP 21 1 -25
+place 20 1 -22 barrel
+container 20 1 -22 0 stone 64
+container 20 1 -22 1 stone 59
+place 21 1 -22 comparator out=east
+label D_BARREL_123 20 1 -22
+label D_BARREL_123_COMP 21 1 -22
+place 20 1 -19 barrel
+container 20 1 -19 0 stone 64
+container 20 1 -19 1 stone 60
+place 21 1 -19 comparator out=east
+label D_BARREL_124 20 1 -19
+label D_BARREL_124_COMP 21 1 -19
+place 20 1 -16 barrel
+container 20 1 -16 0 stone 64
+container 20 1 -16 1 stone 64
+container 20 1 -16 2 stone 64
+container 20 1 -16 3 stone 64
+container 20 1 -16 4 stone 64
+container 20 1 -16 5 stone 64
+container 20 1 -16 6 stone 64
+container 20 1 -16 7 stone 64
+container 20 1 -16 8 stone 64
+container 20 1 -16 9 stone 64
+container 20 1 -16 10 stone 64
+container 20 1 -16 11 stone 64
+container 20 1 -16 12 stone 64
+container 20 1 -16 13 stone 64
+container 20 1 -16 14 stone 64
+container 20 1 -16 15 stone 64
+container 20 1 -16 16 stone 64
+container 20 1 -16 17 stone 64
+container 20 1 -16 18 stone 64
+container 20 1 -16 19 stone 64
+container 20 1 -16 20 stone 64
+container 20 1 -16 21 stone 64
+container 20 1 -16 22 stone 64
+container 20 1 -16 23 stone 64
+container 20 1 -16 24 stone 64
+container 20 1 -16 25 stone 64
+container 20 1 -16 26 stone 63
+place 21 1 -16 comparator out=east
+label D_BARREL_1727 20 1 -16
+label D_BARREL_1727_COMP 21 1 -16
+place 20 1 -13 barrel
+container 20 1 -13 0 stone 64
+container 20 1 -13 1 stone 64
+container 20 1 -13 2 stone 64
+container 20 1 -13 3 stone 64
+container 20 1 -13 4 stone 64
+container 20 1 -13 5 stone 64
+container 20 1 -13 6 stone 64
+container 20 1 -13 7 stone 64
+container 20 1 -13 8 stone 64
+container 20 1 -13 9 stone 64
+container 20 1 -13 10 stone 64
+container 20 1 -13 11 stone 64
+container 20 1 -13 12 stone 64
+container 20 1 -13 13 stone 64
+container 20 1 -13 14 stone 64
+container 20 1 -13 15 stone 64
+container 20 1 -13 16 stone 64
+container 20 1 -13 17 stone 64
+container 20 1 -13 18 stone 64
+container 20 1 -13 19 stone 64
+container 20 1 -13 20 stone 64
+container 20 1 -13 21 stone 64
+container 20 1 -13 22 stone 64
+container 20 1 -13 23 stone 64
+container 20 1 -13 24 stone 64
+container 20 1 -13 25 stone 64
+container 20 1 -13 26 stone 64
+place 21 1 -13 comparator out=east
+label D_BARREL_1728 20 1 -13
+label D_BARREL_1728_COMP 21 1 -13
+place 20 1 -10 barrel
+container 20 1 -10 0 ender_pearl 1
+place 21 1 -10 comparator out=east
+label D_BARREL_PEARL1 20 1 -10
+label D_BARREL_PEARL1_COMP 21 1 -10
+place 20 1 -7 barrel
+container 20 1 -7 0 ender_pearl 16
+container 20 1 -7 1 ender_pearl 15
+place 21 1 -7 comparator out=east
+label D_BARREL_PEARL31 20 1 -7
+label D_BARREL_PEARL31_COMP 21 1 -7
+place 20 1 -4 barrel
+container 20 1 -4 0 ender_pearl 16
+container 20 1 -4 1 ender_pearl 16
+place 21 1 -4 comparator out=east
+label D_BARREL_PEARL32 20 1 -4
+label D_BARREL_PEARL32_COMP 21 1 -4
+place 20 1 -1 hopper
+container 20 1 -1 0 stone 22
+place 21 1 -1 comparator out=east
+label D_HOPPER_22 20 1 -1
+label D_HOPPER_22_COMP 21 1 -1
+place 20 1 2 hopper
+container 20 1 2 0 stone 23
+place 21 1 2 comparator out=east
+label D_HOPPER_23 20 1 2
+label D_HOPPER_23_COMP 21 1 2
+place 20 1 5 hopper
+container 20 1 5 0 stone 64
+container 20 1 5 1 stone 64
+container 20 1 5 2 stone 64
+container 20 1 5 3 stone 64
+container 20 1 5 4 stone 64
+place 21 1 5 comparator out=east
+label D_HOPPER_320 20 1 5
+label D_HOPPER_320_COMP 21 1 5
+place 20 1 8 dropper
+container 20 1 8 0 stone 41
+place 21 1 8 comparator out=east
+label D_DROPPER_41 20 1 8
+label D_DROPPER_41_COMP 21 1 8
+place 20 1 11 dropper
+container 20 1 11 0 stone 42
+place 21 1 11 comparator out=east
+label D_DROPPER_42 20 1 11
+label D_DROPPER_42_COMP 21 1 11
+place 20 1 14 dropper
+container 20 1 14 0 stone 64
+container 20 1 14 1 stone 64
+container 20 1 14 2 stone 64
+container 20 1 14 3 stone 64
+container 20 1 14 4 stone 64
+container 20 1 14 5 stone 64
+container 20 1 14 6 stone 64
+container 20 1 14 7 stone 64
+container 20 1 14 8 stone 64
+place 21 1 14 comparator out=east
+label D_DROPPER_576 20 1 14
+label D_DROPPER_576_COMP 21 1 14
+settle
+
+target new strength "strength carries through a block, decays 1 per wire, is kept by comparators and restored to 15 by repeaters"
+target strength do at 2 use @IN_A6
+target strength do at 2 use @IN_A8
+target strength expect @A1_COMP power=7 at 1
+target strength expect @A1_W1 power=7 at 1
+target strength expect @A1_W2 power=6 at 1
+target strength expect @A2_W1 power=7 at 1
+target strength expect @A2_W2 power=6 at 1
+target strength expect @A3_COMP power=1 at 1
+target strength expect @A3_W power=15 at 1
+target strength expect @A4_COMP2 power=7 at 1
+target strength expect @A4_W power=7 at 1
+target strength expect @A5_COMP2 power=7 at 1
+target strength expect @A6_WEND power=10 at 2
+target strength expect @A6_COMP power=0 at 3
+target strength expect @A6_COMP power=10 at 4
+target strength expect @A7_COMP power=9 at 1
+target strength expect @A8_COMP power=9 at 3
+target strength expect @A8_COMP power=15 at 4
+
+target new modes "compare: rear if rear >= side, else 0; subtract: rear - side, at least 0"
+target modes expect @B1 power=7 at 1
+target modes expect @B2 power=12 at 1
+target modes expect @B3 power=0 at 1
+target modes expect @B4 power=7 at 1
+target modes expect @B5 power=0 at 1
+target modes expect @B6 power=0 at 1
+
+target new sides "side inputs: wire (its power), comparators, repeaters, redstone blocks, the larger of two sides; not torches, levers, powered blocks, or an observer's 2-tick pulse"
+target sides do at 2 use @IN_C1
+target sides do at 2 set @C4_RBLOCK redstone_block
+target sides do at 2 use @IN_C5
+target sides do at 2 use @IN_C6
+target sides do at 2 use @IN_C7
+target sides do at 2 use @IN_C9
+target sides expect @C1 power=15 at 3
+target sides expect @C1 power=0 at 4
+target sides expect @C2 power=6 at 1
+target sides expect @C3 power=15 during 0..12
+target sides expect @C4 power=15 at 3
+target sides expect @C4 power=0 at 4
+target sides expect @C5 power=15 during 0..12
+target sides expect @C6 power=15 at 5
+target sides expect @C6 power=0 at 6
+target sides expect @C7 power=15 during 0..12
+target sides expect @C8_WIRE power=5 at 1
+target sides expect @C8 power=10 at 1
+target sides expect @C9 power=15 during 0..12
+
+target new containers "a comparator reads 1 + floor(14 * fullness) from a non-empty container; fullness counts each slot as count / max stack"
+target containers expect @D_BARREL_1 analog=1 at 1
+target containers expect @D_BARREL_1_COMP power=1 at 1
+target containers expect @D_BARREL_64 analog=1 at 1
+target containers expect @D_BARREL_64_COMP power=1 at 1
+target containers expect @D_BARREL_123 analog=1 at 1
+target containers expect @D_BARREL_123_COMP power=1 at 1
+target containers expect @D_BARREL_124 analog=2 at 1
+target containers expect @D_BARREL_124_COMP power=2 at 1
+target containers expect @D_BARREL_1727 analog=14 at 1
+target containers expect @D_BARREL_1727_COMP power=14 at 1
+target containers expect @D_BARREL_1728 analog=15 at 1
+target containers expect @D_BARREL_1728_COMP power=15 at 1
+target containers expect @D_BARREL_PEARL1 analog=1 at 1
+target containers expect @D_BARREL_PEARL1_COMP power=1 at 1
+target containers expect @D_BARREL_PEARL31 analog=2 at 1
+target containers expect @D_BARREL_PEARL31_COMP power=2 at 1
+target containers expect @D_BARREL_PEARL32 analog=2 at 1
+target containers expect @D_BARREL_PEARL32_COMP power=2 at 1
+target containers expect @D_HOPPER_22 analog=1 at 1
+target containers expect @D_HOPPER_22_COMP power=1 at 1
+target containers expect @D_HOPPER_23 analog=2 at 1
+target containers expect @D_HOPPER_23_COMP power=2 at 1
+target containers expect @D_HOPPER_320 analog=15 at 1
+target containers expect @D_HOPPER_320_COMP power=15 at 1
+target containers expect @D_DROPPER_41 analog=1 at 1
+target containers expect @D_DROPPER_41_COMP power=1 at 1
+target containers expect @D_DROPPER_42 analog=2 at 1
+target containers expect @D_DROPPER_42_COMP power=2 at 1
+target containers expect @D_DROPPER_576 analog=15 at 1
+target containers expect @D_DROPPER_576_COMP power=15 at 1
+
+check
