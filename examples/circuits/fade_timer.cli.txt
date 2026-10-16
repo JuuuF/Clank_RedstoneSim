@@ -1,0 +1,67 @@
+# Circuit: retriggerable timer (comparator fade ring). Contract: doc/redstone/circuits.md, "Fade timer".
+#
+# Module (box 0 1 0 .. 3 1 3):
+#   @IN    0 1 1  input: repeater out=east (delay 4); drive it from the west. Any pulse
+#                 (even 1 tick) becomes at least 8 ticks long, more than one lap (6),
+#                 so it fills the whole ring with 15.
+#   @OUT   3 1 0  output: repeater out=north reading the stone 3 1 1: on while the ring
+#                 holds anything: from 12 ticks after the input rises until 54 ticks
+#                 after it falls (inputs shorter than 8 ticks count as 8: T+12 .. T+61)
+# The ring: comparators C1 (2 1 1, east) -> stone -> C2 (3 1 2, south) -> stone -> C3
+# (2 1 3, west) -> wires 1 1 3, 1 1 2, 1 1 1 -> C1's rear. Comparators keep the strength;
+# the second and third wire take 1 each, so the value drops by 2 per lap of 6 ticks: 15
+# lasts 7 laps. While IN is on (or again), its 15 refills the ring: retriggerable.
+# An input shorter than a lap would load only part of the ring: a packet circulates and
+# the output flickers (4 on, 2 off; seen with a delay-2 input repeater). Hence delay 4.
+# Test harness: lever @L west of IN.
+#   redsim-cli fade_timer.redsim.json < examples/circuits/fade_timer.cli.txt
+new size 16 force
+note "Fade timer: @OUT on from 12 ticks after the input rises until 54 ticks after it falls (short inputs count as 8 ticks); a new input restarts the time"
+place 0 1 1 repeater out=east delay=4
+place 1 1 1 redstone_wire
+place 2 1 1 comparator out=east
+place 3 1 1 stone
+place 3 1 2 comparator out=south
+place 3 1 3 stone
+place 2 1 3 comparator out=west
+place 1 1 3 redstone_wire
+place 1 1 2 redstone_wire
+place 3 1 0 repeater out=north
+label IN 0 1 1 "input: repeater (delay 2), driven from the west"
+label C1 2 1 1 "ring comparator reading the input wire"
+label OUT 3 1 0 "output: repeater"
+group fade_timer 0 1 0 3 1 3 in @IN IN out @OUT OUT
+prefab save fade_timer 0 1 0 3 1 3
+# harness
+place -1 1 1 lever face=floor
+label L -1 1 1 "test lever"
+settle
+
+target new single "input on 2..9: OUT on 14..63 (off 54 ticks after the input fell at 10)"
+target single do at 2 use @L
+target single do at 10 use @L
+target single expect @OUT powered=false at 13
+target single expect @OUT powered=true during 14..63
+target single expect @OUT powered=false during 64..80
+
+target new long "input on 2..39: OUT on 14..93 (off 54 ticks after it fell)"
+target long do at 2 use @L
+target long do at 40 use @L
+target long expect @OUT powered=true during 14..93
+target long expect @OUT powered=false during 94..110
+
+target new retrigger "a 2-tick input at 40 (while it fades) restarts the time: OUT on without a break until 101 (40 + 62 - 1)"
+target retrigger do at 2 use @L
+target retrigger do at 10 use @L
+target retrigger do at 40 use @L
+target retrigger do at 42 use @L
+target retrigger expect @OUT powered=true during 14..101
+target retrigger expect @OUT powered=false during 102..120
+
+target new tick "a 1-tick input is enough (the input repeater stretches it to 8 ticks): OUT on 14..63, as for 8 ticks"
+target tick do at 2 use @L
+target tick do at 3 use @L
+target tick expect @OUT powered=true during 14..63
+target tick expect @OUT powered=false during 64..80
+
+check

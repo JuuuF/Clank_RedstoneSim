@@ -31,7 +31,8 @@ with the record that answered it.
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
    - [x] edge detectors (rising, falling, both)
    - [x] monostable (exact duration from a delay line and a copper bulb)
-   - [ ] retriggerable monostable / off-delay timer
+   - [x] retriggerable timer (comparator fade ring)
+   - [ ] analog memory (comparator ring without wire), H
    - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
@@ -42,7 +43,6 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
-| Q8 | Can a monostable be made retriggerable (restart its time on a new edge)? | timed doors that stay open while people pass | circuits |
 | Q9 | Double piston extender: the shortest sequence and a controller from library parts | hidden doors, block placement | circuits |
 
 ## Hypotheses waiting for a test
@@ -65,6 +65,7 @@ with the record that answered it.
 | Rails reach 8 past the powered one; doors from either half; target, lectern sources | [[components]] | [[R-014-other-components]] |
 | Q6: yes, a race fed by one wire change flips with the build's position (z sign here) | [[timing]] | [[R-017-wire-order]] |
 | Q7/H4: the counter follows lever edges every 2 ticks and an observer clock | [[circuits]] | `counter4` targets |
+| Q8: a retriggerable timer: comparator fade ring; inputs must last a lap | [[circuits]] | `fade_timer` |
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |

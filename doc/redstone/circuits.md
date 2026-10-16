@@ -38,6 +38,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 |---|---|
 | a button that toggles something (lever-like) | [[#T flip-flop]] ([[#Toggle door]] shows it wired) |
 | on for a fixed time after a press | [[#Monostable]] (any length), a stone/oak button (20/30 ticks) |
+| on while things keep happening, off a while after the last one | [[#Fade timer]] (retriggerable) |
 | a short pulse from a long signal | [[#Rising-edge detector]] / [[#Falling-edge detector]] / [[#Both-edge detector]] |
 | remember set/reset | [[#RS latch]]; sample-and-hold: [[#D latch]] |
 | a repeating signal | [[#Clock]] (2–20 ticks period, enable), [[#Hopper clock]] (long), [[#Observer clock]] (6, free) |
@@ -68,6 +69,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | **Pulse shapers** | | | | |
 | [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
 | [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
+| [[#Fade timer]] | on until 54 ticks after the last input (retriggerable) | 4×1×4 | 12 | `fade_timer` |
 | [[#Both-edge detector]] | 2-tick pulse on every change of A | 2×1×1 | 2 | `both_edges` |
 | **Memory** | | | | |
 | [[#T flip-flop]] | toggles on each rising edge | 2×1×1 | 2 | `t_flipflop` |
@@ -326,6 +328,32 @@ An observer watching the input wire. `both_edges.cli.txt`. **Verified.**
 - **Merging:** changes less than 4 ticks apart give one pulse; 4 ticks apart give two.
 - **Output** is a circuit-made 2-tick pulse: repeaters, pistons, lamps, bulbs see it,
   **torches and comparators do not** (R-003); stretch it with a repeater of delay ≥ 2.
+
+### Fade timer
+
+A retriggerable timer: a ring of three comparators (they keep the strength) closed by
+three wires (two of which take 1 each) holds a value that drops by 2 per 6-tick lap.
+The input fills the ring with 15; the output is on while anything is left.
+`fade_timer.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| IN | 0 0 1 | repeater facing east, delay 4; drive it from the west |
+| OUT | 3 0 0 | repeater facing north reading the ring's first stone |
+
+- **Behavior:** OUT on **12 ticks** after the input rises; off **54 ticks after the input
+  falls**. Inputs shorter than 8 ticks count as 8 (the input repeater stretches them), so
+  a short trigger at T gives OUT on T+12 … T+61.
+- **Retriggerable:** any new input while it runs refills the ring and restarts the time
+  (tested: a 2-tick input at 40 kept OUT on without a break until 101).
+- **Tuning:** each extra comparator+stone pair in the ring adds 2 ticks per lap
+  (7 laps); fewer decaying wires make it fade more slowly (15 laps with one).
+- **Failure case found (V):** an input shorter than one lap (6 ticks) fills only part
+  of the ring: a packet of strength circulates and OUT flickers (4 on, 2 off). That is
+  why the input repeater has delay 4 (8-tick minimum); with delay 2 it flickered.
+- **Analog note:** comparators in a ring keep a strength forever; any wire in the ring
+  makes it fade ([[R-005-signal-strength]]). A ring of comparators and blocks alone is an
+  analog memory (H, not tested).
 
 ## Memory
 
