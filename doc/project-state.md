@@ -59,10 +59,13 @@ page is the summary to start from.*
   (game-verified), clipboard rotation, delete with `/fill` semantics (game-verified),
   a prefab library (save, import/export JSON), and groups with exposed input/output ports and
   live readings. Abstract (black-box) group models are deferred (ADR-016).
-- **Command line (`redsim-cli`):** for AI agents and people ([[cli]], ADR-027): build,
-  run, inspect (maps, signals per side, waves, cause chains, steps) and test (targets)
-  contraptions in the editor's world files; reference [[cli-reference]], internals
-  [[cli-internals]], examples in `examples/cli/`.
+- **Command line (`redsim-cli`):** for AI agents and people ([[cli]], ADR-027): build
+  (placing like a player, right-click properties clicked in), run, inspect (maps, signals
+  per side, which way blocks face, comparator readings, waves, cause chains backwards
+  with `why` and forwards with `effects`, steps forwards and back, delays) and test
+  (targets, truth tables) contraptions in the editor's world files, which the editor's
+  World tab shows; reference [[cli-reference]], internals [[cli-internals]], agents'
+  entry point `AGENTS.md`, five example scripts with targets in `examples/cli/`.
 - **Minecraft worlds:** File → Open Minecraft world… opens a Java 26.x save around the
   player and streams further chunks in around the camera up to a view distance; blocks the
   simulator does not model come in as inert "foreign" blocks drawn with their real model
@@ -136,7 +139,7 @@ page is the summary to start from.*
 
 ## Verification status
 
-- `python -m pytest`: **654 tests pass** (2026-10-15, after gravity blocks, campfires and the differences list; earlier also on the
+- `python -m pytest`: **698 tests pass** (2026-10-16, after the command line; also on the
   compiled build), including
   the JDK oracle, the 107 game-recording replays (47 named recordings, 60 random),
   randomized history checks (replay, save/open, undo/redo), every window action in every
