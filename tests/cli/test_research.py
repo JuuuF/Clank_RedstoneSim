@@ -28,7 +28,10 @@ class _Stdin(io.StringIO):
 
 
 @pytest.mark.parametrize("script", SCRIPTS, ids=[p.name.split(".")[0] for p in SCRIPTS])
-def test_research_script_reproduces_its_record(script: Path, tmp_path: Path) -> None:
+def test_research_script_reproduces_its_record(
+    script: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(ROOT)  # compositions import examples/circuits/*.nbt by relative path
     out = io.StringIO()
     code = main([str(tmp_path / "w.redsim.json")], stdin=_Stdin(script.read_text()), out=out)
     text = out.getvalue()

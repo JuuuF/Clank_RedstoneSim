@@ -49,6 +49,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#D latch]] | Q follows D, holds while E is on | 2×1×3 | 2 | `d_latch` |
 | [[#Clock]] | period 4d+4 with enable, no burnout | 3×1×3 | 2 from enable | `clock` |
 | [[#Observer clock]] | free-running, 2 on / 4 off | 2×1×1 | — | `observer_clock` |
+| [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
 
 ## Gates
 
@@ -233,6 +234,10 @@ A copper bulb toggles on every rising edge of its power; a comparator reads it.
 - **Latency:** bulb 0, Q 2 ticks.
 - **Pulses:** any pulse toggles it once, even 1 tick long and circuit-made (R-003).
 - **State:** the bulb's `lit`; built unlit. Reset: none (toggle it).
+- **Pitfall:** a bulb **placed** next to something that already powers it lights at once
+  (placement is a rising edge). Pasting the module (`import`, strict) keeps it unlit; to
+  place one next to power unlit, use `set POS copper_bulb[lit=false,powered=true]`
+  (V: the first counter build started at 14 because of this).
 
 ### RS latch
 
@@ -307,6 +312,31 @@ Two observers watching each other. `observer_clock.cli.txt`. **Verified.**
   to start it (tested).
 - **Output** is a circuit-made 2-tick pulse (torches and comparators ignore it).
 
+## Compositions
+
+### 4-bit counter
+
+Four [[#T flip-flop]]s chained through three [[#NOT gate]]s, pasted from the library's
+`.nbt` files: bit k's comparator powers a NOT gate's input block, whose torch powers bit
+k+1's bulb, so bit k+1 toggles when bit k falls. `counter4.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| IN | 0 0 0 | the first bulb: any rising edge next to it counts |
+| Q0…Q3 | 1, 5, 9, 13 (x) | comparators: bit k = 15 while set |
+
+- **Behavior:** counts rising edges modulo 16, from 0.
+- **Latency:** bit k settles **2 + 4k** ticks after the edge (ripple: 4 ticks per bit:
+  comparator 2 + torch 2). Read all four bits at least 14 ticks after an edge.
+- **Rate:** tested with one edge every 20 ticks (16 edges, every count checked; the 7 → 8
+  ripple checked tick by tick). Bit k is high for ≥ 20·2^k ticks, far above the torch's
+  3-tick minimum; faster input is not tested (H: the limit is the first bit: input edges
+  at least 4 ticks apart, R-003's merging does not apply to bulbs).
+- **Integration findings:** the pasted modules keep their states, so later bulbs sit
+  unlit and unpowered next to lit torches and only react when those torches change: the
+  counter starts at 0 with no reset step. The NOT gate's input block takes the comparator
+  output directly (a comparator strongly powers the block it points into).
+
 ## Composition rules
 
 To be filled as primitives are combined: how far apart modules must be, which outputs
@@ -315,5 +345,13 @@ may drive which inputs, timing budgets. Known so far:
 - A torch output does **not** power a block beside it (R-002), so it cannot drive the
   next module's input *block* directly. Connect it through a repeater or wire, or put
   the next input block *above* the torch (a torch strongly powers the block above).
-- A repeater output can point straight into the next module's input block (strong
-  power) or wire.
+- A repeater or comparator output can point straight into the next module's input block
+  (strong power) or wire. V `counter4` (comparator → NOT gate block).
+- A torch output powers a component next to it directly (a bulb, a lamp, a repeater's
+  back). V `counter4` (torch → copper bulb).
+- Pasting with `import` is a strict paste: no updates, states kept exactly. A module whose
+  state disagrees with its new neighbors (a bulb unpowered beside a lit torch) stays that
+  way until something nearby changes. That can be what you want (`counter4`) or a hidden
+  initial glitch: check the first ticks after pasting.
+- Free-running modules (the [[#Observer clock]]) do not start after a paste: no scheduled
+  ticks are pasted.

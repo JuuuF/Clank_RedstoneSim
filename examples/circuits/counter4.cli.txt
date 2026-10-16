@@ -1,0 +1,156 @@
+# Composition: 4-bit ripple counter from library modules. Contract: doc/redstone/circuits.md, "4-bit counter".
+#
+# Built only from examples/circuits/*.nbt (run from the repository root): per bit a
+# t_flipflop (copper bulb + comparator Q) and, between bits, a not_gate whose input block
+# the comparator powers; the gate's torch powers the next bulb. Bit k+1 toggles when bit
+# k falls (the torch turns on), so the bulbs count rising edges at @IN.
+#   @IN   -1 1 0   test lever beside the first bulb (any rising edge counts)
+#   @Q0..@Q3       comparators: bit k at x = 4k+1 (15 = 1)
+# The pasted modules keep their states (strict paste, no updates): each later bulb sits
+# unlit and unpowered next to a lit torch, and stays so until that torch changes, so the
+# counter starts at 0. (A bulb *placed* next to a lit torch would light: placement
+# counts as a rising edge.)
+#   redsim-cli counter4.redsim.json < examples/circuits/counter4.cli.txt
+new size 32 force
+note "4-bit ripple counter: rising edges at @IN count up in @Q0..@Q3 (bit k settles 2+4k ticks after the edge)"
+import examples/circuits/t_flipflop.nbt at 0 1 0
+import examples/circuits/not_gate.nbt at 2 1 0
+import examples/circuits/t_flipflop.nbt at 4 1 0
+import examples/circuits/not_gate.nbt at 6 1 0
+import examples/circuits/t_flipflop.nbt at 8 1 0
+import examples/circuits/not_gate.nbt at 10 1 0
+import examples/circuits/t_flipflop.nbt at 12 1 0
+place -1 1 0 lever face=floor
+label IN -1 1 0 "test lever: count its rising edges"
+label Q0 1 1 0 "bit 0"
+label Q1 5 1 0 "bit 1"
+label Q2 9 1 0 "bit 2"
+label Q3 13 1 0 "bit 3"
+group counter4 0 1 0 13 1 0 in 0 1 0 IN out @Q0 Q0 out @Q1 Q1 out @Q2 Q2 out @Q3 Q3
+prefab save counter4 0 1 0 13 1 0
+settle
+
+target new count "16 rising edges, 20 ticks apart, count 1, 2, ..., 15, 0; checked just before each next edge"
+target count do at 2 use @IN
+target count do at 12 use @IN
+target count do at 22 use @IN
+target count do at 32 use @IN
+target count do at 42 use @IN
+target count do at 52 use @IN
+target count do at 62 use @IN
+target count do at 72 use @IN
+target count do at 82 use @IN
+target count do at 92 use @IN
+target count do at 102 use @IN
+target count do at 112 use @IN
+target count do at 122 use @IN
+target count do at 132 use @IN
+target count do at 142 use @IN
+target count do at 152 use @IN
+target count do at 162 use @IN
+target count do at 172 use @IN
+target count do at 182 use @IN
+target count do at 192 use @IN
+target count do at 202 use @IN
+target count do at 212 use @IN
+target count do at 222 use @IN
+target count do at 232 use @IN
+target count do at 242 use @IN
+target count do at 252 use @IN
+target count do at 262 use @IN
+target count do at 272 use @IN
+target count do at 282 use @IN
+target count do at 292 use @IN
+target count do at 302 use @IN
+target count do at 312 use @IN
+target count expect @Q0 power=15 at 21
+target count expect @Q1 power=0 at 21
+target count expect @Q2 power=0 at 21
+target count expect @Q3 power=0 at 21
+target count expect @Q0 power=0 at 41
+target count expect @Q1 power=15 at 41
+target count expect @Q2 power=0 at 41
+target count expect @Q3 power=0 at 41
+target count expect @Q0 power=15 at 61
+target count expect @Q1 power=15 at 61
+target count expect @Q2 power=0 at 61
+target count expect @Q3 power=0 at 61
+target count expect @Q0 power=0 at 81
+target count expect @Q1 power=0 at 81
+target count expect @Q2 power=15 at 81
+target count expect @Q3 power=0 at 81
+target count expect @Q0 power=15 at 101
+target count expect @Q1 power=0 at 101
+target count expect @Q2 power=15 at 101
+target count expect @Q3 power=0 at 101
+target count expect @Q0 power=0 at 121
+target count expect @Q1 power=15 at 121
+target count expect @Q2 power=15 at 121
+target count expect @Q3 power=0 at 121
+target count expect @Q0 power=15 at 141
+target count expect @Q1 power=15 at 141
+target count expect @Q2 power=15 at 141
+target count expect @Q3 power=0 at 141
+target count expect @Q0 power=0 at 161
+target count expect @Q1 power=0 at 161
+target count expect @Q2 power=0 at 161
+target count expect @Q3 power=15 at 161
+target count expect @Q0 power=15 at 181
+target count expect @Q1 power=0 at 181
+target count expect @Q2 power=0 at 181
+target count expect @Q3 power=15 at 181
+target count expect @Q0 power=0 at 201
+target count expect @Q1 power=15 at 201
+target count expect @Q2 power=0 at 201
+target count expect @Q3 power=15 at 201
+target count expect @Q0 power=15 at 221
+target count expect @Q1 power=15 at 221
+target count expect @Q2 power=0 at 221
+target count expect @Q3 power=15 at 221
+target count expect @Q0 power=0 at 241
+target count expect @Q1 power=0 at 241
+target count expect @Q2 power=15 at 241
+target count expect @Q3 power=15 at 241
+target count expect @Q0 power=15 at 261
+target count expect @Q1 power=0 at 261
+target count expect @Q2 power=15 at 261
+target count expect @Q3 power=15 at 261
+target count expect @Q0 power=0 at 281
+target count expect @Q1 power=15 at 281
+target count expect @Q2 power=15 at 281
+target count expect @Q3 power=15 at 281
+target count expect @Q0 power=15 at 301
+target count expect @Q1 power=15 at 301
+target count expect @Q2 power=15 at 301
+target count expect @Q3 power=15 at 301
+target count expect @Q0 power=0 at 321
+target count expect @Q1 power=0 at 321
+target count expect @Q2 power=0 at 321
+target count expect @Q3 power=0 at 321
+
+target new ripple "from 7 to 8: bit 0 falls at +2, bit 1 at +6, bit 2 at +10, bit 3 rises at +14"
+target ripple do at 2 use @IN
+target ripple do at 12 use @IN
+target ripple do at 22 use @IN
+target ripple do at 32 use @IN
+target ripple do at 42 use @IN
+target ripple do at 52 use @IN
+target ripple do at 62 use @IN
+target ripple do at 72 use @IN
+target ripple do at 82 use @IN
+target ripple do at 92 use @IN
+target ripple do at 102 use @IN
+target ripple do at 112 use @IN
+target ripple do at 122 use @IN
+target ripple do at 132 use @IN
+target ripple do at 142 use @IN
+target ripple do at 152 use @IN
+target ripple expect @Q0 power=0 at 144
+target ripple expect @Q1 power=15 at 147
+target ripple expect @Q1 power=0 at 148
+target ripple expect @Q2 power=15 at 151
+target ripple expect @Q2 power=0 at 152
+target ripple expect @Q3 power=0 at 155
+target ripple expect @Q3 power=15 at 156
+
+check
