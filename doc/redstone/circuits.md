@@ -47,6 +47,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | count events | [[#4-bit counter]] |
 | react to a container's fill level | [[#Threshold detector]] |
 | remember a strength (0–15) | [[#Peak-hold register]] |
+| add two strengths | [[#Analog adder]] (subtract: one comparator, R-005) |
 | two signal paths must cross | [[#Crossing]] |
 | move a structure by itself | [[#Flying machine]] |
 | push a block two cells and pull it back | [[#Double piston extender]] |
@@ -66,6 +67,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | **Analog** | | | | |
 | [[#Threshold detector]] | on while an analog signal (a container's fill) ≥ k | 3×1×3 | 4 | `threshold` |
 | [[#Peak-hold register]] | analog memory: keeps the largest strength written | 3×1×4 | 2–8 | `peak_hold` |
+| [[#Analog adder]] | min(15, A + B) of two strengths | 4×1×4 | 6–8 | `analog_adder` |
 | **Wiring** | | | | |
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
 | [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
@@ -263,6 +265,26 @@ comparator through its side. `peak_hold.cli.txt`. **Verified.**
   ring; the old value keeps circulating and the output alternates (9, 4, 9, 4 every 4
   ticks). The same lap rule as the [[#Fade timer]]: anything that should change a ring's
   whole contents must last at least one lap.
+
+### Analog adder
+
+Three subtracting comparators: C1 = 15 − A (a redstone block behind it, A at its side),
+C2 = C1 − B, C3 = 15 − C2 = A + B (another redstone block behind C3, C2 at its side).
+`analog_adder.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A, B | 1 0 0, 2 0 0 | analog inputs (containers or analog blocks; each read by a comparator pointing into C1's / C2's side) |
+| SUM | 3 0 2 | comparator C3 facing north: strength min(15, A + B) |
+
+(Offsets from the lowest corner, 0 1 −2 in the script.)
+
+- **Behavior:** tested 3+4 = 7, 7+8 = 15, 9+9 → 15 (saturates), 1+0 = 1, 6+6 = 12,
+  0+5 = 5, 2+11 = 13.
+- **Latency:** 6 ticks from B, 8 from A (2 per comparator).
+- **Constraints:** strengths travel comparator to comparator only: wire would lose 1 per
+  block. Keep wire and redstone blocks away from the input comparators' sides (they would
+  be side inputs, R-005); that is why C3 points into a stone.
 
 ## Wiring
 

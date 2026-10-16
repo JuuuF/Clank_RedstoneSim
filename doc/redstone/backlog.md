@@ -36,7 +36,8 @@ with the record that answered it.
    - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
-   - [ ] signal strength encoders/decoders, multiplexers, an analog adder (strength arithmetic)
+   - [x] analog adder (three subtracting comparators)
+   - [ ] signal strength decoder (1-of-16), multiplexer
 5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [ ] a flush door, a timed door (monostable + door).
 
 ## Open questions

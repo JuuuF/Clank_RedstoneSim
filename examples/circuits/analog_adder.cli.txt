@@ -1,0 +1,61 @@
+# Circuit: analog adder (A + B, saturating at 15). Contract: doc/redstone/circuits.md, "Analog adder".
+#
+# Module (box 0 1 -2 .. 3 1 1):
+#   @A    1 1 -2  input A: an analog block here (the script uses a barrel), read by the
+#                 comparator 1 1 -1 that points south into C1's side
+#   @B    2 1 -2  input B: the same for C2
+#   @SUM  3 1 0   output: comparator C3 (facing north); its strength is min(15, A + B)
+# C1 (1 1 0, east, subtract) has a redstone block behind it: C1 = 15 - A. C2 (2 1 0,
+# east, subtract) reads C1: C2 = 15 - A - B (at least 0). C2 points into C3's west side;
+# C3 (subtract) has a redstone block behind it (3 1 1): C3 = 15 - C2 = A + B.
+# C3 points into a stone (3 1 -1): a wire there would be a side input of B's comparator.
+# Strengths are carried comparator to comparator only (wire would lose 1 per block).
+#   redsim-cli analog_adder.redsim.json < examples/circuits/analog_adder.cli.txt
+new size 16 force
+note "Analog adder: comparator @SUM outputs min(15, A + B) for the analog inputs at @A and @B"
+set 0 1 0 redstone_block
+place 1 1 0 comparator out=east mode=subtract
+place 2 1 0 comparator out=east mode=subtract
+place 3 1 0 comparator out=north mode=subtract
+set 3 1 1 redstone_block
+place 3 1 -1 stone
+place 1 1 -1 comparator out=south
+place 2 1 -1 comparator out=south
+source 1 1 -2 barrel 3
+source 2 1 -2 barrel 4
+label A 1 1 -2 "input A (barrel)"
+label B 2 1 -2 "input B (barrel)"
+label C1 1 1 0 "15 - A"
+label C2 2 1 0 "15 - A - B"
+label SUM 3 1 0 "A + B (max 15)"
+group analog_adder 0 1 -2 3 1 1 in @A A in @B B out @SUM SUM
+settle
+prefab save analog_adder 0 1 -2 3 1 1
+
+target new sums "3+4=7, 7+8=15, 9+9 saturates at 15, 1+0=1, 6+6=12, 0+5=5, 2+11=13"
+target sums expect @SUM power=7 at 1
+target sums do at 10 source @A barrel 7
+target sums do at 10 source @B barrel 8
+target sums expect @SUM power=15 at 20
+target sums do at 30 source @A barrel 9
+target sums do at 30 source @B barrel 9
+target sums expect @SUM power=15 at 40
+target sums do at 50 source @A barrel 1
+target sums do at 50 container @B empty
+target sums expect @SUM power=1 at 60
+target sums do at 70 source @A barrel 6
+target sums do at 70 source @B barrel 6
+target sums expect @SUM power=12 at 80
+target sums do at 90 container @A empty
+target sums do at 90 source @B barrel 5
+target sums expect @SUM power=5 at 100
+target sums do at 110 source @A barrel 2
+target sums do at 110 source @B barrel 11
+target sums expect @SUM power=13 at 120
+
+target new latency "B from 4 to 9 at 10 (A = 3): C2 changes at 14, SUM at 16"
+target latency do at 10 source @B barrel 9
+target latency expect @SUM power=7 at 15
+target latency expect @SUM power=12 at 16
+
+check
