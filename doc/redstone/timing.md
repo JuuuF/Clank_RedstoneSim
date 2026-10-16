@@ -43,7 +43,35 @@ labels: [[redstone/README#Scope and trust]].
   (2 + 2). Odd timings come from pistons, from player actions (between ticks) and from
   0-tick tricks.
 
+## Short pulses and short gaps (R-003)
+
+What comes out when the input pulse (or a gap in a long signal) is short. "Lever" pulses
+switch between ticks (player actions); "circuit" pulses switch inside a tick's
+scheduled-tick phase (made by observers and repeaters).
+
+| Component | 1-tick pulse | 2-tick pulse (lever) | 2-tick pulse (circuit: observer, repeater) | 3+ ticks | Short gap | Evidence |
+|---|---|---|---|---|---|---|
+| Repeater, delay D = 2·d | out for D | out for max(2, D) | out for max(2, D) | out for max(n, D) | gaps < D filled; ≥ D pass | V [[R-003-short-pulses]], G EXP-009 |
+| Comparator | **lost** | passes, 2 | **lost** | passes, n | 1-tick gap filled, ≥ 2 pass | V R-003 |
+| Torch | **ignored** | off for 2 | **ignored** | off for n | 1-tick gap filled, ≥ 2 pass | V R-003 |
+| Sticky piston | pushes, **leaves the block** | pushes, leaves the block | pushes, leaves the block | pushes and pulls back | — | V R-003, G EXP-016 |
+| Lamp | lit 1 + 4 | 2 + 4 | 2 + 4 | n + 4 | (a gap < 4 never shows) | V R-003 |
+| Copper bulb | toggles once | once | once | once | each new rising edge toggles | V R-003 |
+| Dropper | fires once | once | once | once | — | V R-003 |
+
+Why: repeaters latch any change and re-check only when their tick runs; torches and
+comparators re-check their input when their tick runs 2 ticks later, and a circuit-made
+2-tick pulse has already ended earlier in that same phase (the source's tick runs
+first: higher priority or scheduled earlier). Details: R-003.
+
+**Design rules:**
+
+- To make a torch or comparator see an observer pulse, stretch it first (a repeater with
+  delay 2+ makes it 4 ticks).
+- A sticky piston needs a pulse of **3 ticks or more** to bring its block back.
+- A repeater with delay D is also a *pulse extender to D* and a *gap filler below D*.
+
 ## To be measured
 
-Short pulses (how each component treats a pulse shorter than its delay), inputs through
-blocks and wire, and update-order races inside a tick are open: [[backlog]].
+Inputs through blocks and wire, and update-order races inside a tick are open:
+[[backlog]].

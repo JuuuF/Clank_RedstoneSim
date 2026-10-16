@@ -9,9 +9,7 @@ with the record that answered it.
 1. **Foundations** (every circuit depends on them)
    - [x] R-001 response times of the basic components
    - [x] R-002 what powers a block, strongly or weakly
-   - [ ] R-003 short pulses: how each component treats a pulse shorter than its delay
-     (repeater extends, comparator, torch, observer, piston spitting, lamp) and short
-     gaps between pulses (does a repeater fill them?)
+   - [x] R-003 short pulses and gaps into each component; lever vs circuit-made pulses
    - [ ] R-004 wire geometry: dot, line, cross, what each shape points into, steps up and
      down, cutting by a block above, glass and slabs, wire into repeaters from the side
    - [ ] R-005 signal strength: through blocks, into comparators and their side inputs,
@@ -40,15 +38,13 @@ with the record that answered it.
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
 | Q1 | Does a block powered by a comparator with output N < 15 give wire beside it N? | analog signals through blocks | R-005 |
-| Q2 | Does a repeater fill an input gap shorter than its delay? | pulse shaping, clock design | R-003 |
-| Q3 | Does a comparator pass a 1-tick pulse? A 0-tick pulse? | edge detectors | R-003, R-012 |
+| Q3 | Does a comparator pass a 0-tick pulse? | edge detectors | R-012 |
+| Q5 | Which circuit-made 2-tick pulses end *after* a torch's tick (and so pass)? Block events, block entities, lower-priority sources? | pulse design | R-011 |
 | Q4 | Does a lone placed wire (cross) power all four neighbors, and a dot only the block below? | compact wiring | R-004 |
 
 ## Hypotheses waiting for a test
 
-- H1: a repeater with delay d turns a pulse shorter than 2·d into one of exactly 2·d.
-  (G EXP-009 for d=4 and a 1-tick pulse.)
-- H2: a torch ignores pulses shorter than 2 ticks? (EXP-027: it ignores 0-tick pulses.)
+- (none open)
 
 ## Done
 
@@ -56,3 +52,5 @@ with the record that answered it.
 |---|---|---|
 | Base delays of every component | [[timing]] | [[R-001-response-times]] |
 | What powers a block, strong vs weak | [[signals]] | [[R-002-what-powers-a-block]] |
+| Q2: does a repeater fill short gaps? Yes, below its delay | [[timing]] | [[R-003-short-pulses]] |
+| Comparators and torches lose 1-tick and circuit-made 2-tick pulses; sticky pistons need 3 ticks | [[timing]] | [[R-003-short-pulses]] |

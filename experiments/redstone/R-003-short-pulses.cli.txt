@@ -1,0 +1,515 @@
+# R-003: short pulses and short gaps (doc/redstone/records/R-003-short-pulses.md)
+#
+# Part 1, player-timed pulses: columns of rows driven by a lever that is on for 1, 2 or
+# 3 ticks from tick 2 (columns x=-24, -12, 0), or by an observer watching a lever flipped
+# at tick 2 (x=12; the observer's 2-tick pulse at ticks 4-5). Each row feeds one
+# component: repeater delay 1 and 2, comparator, torch (on a stone the lever hangs on or
+# the observer points into), sticky piston, lamp, copper bulb, dropper (into a barrel).
+# Gaps (x=24): a lever on from 2 to 20 and back on after a gap of 1-4 ticks, into a
+# delay-2 repeater, a comparator and a torch.
+# Part 2, circuit-made pulses (rows z=8..20): a lever pulse through a repeater makes a
+# 2-tick (1-tick lever pulse, delay 1), 3-tick (3-tick lever pulse, delay 1) or 4-tick
+# (1-tick lever pulse, delay 2) pulse that switches inside the scheduled-tick phase.
+#   redsim-cli r003.redsim.json < experiments/redstone/R-003-short-pulses.cli.txt
+new size 64 force
+note "R-003: short pulses (1-4 ticks) and short gaps into each component; lever and circuit-made pulses"
+place -24 1 -24 lever face=floor
+label IN_REP1_L1 -24 1 -24
+place -23 1 -24 repeater out=east delay=1
+label REP1_L1 -23 1 -24
+place -24 1 -20 lever face=floor
+label IN_REP2_L1 -24 1 -20
+place -23 1 -20 repeater out=east delay=2
+label REP2_L1 -23 1 -20
+place -24 1 -16 lever face=floor
+label IN_COMP_L1 -24 1 -16
+place -23 1 -16 comparator out=east
+label COMP_L1 -23 1 -16
+place -23 1 -12 stone
+place -24 1 -12 lever face=wall facing=west
+label IN_TORCH_L1 -24 1 -12
+place -22 1 -12 redstone_wall_torch facing=east
+label TORCH_L1 -22 1 -12
+place -24 1 -8 lever face=floor
+label IN_STICKY_L1 -24 1 -8
+place -23 1 -8 sticky_piston facing=east
+place -22 1 -8 stone
+label BLK_STICKY_L1 -22 1 -8
+label DST_STICKY_L1 -21 1 -8
+label STICKY_L1 -23 1 -8
+place -24 1 -4 lever face=floor
+label IN_LAMP_L1 -24 1 -4
+place -23 1 -4 redstone_lamp
+label LAMP_L1 -23 1 -4
+place -24 1 0 lever face=floor
+label IN_BULB_L1 -24 1 0
+place -23 1 0 copper_bulb
+label BULB_L1 -23 1 0
+place -24 1 4 lever face=floor
+label IN_DROP_L1 -24 1 4
+place -23 1 4 dropper facing=east
+container -23 1 4 0 stone 64
+place -22 1 4 barrel
+label BAR_DROP_L1 -22 1 4
+label DROP_L1 -23 1 4
+place -12 1 -24 lever face=floor
+label IN_REP1_L2 -12 1 -24
+place -11 1 -24 repeater out=east delay=1
+label REP1_L2 -11 1 -24
+place -12 1 -20 lever face=floor
+label IN_REP2_L2 -12 1 -20
+place -11 1 -20 repeater out=east delay=2
+label REP2_L2 -11 1 -20
+place -12 1 -16 lever face=floor
+label IN_COMP_L2 -12 1 -16
+place -11 1 -16 comparator out=east
+label COMP_L2 -11 1 -16
+place -11 1 -12 stone
+place -12 1 -12 lever face=wall facing=west
+label IN_TORCH_L2 -12 1 -12
+place -10 1 -12 redstone_wall_torch facing=east
+label TORCH_L2 -10 1 -12
+place -12 1 -8 lever face=floor
+label IN_STICKY_L2 -12 1 -8
+place -11 1 -8 sticky_piston facing=east
+place -10 1 -8 stone
+label BLK_STICKY_L2 -10 1 -8
+label DST_STICKY_L2 -9 1 -8
+label STICKY_L2 -11 1 -8
+place -12 1 -4 lever face=floor
+label IN_LAMP_L2 -12 1 -4
+place -11 1 -4 redstone_lamp
+label LAMP_L2 -11 1 -4
+place -12 1 0 lever face=floor
+label IN_BULB_L2 -12 1 0
+place -11 1 0 copper_bulb
+label BULB_L2 -11 1 0
+place -12 1 4 lever face=floor
+label IN_DROP_L2 -12 1 4
+place -11 1 4 dropper facing=east
+container -11 1 4 0 stone 64
+place -10 1 4 barrel
+label BAR_DROP_L2 -10 1 4
+label DROP_L2 -11 1 4
+place 0 1 -24 lever face=floor
+label IN_REP1_L3 0 1 -24
+place 1 1 -24 repeater out=east delay=1
+label REP1_L3 1 1 -24
+place 0 1 -20 lever face=floor
+label IN_REP2_L3 0 1 -20
+place 1 1 -20 repeater out=east delay=2
+label REP2_L3 1 1 -20
+place 0 1 -16 lever face=floor
+label IN_COMP_L3 0 1 -16
+place 1 1 -16 comparator out=east
+label COMP_L3 1 1 -16
+place 1 1 -12 stone
+place 0 1 -12 lever face=wall facing=west
+label IN_TORCH_L3 0 1 -12
+place 2 1 -12 redstone_wall_torch facing=east
+label TORCH_L3 2 1 -12
+place 0 1 -8 lever face=floor
+label IN_STICKY_L3 0 1 -8
+place 1 1 -8 sticky_piston facing=east
+place 2 1 -8 stone
+label BLK_STICKY_L3 2 1 -8
+label DST_STICKY_L3 3 1 -8
+label STICKY_L3 1 1 -8
+place 0 1 -4 lever face=floor
+label IN_LAMP_L3 0 1 -4
+place 1 1 -4 redstone_lamp
+label LAMP_L3 1 1 -4
+place 0 1 0 lever face=floor
+label IN_BULB_L3 0 1 0
+place 1 1 0 copper_bulb
+label BULB_L3 1 1 0
+place 0 1 4 lever face=floor
+label IN_DROP_L3 0 1 4
+place 1 1 4 dropper facing=east
+container 1 1 4 0 stone 64
+place 2 1 4 barrel
+label BAR_DROP_L3 2 1 4
+label DROP_L3 1 1 4
+place 11 1 -24 lever face=floor
+place 12 1 -24 observer out=east
+label IN_REP1_OBS 11 1 -24
+label SRC_REP1_OBS 12 1 -24
+place 13 1 -24 repeater out=east delay=1
+label REP1_OBS 13 1 -24
+place 11 1 -20 lever face=floor
+place 12 1 -20 observer out=east
+label IN_REP2_OBS 11 1 -20
+label SRC_REP2_OBS 12 1 -20
+place 13 1 -20 repeater out=east delay=2
+label REP2_OBS 13 1 -20
+place 11 1 -16 lever face=floor
+place 12 1 -16 observer out=east
+label IN_COMP_OBS 11 1 -16
+label SRC_COMP_OBS 12 1 -16
+place 13 1 -16 comparator out=east
+label COMP_OBS 13 1 -16
+place 11 1 -12 lever face=floor
+place 12 1 -12 observer out=east
+label IN_TORCH_OBS 11 1 -12
+label SRC_TORCH_OBS 12 1 -12
+place 13 1 -12 stone
+place 14 1 -12 redstone_wall_torch facing=east
+label TORCH_OBS 14 1 -12
+place 11 1 -8 lever face=floor
+place 12 1 -8 observer out=east
+label IN_STICKY_OBS 11 1 -8
+label SRC_STICKY_OBS 12 1 -8
+place 13 1 -8 sticky_piston facing=east
+place 14 1 -8 stone
+label BLK_STICKY_OBS 14 1 -8
+label DST_STICKY_OBS 15 1 -8
+label STICKY_OBS 13 1 -8
+place 11 1 -4 lever face=floor
+place 12 1 -4 observer out=east
+label IN_LAMP_OBS 11 1 -4
+label SRC_LAMP_OBS 12 1 -4
+place 13 1 -4 redstone_lamp
+label LAMP_OBS 13 1 -4
+place 11 1 0 lever face=floor
+place 12 1 0 observer out=east
+label IN_BULB_OBS 11 1 0
+label SRC_BULB_OBS 12 1 0
+place 13 1 0 copper_bulb
+label BULB_OBS 13 1 0
+place 11 1 4 lever face=floor
+place 12 1 4 observer out=east
+label IN_DROP_OBS 11 1 4
+label SRC_DROP_OBS 12 1 4
+place 13 1 4 dropper facing=east
+container 13 1 4 0 stone 64
+place 14 1 4 barrel
+label BAR_DROP_OBS 14 1 4
+label DROP_OBS 13 1 4
+place 24 1 -24 lever face=floor
+place 25 1 -24 repeater out=east delay=2
+label IN_GAP1_REP2 24 1 -24
+label GAP1_REP2 25 1 -24
+place 24 1 -20 lever face=floor
+place 25 1 -20 repeater out=east delay=2
+label IN_GAP2_REP2 24 1 -20
+label GAP2_REP2 25 1 -20
+place 24 1 -16 lever face=floor
+place 25 1 -16 repeater out=east delay=2
+label IN_GAP3_REP2 24 1 -16
+label GAP3_REP2 25 1 -16
+place 24 1 -12 lever face=floor
+place 25 1 -12 repeater out=east delay=2
+label IN_GAP4_REP2 24 1 -12
+label GAP4_REP2 25 1 -12
+place 24 1 -8 lever face=floor
+place 25 1 -8 comparator out=east
+label IN_GAP1_COMP 24 1 -8
+label GAP1_COMP 25 1 -8
+place 24 1 -4 lever face=floor
+place 25 1 -4 comparator out=east
+label IN_GAP2_COMP 24 1 -4
+label GAP2_COMP 25 1 -4
+place 24 1 0 lever face=floor
+place 25 1 0 comparator out=east
+label IN_GAP3_COMP 24 1 0
+label GAP3_COMP 25 1 0
+place 25 1 4 stone
+place 24 1 4 lever face=wall facing=west
+place 26 1 4 redstone_wall_torch facing=east
+label IN_GAP1_TORCH 24 1 4
+label GAP1_TORCH 26 1 4
+place 25 1 8 stone
+place 24 1 8 lever face=wall facing=west
+place 26 1 8 redstone_wall_torch facing=east
+label IN_GAP2_TORCH 24 1 8
+label GAP2_TORCH 26 1 8
+place 25 1 12 stone
+place 24 1 12 lever face=wall facing=west
+place 26 1 12 redstone_wall_torch facing=east
+label IN_GAP3_TORCH 24 1 12
+label GAP3_TORCH 26 1 12
+place -25 1 8 lever face=floor
+place -24 1 8 repeater out=east delay=1
+label IN_TORCH_RP2 -25 1 8
+label SRC_TORCH_RP2 -24 1 8
+place -23 1 8 stone
+place -22 1 8 redstone_wall_torch facing=east
+label TORCH_RP2 -22 1 8
+place -25 1 12 lever face=floor
+place -24 1 12 repeater out=east delay=1
+label IN_COMP_RP2 -25 1 12
+label SRC_COMP_RP2 -24 1 12
+place -23 1 12 comparator out=east
+label COMP_RP2 -23 1 12
+place -25 1 16 lever face=floor
+place -24 1 16 repeater out=east delay=1
+label IN_STICKY_RP2 -25 1 16
+label SRC_STICKY_RP2 -24 1 16
+place -23 1 16 sticky_piston facing=east
+place -22 1 16 stone
+label BLK_STICKY_RP2 -22 1 16
+label DST_STICKY_RP2 -21 1 16
+label STICKY_RP2 -23 1 16
+place -25 1 20 lever face=floor
+place -24 1 20 repeater out=east delay=1
+label IN_REP1_RP2 -25 1 20
+label SRC_REP1_RP2 -24 1 20
+place -23 1 20 repeater out=east delay=1
+label REP1_RP2 -23 1 20
+place -13 1 8 lever face=floor
+place -12 1 8 repeater out=east delay=1
+label IN_TORCH_RP3 -13 1 8
+label SRC_TORCH_RP3 -12 1 8
+place -11 1 8 stone
+place -10 1 8 redstone_wall_torch facing=east
+label TORCH_RP3 -10 1 8
+place -13 1 12 lever face=floor
+place -12 1 12 repeater out=east delay=1
+label IN_COMP_RP3 -13 1 12
+label SRC_COMP_RP3 -12 1 12
+place -11 1 12 comparator out=east
+label COMP_RP3 -11 1 12
+place -13 1 16 lever face=floor
+place -12 1 16 repeater out=east delay=1
+label IN_STICKY_RP3 -13 1 16
+label SRC_STICKY_RP3 -12 1 16
+place -11 1 16 sticky_piston facing=east
+place -10 1 16 stone
+label BLK_STICKY_RP3 -10 1 16
+label DST_STICKY_RP3 -9 1 16
+label STICKY_RP3 -11 1 16
+place -13 1 20 lever face=floor
+place -12 1 20 repeater out=east delay=1
+label IN_REP1_RP3 -13 1 20
+label SRC_REP1_RP3 -12 1 20
+place -11 1 20 repeater out=east delay=1
+label REP1_RP3 -11 1 20
+place -1 1 8 lever face=floor
+place 0 1 8 repeater out=east delay=2
+label IN_TORCH_RP4 -1 1 8
+label SRC_TORCH_RP4 0 1 8
+place 1 1 8 stone
+place 2 1 8 redstone_wall_torch facing=east
+label TORCH_RP4 2 1 8
+place -1 1 12 lever face=floor
+place 0 1 12 repeater out=east delay=2
+label IN_COMP_RP4 -1 1 12
+label SRC_COMP_RP4 0 1 12
+place 1 1 12 comparator out=east
+label COMP_RP4 1 1 12
+place -1 1 16 lever face=floor
+place 0 1 16 repeater out=east delay=2
+label IN_STICKY_RP4 -1 1 16
+label SRC_STICKY_RP4 0 1 16
+place 1 1 16 sticky_piston facing=east
+place 2 1 16 stone
+label BLK_STICKY_RP4 2 1 16
+label DST_STICKY_RP4 3 1 16
+label STICKY_RP4 1 1 16
+place -1 1 20 lever face=floor
+place 0 1 20 repeater out=east delay=2
+label IN_REP1_RP4 -1 1 20
+label SRC_REP1_RP4 0 1 20
+place 1 1 20 repeater out=east delay=1
+label REP1_RP4 1 1 20
+settle
+
+target new repeater "a repeater stretches pulses and fills gaps shorter than its delay to the delay; longer ones pass unchanged; it passes circuit-made 2-tick pulses"
+target repeater do at 2 use @IN_REP1_L1
+target repeater do at 3 use @IN_REP1_L1
+target repeater do at 2 use @IN_REP1_L2
+target repeater do at 4 use @IN_REP1_L2
+target repeater do at 2 use @IN_REP1_L3
+target repeater do at 5 use @IN_REP1_L3
+target repeater do at 2 use @IN_REP1_OBS
+target repeater do at 2 use @IN_REP2_L1
+target repeater do at 3 use @IN_REP2_L1
+target repeater do at 2 use @IN_REP2_L3
+target repeater do at 5 use @IN_REP2_L3
+target repeater do at 2 use @IN_REP2_OBS
+target repeater do at 2 use @IN_GAP1_REP2
+target repeater do at 20 use @IN_GAP1_REP2
+target repeater do at 21 use @IN_GAP1_REP2
+target repeater do at 2 use @IN_GAP3_REP2
+target repeater do at 20 use @IN_GAP3_REP2
+target repeater do at 23 use @IN_GAP3_REP2
+target repeater do at 2 use @IN_GAP4_REP2
+target repeater do at 20 use @IN_GAP4_REP2
+target repeater do at 24 use @IN_GAP4_REP2
+target repeater do at 2 use @IN_REP1_RP2
+target repeater do at 3 use @IN_REP1_RP2
+target repeater expect @REP1_L1 powered=true during 4..5
+target repeater expect @REP1_L1 powered=false at 6
+target repeater expect @REP1_L2 powered=true during 4..5
+target repeater expect @REP1_L2 powered=false at 6
+target repeater expect @REP1_L3 powered=true during 4..6
+target repeater expect @REP1_L3 powered=false at 7
+target repeater expect @REP1_OBS powered=true during 6..7
+target repeater expect @REP1_OBS powered=false at 8
+target repeater expect @REP2_L1 powered=true during 6..9
+target repeater expect @REP2_L1 powered=false at 10
+target repeater expect @REP2_L3 powered=true during 6..9
+target repeater expect @REP2_L3 powered=false at 10
+target repeater expect @REP2_OBS powered=true during 8..11
+target repeater expect @REP2_OBS powered=false at 12
+target repeater expect @GAP1_REP2 powered=true during 6..40
+target repeater expect @GAP3_REP2 powered=true during 6..40
+target repeater expect @GAP4_REP2 powered=true at 23
+target repeater expect @GAP4_REP2 powered=false during 24..27
+target repeater expect @GAP4_REP2 powered=true at 28
+target repeater expect @REP1_RP2 powered=true during 6..7
+target repeater expect @REP1_RP2 powered=false at 8
+
+target new comparator "a comparator drops a 1-tick pulse and a circuit-made 2-tick pulse; a lever pulse of 2 or more ticks passes with its length; a 1-tick gap is filled"
+target comparator do at 2 use @IN_COMP_L1
+target comparator do at 3 use @IN_COMP_L1
+target comparator do at 2 use @IN_COMP_L2
+target comparator do at 4 use @IN_COMP_L2
+target comparator do at 2 use @IN_COMP_L3
+target comparator do at 5 use @IN_COMP_L3
+target comparator do at 2 use @IN_COMP_OBS
+target comparator do at 2 use @IN_COMP_RP2
+target comparator do at 3 use @IN_COMP_RP2
+target comparator do at 2 use @IN_COMP_RP3
+target comparator do at 5 use @IN_COMP_RP3
+target comparator do at 2 use @IN_COMP_RP4
+target comparator do at 3 use @IN_COMP_RP4
+target comparator do at 2 use @IN_GAP1_COMP
+target comparator do at 20 use @IN_GAP1_COMP
+target comparator do at 21 use @IN_GAP1_COMP
+target comparator do at 2 use @IN_GAP2_COMP
+target comparator do at 20 use @IN_GAP2_COMP
+target comparator do at 22 use @IN_GAP2_COMP
+target comparator do at 2 use @IN_GAP3_COMP
+target comparator do at 20 use @IN_GAP3_COMP
+target comparator do at 23 use @IN_GAP3_COMP
+target comparator expect @COMP_L1 power=0 during 0..20
+target comparator expect @COMP_L2 power=15 during 4..5
+target comparator expect @COMP_L2 power=0 at 6
+target comparator expect @COMP_L3 power=15 during 4..6
+target comparator expect @COMP_L3 power=0 at 7
+target comparator expect @COMP_OBS power=0 during 0..20
+target comparator expect @COMP_RP2 power=0 during 0..20
+target comparator expect @COMP_RP3 power=15 during 6..8
+target comparator expect @COMP_RP3 power=0 at 9
+target comparator expect @COMP_RP4 power=15 during 8..11
+target comparator expect @COMP_RP4 power=0 at 12
+target comparator expect @GAP1_COMP power=15 during 4..40
+target comparator expect @GAP2_COMP power=0 during 22..23
+target comparator expect @GAP2_COMP power=15 at 24
+target comparator expect @GAP3_COMP power=0 during 22..24
+target comparator expect @GAP3_COMP power=15 at 25
+
+target new torch "a torch ignores a 1-tick pulse and a circuit-made 2-tick pulse; a lever pulse of 2 or more ticks passes with its length; a 1-tick gap is filled"
+target torch do at 2 use @IN_TORCH_L1
+target torch do at 3 use @IN_TORCH_L1
+target torch do at 2 use @IN_TORCH_L2
+target torch do at 4 use @IN_TORCH_L2
+target torch do at 2 use @IN_TORCH_L3
+target torch do at 5 use @IN_TORCH_L3
+target torch do at 2 use @IN_TORCH_OBS
+target torch do at 2 use @IN_TORCH_RP2
+target torch do at 3 use @IN_TORCH_RP2
+target torch do at 2 use @IN_TORCH_RP3
+target torch do at 5 use @IN_TORCH_RP3
+target torch do at 2 use @IN_TORCH_RP4
+target torch do at 3 use @IN_TORCH_RP4
+target torch do at 2 use @IN_GAP1_TORCH
+target torch do at 20 use @IN_GAP1_TORCH
+target torch do at 21 use @IN_GAP1_TORCH
+target torch do at 2 use @IN_GAP2_TORCH
+target torch do at 20 use @IN_GAP2_TORCH
+target torch do at 22 use @IN_GAP2_TORCH
+target torch do at 2 use @IN_GAP3_TORCH
+target torch do at 20 use @IN_GAP3_TORCH
+target torch do at 23 use @IN_GAP3_TORCH
+target torch expect @TORCH_L1 lit=true during 0..20
+target torch expect @TORCH_L2 lit=false during 4..5
+target torch expect @TORCH_L2 lit=true at 6
+target torch expect @TORCH_L3 lit=false during 4..6
+target torch expect @TORCH_L3 lit=true at 7
+target torch expect @TORCH_OBS lit=true during 0..20
+target torch expect @TORCH_RP2 lit=true during 0..20
+target torch expect @TORCH_RP3 lit=false during 6..8
+target torch expect @TORCH_RP3 lit=true at 9
+target torch expect @TORCH_RP4 lit=false during 8..11
+target torch expect @TORCH_RP4 lit=true at 12
+target torch expect @GAP1_TORCH lit=false during 4..40
+target torch expect @GAP2_TORCH lit=true during 22..23
+target torch expect @GAP2_TORCH lit=false at 24
+target torch expect @GAP3_TORCH lit=true during 22..24
+target torch expect @GAP3_TORCH lit=false at 25
+
+target new sticky "a sticky piston leaves its block behind after a 1- or 2-tick pulse (lever or circuit) and pulls it back after 3 or more"
+target sticky do at 2 use @IN_STICKY_L1
+target sticky do at 3 use @IN_STICKY_L1
+target sticky do at 2 use @IN_STICKY_L2
+target sticky do at 4 use @IN_STICKY_L2
+target sticky do at 2 use @IN_STICKY_L3
+target sticky do at 5 use @IN_STICKY_L3
+target sticky do at 2 use @IN_STICKY_OBS
+target sticky do at 2 use @IN_STICKY_RP2
+target sticky do at 3 use @IN_STICKY_RP2
+target sticky do at 2 use @IN_STICKY_RP3
+target sticky do at 5 use @IN_STICKY_RP3
+target sticky do at 2 use @IN_STICKY_RP4
+target sticky do at 3 use @IN_STICKY_RP4
+target sticky expect @BLK_STICKY_L1 block=air at 15
+target sticky expect @DST_STICKY_L1 block=stone at 15
+target sticky expect @BLK_STICKY_L2 block=air at 15
+target sticky expect @DST_STICKY_L2 block=stone at 15
+target sticky expect @BLK_STICKY_L3 block=stone at 15
+target sticky expect @DST_STICKY_L3 block=air at 15
+target sticky expect @BLK_STICKY_OBS block=air at 15
+target sticky expect @DST_STICKY_OBS block=stone at 15
+target sticky expect @BLK_STICKY_RP2 block=air at 15
+target sticky expect @DST_STICKY_RP2 block=stone at 15
+target sticky expect @BLK_STICKY_RP3 block=stone at 15
+target sticky expect @DST_STICKY_RP3 block=air at 15
+target sticky expect @BLK_STICKY_RP4 block=stone at 15
+target sticky expect @DST_STICKY_RP4 block=air at 15
+
+target new lamp "a lamp shows every pulse, 4 ticks longer"
+target lamp do at 2 use @IN_LAMP_L1
+target lamp do at 3 use @IN_LAMP_L1
+target lamp do at 2 use @IN_LAMP_L2
+target lamp do at 4 use @IN_LAMP_L2
+target lamp do at 2 use @IN_LAMP_L3
+target lamp do at 5 use @IN_LAMP_L3
+target lamp do at 2 use @IN_LAMP_OBS
+target lamp expect @LAMP_L1 lit=true during 2..6
+target lamp expect @LAMP_L1 lit=false at 7
+target lamp expect @LAMP_L2 lit=true during 2..7
+target lamp expect @LAMP_L2 lit=false at 8
+target lamp expect @LAMP_L3 lit=true during 2..8
+target lamp expect @LAMP_L3 lit=false at 9
+target lamp expect @LAMP_OBS lit=true during 4..9
+target lamp expect @LAMP_OBS lit=false at 10
+
+target new edges "a copper bulb toggles and a dropper fires once for every pulse, even 1 tick long"
+target edges do at 2 use @IN_BULB_L1
+target edges do at 3 use @IN_BULB_L1
+target edges do at 2 use @IN_BULB_L2
+target edges do at 4 use @IN_BULB_L2
+target edges do at 2 use @IN_BULB_L3
+target edges do at 5 use @IN_BULB_L3
+target edges do at 2 use @IN_BULB_OBS
+target edges do at 2 use @IN_DROP_L1
+target edges do at 3 use @IN_DROP_L1
+target edges do at 2 use @IN_DROP_L2
+target edges do at 4 use @IN_DROP_L2
+target edges do at 2 use @IN_DROP_L3
+target edges do at 5 use @IN_DROP_L3
+target edges do at 2 use @IN_DROP_OBS
+target edges expect @BULB_L1 lit=true during 2..20
+target edges expect @BULB_L2 lit=true during 2..20
+target edges expect @BULB_L3 lit=true during 2..20
+target edges expect @BULB_OBS lit=true during 4..20
+target edges expect @BAR_DROP_L1 analog=0 at 5
+target edges expect @BAR_DROP_L1 analog=1 during 6..20
+target edges expect @BAR_DROP_L2 analog=1 during 6..20
+target edges expect @BAR_DROP_L3 analog=1 during 6..20
+target edges expect @BAR_DROP_OBS analog=0 at 7
+target edges expect @BAR_DROP_OBS analog=1 during 8..20
+
+check
