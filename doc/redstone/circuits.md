@@ -55,6 +55,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
 | [[#Monostable]] | one edge → output on for exactly D ticks (64) | 5×1×8 | 4 | `monostable` |
 | [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
+| [[#Toggle door]] | a button toggles the 2x2 door | 10×2×6 | open 6, closed 8 | `toggle_door` |
 
 ## Gates
 
@@ -469,6 +470,22 @@ door]] (pasted from its `.nbt`) opens. `combination_lock.cli.txt`. **Verified.**
      other circuits power strongly.
   3. Fed from its far end, the door's 10-wire bus lost too much strength to reach the
      other side: one door half did not open. A repeater right before the bus fixed it.
+
+### Toggle door
+
+A button toggles the [[#2x2 piston door]]: a [[#T flip-flop]] (copper bulb with the
+button on its face) whose comparator points into the middle of the door's input bus.
+`toggle_door.cli.txt`. **Verified** (worked as composed, first try).
+
+| Port | Offset | Kind |
+|---|---|---|
+| B | 4 0 5 | stone button on the bulb's south face (any rising edge at the bulb works) |
+| DOOR | 4..5 0..1 0 | the door cells |
+
+- **Behavior:** each press toggles: open (cells clear) **6 ticks** after an opening
+  press; closing starts 6 ticks after a closing press, solid after **8**.
+- **Why the middle of the bus:** fed at x=4 the 10-wire bus keeps ≥ 10 at both ends
+  (see the [[#Combination lock]]'s third finding).
 
 ## Composition rules
 
