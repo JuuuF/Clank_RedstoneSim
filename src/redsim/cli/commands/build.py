@@ -52,24 +52,35 @@ def _done(session: Session, verb: str, pos: Pos, data: dict[str, Any] | None = N
     Wall torches face away from their wall; levers and buttons use `face=floor|wall|ceiling`
     and, on a wall, `facing` away from the wall.
 
+    Properties a player sets by right-clicking a placed block are set that way: a
+    repeater's `delay`, a comparator's `mode`, a lever's `powered`, a door's, trapdoor's
+    or fence gate's `open`, a note block's `note`. In the game these blocks are always
+    placed with their default value, so `place` right-clicks the block (like `use`) until
+    it has the value you wrote; the output says how many clicks. Any other property you
+    write that the placement rules change (a lamp's `lit`, an observer's `powered`) gives
+    a `note:` line; `set` puts a state exactly as written.
+
     Use `set` to put a block regardless of support or to replace one (the `/setblock`
     command), and `at T place …` to place it at tick T on the timeline instead of in the
     build.
     """,
     examples=(
         "place 0 1 0 redstone_wire",
-        "place 1 1 0 repeater out=east delay=2   # output east, 2 ticks",
+        "place 1 1 0 repeater out=east delay=2   # output east, 4 ticks (clicked once)",
         "place 2 1 0 redstone_lamp",
         "place 0 2 1 lever face=wall facing=south",
         "at 10 place 4 1 0 redstone_block        # recorded at tick 10",
     ),
     kind="edit",
-    data='{"pos", "state" (the placed state), "tick" (0 = the build)}',
+    data="""{"pos", "state" (the placed state), "tick" (0 = the build), "clicks" (right-clicks
+    made after placing), "notes": [properties that came out different]}""",
 )
 def place(session: Session, args: Args) -> Output:
     pos = args.pos()
     state = args.block()
+    written = args.written
     args.done()
+    clicks = 0
     with session.editing() as doc:
         if not doc.state_at(pos).is_air:
             raise CliError(
@@ -82,7 +93,61 @@ def place(session: Session, args: Args) -> Output:
                 f"{_support_hint(doc, state, pos)}"
             )
         doc.place_state(pos, state)
-    return _done(session, "placed", pos)
+        clicks = _click_to(doc, pos, state, written)
+    out = _done(session, "placed", pos, {"clicks": clicks})
+    if clicks:
+        out.lines[0] += f", right-clicked {clicks} time{'s' if clicks > 1 else ''}"
+    placed = session.doc.state_at(pos)
+    notes = []
+    for key in written:
+        prop = placed.block.property_index.get(key)
+        if prop is None or not placed.is_(state.block):
+            continue
+        wanted, got = state.values[prop], placed.values[prop]
+        if wanted != got:
+            p = placed.block.properties[prop]
+            notes.append(
+                f"note: {key}={p.serialize(got)}, not {p.serialize(wanted)}: the game's "
+                "placement rules decide it (set puts a state exactly as written)"
+            )
+    out.lines += notes
+    out.data["notes"] = notes
+    return out
+
+
+#: Properties a player changes by right-clicking a placed block (``place`` clicks until
+#: they have the written value): block name → property. Doors, trapdoors and fence gates
+#: (``open``) are matched by their names. Not as in the game: the clicks are real player
+#: actions, but the orientation they start from is given directly (``PlacementContext``,
+#: doc/differences.md section 3).
+RIGHT_CLICK = {"repeater": "delay", "comparator": "mode", "lever": "powered", "note_block": "note"}
+
+
+def _click_to(doc: Any, pos: Pos, wanted: Any, written: list[str]) -> int:
+    """Right-click the block at ``pos`` until its right-click property has the value of
+    ``wanted`` (only when that property was written); returns the number of clicks."""
+    name = wanted.block.name
+    key = RIGHT_CLICK.get(name)
+    if key is None and name.endswith(("_door", "_trapdoor", "_fence_gate")):
+        key = "open"
+    if key is None or key not in written:
+        return 0
+    index = wanted.block.property_index[key]
+    yaw = None
+    facing = wanted.block.property_index.get("facing")
+    if name.endswith("_fence_gate") and facing is not None:
+        # A gate opens away from the player and turns if it faced them: look its way.
+        yaw = _YAW.get(doc.state_at(pos).values[facing].serialized)
+    clicks = 0
+    while clicks < 30:  # the longest cycle: 25 notes
+        state = doc.state_at(pos)
+        if not state.is_(wanted.block) or state.values[index] == wanted.values[index]:
+            break
+        doc.use(pos, yaw)
+        if doc.state_at(pos) is state:  # no effect (an iron door): stop
+            break
+        clicks += 1
+    return clicks
 
 
 def _support_hint(doc: Any, state: Any, pos: Pos) -> str:

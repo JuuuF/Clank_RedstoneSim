@@ -119,6 +119,14 @@ instead. Pistons, dispensers, droppers and hoppers face where they push or outpu
 Wall torches face away from their wall; levers and buttons use `face=floor|wall|ceiling`
 and, on a wall, `facing` away from the wall.
 
+Properties a player sets by right-clicking a placed block are set that way: a
+repeater's `delay`, a comparator's `mode`, a lever's `powered`, a door's, trapdoor's
+or fence gate's `open`, a note block's `note`. In the game these blocks are always
+placed with their default value, so `place` right-clicks the block (like `use`) until
+it has the value you wrote; the output says how many clicks. Any other property you
+write that the placement rules change (a lamp's `lit`, an observer's `powered`) gives
+a `note:` line; `set` puts a state exactly as written.
+
 Use `set` to put a block regardless of support or to replace one (the `/setblock`
 command), and `at T place …` to place it at tick T on the timeline instead of in the
 build.
@@ -127,13 +135,14 @@ Examples:
 
 ```
 place 0 1 0 redstone_wire
-place 1 1 0 repeater out=east delay=2   # output east, 2 ticks
+place 1 1 0 repeater out=east delay=2   # output east, 4 ticks (clicked once)
 place 2 1 0 redstone_lamp
 place 0 2 1 lever face=wall facing=south
 at 10 place 4 1 0 redstone_block        # recorded at tick 10
 ```
 
-JSON `data`: {"pos", "state" (the placed state), "tick" (0 = the build)}
+JSON `data`: {"pos", "state" (the placed state), "tick" (0 = the build), "clicks" (right-clicks
+    made after placing), "notes": [properties that came out different]}
 
 ### `set`
 

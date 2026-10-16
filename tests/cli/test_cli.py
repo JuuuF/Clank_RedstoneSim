@@ -318,3 +318,18 @@ def test_check_reports_when_a_within_was_met(rs: Run) -> None:
     data = json.loads(rs("--json", "check").splitlines()[0])["data"]
     expectation = data["cases"][0]["expectations"][0]
     assert expectation["failing_ticks"] == [] and expectation["first_held"] == 2
+
+
+def test_place_right_clicks_for_delay_mode_and_open_and_notes_the_rest(rs: Run) -> None:
+    out = rs("place", "1", "1", "0", "repeater", "out=east", "delay=3")
+    assert "repeater[facing=west,delay=3," in out and "right-clicked 2 times" in out
+    assert "comparator[facing=north,mode=subtract," in rs(
+        "place", "1", "1", "2", "comparator", "mode=subtract"
+    )
+    out = rs("place", "3", "1", "0", "oak_fence_gate", "facing=east", "open=true")
+    assert "oak_fence_gate[facing=east,open=true," in out  # clicked looking east: kept
+    out = rs("place", "5", "1", "0", "iron_door", "open=true")
+    assert "right-clicked" not in out and "note: open=false, not true" in out
+    out = rs("place", "5", "1", "3", "redstone_lamp", "lit=true")
+    assert "note: lit=false, not true" in out
+    assert "lit=true" in rs("set", "6", "1", "3", "redstone_lamp", "lit=true")  # set: exact

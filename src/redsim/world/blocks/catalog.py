@@ -418,7 +418,13 @@ class LeavesBlock(CatalogBlock):
         return EMPTY
 
     def player_placement(self, request: Any, level: Level, pos: Pos) -> BlockState | None:
-        return update_distance(self.default_state.with_(PERSISTENT, True), level, pos)
+        return self.get_state_for_placement(PlacementContext(level, pos, self.default_state))
+
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``getStateForPlacement``: placed leaves are persistent (they never decay), with
+        their distance to a log; no water (not simulated)."""
+        state = ctx.requested.with_(PERSISTENT, True).with_(WATERLOGGED, False)
+        return update_distance(state, ctx.level, ctx.pos)
 
     def update_shape(
         self,

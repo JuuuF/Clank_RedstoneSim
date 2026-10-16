@@ -58,6 +58,7 @@ own mechanics.
 | Container slots, sign text, sources | `/item replace`, `/setblock … {…}`, a player writing a sign | Applied with the commands' semantics (`setChanged`, comparators update) | `engine.py` actions |
 | Editing the history | Nothing in the game | Edits inside the recorded history keep the later ones and re-run (ADR-022) | `editor/document.py` |
 | Settling the build (`redsim-cli settle`) | Nothing in the game | The build simulated alone until quiet becomes the new build (the editor's "Set tick 0 here" without moving the timeline) | `editor/document_history.py` |
+| Placing with a given orientation (`redsim-cli place`, the editor's look) | The player's look direction and clicked point decide `facing`, `face`, `half`, `axis`, a door's `hinge` | The orientation is given directly; every other property follows the block's `getStateForPlacement` (power, shapes, neighbors), and properties a player sets by right-clicking are set with real right-clicks (`place`). An orientation a player could not get at that spot (a door hinge against its neighbors) is possible | `world/block.py` `PlacementContext`, `cli/commands/build.py` |
 | Truth-table inputs (`redsim-cli target … truth`) | A player or a circuit switching the input | A lever input is flipped with `use` (a player); any other input gets a sequence power pulse (editor power) | `cli/targets.py` |
 
 Order inside the entity phase: the editor's stand-ins (0-tick ends, projectile hits,

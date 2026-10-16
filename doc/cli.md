@@ -169,6 +169,21 @@ writes states without `minecraft:` and with every property
 (`repeater[facing=west,delay=2,locked=false,powered=false]`), in a form the commands read
 back.
 
+`set` puts a state exactly as written (it is `/setblock`). `place` places like a player,
+and a player cannot choose every property: what the block's placement rules derive from
+its surroundings (a lamp's `lit`, a door's `open` next to power, wire connections) comes
+out as the game decides, and properties a player changes by **right-clicking** afterwards
+are set that way (a repeater's `delay`, a comparator's `mode`, a lever's `powered`, a
+door's, trapdoor's or fence gate's `open`, a note block's `note`). The output says so:
+
+```
+> place 1 1 0 repeater out=east delay=3
+placed 1 1 0: repeater[facing=west,delay=3,locked=false,powered=false] (the build), right-clicked 2 times
+> place 2 1 0 redstone_lamp lit=true
+placed 2 1 0: redstone_lamp[lit=false] (the build)
+note: lit=false, not true: the game's placement rules decide it (set puts a state exactly as written)
+```
+
 **Which way things face.** The game's `facing` property means different things for
 different blocks; getting it wrong is the most common building mistake:
 

@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any
 
 from redsim.core.direction import Direction
 from redsim.core.pos import Pos, below
-from redsim.world.block import BlockState
+from redsim.world.block import BlockState, PlacementContext
 from redsim.world.block_entity import BlockEntity, register_block_entity
 from redsim.world.blocks.catalog import CatalogBlock, horizontal_direction
 from redsim.world.blocks.catalog_data import BLOCKS
@@ -64,14 +64,21 @@ class CampfireBlock(CatalogBlock):
     def player_placement(self, request: Any, level: Level, pos: Pos) -> BlockState | None:
         """``getStateForPlacement``: unlit and waterlogged in water, a signal fire on hay,
         facing the way the player looks."""
+        facing = horizontal_direction(request.yaw)
+        return self._placed(self.default_state.with_(HORIZONTAL_FACING, facing), level, pos)
+
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``getStateForPlacement`` with the ``facing`` given."""
+        return self._placed(ctx.requested, ctx.level, ctx.pos)
+
+    def _placed(self, state: BlockState, level: Level, pos: Pos) -> BlockState:
         from redsim.sim.entities import _is_water
 
         water = _is_water(level.get_block_state(pos))
         return (
-            self.default_state.with_(WATERLOGGED, water)
+            state.with_(WATERLOGGED, water)
             .with_(SIGNAL_FIRE, _is_smoke_source(level.get_block_state(below(pos))))
             .with_(LIT, not water)
-            .with_(HORIZONTAL_FACING, horizontal_direction(request.yaw))
         )
 
     def update_shape(

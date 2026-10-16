@@ -66,9 +66,13 @@ class UpdateFlags:
 class PlacementContext:
     """The parts of ``BlockPlaceContext`` the simulator needs.
 
-    The editor has no player look vector; it states the intended orientation directly.
-    ``facing`` is the direction the placed block should face (as stored in its ``facing``
-    property) and ``face`` the attachment face for lever/button-like blocks.
+    Not as in the game: the game derives a placed block's orientation from the player's
+    look and the clicked point; here ``requested`` states it directly (``facing``,
+    ``face``, ``half``, ``axis``, a door's ``hinge``: from the editor's look in the GUI,
+    as written in ``redsim-cli place``). Each block's ``get_state_for_placement`` keeps
+    that orientation and derives everything else the way the game does (power, shapes,
+    neighbors). A state given this way can have an orientation a player could not get at
+    that spot, such as a door hinge against the neighbors' rule (doc/differences.md).
     """
 
     def __init__(

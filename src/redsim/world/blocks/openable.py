@@ -19,7 +19,7 @@ import numpy as np
 
 from redsim.core.direction import Axis, Direction
 from redsim.core.pos import Pos, offset
-from redsim.world.block import Block, BlockState, PushReaction, UpdateFlags
+from redsim.world.block import Block, BlockState, PlacementContext, PushReaction, UpdateFlags
 from redsim.world.blocks.catalog_data import BLOCKS, TAGS
 from redsim.world.properties import HORIZONTAL_FACING, OPEN, POWERED, WATERLOGGED, Property, boolean
 from redsim.world.shape import EMPTY, N, Shape, box
@@ -212,6 +212,21 @@ class DoorBlock(_GameBlock):
             .with_(DOUBLE_BLOCK_HALF, "lower")
         )
 
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``getStateForPlacement`` with the orientation given (``facing``, ``hinge`` as
+        requested, from the editor or ``player_placement``): needs room above; open and
+        powered when either half has a signal; the lower half."""
+        level, pos = ctx.level, ctx.pos
+        above = offset(pos, Direction.UP)
+        if pos[1] >= level.max_y or not can_be_replaced(level.get_block_state(above)):
+            return None
+        powered = level.has_neighbor_signal(pos) or level.has_neighbor_signal(above)
+        return (
+            ctx.requested.with_(POWERED, powered)
+            .with_(OPEN, powered)
+            .with_(DOUBLE_BLOCK_HALF, "lower")
+        )
+
     def _hinge(self, request: Any, level: Level, pos: Pos, facing: Direction) -> str:
         """``getHinge``: full blocks and doors beside it, else the side of the click."""
         above = offset(pos, Direction.UP)
@@ -349,6 +364,12 @@ class TrapDoorBlock(_GameBlock):
             state = state.with_(OPEN, True).with_(POWERED, True)
         return state
 
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``getStateForPlacement`` with the orientation given (``facing``, ``half``):
+        open and powered only when it has a signal; no water (not simulated)."""
+        signal = ctx.level.has_neighbor_signal(ctx.pos)
+        return ctx.requested.with_(OPEN, signal).with_(POWERED, signal).with_(WATERLOGGED, False)
+
 
 # ---------------------------------------------------------------- fence gates
 _GATE = rotate_horizontal_axis(column(16, 4, 0, 16))
@@ -406,20 +427,25 @@ class FenceGateBlock(_GameBlock):
         return state.with_(IN_WALL, is_wall(neighbor) or is_wall(across))
 
     def player_placement(self, request: Any, level: Level, pos: Pos) -> BlockState | None:
-        is_open = level.has_neighbor_signal(pos)
         facing = horizontal_direction(request.yaw)
+        return self._placed(self.default_state.with_(HORIZONTAL_FACING, facing), level, pos)
+
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``getStateForPlacement`` with the ``facing`` given."""
+        return self._placed(ctx.requested, ctx.level, ctx.pos)
+
+    def _placed(self, state: BlockState, level: Level, pos: Pos) -> BlockState:
+        """Open and powered when it has a signal; in a wall when a wall is at either
+        side (across its facing)."""
+        is_open = level.has_neighbor_signal(pos)
+        facing = state.get(HORIZONTAL_FACING)
         sides = (
             (Direction.WEST, Direction.EAST)
             if facing.axis is Axis.Z
             else (Direction.NORTH, Direction.SOUTH)
         )
         in_wall = any(is_wall(level.get_block_state(offset(pos, d))) for d in sides)
-        return (
-            self.default_state.with_(HORIZONTAL_FACING, facing)
-            .with_(OPEN, is_open)
-            .with_(POWERED, is_open)
-            .with_(IN_WALL, in_wall)
-        )
+        return state.with_(OPEN, is_open).with_(POWERED, is_open).with_(IN_WALL, in_wall)
 
     def use_without_item(self, state: BlockState, level: Level, pos: Pos) -> bool:
         """``useWithoutItem``: closes, or opens away from the player (it turns to face

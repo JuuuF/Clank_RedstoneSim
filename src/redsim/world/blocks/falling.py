@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Any
 
 from redsim.core.direction import ALL, Direction
 from redsim.core.pos import Pos, below, offset
-from redsim.world.block import BlockState
+from redsim.world.block import BlockState, PlacementContext
 from redsim.world.blocks.catalog import CatalogBlock, horizontal_direction
 from redsim.world.blocks.catalog_data import BLOCKS
 from redsim.world.properties import HORIZONTAL_FACING
@@ -160,9 +160,14 @@ class ConcretePowderBlock(FallingBlock):
             level.set_block_and_update(pos, self._concrete())
 
     def player_placement(self, request: Any, level: Level, pos: Pos) -> BlockState | None:
-        if self._should_solidify(level, pos, level.get_block_state(pos)):
+        return self.get_state_for_placement(PlacementContext(level, pos, self.default_state))
+
+    def get_state_for_placement(self, ctx: PlacementContext) -> BlockState | None:
+        """``getStateForPlacement``: concrete right away when placed into or next to
+        water."""
+        if self._should_solidify(ctx.level, ctx.pos, ctx.level.get_block_state(ctx.pos)):
             return self._concrete()
-        return self.default_state
+        return ctx.requested
 
     def update_shape(
         self,

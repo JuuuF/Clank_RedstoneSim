@@ -127,3 +127,33 @@ def test_fences_and_walls_connect_when_placed_and_turn_with_the_selection() -> N
     doc.place((0, 1, 6), blocks.get("glass_pane"), look(0.0))
     doc.place((1, 1, 6), blocks.get("iron_bars"), look(0.0))
     assert "east=true" in repr(doc.state_at((0, 1, 6)))
+
+
+def test_placing_a_given_state_still_applies_the_placement_rules() -> None:
+    """``place_state`` (the command line's ``place``) gives the orientation directly; the
+    rest still follows ``getStateForPlacement``: open and powered only with a signal, a
+    gate in a wall, leaves persistent, a campfire lit."""
+    doc = Document.new_flat()
+    doc.place_state((0, 1, 0), P("oak_door[facing=east,hinge=right,open=true]"))
+    assert repr(doc.state_at((0, 1, 0))) == (
+        "minecraft:oak_door[half=lower,facing=east,open=false,hinge=right,powered=false]"
+    )
+    assert "half=upper" in repr(doc.state_at((0, 2, 0)))
+    doc.place_state((3, 1, 0), P("oak_trapdoor[facing=south,half=top,open=true]"))
+    assert repr(doc.state_at((3, 1, 0))) == (
+        "minecraft:oak_trapdoor[facing=south,open=false,half=top,powered=false,waterlogged=false]"
+    )
+    doc.setblock((5, 1, 1), P("redstone_block"))
+    doc.place_state((5, 1, 0), P("oak_trapdoor"))
+    assert "open=true" in repr(doc.state_at((5, 1, 0)))  # powered: placed open
+    doc.setblock((7, 1, 1), P("cobblestone_wall"))
+    doc.place_state((7, 1, 0), P("oak_fence_gate[facing=west,open=true]"))
+    assert repr(doc.state_at((7, 1, 0))) == (
+        "minecraft:oak_fence_gate[facing=west,open=false,powered=false,in_wall=true]"
+    )
+    doc.place_state((0, 1, 3), P("oak_leaves[persistent=false]"))
+    assert "persistent=true" in repr(doc.state_at((0, 1, 3)))
+    doc.place_state((2, 1, 3), P("campfire[facing=east,lit=false]"))
+    assert repr(doc.state_at((2, 1, 3))) == (
+        "minecraft:campfire[lit=true,signal_fire=false,waterlogged=false,facing=east]"
+    )

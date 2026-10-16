@@ -248,6 +248,14 @@ edits, regions, world chunks and files. Mixin methods begin with
   `BlockPlaceContext.getNearestLookingDirections` and the per-block placement rules
   (face-attached, torch item, diodes), so the editor produces the states a player at that
   yaw/pitch clicking that face would get.
+- Placing is two steps, as `BlockItem.place` with the look split off: the orientation
+  (`placement_state` / a block's `player_placement` in the GUI, the written state in
+  `redsim-cli place`), then the block's `get_state_for_placement`, which keeps that
+  orientation and derives every other property like the game's `getStateForPlacement`
+  (doors, trapdoors, gates open when powered; leaves persistent; lamps lit; stairs
+  shapes). A block whose game placement reads the world must do that in
+  `get_state_for_placement`, not only in `player_placement`, or the command line misses
+  it ([[differences]] section 3).
 - `annotations.py`: named sections with colors, purely visual, saved in the file's `extra`.
 
 ## Contraptions (`redsim.editor.clipboard`, `redsim.editor.groups`)

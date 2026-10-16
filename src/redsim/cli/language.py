@@ -124,6 +124,8 @@ class Args:
     command: str = ""
     index: int = 0
     used_keys: set[str] = field(default_factory=set)
+    #: The property names written with the last ``block()`` (``out`` counts as ``facing``).
+    written: list[str] = field(default_factory=list)
 
     # ------------------------------------------------------------------ basics
     def more(self) -> bool:
@@ -261,6 +263,10 @@ class Args:
             if not re.fullmatch(r"[a-z_]+", key):
                 break
             extra.append(self.word())
+        inner = text.partition("[")[2].rstrip("]")
+        keys = [part.partition("=")[0].strip() for part in inner.split(",") if part.strip()]
+        keys += [word.partition("=")[0] for word in extra]
+        self.written = ["facing" if key == "out" else key for key in keys]
         return parse_block(text, extra, self.command)
 
 
