@@ -1,0 +1,74 @@
+# Circuit: peak-hold register (analog memory, comparator ring). Contract: doc/redstone/circuits.md, "Peak-hold register".
+#
+# Module (box 0 1 0 .. 2 1 3):
+#   @W     0 1 0  write: comparator facing south; whatever it reads behind it (0 1 -1: a
+#                 container, a signal) is written into the ring
+#   @CLR   1 1 0  clear: repeater facing south into the ring's subtracting comparator's
+#                 side; drive it from the north (1 1 -1) for at least 8 ticks
+#   @VAL   2 1 1  a ring stone holding the stored value (strong): read it with a
+#                 comparator facing away from it, or wire beside it
+# The ring: comparators C1 (1 1 1, east, subtract) -> stone 2 1 1 -> C2 (2 1 2, south) ->
+# stone 2 1 3 -> C3 (1 1 3, west) -> stone 0 1 3 -> C4 (0 1 2, north) -> stone 0 1 1 ->
+# C1's rear. No wire, so the strength never fades. The stone 0 1 1 takes the larger of
+# C4 and the write comparator: the ring keeps the largest value written. Clearing zeroes
+# C1 for the clear's length; it must cover a whole lap (4 comparators: 8 ticks), else part
+# of the old value keeps circulating. After a clear the ring holds the current write value.
+# Test harness: a barrel @SRC behind the write comparator, a lever @L behind the clear.
+#   redsim-cli peak_hold.redsim.json < examples/circuits/peak_hold.cli.txt
+new size 16 force
+note "Peak-hold register: the ring keeps the largest strength written at @W; @CLR (8+ ticks) resets it to the current write value; read it at @VAL"
+place 1 1 1 comparator out=east mode=subtract
+place 2 1 1 stone
+place 2 1 2 comparator out=south
+place 2 1 3 stone
+place 1 1 3 comparator out=west
+place 0 1 3 stone
+place 0 1 2 comparator out=north
+place 0 1 1 stone
+place 0 1 0 comparator out=south
+place 1 1 0 repeater out=south
+label W 0 1 0 "write: comparator into the ring"
+label CLR 1 1 0 "clear: repeater into the ring's side input"
+label C1 1 1 1 "ring comparator (subtract: the clear's side input)"
+label VAL 2 1 1 "stone holding the value"
+group peak_hold 0 1 0 2 1 3 in @W W in @CLR CLR out @VAL VAL
+prefab save peak_hold 0 1 0 2 1 3
+# harness
+source 0 1 -1 barrel 1
+place 1 1 -1 lever face=floor
+place 3 1 1 redstone_wire
+label SRC 0 1 -1 "test source for the write input"
+label L 1 1 -1 "test lever: clear"
+label READ 3 1 1 "test wire beside the value stone"
+settle
+
+target new hold "writes 7 then 9 then 4: the ring holds 1, then 7, then 9 and stays 9"
+target hold do at 10 source @SRC barrel 7
+target hold do at 30 source @SRC barrel 9
+target hold do at 50 source @SRC barrel 4
+target hold expect @C1 power=1 at 8
+target hold expect @C1 power=7 during 14..33
+target hold expect @C1 power=9 during 36..120
+target hold expect @READ power=9 at 100
+
+target new clear "write 9, set the input to 4, clear for 10 ticks: the ring then holds 4 (and stays 4 when the input drops to 2)"
+target clear do at 10 source @SRC barrel 9
+target clear do at 30 source @SRC barrel 4
+target clear do at 50 use @L
+target clear do at 60 use @L
+target clear do at 80 source @SRC barrel 2
+target clear expect @C1 power=9 during 20..51
+target clear expect @C1 power=0 during 54..61
+target clear expect @C1 power=4 during 66..120
+
+target new short "failure case: a clear shorter than a lap (4 ticks) leaves half the ring at the old value: the output alternates 9 and 4"
+target short do at 10 source @SRC barrel 9
+target short do at 30 source @SRC barrel 4
+target short do at 50 use @L
+target short do at 54 use @L
+target short expect @C1 power=9 at 60
+target short expect @C1 power=4 at 64
+target short expect @C1 power=9 at 68
+target short expect @C1 power=4 at 72
+
+check

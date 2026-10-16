@@ -46,6 +46,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | combine signals | gates; glitch-free when inputs change together: [[#XOR gate]], [[#Compact AND]], [[#AND gate]] |
 | count events | [[#4-bit counter]] |
 | react to a container's fill level | [[#Threshold detector]] |
+| remember a strength (0–15) | [[#Peak-hold register]] |
 | two signal paths must cross | [[#Crossing]] |
 | move a structure by itself | [[#Flying machine]] |
 
@@ -63,6 +64,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#XOR gate]] | OUT = A ⊕ B, glitch-free | 7×3×6 | 4 / 4 | `xor_gate` |
 | **Analog** | | | | |
 | [[#Threshold detector]] | on while an analog signal (a container's fill) ≥ k | 3×1×3 | 4 | `threshold` |
+| [[#Peak-hold register]] | analog memory: keeps the largest strength written | 3×1×4 | 2–8 | `peak_hold` |
 | **Wiring** | | | | |
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
 | [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
@@ -237,6 +239,29 @@ when it is ≥ k; a repeater turns that into a clean 15. `threshold.cli.txt`. **
   combination locks, level sensors. For "X ≥ k" with k = 1 a plain comparator does it.
 - Rules behind it: [[R-005-signal-strength]] (compare mode: rear ≥ side passes).
 
+### Peak-hold register
+
+Analog memory: four comparators and four stones in a ring (no wire, so nothing fades)
+hold a strength 0–15 forever. The write comparator feeds the ring's last stone, which
+takes the larger of the ring and the write value; a clear zeroes the subtracting
+comparator through its side. `peak_hold.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| W | 0 0 0 | write: comparator facing south; it writes what it reads behind it |
+| CLR | 1 0 0 | clear: repeater facing south; drive it from the north for **8+ ticks** |
+| VAL | 2 0 1 | a ring stone holding the value (strong): wire beside it, or a comparator facing away |
+
+- **Behavior:** keeps the **largest** value written (tested: 1 → 7 → 9, then a 4 does
+  not lower it); the stored value appears within one lap (up to 8 ticks).
+- **Clear:** zeroes the ring for as long as CLR is on; afterwards the ring holds the
+  *current* write value (tested: 9, write input lowered to 4, clear 10 ticks → 4, and a
+  later 2 does not lower it).
+- **Failure case (V):** a clear shorter than one lap (8 ticks) wipes only part of the
+  ring; the old value keeps circulating and the output alternates (9, 4, 9, 4 every 4
+  ticks). The same lap rule as the [[#Fade timer]]: anything that should change a ring's
+  whole contents must last at least one lap.
+
 ## Wiring
 
 ### Crossing
@@ -346,14 +371,14 @@ The input fills the ring with 15; the output is on while anything is left.
   a short trigger at T gives OUT on T+12 … T+61.
 - **Retriggerable:** any new input while it runs refills the ring and restarts the time
   (tested: a 2-tick input at 40 kept OUT on without a break until 101).
-- **Tuning:** each extra comparator+stone pair in the ring adds 2 ticks per lap
-  (7 laps); fewer decaying wires make it fade more slowly (15 laps with one).
+- **Tuning (I, not tested):** each extra comparator+stone pair in the ring adds 2 ticks
+  per lap (7 laps); one decaying wire instead of two would make it last 15 laps.
 - **Failure case found (V):** an input shorter than one lap (6 ticks) fills only part
   of the ring: a packet of strength circulates and OUT flickers (4 on, 2 off). That is
   why the input repeater has delay 4 (8-tick minimum); with delay 2 it flickered.
 - **Analog note:** comparators in a ring keep a strength forever; any wire in the ring
-  makes it fade ([[R-005-signal-strength]]). A ring of comparators and blocks alone is an
-  analog memory (H, not tested).
+  makes it fade ([[R-005-signal-strength]]). A ring without wire is the
+  [[#Peak-hold register]].
 
 ## Memory
 

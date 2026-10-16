@@ -32,11 +32,11 @@ with the record that answered it.
    - [x] edge detectors (rising, falling, both)
    - [x] monostable (exact duration from a delay line and a copper bulb)
    - [x] retriggerable timer (comparator fade ring)
-   - [ ] analog memory (comparator ring without wire), H
+   - [x] analog memory: peak-hold register (comparator ring without wire)
    - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
-   - [ ] signal strength encoders/decoders, multiplexers
+   - [ ] signal strength encoders/decoders, multiplexers, an analog adder (strength arithmetic)
 5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [ ] a flush door, a timed door, a double piston extender.
 
 ## Open questions
