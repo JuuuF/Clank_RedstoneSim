@@ -1,0 +1,78 @@
+# Contraption: 2x2 sticky-piston door. Contract: doc/redstone/circuits.md, "2x2 piston door".
+#
+# Module (box 0 1 0 .. 9 2 2; the doorway is 4..5 1..2 0, seen from the south):
+#   @DOOR  4 1 0 .. 5 2 0  the four door cells: stone while closed, air while open
+#   @IN    4 1 2           input: the wire bus (0 1 2 .. 9 1 2); power it to open
+# Inside, per side (west shown; the east side mirrors it): sticky pistons 2 1 0 and 2 2 0
+# facing east, holding the door stones; a wall torch 1 1 0 on the input block 0 1 0
+# powers the lower piston directly and the upper one through the stone 1 2 0 above it
+# (a torch strongly powers the block above); a repeater 0 1 1 feeds the input block
+# from the bus. The input block touches no piston: the first version stood the torch on
+# a block beside the lower piston, so the input itself kept that piston powered and the
+# lower half of the door did not open.
+# Test harness: lever @L south of the bus, a button @B on a stone south of the bus.
+#   redsim-cli piston_door_2x2.redsim.json < examples/circuits/piston_door_2x2.cli.txt
+new size 32 force
+note "2x2 piston door: power the bus @IN to open (cells clear 4 ticks later); off: closing starts after 4 ticks, solid after 6"
+place 0 1 0 stone
+place 9 1 0 stone
+place 2 1 0 sticky_piston facing=east
+place 2 2 0 sticky_piston facing=east
+place 7 1 0 sticky_piston facing=west
+place 7 2 0 sticky_piston facing=west
+place 3 1 0 stone
+place 3 2 0 stone
+place 6 1 0 stone
+place 6 2 0 stone
+place 1 1 0 redstone_wall_torch facing=east
+place 8 1 0 redstone_wall_torch facing=west
+set 1 2 0 stone
+set 8 2 0 stone
+place 0 1 1 repeater out=north
+place 9 1 1 repeater out=north
+line 0 1 2 to 9 1 2 redstone_wire
+label IN 4 1 2 "input: the wire bus; on = open"
+label D1 4 1 0 "door cell, lower west"
+label D2 4 2 0 "door cell, upper west"
+label D3 5 1 0 "door cell, lower east"
+label D4 5 2 0 "door cell, upper east"
+group piston_door_2x2 0 1 0 9 2 2 in @IN IN out @D1 D1 out @D2 D2 out @D3 D3 out @D4 D4
+# harness
+place 4 1 3 lever face=floor
+place 6 1 4 stone
+place 6 1 3 stone_button face=wall facing=north
+label L 4 1 3 "test lever"
+label B 6 1 3 "test button (on the stone south of the bus)"
+settle
+prefab save piston_door_2x2 0 1 0 9 2 2
+
+target new lever "open: all four cells clear 4 ticks after the lever; close: blocks moving in 4 ticks after, solid after 6"
+target lever do at 2 use @L
+target lever do at 30 use @L
+target lever expect @D1 block=stone during 0..5
+target lever expect @D1 block=air during 6..33
+target lever expect @D2 block=air during 6..33
+target lever expect @D3 block=air during 6..33
+target lever expect @D4 block=air during 6..33
+target lever expect @D1 block=moving_piston during 34..35
+target lever expect @D1 block=stone during 36..50
+target lever expect @D2 block=stone during 36..50
+target lever expect @D3 block=stone during 36..50
+target lever expect @D4 block=stone during 36..50
+
+target new button "a stone button (20 ticks) keeps it open 6..25"
+target button do at 2 use @B
+target button expect @D1 block=air during 6..25
+target button expect @D4 block=air during 6..25
+target button expect @D1 block=stone during 28..40
+
+target new short "failure case: a 2-tick input pulse does nothing (the repeaters pass it as a circuit-made 2-tick pulse, which the torches ignore); 3 ticks open it"
+target short do at 2 use @L
+target short do at 4 use @L
+target short do at 20 use @L
+target short do at 23 use @L
+target short expect @D1 block=stone during 0..19
+target short expect @D1 block=air during 24..25
+target short expect @D1 block=stone during 30..40
+
+check

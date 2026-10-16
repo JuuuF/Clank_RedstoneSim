@@ -52,6 +52,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Observer clock]] | free-running, 2 on / 4 off | 2×1×1 | — | `observer_clock` |
 | [[#Hopper clock]] | long periods: 16·N − 2 ticks for N items, with stop | 10×2×5 | — | `hopper_clock` |
 | [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
+| [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
 
 ## Gates
 
@@ -391,6 +392,30 @@ k+1's bulb, so bit k+1 toggles when bit k falls. `counter4.cli.txt`. **Verified.
   counter starts at 0 with no reset step. The NOT gate's input block takes the comparator
   output directly (a comparator strongly powers the block it points into).
 
+### 2x2 piston door
+
+Four sticky pistons, two per side, hold the door stones; a wall torch per side inverts the
+input. `piston_door_2x2.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| DOOR | 4..5 0..1 0 | the four door cells (seen from the south) |
+| IN | 4 0 2 | the input wire bus (0..9 0 2): power any part of it to open |
+
+- **Behavior:** input on → all four cells clear **4 ticks** later (pistons retract in the
+  tick the torches go out: same-tick start, [[R-009-pistons]]); input off → the stones
+  start moving back after **4 ticks** and are solid after **6**.
+- **Pulses:** the door stays open as long as the input; a stone button opens it for 20
+  ticks (cells clear 6..25). **Failure case:** an input pulse of 2 ticks or less does
+  nothing (the repeaters turn it into a circuit-made 2-tick pulse, which the torches
+  ignore, R-003); 3 ticks open it briefly.
+- **Design notes:** each torch hangs on its own input block, which touches no piston; the
+  torch powers the lower piston directly and the upper one through the stone above the
+  torch (a torch strongly powers the block above it). **Pitfall found:** the first build
+  stood the torch on a block next to the lower piston; the input powering that block also
+  powered the piston, so the lower half never opened (V).
+- **Floor:** the door stones rest on the floor and are not slime: nothing else moves.
+
 ## Composition rules
 
 To be filled as primitives are combined: how far apart modules must be, which outputs
@@ -409,6 +434,9 @@ may drive which inputs, timing budgets. Known so far:
   initial glitch: check the first ticks after pasting.
 - Free-running modules (the [[#Observer clock]]) do not start after a paste: no scheduled
   ticks are pasted.
+- **Check what else an input powers:** a block powered to drive one component powers
+  every component touching it (the first piston door: the torch's input block also
+  powered a piston). Keep input blocks away from components they must not drive.
 - **Balance path delays** into any gate whose inputs may change in the same tick: an
   input that arrives 2 ticks early makes a 2-tick glitch (a false 1 or a dropout). Add
   delay-1 repeaters to the faster paths ([[R-010-hazards]]).
