@@ -1,0 +1,65 @@
+# Composition: monostable (one input edge -> output on for exactly D ticks). Contract: doc/redstone/circuits.md, "Monostable".
+#
+# Module (box 0 1 -5 .. 4 1 2, output east):
+#   @A      0 1 0   input wire: drive it from the west; its rising edge starts the timer
+#   @Q      4 1 0   output: comparator reading the bulb; on for D = 64 ticks
+#   @BULB   3 1 0   copper bulb: the state
+# Built from examples/circuits/rising_edge.nbt (at 0 1 0: @A, its comparator 1 1 0 makes
+# a 4-tick pulse P on each rising edge) and a copper bulb (the T flip-flop). P powers the
+# stone 2 1 0, which toggles the bulb at once (bulb on) and starts a delay line of eight
+# delay-4 repeaters (2 1 -1 .. 2 1 -4 north, 3 1 -4 .. 3 1 -1 south, 64 ticks) whose end
+# points into the bulb: the same pulse, 64 ticks later, toggles it off. Duration =
+# total delay of the line (8 ticks per delay-4 repeater; change their delays to tune).
+# Test harness: lever @L west of @A.
+#   redsim-cli monostable.redsim.json < examples/circuits/monostable.cli.txt
+new size 32 force
+note "Monostable: a rising edge at @A turns @Q on for 64 ticks (4 ticks after the edge), whatever the input does meanwhile; not retriggerable"
+import examples/circuits/rising_edge.nbt at 0 1 0
+place 2 1 0 stone
+set 3 1 0 copper_bulb[lit=false,powered=false]
+place 4 1 0 comparator out=east
+place 2 1 -1 repeater out=north delay=4
+place 2 1 -2 repeater out=north delay=4
+place 2 1 -3 repeater out=north delay=4
+place 2 1 -4 repeater out=north delay=4
+place 2 1 -5 redstone_wire
+place 3 1 -5 redstone_wire
+place 3 1 -4 repeater out=south delay=4
+place 3 1 -3 repeater out=south delay=4
+place 3 1 -2 repeater out=south delay=4
+place 3 1 -1 repeater out=south delay=4
+label A 0 1 0 "input: wire, driven from the west"
+label P 1 1 0 "rising-edge pulse (4 ticks)"
+label BULB 3 1 0 "state: copper bulb"
+label Q 4 1 0 "output: comparator reading the bulb"
+group monostable 0 1 -5 4 1 2 in @A A out @Q Q
+prefab save monostable 0 1 -5 4 1 2
+# harness
+place -1 1 0 lever face=floor
+label L -1 1 0 "test lever"
+settle
+
+target new pulse "a short press: Q on 6..69 (64 ticks, from 4 ticks after the edge)"
+target pulse do at 2 use @L
+target pulse do at 8 use @L
+target pulse expect @Q power=0 at 5
+target pulse expect @Q power=15 during 6..69
+target pulse expect @Q power=0 during 70..100
+
+target new held "the input held on for 100 ticks: still exactly 64 ticks (only the edge counts)"
+target held do at 2 use @L
+target held do at 102 use @L
+target held expect @Q power=15 during 6..69
+target held expect @Q power=0 during 70..110
+
+target new retrigger "failure case: a second edge while it runs toggles the bulb early (off at 32) and the echoes of both edges toggle it again later"
+target retrigger do at 2 use @L
+target retrigger do at 8 use @L
+target retrigger do at 28 use @L
+target retrigger do at 34 use @L
+target retrigger expect @Q power=15 during 6..31
+target retrigger expect @Q power=0 during 32..69
+target retrigger expect @Q power=15 during 70..95
+target retrigger expect @Q power=0 during 96..120
+
+check

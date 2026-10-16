@@ -27,7 +27,8 @@ with the record that answered it.
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
    - [x] edge detectors (rising, falling, both)
-   - [ ] pulse extender (long pulses), monostable with long delay lines
+   - [x] monostable (exact duration from a delay line and a copper bulb)
+   - [ ] retriggerable monostable / off-delay timer
    - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)

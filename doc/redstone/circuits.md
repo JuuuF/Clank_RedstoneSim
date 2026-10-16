@@ -53,6 +53,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Hopper clock]] | long periods: 16·N − 2 ticks for N items, with stop | 10×2×5 | — | `hopper_clock` |
 | [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
 | [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
+| [[#Monostable]] | one edge → output on for exactly D ticks (64) | 5×1×8 | 4 | `monostable` |
 
 ## Gates
 
@@ -415,6 +416,28 @@ input. `piston_door_2x2.cli.txt`. **Verified.**
   stood the torch on a block next to the lower piston; the input powering that block also
   powered the piston, so the lower half never opened (V).
 - **Floor:** the door stones rest on the floor and are not slime: nothing else moves.
+
+### Monostable
+
+A rising edge turns the output on for exactly D ticks, whatever the input does
+meanwhile: a [[#Rising-edge detector]] makes a 4-tick pulse that toggles a copper bulb
+on at once and, through a delay line, off again D ticks later. `monostable.cli.txt`
+(pasted from `rising_edge.nbt` plus a bulb and repeaters). **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A | 0 0 5 | input wire; drive it from the west (script: 0 1 0) |
+| Q | 4 0 5 | comparator reading the bulb (script: 4 1 0) |
+
+- **Behavior:** Q on **4 ticks** after A rises, for **D = 64 ticks** (eight delay-4
+  repeaters, 8 ticks each). A held input still gives exactly D (only the edge counts).
+- **Tuning:** D = the delay line's total (each repeater 2·delay ticks); keep D > 8 so the
+  echo does not overlap the 4-tick start pulse (stretched to 8 by the line's repeaters).
+- **Failure case (not retriggerable):** a second edge while it runs toggles the bulb off
+  early, and the two echoes toggle it on and off again later (tested: edges at 2 and 28
+  → Q on 6..31, off 32..69, on 70..95). Block re-triggers upstream if needed.
+- **Why a bulb:** it toggles on rising edges of its power only, so the start pulse and
+  its echo (both through the same bulb) give one clean on-off.
 
 ## Composition rules
 
