@@ -54,6 +54,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
 | [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
 | [[#Monostable]] | one edge → output on for exactly D ticks (64) | 5×1×8 | 4 | `monostable` |
+| [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
 
 ## Gates
 
@@ -439,6 +440,36 @@ on at once and, through a delay line, off again D ticks later. `monostable.cli.t
 - **Why a bulb:** it toggles on rising edges of its power only, so the start pulse and
   its echo (both through the same bulb) give one clean on-off.
 
+### Combination lock
+
+Four levers compared to a key (1 0 1 1); right → `OPEN` lights and the [[#2x2 piston
+door]] (pasted from its `.nbt`) opens. `combination_lock.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| K0…K3 | 0, 2, 4, 6 (x), 0 0 0 | levers on the north faces of the key stones |
+| OPEN | 10 0 2 | wall torch: lit only while all four levers match the key |
+| DOOR | 6..7 0..1 6 | the door cells |
+
+- **How:** a "wrong" bus of wire runs beside the key stones (y = 2). A key-1 lever's
+  stone carries a torch next to the bus (lit = lever off = wrong); a key-0 lever's stone
+  carries a wire that joins the bus (lever on = stone strongly powered = wrong). OPEN is
+  a torch on the stone the bus points into: a NOR of the wrong terms. Change the key by
+  swapping torch and wire on a stone.
+- **Behavior:** all 16 lever combinations checked: OPEN only for 1 0 1 1. OPEN lights 4
+  ticks after the last right lever (a key-1 lever: its torch 2 + OPEN 2; a key-0 lever
+  turned off: 2); the door opens 10 ticks after it (route repeater 2, door 4 + 2… cells
+  clear at +10); a wrong lever closes it (moving at +8, solid at +10).
+- **Integration findings (V, both in the first build):**
+  1. Torches placed **in** the bus line split it: power does not pass through a torch, so
+     a wrong key-0 lever west of a torch never reached OPEN. Put torches *beside* a bus.
+  2. The route from OPEN to the door ran past the door's input block. When the door
+     opened, that block was strongly powered, the passing wire took its power (R-002)
+     and fed the bus: the door **latched open**. Keep wires one block away from blocks
+     other circuits power strongly.
+  3. Fed from its far end, the door's 10-wire bus lost too much strength to reach the
+     other side: one door half did not open. A repeater right before the bus fixed it.
+
 ## Composition rules
 
 To be filled as primitives are combined: how far apart modules must be, which outputs
@@ -457,6 +488,12 @@ may drive which inputs, timing budgets. Known so far:
   initial glitch: check the first ticks after pasting.
 - Free-running modules (the [[#Observer clock]]) do not start after a paste: no scheduled
   ticks are pasted.
+- **Wires beside strongly powered blocks pick up their power** (R-002): a wire routed past
+  another circuit's input block can feed that circuit back into itself (the combination
+  lock's door latched open). Keep one block of space.
+- **Do not put components in a wire line** you want to stay one net: torches, repeaters
+  and comparators split it (the combination lock's bus).
+- **Mind wire length:** 15 wires from a 15 source; put a repeater right before long buses.
 - **Check what else an input powers:** a block powered to drive one component powers
   every component touching it (the first piston door: the torch's input block also
   powered a piston). Keep input blocks away from components they must not drive.

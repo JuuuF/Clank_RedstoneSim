@@ -1,0 +1,74 @@
+# Composition: 4-lever combination lock opening the 2x2 piston door. Contract: doc/redstone/circuits.md, "Combination lock".
+#
+# Lock (y=1..2, z=0..2): levers K0..K3 on the north faces of stones at x=0,2,4,6; the key
+# is 1 0 1 1. A "wrong" bus of wire runs on stones along z=2 (y=2). For a key bit 1, a
+# torch on top of the lever's stone sits beside the bus: lit (wrong) while that lever is
+# off. For a key bit 0, a wire on top of the lever's stone joins the bus: the lever on
+# (wrong) powers its stone strongly and so the wire. The bus steps down into a stone with
+# a torch: @OPEN is lit only while nothing is wrong (a NOR of the wrong terms).
+# Change the key: swap torch and wire on top of a lever's stone.
+# Door: examples/circuits/piston_door_2x2.nbt pasted at 2 1 6 (cells 6..7 1..2 6, bus
+# z=8); OPEN's wire runs east and south to the bus, through a repeater right before it.
+# Two first-build bugs are recorded in the contract: torches *in* the bus line split it
+# (power does not pass a torch), and a route wire passing beside the door's input block
+# took that block's strong power and latched the bus on.
+#   redsim-cli combination_lock.redsim.json < examples/circuits/combination_lock.cli.txt
+new size 48 force
+note "Combination lock: levers @K0..@K3 = 1 0 1 1 light @OPEN (4 ticks after the last right lever) and open the door 10 ticks after it"
+place 0 1 1 stone
+place 2 1 1 stone
+place 4 1 1 stone
+place 6 1 1 stone
+place 0 1 0 lever face=wall facing=north
+place 2 1 0 lever face=wall facing=north
+place 4 1 0 lever face=wall facing=north
+place 6 1 0 lever face=wall facing=north
+fill 0 1 2 7 1 2 stone
+place 0 2 1 redstone_torch
+place 2 2 1 redstone_wire
+place 4 2 1 redstone_torch
+place 6 2 1 redstone_torch
+line 0 2 2 to 7 2 2 redstone_wire
+place 8 1 2 redstone_wire
+place 9 1 2 stone
+place 10 1 2 redstone_wall_torch facing=east
+label K0 0 1 0 "lever 0 (key 1)"
+label K1 2 1 0 "lever 1 (key 0)"
+label K2 4 1 0 "lever 2 (key 1)"
+label K3 6 1 0 "lever 3 (key 1)"
+label WRONG 8 1 2 "wire: on while any lever is wrong"
+label OPEN 10 1 2 "torch: lit while the combination is right"
+line 11 1 2 to 12 1 2 redstone_wire
+place 12 1 3 redstone_wire
+place 12 1 4 redstone_wire
+place 12 1 5 redstone_wire
+line 13 1 5 to 13 1 6 redstone_wire
+place 13 1 7 repeater out=south
+place 13 1 8 redstone_wire
+place 12 1 8 redstone_wire
+import examples/circuits/piston_door_2x2.nbt at 2 1 6
+label D1 6 1 6
+label D4 7 2 6
+group combination_lock 0 1 0 13 2 8 in @K0 K0 in @K1 K1 in @K2 K2 in @K3 K3 out @OPEN OPEN out @D1 DOOR
+settle
+prefab save combination_lock 0 1 0 13 2 8
+
+target new key "OPEN only for K0 K1 K2 K3 = 1 0 1 1"
+target key truth @K0 @K1 @K2 @K3 -> @OPEN rows 0000:0 0001:0 0010:0 0011:0 0100:0 0101:0 0110:0 0111:0 1000:0 1001:0 1010:0 1011:1 1100:0 1101:0 1110:0 1111:0
+
+target new door "set the key (last lever at 6): door cells clear at 16; one lever wrong at 20: closing from 28, solid at 30; right again at 30: open at 38"
+target door do at 2 use @K0
+target door do at 4 use @K2
+target door do at 6 use @K3
+target door do at 20 use @K1
+target door do at 30 use @K1
+target door expect @OPEN lit=false at 9
+target door expect @OPEN lit=true during 10..21
+target door expect @D1 block=stone during 0..15
+target door expect @D1 block=air during 16..27
+target door expect @D4 block=air during 16..27
+target door expect @D1 block=stone during 30..37
+target door expect @D1 block=air during 38..50
+target door expect @D4 block=air during 38..50
+
+check
