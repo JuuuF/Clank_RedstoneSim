@@ -7,13 +7,14 @@ The rest of `doc/` describes how the simulator is built (ported from the game's 
 this part describes **how redstone behaves and how to use it**: rules, timings, circuit
 building blocks with contracts, and the experiments behind them.
 
-Start with [[timing]] (how long everything takes) and [[signals]] (what powers what),
-then pick building blocks from [[circuits]].
+Start with the one-page [[cheatsheet]], then [[timing]] (how long everything takes) and
+[[signals]] (what powers what), and pick building blocks from [[circuits]].
 
 ## Pages
 
 | Page | What it holds |
 |---|---|
+| [[cheatsheet]] | The most-used numbers and rules on one page |
 | [[timing]] | Measured delays, pulse lengths and durations of every component, in game ticks |
 | [[signals]] | How power travels: sources, strong and weak power, wire, conductors, what activates components |
 | [[components]] | Per component: inputs, outputs, state, timing, edge cases (rules extracted from the records) |

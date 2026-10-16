@@ -18,7 +18,9 @@ Start here:
    base: measured timings, power rules, component behavior, validated circuit primitives
    with contracts, the experiment records behind them and the research backlog. Read
    [timing](doc/redstone/timing.md) and [signals](doc/redstone/signals.md) before
-   designing; reuse [circuits](doc/redstone/circuits.md); add what you learn.
+   designing (the one-page [cheat sheet](doc/redstone/cheatsheet.md) first); reuse
+   [circuits](doc/redstone/circuits.md); for a request in words follow
+   [workflow](doc/redstone/workflow.md); add what you learn.
 
 Running it: `redsim-cli WORLD COMMAND …` after `pip install -e .`, or
 `PYTHONPATH=src python -m redsim.cli WORLD COMMAND …` from the repository root. Scripts:

@@ -21,7 +21,7 @@ example world: [[tour]].
 
 - **Command line (agents and people):** [[cli]] · [[cli-reference]] · [[cli-internals]]
 - **Redstone engineering knowledge base** (how redstone behaves and how to build with it,
-  from experiments): [[redstone/README]] · [[timing]] · [[signals]] · [[components]] ·
+  from experiments): [[redstone/README]] · [[cheatsheet]] · [[timing]] · [[signals]] · [[components]] ·
   [[circuits]] · [[workflow]] · [[backlog]]
 - **Project:** [[project-state]] · [[differences]] · [[feedback-status]] · [[refactor-plan]] · [[todo-pass]] · [[tutorial]] · [[tour]] · [[controls]] · [[ui-direction]] · [[architecture]] · [[decisions]] · [[roadmap]] · [[implementation-notes]] · [[world-import]]
 - **Research:** [[research/repository-report]] · [[research/source-map]] · [[research/open-questions]] · [[research/wiki-hints]]
