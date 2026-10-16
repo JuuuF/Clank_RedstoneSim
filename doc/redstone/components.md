@@ -50,6 +50,8 @@ Evidence labels: [[redstone/README#Scope and trust]].
   observers). Locked, it holds its output and ignores input changes (a change already
   waiting is dropped); unlocked, it re-reads the input and switches after its delay.
   V [[R-006-repeater-locking]]
+- A chain of latches on one lock bus released for 3–4 ticks moves data exactly one stage
+  (2: none; 5+: race-through). V [[R-021-unlock-window]]
 
 ## Comparator
 

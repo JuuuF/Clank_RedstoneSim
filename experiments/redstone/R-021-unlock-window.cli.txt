@@ -1,0 +1,146 @@
+# R-021: how long may a chain of latches be unlocked? (doc/redstone/records/R-021-unlock-window.md)
+#
+# Four copies of a 4-latch chain (repeaters facing east, wire between, each with a lock
+# repeater on its north side fed by one lock bus whose lever is on = all locked). A data
+# lever at the west end goes on at 4 and off at 34; the bus is switched off for w ticks
+# at 10, 30 and 50, with w = 2, 3, 4, 5 in the four copies.
+#   redsim-cli r021.redsim.json < experiments/redstone/R-021-unlock-window.cli.txt
+new size 64 force
+note "R-021: a shared lock bus opened for 3-4 ticks moves a latch chain exactly one stage; 2 ticks: nothing; 5: two stages"
+place -1 1 -24 lever face=floor
+label D2 -1 1 -24
+place 0 1 -24 repeater out=east
+place 0 1 -25 repeater out=south
+label Q2_0 0 1 -24
+place 1 1 -24 redstone_wire
+place 2 1 -24 repeater out=east
+place 2 1 -25 repeater out=south
+label Q2_1 2 1 -24
+place 3 1 -24 redstone_wire
+place 4 1 -24 repeater out=east
+place 4 1 -25 repeater out=south
+label Q2_2 4 1 -24
+place 5 1 -24 redstone_wire
+place 6 1 -24 repeater out=east
+place 6 1 -25 repeater out=south
+label Q2_3 6 1 -24
+line -1 1 -26 to 6 1 -26 redstone_wire
+place -2 1 -26 lever face=floor
+label EN2 -2 1 -26
+place -1 1 -16 lever face=floor
+label D3 -1 1 -16
+place 0 1 -16 repeater out=east
+place 0 1 -17 repeater out=south
+label Q3_0 0 1 -16
+place 1 1 -16 redstone_wire
+place 2 1 -16 repeater out=east
+place 2 1 -17 repeater out=south
+label Q3_1 2 1 -16
+place 3 1 -16 redstone_wire
+place 4 1 -16 repeater out=east
+place 4 1 -17 repeater out=south
+label Q3_2 4 1 -16
+place 5 1 -16 redstone_wire
+place 6 1 -16 repeater out=east
+place 6 1 -17 repeater out=south
+label Q3_3 6 1 -16
+line -1 1 -18 to 6 1 -18 redstone_wire
+place -2 1 -18 lever face=floor
+label EN3 -2 1 -18
+place -1 1 -8 lever face=floor
+label D4 -1 1 -8
+place 0 1 -8 repeater out=east
+place 0 1 -9 repeater out=south
+label Q4_0 0 1 -8
+place 1 1 -8 redstone_wire
+place 2 1 -8 repeater out=east
+place 2 1 -9 repeater out=south
+label Q4_1 2 1 -8
+place 3 1 -8 redstone_wire
+place 4 1 -8 repeater out=east
+place 4 1 -9 repeater out=south
+label Q4_2 4 1 -8
+place 5 1 -8 redstone_wire
+place 6 1 -8 repeater out=east
+place 6 1 -9 repeater out=south
+label Q4_3 6 1 -8
+line -1 1 -10 to 6 1 -10 redstone_wire
+place -2 1 -10 lever face=floor
+label EN4 -2 1 -10
+place -1 1 0 lever face=floor
+label D5 -1 1 0
+place 0 1 0 repeater out=east
+place 0 1 -1 repeater out=south
+label Q5_0 0 1 0
+place 1 1 0 redstone_wire
+place 2 1 0 repeater out=east
+place 2 1 -1 repeater out=south
+label Q5_1 2 1 0
+place 3 1 0 redstone_wire
+place 4 1 0 repeater out=east
+place 4 1 -1 repeater out=south
+label Q5_2 4 1 0
+place 5 1 0 redstone_wire
+place 6 1 0 repeater out=east
+place 6 1 -1 repeater out=south
+label Q5_3 6 1 0
+line -1 1 -2 to 6 1 -2 redstone_wire
+place -2 1 -2 lever face=floor
+label EN5 -2 1 -2
+use @EN2
+use @EN3
+use @EN4
+use @EN5
+settle
+
+target new windows "w=2: nothing moves; w=3 and 4: one stage per window; w=5: data races two stages"
+target windows do at 4 use @D2
+target windows do at 34 use @D2
+target windows do at 10 use @EN2
+target windows do at 12 use @EN2
+target windows do at 30 use @EN2
+target windows do at 32 use @EN2
+target windows do at 50 use @EN2
+target windows do at 52 use @EN2
+target windows do at 4 use @D3
+target windows do at 34 use @D3
+target windows do at 10 use @EN3
+target windows do at 13 use @EN3
+target windows do at 30 use @EN3
+target windows do at 33 use @EN3
+target windows do at 50 use @EN3
+target windows do at 53 use @EN3
+target windows do at 4 use @D4
+target windows do at 34 use @D4
+target windows do at 10 use @EN4
+target windows do at 14 use @EN4
+target windows do at 30 use @EN4
+target windows do at 34 use @EN4
+target windows do at 50 use @EN4
+target windows do at 54 use @EN4
+target windows do at 4 use @D5
+target windows do at 34 use @D5
+target windows do at 10 use @EN5
+target windows do at 15 use @EN5
+target windows do at 30 use @EN5
+target windows do at 35 use @EN5
+target windows do at 50 use @EN5
+target windows do at 55 use @EN5
+target windows expect @Q2_0 powered=false during 0..80
+target windows expect @Q2_1 powered=false during 0..80
+target windows expect @Q3_0 powered=true during 14..53
+target windows expect @Q3_0 powered=false during 54..80
+target windows expect @Q3_1 powered=false during 0..33
+target windows expect @Q3_1 powered=true during 34..80
+target windows expect @Q3_2 powered=true during 54..80
+target windows expect @Q3_3 powered=false during 0..80
+target windows expect @Q4_0 powered=true during 14..53
+target windows expect @Q4_0 powered=false during 54..80
+target windows expect @Q4_1 powered=false during 0..33
+target windows expect @Q4_1 powered=true during 34..80
+target windows expect @Q4_2 powered=true during 54..80
+target windows expect @Q4_3 powered=false during 0..80
+target windows expect @Q5_1 powered=true at 16
+target windows expect @Q5_3 powered=true during 36..80
+
+check
