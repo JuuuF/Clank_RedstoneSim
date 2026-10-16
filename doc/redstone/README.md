@@ -134,6 +134,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-008-observers]] | What an observer sees | [[components]] Observer | verified |
 | [[R-009-pistons]] | Pistons: limits, sticky and slime, quasi-connectivity, same-tick start | [[components]] Piston, [[timing]] | verified |
 | [[R-010-hazards]] | Glitches from unequal path delays; balancing | [[circuits]] composition rules | verified |
+| [[R-011-hoppers]] | Hoppers and droppers as timing elements | [[timing]] items, [[components]] Hopper | verified |
 
 ## Status
 

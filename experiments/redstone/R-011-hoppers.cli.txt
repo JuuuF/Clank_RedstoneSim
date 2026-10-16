@@ -1,0 +1,98 @@
+# R-011: hoppers and droppers as timing elements (doc/redstone/records/R-011-hoppers.md)
+#
+# Rows: a hopper holding 1, 2 or 5 stone, locked by a lever beside it, draining east into
+# a barrel when unlocked at tick 2, a comparator reading it (D1, D2, D5); a lever, a
+# dropper with one stone firing into three hoppers in a row and a barrel (CHAIN); a
+# hopper with 5 stone unlocked at 2, locked again at 12 and unlocked at 30 (RELOCK).
+#   redsim-cli r011.redsim.json < experiments/redstone/R-011-hoppers.cli.txt
+new size 48 force
+note "R-011: hopper drain and travel times (8 ticks per item, 7 per hop), locking, dropper into hoppers"
+place 0 1 -20 hopper facing=east
+container 0 1 -20 0 stone 1
+label H_D1 0 1 -20
+place 1 1 -20 barrel
+label BAR_D1 1 1 -20
+place 0 1 -19 comparator out=south
+label C_D1 0 1 -19
+place -1 1 -20 lever face=floor
+use -1 1 -20
+label L_D1 -1 1 -20
+place 0 1 -16 hopper facing=east
+container 0 1 -16 0 stone 2
+label H_D2 0 1 -16
+place 1 1 -16 barrel
+label BAR_D2 1 1 -16
+place 0 1 -15 comparator out=south
+label C_D2 0 1 -15
+place -1 1 -16 lever face=floor
+use -1 1 -16
+label L_D2 -1 1 -16
+place 0 1 -12 hopper facing=east
+container 0 1 -12 0 stone 5
+label H_D5 0 1 -12
+place 1 1 -12 barrel
+label BAR_D5 1 1 -12
+place 0 1 -11 comparator out=south
+label C_D5 0 1 -11
+place -1 1 -12 lever face=floor
+use -1 1 -12
+label L_D5 -1 1 -12
+place -2 1 0 lever face=floor
+label L_CHAIN -2 1 0
+place -1 1 0 dropper facing=east
+container -1 1 0 0 stone 1
+place 0 1 0 hopper facing=east
+place 1 1 0 hopper facing=east
+place 2 1 0 hopper facing=east
+place 3 1 0 barrel
+label H1 0 1 0
+label H2 1 1 0
+label H3 2 1 0
+label BAR_CHAIN 3 1 0
+place 0 1 8 hopper facing=east
+container 0 1 8 0 stone 5
+place 1 1 8 barrel
+place 0 1 9 comparator out=south
+place -1 1 8 lever face=floor
+use -1 1 8
+label H_RELOCK 0 1 8
+label BAR_RELOCK 1 1 8
+label L_RELOCK -1 1 8
+settle
+
+target new drain "unlocked at 2, a hopper moves its first item at once (tick 3) and one more every 8 ticks; its comparator turns off 2 ticks after it is empty"
+target drain do at 2 use @L_D1
+target drain do at 2 use @L_D2
+target drain do at 2 use @L_D5
+target drain expect @BAR_D1 analog=0 at 2
+target drain expect @BAR_D1 analog=1 at 3
+target drain expect @H_D1 analog=0 at 3
+target drain expect @C_D1 power=1 at 4
+target drain expect @C_D1 power=0 at 5
+target drain expect @H_D2 analog=1 at 10
+target drain expect @H_D2 analog=0 at 11
+target drain expect @C_D2 power=0 at 13
+target drain expect @H_D5 analog=1 at 34
+target drain expect @H_D5 analog=0 at 35
+target drain expect @C_D5 power=1 at 36
+target drain expect @C_D5 power=0 at 37
+
+target new chain "a dropper fires 4 ticks after its lever; the item then spends 7 ticks in each hopper of a chain"
+target chain do at 2 use @L_CHAIN
+target chain expect @H1 analog=0 at 5
+target chain expect @H1 analog=1 during 6..12
+target chain expect @H2 analog=1 during 13..19
+target chain expect @H3 analog=1 during 20..26
+target chain expect @BAR_CHAIN analog=0 at 26
+target chain expect @BAR_CHAIN analog=1 at 27
+
+target new relock "locked at 12 after 2 items (3, 11), unlocked at 30: it moves on its next tick (31) and every 8 after (39, 47): empty at 47, not 35"
+target relock do at 2 use @L_RELOCK
+target relock do at 12 use @L_RELOCK
+target relock do at 30 use @L_RELOCK
+target relock expect @H_RELOCK enabled=false during 12..29
+target relock expect @H_RELOCK enabled=true at 30
+target relock expect @H_RELOCK analog=1 at 46
+target relock expect @H_RELOCK analog=0 at 47
+
+check

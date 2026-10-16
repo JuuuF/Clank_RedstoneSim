@@ -73,6 +73,15 @@ first: higher priority or scheduled earlier). Details: R-003.
 - A sticky piston needs a pulse of **3 ticks or more** to bring its block back.
 - A repeater with delay D is also a *pulse extender to D* and a *gap filler below D*.
 
+## Items (R-011)
+
+| Element | Time | Evidence |
+|---|---|---|
+| Hopper with N items, unlocked | empty after 1 + 8·(N − 1) ticks; its comparator off 2 later | V [[R-011-hoppers]] |
+| Item through a hopper chain | 7 ticks per hopper | V R-011, G EXP-038 |
+| Dropper → first hopper | 4 ticks after the dropper's rising edge | V R-011 |
+| Hopper unlocked | moves on the next tick | V R-011, G EXP-039 |
+
 ## Torch burnout (R-007)
 
 A torch burns out on its **8th turn-off within 60 ticks**: switching it off every 8 ticks

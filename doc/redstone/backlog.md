@@ -17,8 +17,7 @@ with the record that answered it.
    - [x] R-007 torch burnout thresholds and recovery
    - [x] R-008 observers: what they see (state changes only), chains
    - [x] R-009 pistons: push limit, immovable blocks, slime and honey, QC and BUD, same-tick start
-   - [ ] R-011 copper bulb, dropper/hopper and note block as circuit elements (hopper
-     clocks, item counters)
+   - [x] R-011 hoppers and droppers as timing elements (drain, travel, locking)
 3. **Interactions and timing inside a tick**
    - [x] R-010 glitches from unequal path delays; balancing
    - [ ] R-012 races: two signals arriving in the same tick (repeater priorities, piston
@@ -60,3 +59,4 @@ with the record that answered it.
 | Observers see state changes only (not comparator strength or container contents) | [[components]] | [[R-008-observers]] |
 | Pistons: limits, slime grabs the floor, QC/BUD, same-tick start from circuits | [[components]] | [[R-009-pistons]] |
 | H3: balancing path delays removes the compact AND's (and XOR's) glitch | [[circuits]] | [[R-010-hazards]] |
+| Hopper drain 1+8(N-1) ticks, 7 ticks per hop, lock pauses | [[timing]] | [[R-011-hoppers]] |

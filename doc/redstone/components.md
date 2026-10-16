@@ -112,6 +112,13 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - The copper bulb toggles once for every pulse, even a 1-tick one; a dropper fires once
   per pulse of any length. V R-003
 
+## Hopper
+
+- Moves one item per 8 ticks (block-entity phase); locked while powered (Δ 0). Unlocked,
+  it moves on the next tick. N items empty in 1 + 8·(N − 1) ticks; an item crosses a
+  straight chain at 7 ticks per hopper. A comparator reads its fill (5 slots). Pistons
+  cannot move it (block entity). V [[R-011-hoppers]]
+
 ## Buttons and levers
 
 - A lever stays until flipped; a stone button is on for 20 ticks, an oak button for 30.
