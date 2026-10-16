@@ -1,0 +1,194 @@
+# R-018: pistons making 0-tick pulses (doc/redstone/records/R-018-piston-zero-tick.md)
+#
+# Part 1, spitting: a sticky piston with a redstone block in front, powered for 1, 2, 3
+# ticks by a lever and for 2 ticks by an observer. When does the block arrive at D, the
+# cell in front of the head?
+# Part 2, generators: a redstone block reaches cell D and a piston P beside D, quasi-
+# powered but never updated (BUD), is woken by the arrival and pushes it out again.
+#   G0: the block lands normally (block-entity phase) and P pushes it at the next tick's
+#       block events: a 1-tick pulse.
+#   G1-G5: the block is spat into D (placed in the block-event phase by the sticky
+#       piston's retract) and P pushes it out in the same block-event phase: a 0-tick
+#       pulse. Probes beside D: a sticky piston, a lamp, a copper bulb (G1), a normal
+#       piston (G1b), a repeater (G2), a comparator (G3), sticky pistons updated before
+#       and after P (G5: P above D).
+#   redsim-cli r018.redsim.json < experiments/redstone/R-018-piston-zero-tick.cli.txt
+new size 48 force
+note "R-018: a sticky piston that loses power while its block moves places it at once (spit); a spat redstone block pushed out by a BUD piston in the same block-event phase is a 0-tick pulse that pistons updated before the remover still react to"
+
+# --- Part 1: spit timing (D = the cell in front of the head)
+place -1 1 -22 lever face=floor
+place 0 1 -22 sticky_piston facing=east
+set 1 1 -22 redstone_block
+label T1 -1 1 -22
+label D1 2 1 -22
+place -1 1 -19 lever face=floor
+place 0 1 -19 sticky_piston facing=east
+set 1 1 -19 redstone_block
+label T2 -1 1 -19
+label D2 2 1 -19
+place -1 1 -16 lever face=floor
+place 0 1 -16 sticky_piston facing=east
+set 1 1 -16 redstone_block
+label T3 -1 1 -16
+label D3 2 1 -16
+place -2 1 -13 lever face=floor
+place -1 1 -13 observer out=east
+place 0 1 -13 sticky_piston facing=east
+set 1 1 -13 redstone_block
+label TO -2 1 -13
+label DO 2 1 -13
+
+# --- G0: normal landing, then a BUD piston pushes it out (1-tick pulse)
+place -1 1 -8 lever face=floor
+place 0 1 -8 sticky_piston facing=east
+set 1 1 -8 redstone_block
+label L0 -1 1 -8
+label G0 2 1 -8
+place 2 1 -7 piston facing=north
+set 2 3 -7 redstone_block
+place 3 1 -8 repeater out=east
+label REP0 3 1 -8
+
+# --- G1: spit east into D; P south of D (updated last) pushes it north
+place -2 1 -2 lever face=floor
+place -1 1 -2 observer out=east
+place 0 1 -2 sticky_piston facing=east
+set 1 1 -2 redstone_block
+label L1 -2 1 -2
+label G1 2 1 -2
+place 2 1 -1 piston facing=north
+set 2 3 -1 redstone_block
+place 3 1 -2 sticky_piston facing=east
+place 4 1 -2 stone
+label X1 3 1 -2
+label X1A 4 1 -2
+label X1B 5 1 -2
+place 2 2 -2 redstone_lamp
+label LAMP1 2 2 -2
+set 2 0 -2 copper_bulb
+label BULB1 2 0 -2
+
+# --- G1b: as G1 with a normal piston east of D
+place -2 1 3 lever face=floor
+place -1 1 3 observer out=east
+place 0 1 3 sticky_piston facing=east
+set 1 1 3 redstone_block
+label L1B -2 1 3
+place 2 1 4 piston facing=north
+set 2 3 4 redstone_block
+place 3 1 3 piston facing=east
+place 4 1 3 stone
+label N1A 4 1 3
+label N1B 5 1 3
+
+# --- G2: a repeater east of D
+place -2 1 8 lever face=floor
+place -1 1 8 observer out=east
+place 0 1 8 sticky_piston facing=east
+set 1 1 8 redstone_block
+label L2 -2 1 8
+place 2 1 9 piston facing=north
+set 2 3 9 redstone_block
+place 3 1 8 repeater out=east
+label REP2 3 1 8
+
+# --- G3: a comparator east of D
+place -2 1 13 lever face=floor
+place -1 1 13 observer out=east
+place 0 1 13 sticky_piston facing=east
+set 1 1 13 redstone_block
+label L3 -2 1 13
+place 2 1 14 piston facing=north
+set 2 3 14 redstone_block
+place 3 1 13 comparator out=east
+label CMP3 3 1 13
+
+# --- G5: D = 20 2 0; spit from the west, P above D (4th in the order) pushes it down;
+#     sticky pistons east (2nd: before P), north and south (5th, 6th: after P)
+set 16 1 0 stone
+place 16 2 0 lever face=floor
+place 17 2 0 observer out=east
+place 18 2 0 sticky_piston facing=east
+set 19 2 0 redstone_block
+label L5 16 2 0
+label G5 20 2 0
+place 20 3 0 piston facing=down
+set 20 5 0 redstone_block
+place 21 2 0 sticky_piston facing=east
+set 22 2 0 stone
+label XEA 22 2 0
+label XEB 23 2 0
+place 20 2 -1 sticky_piston facing=north
+set 20 2 -2 stone
+label XNA 20 2 -2
+label XNB 20 2 -3
+place 20 2 1 sticky_piston facing=south
+set 20 2 2 stone
+label XSA 20 2 2
+label XSB 20 2 3
+settle
+
+target new spit "a sticky piston that loses power while its block moves places it at once: 1-tick lever pulse → in place at 4 (a full push lands at 5), 2-tick → 5, observer → 6; a 3-tick pulse pulls it back"
+target spit do at 2 use @T1
+target spit do at 3 use @T1
+target spit do at 2 use @T2
+target spit do at 4 use @T2
+target spit do at 2 use @T3
+target spit do at 5 use @T3
+target spit do at 2 use @TO
+target spit expect @D1 block=moving_piston at 3
+target spit expect @D1 block=redstone_block during 4..12
+target spit expect @D2 block=moving_piston during 3..4
+target spit expect @D2 block=redstone_block during 5..12
+target spit expect @D3 block=redstone_block at 5
+target spit expect @D3 block=air during 6..12
+target spit expect @DO block=moving_piston during 4..5
+target spit expect @DO block=redstone_block during 6..12
+
+target new onetick "G0: the block lands at 5 (block entities) and the BUD piston pushes it out at 6: on at D for view 5 only; the repeater turns it into a 2-tick pulse"
+target onetick do at 2 use @L0
+target onetick expect @G0 block=moving_piston during 3..4
+target onetick expect @G0 block=redstone_block at 5
+target onetick expect @G0 block=moving_piston at 6
+target onetick expect @REP0 powered=false during 0..6
+target onetick expect @REP0 powered=true during 7..8
+target onetick expect @REP0 powered=false during 9..14
+
+target new zerotick "G1-G3: spat into D and pushed out in tick 6's block events (never in D at a tick's end); sticky piston east of D moves its stone at once and is back; normal piston: stone lands at 8; lamp flashes 6..9; bulb toggles; repeater 8..9; comparator nothing"
+target zerotick do at 2 use @L1
+target zerotick do at 2 use @L1B
+target zerotick do at 2 use @L2
+target zerotick do at 2 use @L3
+target zerotick expect @G1 block!=redstone_block during 0..14
+target zerotick expect @G1 block=moving_piston at 6
+target zerotick expect @X1 extended=false during 0..5
+target zerotick expect @X1 block=moving_piston during 6..7
+target zerotick expect @X1 extended=false during 8..14
+target zerotick expect @X1A block=stone at 5
+target zerotick expect @X1A block=air during 6..14
+target zerotick expect @X1B block=stone during 6..14
+target zerotick expect @N1A block=air during 6..14
+target zerotick expect @N1B block=moving_piston during 6..7
+target zerotick expect @N1B block=stone during 8..14
+target zerotick expect @LAMP1 lit=false at 5
+target zerotick expect @LAMP1 lit=true during 6..9
+target zerotick expect @LAMP1 lit=false during 10..14
+target zerotick expect @BULB1 lit=true during 6..14
+target zerotick expect @BULB1 powered=false during 0..14
+target zerotick expect @REP2 powered=false during 0..7
+target zerotick expect @REP2 powered=true during 8..9
+target zerotick expect @REP2 powered=false during 10..14
+target zerotick expect @CMP3 power=0 during 0..14
+
+target new order "G5: P above D is 4th in D's update order (W, E, down, up, N, S): the sticky piston east (2nd) moves its stone at once, those north and south (5th, 6th) never move"
+target order do at 2 use @L5
+target order expect @G5 block=moving_piston at 6
+target order expect @XEA block=air during 6..14
+target order expect @XEB block=stone during 6..14
+target order expect @XNA block=stone during 0..14
+target order expect @XNB block=air during 0..14
+target order expect @XSA block=stone during 0..14
+target order expect @XSB block=air during 0..14
+
+check

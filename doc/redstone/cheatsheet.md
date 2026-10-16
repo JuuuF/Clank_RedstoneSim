@@ -40,9 +40,11 @@ All times in **game ticks** (20 per second). Details: [[timing]], [[signals]],
   repeaters**: stretch to 3+ ticks first ([[R-003-short-pulses]], exceptions
   [[R-012-same-tick-order]]).
 - Sticky pistons need 3+ ticks of power to pull their block back; shorter pulses leave
-  it ("spit").
-- A 0-tick pulse moves no piston, lights no comparator; repeaters, lamps, bulbs and
-  droppers react ([[R-013-zero-tick]]).
+  it ("spit"), in place at once when the power goes ([[R-018-piston-zero-tick]]).
+- A 0-tick pulse lights no comparator; repeaters, lamps, bulbs and droppers react
+  ([[R-013-zero-tick]]). It moves no piston when a player makes it; made by pistons
+  inside a tick, it moves pistons updated before it ends (order W, E, down, up, N, S):
+  a sticky one moves its block in 0 ticks ([[R-018-piston-zero-tick]]).
 - Copper bulbs and droppers react once per pulse, any length.
 
 ## Components

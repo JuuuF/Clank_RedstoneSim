@@ -33,6 +33,19 @@ bulb** toggles, a **dropper** fires (4 ticks later), an observer watching the ch
 block pulses once. **Comparators, torches, pistons** ignore it; wire shows nothing. V
 [[R-013-zero-tick]], G EXP-027.
 
+**Made by pistons** ([[R-018-piston-zero-tick]], G EXP-057): a redstone block spat into a
+cell (below) and pushed out again by a piston woken by its arrival (a BUD piston) is there
+for 0 ticks, inside one block-event phase. Repeaters, lamps and bulbs react as above and
+comparators do not, but **pistons can**: a piston beside the cell whose update came before
+the remover's (order around the cell: west, east, down, up, north, south) extends, and a
+sticky one moves its block one cell in 0 ticks. A block that lands normally and is pushed
+out the same way gives a 1-tick pulse.
+
+**Spit timing** (R-018): a sticky piston that loses power while its block still moves
+places the block at its destination at once, at its retract: a 1-tick lever pulse has the
+block in place 1 tick earlier than a full push (Δ 2 instead of 3 from the lever), a 2-tick
+lever pulse at the normal time, an observer's pulse 2 ticks after the start. V, G EXP-016.
+
 ## Durations of manual sources
 
 | Source | On for | Evidence |
@@ -126,6 +139,6 @@ lap. Used by the [[circuits]] Fade timer, Peak-hold register and Clock.
 
 ## Not measured yet
 
-Making 0-tick pulses with pistons (R-018), and timings of blocks the knowledge base has
+Timings of blocks the knowledge base has
 not used in circuits yet (composters, campfires, lecterns' page turns by circuits):
 [[backlog]].

@@ -25,7 +25,7 @@ with the record that answered it.
    - [x] R-014 rails, doors, gates, target blocks, lecterns
    - [x] R-015 observers moved by pistons; pulling across a gap (flying machines)
    - [x] R-016 falling blocks as timers and triggers
-   - [ ] R-018 making 0-tick pulses with pistons (block dropping, redstone block pushes)
+   - [x] R-018 making 0-tick pulses with pistons (spit + BUD push; spit timing; 0-tick piston moves)
    - [x] R-019 wire on partial blocks (supports, one-way steps); dropper quasi-connectivity
    - [x] R-020 vertical signal transmission compared
    - [x] R-021 latch chains: the unlock window
@@ -49,6 +49,8 @@ with the record that answered it.
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
+| Q10 | A re-armable piston 0-tick (or 1-tick) pulse generator: the R-018 ones are one-shot (the BUD piston stays out, the redstone block is moved away) | a library module for 0-tick pulses on demand | after the decoder and adder |
+| Q11 | Chains of 0-tick piston moves: can a spat block wake the next stage in the same block-event phase, so a signal crosses many blocks in 0 ticks ("instant wire")? | fastest possible long-distance signals | later |
 
 ## Hypotheses waiting for a test
 
@@ -78,3 +80,4 @@ with the record that answered it.
 | Hopper drain 1+8(N-1) ticks, 7 ticks per hop, lock pauses | [[timing]] | [[R-011-hoppers]] |
 | Q5: a 2-tick pulse passes iff the receiver's tick runs first (priority, then order); piston races: first powered wins | [[timing]] | [[R-012-same-tick-order]] |
 | Q3: comparators (and torches, pistons) ignore 0-tick pulses; repeaters, lamps, bulbs, droppers react | [[timing]] | [[R-013-zero-tick]] |
+| Can pistons make 0-tick pulses? Yes: a spat block pushed out by a BUD piston in the same block-event phase; pistons updated before it ends still move (a sticky one in 0 ticks) | [[timing]], [[components]] | [[R-018-piston-zero-tick]] |

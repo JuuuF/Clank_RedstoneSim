@@ -1898,7 +1898,74 @@ CAMPFIRES = Scenario(
     watch_entities=True,
 )
 
+#: R-018 (doc/redstone/records/R-018-piston-zero-tick.md): pistons make a 0-tick pulse. In
+#: each row an observer's 2-tick pulse (ticks 2-3: ``/setblock`` runs the new observer's
+#: shape update, so it sees its front and fires by itself) makes a sticky piston push a
+#: redstone block (tick 2); the retract at tick 4, while the block still moves, "spits" it
+#: into cell D at once (block-event phase), and a piston P beside D, quasi-powered but never
+#: updated, is woken by the arrival and pushes the block out again in the same block-event
+#: phase. Neighbors of D are updated west, east, down, up, north, south: a sticky piston
+#: updated before P moves (its block lands at once), one updated after P does not.
+PISTON_ZERO_TICK = Scenario(
+    name="piston_zero_tick",
+    description=(
+        "Pistons make a 0-tick pulse: a spat redstone block is pushed out of its cell in the "
+        "same block-event phase; a repeater catches it, a comparator does not, a lamp "
+        "flashes, a copper bulb toggles, sticky pistons updated before the remover move "
+        "their block at once, those updated after it stay."
+    ),
+    size=(9, 19),
+    setup=[
+        # Row A (D = 4 1 1): P south of D; sticky X east, lamp above, copper bulb below D.
+        ((1, 1, 1), "minecraft:observer[facing=west]"),
+        ((2, 1, 1), "minecraft:sticky_piston[facing=east]"),
+        ((3, 1, 1), RB),
+        ((4, 1, 2), "minecraft:piston[facing=north]"),
+        ((5, 1, 1), "minecraft:sticky_piston[facing=east]"),
+        ((6, 1, 1), "minecraft:stone"),
+        ((4, 2, 1), "minecraft:redstone_lamp"),
+        ((4, 0, 1), "minecraft:copper_bulb"),
+        # Row B (D = 4 1 5): a repeater east of D.
+        ((1, 1, 5), "minecraft:observer[facing=west]"),
+        ((2, 1, 5), "minecraft:sticky_piston[facing=east]"),
+        ((3, 1, 5), RB),
+        ((4, 1, 6), "minecraft:piston[facing=north]"),
+        ((5, 1, 5), "minecraft:repeater[facing=west,delay=1]"),
+        # Row C (D = 4 1 9): a comparator east of D.
+        ((1, 1, 9), "minecraft:observer[facing=west]"),
+        ((2, 1, 9), "minecraft:sticky_piston[facing=east]"),
+        ((3, 1, 9), RB),
+        ((4, 1, 10), "minecraft:piston[facing=north]"),
+        ((5, 1, 9), "minecraft:comparator[facing=west]"),
+        # Row D (D = 4 2 14): P above D pushes down; sticky pistons east, north and south.
+        ((1, 2, 14), "minecraft:observer[facing=west]"),
+        ((2, 2, 14), "minecraft:sticky_piston[facing=east]"),
+        ((3, 2, 14), RB),
+        ((4, 3, 14), "minecraft:piston[facing=down]"),
+        ((5, 2, 14), "minecraft:sticky_piston[facing=east]"),
+        ((6, 2, 14), "minecraft:stone"),
+        ((4, 2, 13), "minecraft:sticky_piston[facing=north]"),
+        ((4, 2, 12), "minecraft:stone"),
+        ((4, 2, 15), "minecraft:sticky_piston[facing=south]"),
+        ((4, 2, 16), "minecraft:stone"),
+    ],
+    watch=[
+        (2, 1, 1), (3, 1, 1), (4, 1, 1), (4, 1, 0), (4, 1, 2), (5, 1, 1), (6, 1, 1), (7, 1, 1),
+        (4, 2, 1), (4, 0, 1),
+        (4, 1, 5), (4, 1, 4), (5, 1, 5),
+        (4, 1, 9), (4, 1, 8), (5, 1, 9),
+        (3, 2, 14), (4, 2, 14), (4, 1, 14), (4, 3, 14), (5, 2, 14), (6, 2, 14), (7, 2, 14),
+        (4, 2, 13), (4, 2, 12), (4, 2, 11), (4, 2, 15), (4, 2, 16), (4, 2, 17),
+    ],
+    ticks=14,
+    inputs={
+        # Quasi-power for each P, placed after P so P is never updated (stays retracted).
+        0: [((4, 3, 2), RB), ((4, 3, 6), RB), ((4, 3, 10), RB), ((4, 5, 14), RB)],
+    },
+)  # fmt: skip
+
 ALL = [
+    PISTON_ZERO_TICK,
     CAMPFIRES,
     GRAVITY_BLOCKS,
     GRAVITY_PISTONS,

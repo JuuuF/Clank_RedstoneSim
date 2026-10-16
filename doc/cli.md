@@ -768,6 +768,8 @@ see [[world-import]] and [[differences]].
   kept exactly, no scheduled ticks. A pasted part that disagrees with its new neighbors
   stays so until something next to it changes; a pasted observer clock does not start
   (break and place one observer). Check the first ticks after pasting.
+- **`set` of an observer makes it fire** once, 2 ticks later, as `/setblock` does in the
+  game (the new block's shape update shows the observer its own front). `place` does not.
 - **Probe with the right block:** a wire beside a block shows only *strong* power, a lamp
   stretches every pulse by 4 ticks, `waves` shows a redstone block as 0 (what it
   receives). Probe signals with the component itself, a repeater or wire

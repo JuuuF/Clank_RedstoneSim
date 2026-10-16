@@ -106,6 +106,17 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - Quasi-connectivity: power next to the space above it powers it, but it only checks on
   a neighbor update (BUD): it can stay retracted while powered, and extended after the
   power is gone, until the next update. V R-009
+- **Spitting:** a sticky piston losing power while its block still moves places the block
+  at its destination at once (in the retract's block event) and leaves it: after a 1-tick
+  lever pulse the block is in place 1 tick before a full push would land it.
+  V [[R-018-piston-zero-tick]], G EXP-016
+- **0-tick moves:** a piston gets a 0-tick pulse made inside the block-event phase (a
+  block arriving and leaving there, e.g. pushed by pistons) and still moves if its event
+  was queued before the pulse ended: neighbors of a changing cell are updated west,
+  east, down, up, north, south. A sticky piston then moves its block one cell in 0 ticks;
+  a normal piston's head goes out and back in one tick and its block lands 2 ticks
+  later. A 0-tick pulse between ticks (a player, [[R-013-zero-tick]]) never moves one.
+  V R-018, G EXP-057
 
 ## Dropper, dispenser
 

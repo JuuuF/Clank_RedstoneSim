@@ -47,10 +47,10 @@ example world: [[tour]].
   with Ableton-like line groups (ADR-026).
 - An optional compiled build (mypyc) runs the simulation about 2× faster
   ([[implementation-notes]]); the overnight refactor pass is logged in [[refactor-plan]]; work through the open list is logged in [[todo-pass]].
-- **Redstone engineering knowledge base** ([[redstone/README]], since 2026-10-16): 13
+- **Redstone engineering knowledge base** ([[redstone/README]], since 2026-10-16): 22
   reproducible experiments with `redsim-cli` (timings, power rules, wire shapes, signal
   strength, locking, burnout, observers, pistons, hazards, hoppers, order inside a tick,
-  0-tick pulses), a circuit library of contracted modules (gates, edge detectors,
+  0-tick pulses and how pistons make them, vertical signals, latch chains), a circuit library of contracted modules (gates, edge detectors,
   latches, clocks, counter, monostable, piston door) with `.nbt` files to paste, and a
   research backlog. `tests/cli/test_research.py` re-runs every script.
 - Work happens on feature branches; verified work is fast-forwarded to `main` and pushed.

@@ -103,6 +103,9 @@ Pitfalls found while doing this (also in [[cli]] section 13):
   powers instead.
 - Two labels on one position made `waves` print a doubled, shifted row (fixed
   2026-10-16); give each position one label anyway.
+- `set` of an observer makes it fire once (ticks 2–3), as `/setblock` does in the game: the
+  new block's shape update shows it its own front. `place` it instead
+  ([[R-018-piston-zero-tick]], G EXP-057).
 
 ### Record template
 
@@ -143,6 +146,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-015-moving-observers]] | Observers moved by pistons; pulling across a gap | [[components]], flying machine | verified |
 | [[R-016-falling-blocks]] | Falling blocks as timers and triggers | [[timing]], [[components]] | verified (one L) |
 | [[R-017-wire-order]] | Races decided by wire update order depend on position | [[timing]], composition rules | verified |
+| [[R-018-piston-zero-tick]] | Pistons making 0-tick pulses; spit timing; 0-tick piston moves | [[timing]], [[components]] Piston | verified |
 | [[R-019-wire-supports-and-dropper-qc]] | Wire on partial blocks; dropper quasi-connectivity | [[signals]] | verified |
 | [[R-020-vertical-signals]] | Sending a signal up: stairs, ladders, torch towers, observer columns | [[signals]] | verified |
 | [[R-021-unlock-window]] | How long a chain of latches may be unlocked (shift registers) | [[components]], [[circuits]] | verified |
@@ -152,9 +156,12 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 
 *2026-10-16 (first session):* 21 experiment records (R-001…R-017, R-019…R-022), all reproducible and
 re-checked by `tests/cli/test_research.py`; the timing, signal and component references
-built from them; a circuit library of 27 contracted modules and contraptions (gates,
+built from them; a circuit library of 32 contracted modules and contraptions (gates,
 analog threshold, wiring, pulse shapers, memory, clocks, counter, monostable, piston
-doors, combination lock, flying machine), each pasteable from its `.nbt`. Open questions
+doors, combination lock, flying machine), each pasteable from its `.nbt`.
+
+*2026-10-16 (second session):* R-018 (pistons making 0-tick pulses, game-verified as
+EXP-057) closes the roadmap's experiment list: 22 records, R-001…R-022. Open questions
 and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,
 water, randomness) is listed in [[differences]].
 
