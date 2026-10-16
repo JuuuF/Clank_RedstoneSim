@@ -23,7 +23,8 @@ with the record that answered it.
    - [x] R-012 order inside a tick: which 2-tick pulses pass; piston races
    - [x] R-013 0-tick pulses: what reacts to them
    - [x] R-014 rails, doors, gates, target blocks, lecterns
-   - [ ] R-015 making 0-tick pulses with pistons (block dropping, redstone block pushes)
+   - [x] R-015 observers moved by pistons; pulling across a gap (flying machines)
+   - [ ] R-016 making 0-tick pulses with pistons (block dropping, redstone block pushes)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
@@ -34,7 +35,7 @@ with the record that answered it.
    - [x] clocks: comparator clock with enable, observer clock
    - [x] hopper clock (long periods, stop input)
    - [ ] signal strength encoders/decoders, multiplexers
-5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [ ] a flush door, a timed door.
+5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [ ] a flush door, a timed door, a double piston extender.
 
 ## Open questions
 

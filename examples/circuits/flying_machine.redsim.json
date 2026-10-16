@@ -1,0 +1,365 @@
+{
+ "format": "redsim-save",
+ "version": 1,
+ "game_version": "26.3",
+ "level": {
+  "min_y": -64,
+  "max_y": 319,
+  "game_time": 0,
+  "sub_tick_count": 4,
+  "palette": [
+   "minecraft:observer[facing=west,powered=false]",
+   "minecraft:honey_block",
+   "minecraft:sticky_piston[facing=east,extended=false]",
+   "minecraft:slime_block",
+   "minecraft:sticky_piston[facing=west,extended=false]",
+   "minecraft:observer[facing=east,powered=false]",
+   "minecraft:obsidian"
+  ],
+  "blocks": [
+   [
+    0,
+    10,
+    0,
+    0
+   ],
+   [
+    0,
+    11,
+    0,
+    1
+   ],
+   [
+    1,
+    10,
+    0,
+    2
+   ],
+   [
+    1,
+    11,
+    0,
+    1
+   ],
+   [
+    3,
+    10,
+    0,
+    3
+   ],
+   [
+    3,
+    11,
+    0,
+    4
+   ],
+   [
+    4,
+    10,
+    0,
+    3
+   ],
+   [
+    4,
+    11,
+    0,
+    5
+   ],
+   [
+    13,
+    10,
+    0,
+    6
+   ]
+  ],
+  "block_entities": [],
+  "block_entity_map": {},
+  "scheduled_ticks": [],
+  "ticks_to_run": [],
+  "overdue_collected": 0,
+  "block_events": [],
+  "projectile_hits": [],
+  "plate_visitors": [],
+  "forced_power": [],
+  "zero_tick_pulses": [],
+  "zero_tick_ends": [],
+  "entity_queue": [],
+  "entities": [],
+  "next_entity_id": 0,
+  "entity_tick_queue": [],
+  "wrappers": [],
+  "tickers": [],
+  "pending_tickers": [],
+  "tickers_by_pos": {},
+  "ticking_block_entities": false,
+  "handling_tick": false,
+  "torch_toggles": [],
+  "max_chained_neighbor_updates": 1000000
+ },
+ "engine": {
+  "phase": "BETWEEN_TICKS",
+  "step_index": 40,
+  "be_index": 0
+ },
+ "extra": {
+  "cli": {
+   "log": [
+    "new size 64 floor none force",
+    "note 'Flying machine: started at @OA'\"'\"'s eyes it flies east 1 block per 10 ticks until the obsidian stops it'",
+    "set 0 10 0 observer[facing=west,powered=false]",
+    "set 1 10 0 sticky_piston[facing=east,extended=false]",
+    "set 0 11 0 honey_block",
+    "set 1 11 0 honey_block",
+    "set 2 10 0 slime_block",
+    "set 3 10 0 slime_block",
+    "set 2 11 0 sticky_piston[facing=west,extended=false]",
+    "set 3 11 0 observer[facing=east,powered=false]",
+    "settle",
+    "set 13 10 0 obsidian",
+    "label OB 0 10 0 'back observer (watches west)'",
+    "label P1 1 10 0 'back piston (facing east)'",
+    "label P2 3 11 0 'front piston (facing west)'",
+    "label OA 4 11 0 'front observer (watches east)'",
+    "label EYE_A 5 11 0 'the cell @OA watches: change it to start east'",
+    "label EYE_B -1 10 0 'the cell @OB watches: change it to start west'",
+    "label STOP 13 10 0 'obsidian: stops the machine'",
+    "prefab save flying_machine 0 10 0 4 11 0",
+    "target new east 'started at 2 from the east: the front observer is at x=5 at 12, 6 at 22, ..., 12 from 82 on (slime against the obsidian); the back group closes up and it stops'",
+    "target east do at 2 set @EYE_A stone",
+    "target east do at 2 set @EYE_A air",
+    "target east expect @OA block=observer at 2",
+    "target east expect 5 11 0 block=observer at 12",
+    "target east expect 6 11 0 block=observer at 22",
+    "target east expect 9 11 0 block=observer at 52",
+    "target east expect 11 11 0 block=observer during 72..79",
+    "target east expect 12 11 0 block=observer during 82..200",
+    "target east expect 12 10 0 block=slime_block during 82..200",
+    "target east expect @STOP block=obsidian during 0..200",
+    "target east expect 10 10 0 block=sticky_piston during 100..200",
+    "target east expect 10 11 0 block=honey_block during 100..200",
+    "target east expect 8 10 0 block=air during 100..200",
+    "target new west 'started at 2 from the west: one block west every 10 ticks'",
+    "target west do at 2 set @EYE_B stone",
+    "target west do at 2 set @EYE_B air",
+    "target west expect -1 10 0 block=observer at 12",
+    "target west expect -2 10 0 block=observer at 22",
+    "target west expect -6 10 0 block=observer at 62",
+    "target west expect 3 11 0 block=air at 62"
+   ],
+   "view": [
+    0,
+    0
+   ]
+  },
+  "sections": {
+   "input": {
+    "color": "#3fa9f5",
+    "positions": []
+   },
+   "processing": {
+    "color": "#f5a623",
+    "positions": []
+   },
+   "output": {
+    "color": "#7ed321",
+    "positions": []
+   },
+   "clock": {
+    "color": "#bd10e0",
+    "positions": []
+   }
+  },
+  "groups": [],
+  "prefabs": {
+   "flying_machine": {
+    "format": "redsim-prefab",
+    "name": "flying_machine",
+    "size": [
+     5,
+     2,
+     1
+    ],
+    "blocks": [
+     [
+      0,
+      0,
+      0,
+      "minecraft:observer[facing=west,powered=false]",
+      null
+     ],
+     [
+      1,
+      0,
+      0,
+      "minecraft:sticky_piston[facing=east,extended=false]",
+      null
+     ],
+     [
+      2,
+      0,
+      0,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      0,
+      0,
+      "minecraft:slime_block",
+      null
+     ],
+     [
+      4,
+      0,
+      0,
+      "minecraft:slime_block",
+      null
+     ],
+     [
+      0,
+      1,
+      0,
+      "minecraft:honey_block",
+      null
+     ],
+     [
+      1,
+      1,
+      0,
+      "minecraft:honey_block",
+      null
+     ],
+     [
+      2,
+      1,
+      0,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      1,
+      0,
+      "minecraft:sticky_piston[facing=west,extended=false]",
+      null
+     ],
+     [
+      4,
+      1,
+      0,
+      "minecraft:observer[facing=east,powered=false]",
+      null
+     ]
+    ]
+   }
+  },
+  "monitors": [],
+  "line_groups": [],
+  "row_line_groups": {},
+  "markers": {},
+  "labels": {
+   "OB": {
+    "pos": [
+     0,
+     10,
+     0
+    ],
+    "note": "back observer (watches west)"
+   },
+   "P1": {
+    "pos": [
+     1,
+     10,
+     0
+    ],
+    "note": "back piston (facing east)"
+   },
+   "P2": {
+    "pos": [
+     3,
+     11,
+     0
+    ],
+    "note": "front piston (facing west)"
+   },
+   "OA": {
+    "pos": [
+     4,
+     11,
+     0
+    ],
+    "note": "front observer (watches east)"
+   },
+   "EYE_A": {
+    "pos": [
+     5,
+     11,
+     0
+    ],
+    "note": "the cell @OA watches: change it to start east"
+   },
+   "EYE_B": {
+    "pos": [
+     -1,
+     10,
+     0
+    ],
+    "note": "the cell @OB watches: change it to start west"
+   },
+   "STOP": {
+    "pos": [
+     13,
+     10,
+     0
+    ],
+    "note": "obsidian: stops the machine"
+   }
+  },
+  "notes": [
+   "Flying machine: started at @OA's eyes it flies east 1 block per 10 ticks until the obsidian stops it"
+  ],
+  "targets": [
+   {
+    "name": "east",
+    "description": "started at 2 from the east: the front observer is at x=5 at 12, 6 at 22, ..., 12 from 82 on (slime against the obsidian); the back group closes up and it stops",
+    "cases": [
+     {
+      "name": "main",
+      "lines": [
+       "at 2 set @EYE_A stone",
+       "at 2 set @EYE_A air",
+       "expect @OA block=observer at 2",
+       "expect 5 11 0 block=observer at 12",
+       "expect 6 11 0 block=observer at 22",
+       "expect 9 11 0 block=observer at 52",
+       "expect 11 11 0 block=observer during 72..79",
+       "expect 12 11 0 block=observer during 82..200",
+       "expect 12 10 0 block=slime_block during 82..200",
+       "expect @STOP block=obsidian during 0..200",
+       "expect 10 10 0 block=sticky_piston during 100..200",
+       "expect 10 11 0 block=honey_block during 100..200",
+       "expect 8 10 0 block=air during 100..200"
+      ]
+     }
+    ]
+   },
+   {
+    "name": "west",
+    "description": "started at 2 from the west: one block west every 10 ticks",
+    "cases": [
+     {
+      "name": "main",
+      "lines": [
+       "at 2 set @EYE_B stone",
+       "at 2 set @EYE_B air",
+       "expect -1 10 0 block=observer at 12",
+       "expect -2 10 0 block=observer at 22",
+       "expect -6 10 0 block=observer at 62",
+       "expect 3 11 0 block=air at 62"
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

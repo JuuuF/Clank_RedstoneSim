@@ -138,6 +138,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-012-same-tick-order]] | Order inside a tick: which 2-tick pulses pass; piston races | [[timing]] | verified |
 | [[R-013-zero-tick]] | 0-tick pulses: what reacts | [[timing]] | verified |
 | [[R-014-other-components]] | Rails, doors, gates, target blocks, lecterns | [[components]] | verified |
+| [[R-015-moving-observers]] | Observers moved by pistons; pulling across a gap | [[components]], flying machine | verified |
 
 ## Status
 

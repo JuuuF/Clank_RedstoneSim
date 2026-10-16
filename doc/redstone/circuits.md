@@ -46,6 +46,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | count events | [[#4-bit counter]] |
 | react to a container's fill level | [[#Threshold detector]] |
 | two signal paths must cross | [[#Crossing]] |
+| move a structure by itself | [[#Flying machine]] |
 
 ## Index
 
@@ -82,6 +83,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#2x2 piston door]] | opens a 2×2 doorway while its input is on | 10×2×3 | open 4, close 4 (solid 6) | `piston_door_2x2` |
 | [[#Toggle door]] | a button toggles the 2x2 door | 10×2×6 | open 6, closed 8 | `toggle_door` |
 | [[#Combination lock]] | 4 levers = 1 0 1 1 open the 2x2 door | 14×2×9 | OPEN 4, door 10 | `combination_lock` |
+| [[#Flying machine]] | moves itself 1 block / 10 ticks, either way, until blocked | 5×2×1 | — | `flying_machine` |
 
 ## Gates
 
@@ -565,6 +567,36 @@ button on its face) whose comparator points into the middle of the door's input 
   press; closing starts 6 ticks after a closing press, solid after **8**.
 - **Why the middle of the bus:** fed at x=4 the 10-wire bus keeps ≥ 10 at both ends
   (see the [[#Combination lock]]'s third finding).
+
+### Flying machine
+
+Two groups that move each other: a honey group (observer, sticky piston facing east,
+two honey blocks) and a slime group (two slime blocks, sticky piston facing west,
+observer), with a one-block gap between them. Honey and slime do not stick to each
+other. `flying_machine.cli.txt` (built in a world without floor). **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| OB, P1 | 0 0 0, 1 0 0 | honey group's observer (watches west) and sticky piston (faces east) |
+| P2, OA | 3 1 0, 4 1 0 | slime group's sticky piston (faces west) and observer (watches east) |
+| start east / west | 5 1 0 / −1 0 0 | change the block OA / OB watches (set a block and remove it) |
+
+(Offsets from the lowest corner, 0 10 0 in the script.)
+
+- **Behavior:** once started it moves **1 block every 10 ticks** (2 blocks per second)
+  in the direction of the observer that was triggered: started at OA's side it flies
+  east, at OB's side west. Each group's observer fires 2 ticks after its group lands
+  ([[R-015-moving-observers]]) and fires its own piston: one piston extends into the gap
+  and pulls the other group over, the other pushes the other group away and leaves it.
+- **Stops** when a push fails: tested with obsidian in the path (the slime ends against
+  it, the honey group closes up, nothing fires again). More than 12 blocks, block
+  entities or immovable blocks in the way do the same ([[R-009-pistons]]).
+- **Build it in the air:** slime grabs any pushable block it touches, including the
+  ground (R-009).
+- **Pitfalls found:** built with `set`, observers carry start-up ticks: one version fired
+  both pistons together and did not move; another moved an observer while it was
+  powered, which killed its pulse. Building it closed (no gap) and running `settle`
+  leaves it at rest with the gaps open; the pasted `.nbt` is in that rest state.
 
 ## Composition rules
 

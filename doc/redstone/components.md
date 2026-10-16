@@ -69,6 +69,9 @@ Evidence labels: [[redstone/README#Scope and trust]].
   piston head arriving or leaving). Not block-entity data (a comparator's strength while
   it stays powered, container contents) and not updates without a state change.
   V R-001, [[R-008-observers]]
+- **Moved by a piston:** it pulses once, 2 ticks after landing (any facing), unless it was
+  powered when moved: then it lands, switches off at once and gives no pulse.
+  V [[R-015-moving-observers]]
 - Chains of observers: 2 ticks each. Changes less than 4 ticks apart merge into one
   pulse (the [[circuits]] both-edge detector). V R-008
 - Gives: a 2-tick pulse from its back (output) side, 2 ticks after the change, strongly
@@ -95,6 +98,9 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - Sticky: pulls the block in front back, but not push-only blocks (glazed terracotta).
   Slime moves everything touching it except honey, **including the floor under it** (a
   slime block on a long stone floor cannot be pushed: stand it on obsidian). V R-009
+- A sticky piston extending into air pulls the block beyond its head when it retracts,
+  even after a 2-tick pulse (only a block it was still pushing is left behind).
+  V [[R-015-moving-observers]]
 - Quasi-connectivity: power next to the space above it powers it, but it only checks on
   a neighbor update (BUD): it can stay retracted while powered, and extended after the
   power is gone, until the next update. V R-009

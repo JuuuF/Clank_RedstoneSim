@@ -1,0 +1,70 @@
+# R-015: observers moved by pistons; sticky pistons pulling across a gap (doc/redstone/records/R-015-moving-observers.md)
+#
+# Rows: three observers (watching south, east, west) pushed one block east by a piston
+# whose lever goes on at 2; an observer watching a lever (flipped at 2: it pulses 4..5)
+# pushed at tick 4, while it is powered, with a repeater where its output will point; a
+# sticky piston with a stone two cells ahead (one cell of air between), on for 2 ticks.
+#   redsim-cli r015.redsim.json < experiments/redstone/R-015-moving-observers.cli.txt
+new size 32 force
+note "R-015: observers moved by pistons, sticky pistons pulling after extending into air"
+# moved observers (piston pushes them east), facing south / east / west
+place -1 1 -10 lever face=floor
+place 0 1 -10 piston facing=east
+place 1 1 -10 observer facing=south
+label L_S -1 1 -10
+label O_S 2 1 -10
+place -1 1 -7 lever face=floor
+place 0 1 -7 piston facing=east
+place 1 1 -7 observer facing=east
+label L_E -1 1 -7
+label O_E 2 1 -7
+place -1 1 -4 lever face=floor
+place 0 1 -4 piston facing=east
+place 1 1 -4 observer facing=west
+label L_W -1 1 -4
+label O_W 2 1 -4
+# an observer moved while it is powered: it watches a lever north of it (flipped at 2, pulse 4..5); its piston fires at 4
+place 1 1 0 observer facing=north
+place 1 1 -1 lever face=floor
+place 0 1 0 piston facing=east
+place -1 1 0 stone
+place -2 1 0 lever face=wall facing=west
+place 2 1 1 repeater out=south
+label L_WATCH 1 1 -1
+label L_PUSH -2 1 0
+label O_POW 2 1 0
+label PROBE 2 1 1
+# sticky pistons with a block one cell away (a gap): 2-tick pulse
+place -1 1 4 lever face=floor
+place 0 1 4 sticky_piston facing=east
+place 2 1 4 stone
+label L_GAP -1 1 4
+label GAP_FROM 2 1 4
+label GAP_TO 1 1 4
+settle
+
+target new moved "a pushed observer pulses 2 ticks after it lands, whichever way it faces"
+target moved do at 2 use @L_S
+target moved do at 2 use @L_E
+target moved do at 2 use @L_W
+target moved expect @O_S block=observer at 5
+target moved expect @O_S powered=false at 6
+target moved expect @O_S powered=true during 7..8
+target moved expect @O_E powered=true during 7..8
+target moved expect @O_W powered=true during 7..8
+target moved expect @O_W powered=false at 9
+
+target new powered "an observer pushed while powered lands unpowered and gives no new pulse"
+target powered do at 2 use @L_WATCH
+target powered do at 3 use @L_PUSH
+target powered expect @O_POW block=observer at 6
+target powered expect @O_POW powered=false during 6..20
+target powered expect @PROBE powered=false during 0..20
+
+target new gap "a sticky piston with air in front pulls the block beyond its head even after a 2-tick pulse"
+target gap do at 2 use @L_GAP
+target gap do at 4 use @L_GAP
+target gap expect @GAP_FROM block=air during 5..20
+target gap expect @GAP_TO block=stone during 7..20
+
+check

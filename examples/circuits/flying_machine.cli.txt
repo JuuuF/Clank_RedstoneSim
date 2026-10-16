@@ -1,0 +1,65 @@
+# Contraption: two-way slime/honey flying machine. Contract: doc/redstone/circuits.md, "Flying machine".
+#
+# Built in the air (no floor: slime would grab the ground) along x at y=10..11, z=0:
+#   back group (honey): observer @OB 0 10 0 (watching west, output east), sticky piston
+#     @P1 1 10 0 facing east, honey 0 11 0 and 1 11 0
+#   front group (slime): slime 3 10 0 and 4 10 0, sticky piston @P2 3 11 0 facing west,
+#     observer @OA 4 11 0 (watching east, output west)
+# with a one-block gap between the groups in both rows (x=2). It is built without the gap
+# (front group at x=2..3) and settled: the observers' start-up ticks (left by `set`) push
+# the front group one block east and leave the machine at rest, gaps open. Honey and slime do not
+# stick to each other, so the groups move separately. Each observer fires 2 ticks after
+# its group lands; its 2-tick pulse fires its own group's piston: one piston extends into
+# the gap and pulls the other group over (a sticky piston extending into air pulls even
+# on a 2-tick pulse), the other pushes the other group away and leaves it there (a
+# 2-tick pulse "spits" a pushed block, R-003).
+# Start: change the block an observer watches (here: a stone set and removed at once).
+# Changing @OA's watched cell (east) first sends it east; @OB's (west) sends it west.
+# Speed: 1 block every 10 ticks. Stops when a push fails (here: obsidian at 13 10 0: the
+# slime ends against it, the back group closes up, nothing fires again).
+#   redsim-cli flying_machine.redsim.json < examples/circuits/flying_machine.cli.txt
+new size 64 floor none force
+note "Flying machine: started at @OA's eyes it flies east 1 block per 10 ticks until the obsidian stops it"
+set 0 10 0 observer[facing=west,powered=false]
+set 1 10 0 sticky_piston[facing=east,extended=false]
+set 0 11 0 honey_block
+set 1 11 0 honey_block
+set 2 10 0 slime_block
+set 3 10 0 slime_block
+set 2 11 0 sticky_piston[facing=west,extended=false]
+set 3 11 0 observer[facing=east,powered=false]
+settle
+set 13 10 0 obsidian
+label OB 0 10 0 "back observer (watches west)"
+label P1 1 10 0 "back piston (facing east)"
+label P2 3 11 0 "front piston (facing west)"
+label OA 4 11 0 "front observer (watches east)"
+label EYE_A 5 11 0 "the cell @OA watches: change it to start east"
+label EYE_B -1 10 0 "the cell @OB watches: change it to start west"
+label STOP 13 10 0 "obsidian: stops the machine"
+prefab save flying_machine 0 10 0 4 11 0
+
+target new east "started at 2 from the east: the front observer is at x=5 at 12, 6 at 22, ..., 12 from 82 on (slime against the obsidian); the back group closes up and it stops"
+target east do at 2 set @EYE_A stone
+target east do at 2 set @EYE_A air
+target east expect @OA block=observer at 2
+target east expect 5 11 0 block=observer at 12
+target east expect 6 11 0 block=observer at 22
+target east expect 9 11 0 block=observer at 52
+target east expect 11 11 0 block=observer during 72..79
+target east expect 12 11 0 block=observer during 82..200
+target east expect 12 10 0 block=slime_block during 82..200
+target east expect @STOP block=obsidian during 0..200
+target east expect 10 10 0 block=sticky_piston during 100..200
+target east expect 10 11 0 block=honey_block during 100..200
+target east expect 8 10 0 block=air during 100..200
+
+target new west "started at 2 from the west: one block west every 10 ticks"
+target west do at 2 set @EYE_B stone
+target west do at 2 set @EYE_B air
+target west expect -1 10 0 block=observer at 12
+target west expect -2 10 0 block=observer at 22
+target west expect -6 10 0 block=observer at 62
+target west expect 3 11 0 block=air at 62
+
+check
