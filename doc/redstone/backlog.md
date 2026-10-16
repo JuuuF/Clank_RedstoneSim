@@ -30,7 +30,8 @@ with the record that answered it.
    - [ ] pulse extender (long pulses), monostable with long delay lines
    - [x] memory: RS latch, D latch, T flip-flop (copper bulb)
    - [x] clocks: comparator clock with enable, observer clock
-   - [ ] hopper clock (long periods), signal strength encoders/decoders
+   - [x] hopper clock (long periods, stop input)
+   - [ ] signal strength encoders/decoders, multiplexers
 5. **Compositions:** [x] 4-bit counter; [ ] a sequencer, piston doors, a combination lock.
 
 ## Open questions

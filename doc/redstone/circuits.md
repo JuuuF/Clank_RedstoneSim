@@ -50,6 +50,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#D latch]] | Q follows D, holds while E is on | 2×1×3 | 2 | `d_latch` |
 | [[#Clock]] | period 4d+4 with enable, no burnout | 3×1×3 | 2 from enable | `clock` |
 | [[#Observer clock]] | free-running, 2 on / 4 off | 2×1×1 | — | `observer_clock` |
+| [[#Hopper clock]] | long periods: 16·N − 2 ticks for N items, with stop | 10×2×5 | — | `hopper_clock` |
 | [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
 
 ## Gates
@@ -334,6 +335,36 @@ Two observers watching each other. `observer_clock.cli.txt`. **Verified.**
   not** (structure files carry no scheduled ticks): break and place one observer again
   to start it (tested).
 - **Output** is a circuit-made 2-tick pulse (torches and comparators ignore it).
+
+### Hopper clock
+
+Two hoppers pass N items back and forth; a copper bulb remembers the direction.
+`hopper_clock.cli.txt`. **Verified.** Built for this library from [[R-011-hoppers]]
+(hopper timing) and [[#T flip-flop]] (bulb).
+
+| Port | Offset | Kind |
+|---|---|---|
+| H1, H2 | 4 0 3, 5 0 3 | hoppers facing each other; H1 holds the N items at the start |
+| OUT | 6 0 2 | repeater facing east: the clock output |
+| STOP | 4 1 4 | wire (y = 2 in the script): power it to freeze the clock |
+
+- **Behavior:** OUT on for **8·N ticks**, off for **8·N − 2** (period **16·N − 2**; N = 5:
+  78 ticks, 40 on / 38 off). Measured for N = 2, 3, 5, 10; N = 1 gives 8 on / 7 off.
+  Runs by itself; a pasted copy starts by itself too (hoppers tick without updates).
+- **How:** comparators read both hoppers; torches on the blocks they power are lit while
+  their hopper is **empty**; both torches feed one wire into the copper bulb, which
+  toggles each time a hopper runs empty (the torch turning off again does nothing to a
+  bulb, and both hoppers are never empty at once). The bulb's comparator locks H2 (H1
+  drains into H2) through a stone; a torch on that stone locks H1 while the bulb is off
+  (H2 drains back). The torches and the bulb make the hysteresis that a plain "lock the
+  full one" rule lacks.
+- **Tuning:** `container 4 1 3 0 stone N` (script coordinates) sets N (1–64 per slot; more
+  slots for more).
+- **STOP:** both hoppers locked; the state holds. Released, the next item moves on the
+  next tick; since the 8-tick cooldown keeps running while stopped, a phase is extended
+  by the stop time minus the cooldown already elapsed (stopped 20..60: phase end 43 → 77).
+- **Constraints:** nothing else may power the hoppers or the stone 5 0 2; the output
+  repeater's south side faces C2 harmlessly (a comparator pointing east does not lock it).
 
 ## Compositions
 
