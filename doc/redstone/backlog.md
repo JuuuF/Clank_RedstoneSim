@@ -22,7 +22,8 @@ with the record that answered it.
    - [x] R-010 glitches from unequal path delays; balancing
    - [x] R-012 order inside a tick: which 2-tick pulses pass; piston races
    - [x] R-013 0-tick pulses: what reacts to them
-   - [ ] R-014 making 0-tick pulses with pistons (block dropping, redstone block pushes)
+   - [x] R-014 rails, doors, gates, target blocks, lecterns
+   - [ ] R-015 making 0-tick pulses with pistons (block dropping, redstone block pushes)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT

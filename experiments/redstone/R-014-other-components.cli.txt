@@ -1,0 +1,104 @@
+# R-014: rails, doors, gates, target blocks, lecterns as outputs and sources (doc/redstone/records/R-014-other-components.md)
+#
+# Rows: 12 powered rails (and 12 activator rails) fed by a lever at the west end; 12
+# powered rails fed by a lever beside the 6th; an iron door with a lever beside its lower
+# half, and one powered at its upper half (a lever on a stone beside it); a fence gate
+# behind a wire; a target block between two wires (hit with strength 9 at tick 4, an
+# editor stand-in for an arrow); a lectern with a 15-page book on page 0, a comparator
+# reading it and a repeater taking its page-turn pulse (page 7 at tick 4).
+#   redsim-cli r014.redsim.json < experiments/redstone/R-014-other-components.cli.txt
+new size 48 force
+note "R-014: powered/activator rails reach 8 rails past the powered one; doors open from either half; target blocks feed wire; lecterns read pages and pulse on a page turn"
+# powered rails: lever at x=-1, 12 powered rails x=0..11 east-west
+place -1 1 -20 lever face=floor
+line 0 1 -20 to 11 1 -20 powered_rail shape=east_west
+label LPR -1 1 -20
+label PR1 0 1 -20
+label PR9 8 1 -20
+label PR10 9 1 -20
+# activator rails
+place -1 1 -17 lever face=floor
+line 0 1 -17 to 11 1 -17 activator_rail shape=east_west
+label LAR -1 1 -17
+label AR9 8 1 -17
+label AR10 9 1 -17
+# powered rails fed in the middle: lever beside rail x=5
+line 0 1 -14 to 11 1 -14 powered_rail shape=east_west
+place 5 1 -13 lever face=floor
+label LPM 5 1 -13
+label PM0 0 1 -14
+label PM1 1 1 -14
+label PM11 11 1 -14
+# iron door: lever beside the lower half; second door: power at the upper half (a lever on a block beside it)
+place 0 1 -10 iron_door
+place -1 1 -10 lever face=floor
+label LDOOR -1 1 -10
+label DOOR_LO 0 1 -10
+label DOOR_HI 0 2 -10
+place 4 1 -10 iron_door
+set 3 2 -10 stone
+place 3 3 -10 lever face=floor
+label LDOOR2 3 3 -10
+label DOOR2_LO 4 1 -10
+# fence gate and iron trapdoor via wire
+place -1 1 -6 lever face=floor
+place 0 1 -6 redstone_wire
+place 1 1 -6 oak_fence_gate facing=north
+label LGATE -1 1 -6
+label GATE 1 1 -6
+# target block: wire beside it connects and carries its power; hit at tick 4
+place 0 1 -2 target
+place 1 1 -2 redstone_wire
+place 2 1 -2 redstone_lamp
+place -1 1 -2 redstone_wire
+label TARGET 0 1 -2
+label TW 1 1 -2
+label TW2 -1 1 -2
+# lectern with a 15-page book via source command at strength 1, comparator, lamp; page turned at 4
+source 0 1 2 lectern 1
+place 1 1 2 comparator out=east
+place 2 1 2 redstone_wire
+place 0 1 3 repeater out=south
+label LECT 0 1 2
+label LC 1 1 2
+label LPULSE 0 1 3
+settle
+
+target new rails "a powered or activator rail passes power to 8 more rails of its kind along the line, in both directions"
+target rails do at 2 use @LPR
+target rails do at 2 use @LAR
+target rails do at 2 use @LPM
+target rails expect @PR1 powered=true at 2
+target rails expect @PR9 powered=true at 2
+target rails expect @PR10 powered=false during 0..20
+target rails expect @AR9 powered=true at 2
+target rails expect @AR10 powered=false during 0..20
+target rails expect @PM0 powered=true at 2
+target rails expect @PM11 powered=true at 2
+
+target new openers "doors (power at either half) and fence gates open at once"
+target openers do at 2 use @LDOOR
+target openers do at 2 use @LDOOR2
+target openers do at 2 use @LGATE
+target openers expect @DOOR_LO open=false at 1
+target openers expect @DOOR_LO open=true at 2
+target openers expect @DOOR_HI open=true at 2
+target openers expect @DOOR2_LO open=true at 2
+target openers expect @GATE open=true at 2
+
+target new target "a hit target block (strength 9, arrow) powers 20 ticks and wire beside it takes that strength"
+target target do at 4 hit @TARGET strength 9
+target target expect @TARGET power=0 at 4
+target target expect @TARGET power=9 during 5..24
+target target expect @TW power=9 during 5..24
+target target expect @TW2 power=9 at 5
+target target expect @TARGET power=0 at 25
+
+target new lectern "a comparator reads the page (page 7 of 15: 8); turning a page gives a 2-tick pulse"
+target lectern do at 4 page @LECT 7
+target lectern expect @LC power=1 at 5
+target lectern expect @LC power=8 at 6
+target lectern expect @LPULSE powered=true during 6..7
+target lectern expect @LPULSE powered=false at 8
+
+check

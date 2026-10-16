@@ -137,6 +137,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-011-hoppers]] | Hoppers and droppers as timing elements | [[timing]] items, [[components]] Hopper | verified |
 | [[R-012-same-tick-order]] | Order inside a tick: which 2-tick pulses pass; piston races | [[timing]] | verified |
 | [[R-013-zero-tick]] | 0-tick pulses: what reacts | [[timing]] | verified |
+| [[R-014-other-components]] | Rails, doors, gates, target blocks, lecterns | [[components]] | verified |
 
 ## Status
 

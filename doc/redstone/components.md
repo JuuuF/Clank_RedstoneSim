@@ -112,6 +112,22 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - The copper bulb toggles once for every pulse, even a 1-tick one; a dropper fires once
   per pulse of any length. Both react even to a 0-tick pulse. V R-003, [[R-013-zero-tick]]
 
+## Rails, doors, gates
+
+- Powered and activator rails: a powered rail feeds up to **8 more rails of its kind**
+  along its straight line, both ways; instant. Detector rails are not simulated (L).
+  V [[R-014-other-components]]
+- Iron doors open both halves from power at either half; fence gates and trapdoors open
+  while powered; all at once (Δ 0). V R-001, R-014
+
+## Target block and lectern
+
+- Target block: a projectile hit gives its strength for 20 ticks (arrow) or 8 (others);
+  wire next to it connects and takes that strength (`hit` is an editor stand-in, L for
+  real projectiles). V R-014
+- Lectern: a comparator reads ⌊page / (pages − 1) · 14⌋ + 1; turning a page (a player)
+  gives a 2-tick pulse. V R-014
+
 ## Hopper
 
 - Moves one item per 8 ticks (block-entity phase); locked while powered (Δ 0). Unlocked,
