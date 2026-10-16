@@ -102,6 +102,13 @@ same build can race differently when moved ([[R-017-wire-order]]); never rely on
 | Dropper → first hopper | 4 ticks after the dropper's rising edge | V R-011 |
 | Hopper unlocked | moves on the next tick | V R-011, G EXP-039 |
 
+## Falling blocks (R-016)
+
+A gravity block (sand, gravel, …) falls 2 ticks after losing its support and lands this
+many ticks after the support went: 1 block 8, 2 → 11, 3 → 14, 4 → 16, 8 → 22, 16 → 32,
+24 → 40. An observer on the landing cell pulses 2 ticks after landing. V
+[[R-016-falling-blocks]], G EXP-054.
+
 ## Torch burnout (R-007)
 
 A torch burns out on its **8th turn-off within 60 ticks**: switching it off every 8 ticks

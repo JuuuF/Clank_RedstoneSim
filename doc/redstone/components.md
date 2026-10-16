@@ -141,6 +141,15 @@ Evidence labels: [[redstone/README#Scope and trust]].
   straight chain at 7 ticks per hopper. A comparator reads its fill (5 slots). Pistons
   cannot move it (block entity). V [[R-011-hoppers]]
 
+## Gravity blocks and pressure plates
+
+- Sand and other gravity blocks fall 2 ticks after their support goes (fall times in
+  [[timing]]); landing is a state change observers see. A falling block passing into a
+  wooden pressure plate presses it (stone plates ignore it); it cannot land there and is
+  gone (in the game it becomes an item that keeps the plate pressed: L).
+  V [[R-016-falling-blocks]]
+- Pressure plates with mobs and items: only the editor's `plate` stand-in (L).
+
 ## Buttons and levers
 
 - A lever stays until flipped; a stone button is on for 20 ticks, an oak button for 30.

@@ -1,0 +1,100 @@
+# R-016: falling blocks as timers and triggers (doc/redstone/records/R-016-falling-blocks.md)
+#
+# Sand on a floating stone at heights h = 1, 2, 3, 4, 8, 16, 24 above the floor (sand at
+# y = h+1), each with an observer watching the floor cell it lands in; the stone is broken
+# at tick 2. Two more sands fall 3 blocks onto a wooden and onto a stone pressure plate
+# (a lamp beside the wooden one).
+#   redsim-cli r016.redsim.json < experiments/redstone/R-016-falling-blocks.cli.txt
+new size 48 force
+note "R-016: sand falls 2 ticks after losing support; landing times by height; observers see it land; a wooden plate is pressed as it passes"
+set -18 1 0 stone
+set -18 2 0 sand
+label S1 -18 1 0
+label LAND1 -18 1 0
+place -17 1 0 observer facing=west
+label OBS1 -17 1 0
+set -13 2 0 stone
+set -13 3 0 sand
+label S2 -13 2 0
+label LAND2 -13 1 0
+place -12 1 0 observer facing=west
+label OBS2 -12 1 0
+set -8 3 0 stone
+set -8 4 0 sand
+label S3 -8 3 0
+label LAND3 -8 1 0
+place -7 1 0 observer facing=west
+label OBS3 -7 1 0
+set -3 4 0 stone
+set -3 5 0 sand
+label S4 -3 4 0
+label LAND4 -3 1 0
+place -2 1 0 observer facing=west
+label OBS4 -2 1 0
+set 2 8 0 stone
+set 2 9 0 sand
+label S8 2 8 0
+label LAND8 2 1 0
+place 3 1 0 observer facing=west
+label OBS8 3 1 0
+set 7 16 0 stone
+set 7 17 0 sand
+label S16 7 16 0
+label LAND16 7 1 0
+place 8 1 0 observer facing=west
+label OBS16 8 1 0
+set 12 24 0 stone
+set 12 25 0 sand
+label S24 12 24 0
+label LAND24 12 1 0
+place 13 1 0 observer facing=west
+label OBS24 13 1 0
+set 20 4 0 stone
+set 20 5 0 sand
+place 20 1 0 oak_pressure_plate
+place 21 1 0 redstone_lamp
+label SP 20 4 0
+label PLATE 20 1 0
+label PLAMP 21 1 0
+set 20 4 4 stone
+set 20 5 4 sand
+place 20 1 4 stone_pressure_plate
+label SP2 20 4 4
+label SPLATE 20 1 4
+settle
+
+target new fall "support removed at 2: the sand lands at tick 10, 13, 16, 18, 24, 34, 42 for h = 1, 2, 3, 4, 8, 16, 24"
+target fall do at 2 break @S1
+target fall do at 2 break @S2
+target fall do at 2 break @S3
+target fall do at 2 break @S4
+target fall do at 2 break @S8
+target fall do at 2 break @S16
+target fall do at 2 break @S24
+target fall expect @LAND1 block=air at 9
+target fall expect @LAND1 block=sand at 10
+target fall expect @LAND2 block=air at 12
+target fall expect @LAND2 block=sand at 13
+target fall expect @LAND3 block=air at 15
+target fall expect @LAND3 block=sand at 16
+target fall expect @LAND4 block=air at 17
+target fall expect @LAND4 block=sand at 18
+target fall expect @LAND8 block=air at 23
+target fall expect @LAND8 block=sand at 24
+target fall expect @LAND16 block=air at 33
+target fall expect @LAND16 block=sand at 34
+target fall expect @LAND24 block=air at 41
+target fall expect @LAND24 block=sand at 42
+target fall expect @OBS4 powered=true during 20..21
+target fall expect @OBS24 powered=true during 44..45
+
+target new plates "a sand passing into a wooden plate presses it (17..36, then the recheck releases it; the sand is gone); a stone plate ignores it"
+target plates do at 2 break @SP
+target plates do at 2 break @SP2
+target plates expect @PLATE powered=false at 16
+target plates expect @PLATE powered=true during 17..36
+target plates expect @PLATE powered=false at 37
+target plates expect @PLAMP lit=true at 17
+target plates expect @SPLATE powered=false during 0..60
+
+check

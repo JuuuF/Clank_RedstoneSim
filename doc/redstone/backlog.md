@@ -24,7 +24,8 @@ with the record that answered it.
    - [x] R-013 0-tick pulses: what reacts to them
    - [x] R-014 rails, doors, gates, target blocks, lecterns
    - [x] R-015 observers moved by pistons; pulling across a gap (flying machines)
-   - [ ] R-016 making 0-tick pulses with pistons (block dropping, redstone block pushes)
+   - [x] R-016 falling blocks as timers and triggers
+   - [ ] R-018 making 0-tick pulses with pistons (block dropping, redstone block pushes)
    - [x] R-017 wire update order: position-dependent races (Q6)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
