@@ -295,6 +295,7 @@ def clear(session: Session, args: Args) -> Output:
 )
 def line(session: Session, args: Args) -> Output:
     a = args.pos("the start")
+    args.option("to")
     b = args.pos("the end")
     state = args.block()
     support = args.block("a support block") if args.option("support") else None

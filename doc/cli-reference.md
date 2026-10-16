@@ -928,8 +928,10 @@ The forward view of `why`: takes the last change of the block at POS up to the v
 tick (a lever switched on, a repeater turning on) and lists every block change it
 caused afterwards, oldest first: through the updates it sent, the scheduled ticks and
 block events those queued (in later ticks too), and so on, to the end of the simulated
-history. Use it to see where a signal goes and what it reaches, or to find out why
-something far away reacted. At most N changes (default 200).
+history. One line per block and tick: a block that changed several times in a tick
+(wire turning off passes through every power level) shows its first and last state
+and the number of changes. Use it to see where a signal goes and what it reaches, or
+to find out why something far away reacted. At most N lines (default 200).
 
 Examples:
 
@@ -938,7 +940,8 @@ effects @A
 at 3 effects @CLOCK max 40
 ```
 
-JSON `data`: {"pos", "change": {"tick", "text"} or null, "effects": [{"tick", "pos", "text"}]}
+JSON `data`: {"pos", "change": {"tick", "text"} or null, "effects": [{"tick", "pos", "text",
+    "changes"}]}
 
 ### `trace`
 

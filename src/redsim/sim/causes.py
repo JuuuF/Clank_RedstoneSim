@@ -161,26 +161,46 @@ def _origin(trace: Trace, step: TraceRecord) -> TraceRecord | None:
     return None
 
 
+def _block_name(state_text: Any) -> str:
+    """``minecraft:stone_button[…]`` → ``stone_button`` (the name neighbor updates carry)."""
+    return str(state_text).split("[", 1)[0].removeprefix("minecraft:")
+
+
+def _adjacent(a: Pos, b: Pos) -> bool:
+    return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2]) == 1
+
+
 def _source_change(trace: Trace, update: TraceRecord) -> TraceRecord | None:
     """The change of the block a neighbor update came from, earlier in the same step.
-    Some blocks change first and update their neighbors afterwards (redstone wire sets its
-    power with flags 2, then updates around it), so the change is not the update's
-    parent."""
+    Some blocks change first and update their neighbors afterwards, so the change is not
+    the update's parent: redstone wire sets its power with flags 2, then updates around
+    it (the update comes from the wire's position); buttons, levers, torches, repeaters
+    and observers change, then update around a block next to them (the block they are
+    attached to or point into: the update comes from that block's position, naming the
+    component as its source). So: the latest change at the update's source position, or
+    else the latest change next to it to the block the update names."""
     source = update.detail.get("source_pos")
     if source is None:
         return None
     source = tuple(source)
+    name = update.detail.get("source")
     end = update.id - trace.base_id
+    beside: TraceRecord | None = None
     for record in reversed(trace.records[: max(0, end)]):
         if record.step != update.step:
-            return None
-        if (
-            record.kind == tr.SET_BLOCK
-            and record.pos == source
-            and record.detail.get("old") != record.detail.get("new")
-        ):
+            break
+        if record.kind != tr.SET_BLOCK or record.detail.get("old") == record.detail.get("new"):
+            continue
+        if record.pos == source:
             return record
-    return None
+        if (
+            beside is None
+            and record.pos is not None
+            and _adjacent(record.pos, source)
+            and _block_name(record.detail.get("new")) == name
+        ):
+            beside = record
+    return beside
 
 
 def chain(trace: Trace, record: TraceRecord, limit: int = MAX_LINKS) -> list[TraceRecord]:
@@ -264,11 +284,15 @@ MAX_EFFECTS = 200
 def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list[TraceRecord]:
     """The block changes that ``record`` (a block change) caused, oldest first: through
     the updates it sent, the scheduled ticks and block events those queued (in later
-    ticks too), and their own updates — ``chain`` read forwards. Changes made in the same
-    engine step as a caused change and updating from its position count as caused too
-    (wire changes first and updates around it afterwards, see ``_source_change``)."""
+    ticks too), and their own updates — ``chain`` read forwards. Neighbor updates sent in
+    the same engine step from the position of a caused change, or from next to it naming
+    the changed block as their source, count as caused too (blocks that change first and
+    update around themselves afterwards, see ``_source_change``)."""
     caused = {record.id}
-    changed: set[tuple[int, Any]] = {(record.step, record.pos)}
+    #: (step, position) → name of the block a caused change put there.
+    changed: dict[tuple[int, Any], str] = {
+        (record.step, record.pos): _block_name(record.detail.get("new"))
+    }
     scheduled: set[tuple[Any, Any, Any]] = set()
     queued: set[tuple[Any, Any, Any]] = set()
     out: list[TraceRecord] = []
@@ -276,7 +300,12 @@ def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list
         d = r.detail
         inside = r.parent in caused
         if not inside and r.kind == tr.NEIGHBOR_UPDATE and d.get("source_pos") is not None:
-            inside = (r.step, tuple(d["source_pos"])) in changed
+            x, y, z = d["source_pos"]
+            inside = (r.step, (x, y, z)) in changed or any(
+                changed.get((r.step, near)) == d.get("source")
+                for near in ((x - 1, y, z), (x + 1, y, z), (x, y - 1, z), (x, y + 1, z),
+                             (x, y, z - 1), (x, y, z + 1))
+            )  # fmt: skip
         if not inside and r.kind == tr.STEP:
             kind = d.get("kind")
             if kind == "scheduled_tick":
@@ -288,7 +317,7 @@ def effects(trace: Trace, record: TraceRecord, limit: int = MAX_EFFECTS) -> list
         caused.add(r.id)
         if r.kind == tr.SET_BLOCK and d.get("old") != d.get("new"):
             out.append(r)
-            changed.add((r.step, r.pos))
+            changed[(r.step, r.pos)] = _block_name(d.get("new"))
             if len(out) >= limit:
                 break
         elif r.kind == tr.SCHEDULE_TICK and d.get("accepted"):

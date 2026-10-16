@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from redsim.editor.document import Document
 from redsim.editor.heat import signal_heat
-from redsim.sim.causes import state_change, why
+from redsim.sim.causes import describe, effects, last_change, state_change, why
 from redsim.world import blocks
 from redsim.world.properties import EXTENDED
 
@@ -103,3 +103,38 @@ def test_a_quasi_connected_piston_names_its_power_source() -> None:
     assert "quasi-connectivity" in branch[0].text and "0 3 0" in branch[0].text
     assert branch[0].pos == power
     assert any(c.pos == power and "redstone block placed" in c.text for c in branch[1:])
+
+
+def button_and_torch() -> Document:
+    """A button on a stone block with a torch on its other side: the button updates
+    around the block it is attached to, not from its own position."""
+    doc = Document.new_flat()
+    doc.setblock((-1, 1, 0), P("stone_button[face=wall,facing=west]"))
+    doc.setblock((0, 1, 0), P("stone"))
+    doc.setblock((2, 1, 0), P("redstone_lamp"))
+    doc.setblock((1, 1, 0), P("redstone_wall_torch[facing=east]"))  # lights the lamp
+    doc.run_ticks(2)
+    doc.use((-1, 1, 0))
+    doc.run_ticks(10)
+    return doc
+
+
+def test_the_chain_passes_through_a_button_updating_from_the_block_it_is_on() -> None:
+    doc = button_and_torch()
+    texts = [c.text for c in why(doc.level.trace, (1, 1, 0))]
+    assert "neighbor update from stone button at 0 1 0" in texts
+    assert "stone button: powered false → true" in texts  # not skipped to the action
+    assert texts[-1] == "edit or player action: use"
+
+
+def test_effects_follow_a_change_forwards() -> None:
+    doc = button_and_torch()
+    trace = doc.level.trace
+    press = last_change(
+        trace, (-1, 1, 0), before=next(r.id for r in trace.records if r.game_time > 3)
+    )
+    assert press is not None and describe(press) == "stone button: powered false → true"
+    found = [(r.pos, describe(r)) for r in effects(trace, press)]
+    assert found[0] == ((1, 1, 0), "redstone wall torch: lit true → false")
+    assert ((2, 1, 0), "redstone lamp: lit true → false") in found  # 4 ticks after the torch
+    assert all(r.game_time >= press.game_time for r in effects(trace, press))

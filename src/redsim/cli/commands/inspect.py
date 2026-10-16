@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from redsim.cli.commands.common import content_box, name_of, named, tick_line, view_data
+from redsim.cli.commands.common import content_box, name_of, named, region, tick_line, view_data
 from redsim.cli.language import Args, CliError, format_pos, parse_block
 from redsim.cli.registry import Output, command
 from redsim.cli.session import Session
@@ -93,12 +93,7 @@ def show(session: Session, args: Args) -> Output:
         elif args.option("wide"):
             wide = True
         elif args.option("from"):
-            a = args.pos("the first corner")
-            if not args.option("to"):
-                raise CliError("show: from POS to POS")
-            b = args.pos("the second corner")
-            low = (min(a[0], b[0]), min(a[1], b[1]), min(a[2], b[2]))
-            high = (max(a[0], b[0]), max(a[1], b[1]), max(a[2], b[2]))
+            low, high = region(args)
         elif args.option("around"):
             center = args.pos("the center")
             radius = args.option_int("radius", 4)
@@ -350,15 +345,18 @@ def why(session: Session, args: Args) -> Output:
     tick (a lever switched on, a repeater turning on) and lists every block change it
     caused afterwards, oldest first: through the updates it sent, the scheduled ticks and
     block events those queued (in later ticks too), and so on, to the end of the simulated
-    history. Use it to see where a signal goes and what it reaches, or to find out why
-    something far away reacted. At most N changes (default 200).
+    history. One line per block and tick: a block that changed several times in a tick
+    (wire turning off passes through every power level) shows its first and last state
+    and the number of changes. Use it to see where a signal goes and what it reaches, or
+    to find out why something far away reacted. At most N lines (default 200).
     """,
     examples=("effects @A", "at 3 effects @CLOCK max 40"),
     kind="view",
-    data='{"pos", "change": {"tick", "text"} or null, "effects": [{"tick", "pos", "text"}]}',
+    data="""{"pos", "change": {"tick", "text"} or null, "effects": [{"tick", "pos", "text",
+    "changes"}]}""",
 )
 def effects(session: Session, args: Args) -> Output:
-    from redsim.sim.causes import describe, last_change
+    from redsim.sim.causes import describe, last_change, state_change
     from redsim.sim.causes import effects as find_effects
 
     pos = args.pos()
@@ -372,23 +370,40 @@ def effects(session: Session, args: Args) -> Output:
     trace = doc.level.trace
     boundary = next((r.id for r in trace.records if r.game_time > upto + base), None)
     change = last_change(trace, pos, before=boundary)
-    found = find_effects(trace, change, limit) if change is not None else []
+    raw_limit = limit * 20
+    found = find_effects(trace, change, raw_limit) if change is not None else []
     session.goto_view(view)
     out = Output()
     if change is None:
         out.add(f"{named(doc, pos)} has not changed since the build (up to tick {upto})")
         out.data = {"pos": list(pos), "change": None, "effects": []}
         return out
-    out.add(f"{named(doc, pos)} changed at tick {change.game_time - base}: {describe(change)}")
-    out.add(f"  it caused {len(found)} block changes" + (":" if found else ""))
+    # One line per block and tick: wire turning off passes through every power level.
+    groups: dict[tuple[int, Any], list[Any]] = {}
     for r in found:
-        out.add(f"  → tick {r.game_time - base:<4} {name_of(doc, r.pos):<12} {describe(r)}")  # type: ignore[arg-type]
-    if len(found) >= limit:
+        groups.setdefault((r.game_time - base, r.pos), []).append(r)
+    effects_data = []
+    for (tick, where), records in list(groups.items())[:limit]:
+        old, new = records[0].detail.get("old"), records[-1].detail.get("new")
+        if old != new:
+            text = state_change(str(old), str(new))
+        else:
+            text = describe(records[0]) + " and back"
+        if len(records) > 1:
+            text += f" ({len(records)} changes)"
+        effects_data.append({"tick": tick, "pos": list(where) if where else None,
+                             "text": text, "changes": len(records)})  # fmt: skip
+    out.add(f"{named(doc, pos)} changed at tick {change.game_time - base}: {describe(change)}")
+    count = len(effects_data)
+    out.add(f"  it caused {count} change{'' if count == 1 else 's'}" + (":" if count else ""))
+    for e in effects_data:
+        where = name_of(doc, tuple(e["pos"])) if e["pos"] else "?"  # type: ignore[arg-type]
+        out.add(f"  → tick {e['tick']:<4} {where:<12} {e['text']}")
+    if len(groups) > limit or len(found) >= raw_limit:
         out.add(f"  … (stopped at {limit}; more with max N)")
     out.data = {"pos": list(pos),
                 "change": {"tick": change.game_time - base, "text": describe(change)},
-                "effects": [{"tick": r.game_time - base, "pos": list(r.pos) if r.pos else None,
-                             "text": describe(r)} for r in found]}  # fmt: skip
+                "effects": effects_data}  # fmt: skip
     return out
 
 
@@ -731,8 +746,7 @@ def find(session: Session, args: Args) -> Output:
         words.append(args.word())
     box: tuple[Pos, Pos] | None = None
     if args.option("in"):
-        a, b = args.pos(), args.pos()
-        box = (tuple(min(a[i], b[i]) for i in range(3)), tuple(max(a[i], b[i]) for i in range(3)))  # type: ignore[assignment]
+        box = region(args)
     args.done()
     target = parse_block(words[0], command="find")
     wanted = {}
@@ -815,6 +829,7 @@ def delays(session: Session, args: Args) -> Output:
 
     doc = session.doc
     first = args.pos("the input")
+    args.option("to")
     second = args.pos("the output")
     low, high = 0, doc.end_tick
     if args.option("ticks"):

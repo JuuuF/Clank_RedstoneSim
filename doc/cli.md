@@ -143,6 +143,10 @@ y=0, so things are built from y=1 up. A position is written in any of these form
 Output always writes positions as `x y z`, followed by the label in brackets if one names
 it (`5 1 0 (@OUT)`), or just `@OUT` in tables.
 
+Commands that take two corners or two ends (`fill`, `clear`, `line`, `copy`, `move`,
+`rotate`, `mirror`, `stack`, `prefab save`, `group`, `show from`, `find in`, `export
+from`, `delays`) read them as `A B` or `A to B`: `line 2 1 0 to 2 1 5 redstone_wire`.
+
 ### 4.2 Directions
 
 `north south east west up down`, or `n s e w u d`. North is −z, south +z, east +x, west −x.
@@ -445,15 +449,18 @@ at tick 3:
 
 ```
 0 1 0 (@A) changed at tick 3: lever: powered false → true
-  it caused 4 block changes:
+  it caused 4 changes:
   → tick 3    1 1 0        redstone wire: power 0 → 15
   → tick 5    3 1 0        redstone wall torch: lit true → false
   → tick 5    4 1 0        redstone wire: power 15 → 0
   → tick 9    @OUT         redstone lamp: lit true → false
 ```
 
-If the output is not in the list, the signal never reached it: the last block in the list
-is where it stops (`inspect` it and its neighbors). `max N` limits the list (default 200).
+A block that changes several times in one tick is one line with its first and last state
+and the number of changes (wire turning off passes through every power level: `redstone
+wire: power 15 → 0 (8 changes)`). If the output is not in the list, the signal never
+reached it: the last block in the list is where it stops (`inspect` it and its
+neighbors). `max N` limits the list (default 200 lines).
 
 ### 7.6 Step by step: `trace`, `step`, `ticks`, `diff`
 
@@ -611,6 +618,22 @@ The steps, as a habit:
 5. `step` through the tick where it goes wrong to see the order of updates (`step back`
    to look at a step again).
 
+An example, from building `examples/cli/rs_latch.cli.txt` (a latch whose lamp `@Q` should
+go off when button `@R` is pressed at tick 2) with the two buttons swapped by mistake.
+`check` failed: `@Q` stayed lit through ticks 3..8. `waves` showed the latch did flip,
+but at tick 40, when the *other* button `@S` was pressed:
+
+```
+@Q redstone_lamp   ffffffffffffffffffffffffffffffffffffffffffffff...................................
+@R stone_button    ..ffffffffffffffffffff...........................................................
+@S stone_button    ........................................ffffffffffffffffffff.....................
+```
+
+`at 2 effects @R` listed only one change, a wire next to the button (nothing in the latch
+reacted), and `at 40 effects @S` listed the torch next to `@Q` turning off two ticks later:
+the button that resets is the one on `@Q`'s side. Swapping the two labels made the target
+pass.
+
 ### 10.3 Timing
 
 Clocks, pulse lengths and delays: `run` far enough, then `waves` (one column per tick)
@@ -624,7 +647,20 @@ timeline (`at 3 use @L`, `at 10 use @L`, or `pulse @IN at 2 for 4`), `run`, and 
 `changes` of the moving blocks. `edits` lists the timeline, `edit move E2 to 15` changes
 it. `examples/cli/piston_door.cli.txt` is a small example.
 
-### 10.5 Handing a world over
+### 10.5 The example scripts
+
+Each script in `examples/cli/` builds a contraption on a new world and ends with a
+`check` that passes (`tests/cli/test_examples.py` runs them all); the `.redsim.json` next
+to each is the result, to open in the editor or to inspect with `redsim-cli`.
+
+| Script | What it shows |
+|---|---|
+| `and_gate.cli.txt` | torches and levers, `settle`, a truth table target |
+| `piston_door.cli.txt` | a sequence on the timeline, block movement, `changes` |
+| `observer_clock.cli.txt` | a clock, `waves`, timing with `within` |
+| `rs_latch.cli.txt` | memory: a target with stimuli at two ticks and `during` expectations |
+
+### 10.6 Handing a world over
 
 A person: `redsim WORLD` opens it in the editor with everything. An agent: `info`,
 `notes`, `labels`, `targets`, `log`, then `check` to see what works.

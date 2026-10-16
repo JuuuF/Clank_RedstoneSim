@@ -173,10 +173,14 @@ chain crosses ticks. `effects` (`causes.effects`) does the same forwards: starti
 the change it collects every later record whose parent is already collected, every
 scheduled tick and block event step that a collected record queued (matched by position,
 trigger tick and sub-tick, or position and event numbers), and neighbor updates sent in
-the same engine step from a position a collected change changed (the game updates around
-a wire after changing it, from the same step but not as a child record). The commands
-first simulate the whole history (`goto(end_tick)`) so the trace is complete, and return
-to the view afterwards.
+the same engine step from the position of a collected change, or from a position next to
+it that names the changed block as the update's source. Both cases are blocks that change
+first and update afterwards, so the updates are not child records of the change: wire
+sets its power, then updates around itself; buttons, levers, torches, repeaters and
+observers change, then update around the block they are attached to or point into
+(`_source_change` applies the same rule backwards for `why`). `effects` merges a block's
+changes within one tick into one line. The commands first simulate the whole history
+(`goto(end_tick)`) so the trace is complete, and return to the view afterwards.
 
 ## 9. Tests and documentation
 

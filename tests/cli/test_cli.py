@@ -287,6 +287,7 @@ def test_effects_step_back_and_orientation(rs: Run) -> None:
     out = rs("at", "3", "effects", "@A")
     assert "changed at tick 3: lever: powered false → true" in out
     assert "→ tick 5    3 1 0        redstone wall torch: lit true → false" in out
+    assert "it caused 4 changes:" in out
     assert "@OUT" in out and "redstone lamp: lit true → false" in out  # the lamp, 4 ticks on
     assert "tick 9    @OUT" in rs("effects", "@A")  # the view (tick 12) sees the same change
     assert "has not changed since the build" in rs("at", "2", "effects", "@A")
@@ -299,3 +300,10 @@ def test_effects_step_back_and_orientation(rs: Run) -> None:
     assert "faces     on the block to its west" in rs("inspect", "3", "1", "0")
     data = json.loads(rs("--json", "inspect", "3", "1", "0").splitlines()[0])
     assert "west" in data["data"]["blocks"][0]["orientation"]
+
+
+def test_two_corners_may_be_written_with_to(rs: Run) -> None:
+    rs.batch("line 0 1 0 to 0 1 3 redstone_wire; fill 2 1 0 to 3 1 1 stone; clear 3 1 1 to 3 1 1")
+    out = rs("find", "stone", "in", "2", "1", "0", "to", "3", "1", "1")
+    assert "3 × stone" in out
+    assert "4 × redstone_wire" in rs("find", "redstone_wire")

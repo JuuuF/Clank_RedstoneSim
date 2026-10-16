@@ -52,8 +52,9 @@ def content_box(level: Level, margin: int = 0) -> tuple[Pos, Pos] | None:
 
 
 def region(args: Args) -> tuple[Pos, Pos]:
-    """Two corners (any order) → (low, high)."""
+    """Two corners (any order, ``A B`` or ``A to B``) → (low, high)."""
     a = args.pos("the first corner")
+    args.option("to")
     b = args.pos("the second corner")
     low = (min(a[0], b[0]), min(a[1], b[1]), min(a[2], b[2]))
     high = (max(a[0], b[0]), max(a[1], b[1]), max(a[2], b[2]))

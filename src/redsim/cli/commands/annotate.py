@@ -3,6 +3,7 @@ change the simulation; they make a world readable for the next person or agent."
 
 from __future__ import annotations
 
+from redsim.cli.commands.common import region
 from redsim.cli.language import Args, CliError, format_pos
 from redsim.cli.registry import Output, command
 from redsim.cli.session import Session
@@ -159,7 +160,7 @@ def group(session: Session, args: Args) -> Output:
             raise CliError(f"group: no group {name!r}")
         doc.groups.remove(name)
     else:
-        a, b = args.pos("the first corner"), args.pos("the second corner")
+        a, b = region(args)
         ports = []
         while args.more():
             role = args.choice(("in", "out"), "in or out")

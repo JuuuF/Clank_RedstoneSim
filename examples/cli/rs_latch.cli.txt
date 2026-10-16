@@ -1,0 +1,32 @@
+# An RS NOR latch from two torches: S sets Q, R resets it, and it remembers.
+#   redsim-cli examples/cli/rs_latch.redsim.json new force
+#   redsim-cli examples/cli/rs_latch.redsim.json < examples/cli/rs_latch.cli.txt
+# Two blocks, each with a torch; each torch's wire runs into the other block, so exactly
+# one torch is on. A button on a block turns its torch off and so the other one on.
+note "RS NOR latch: R (button on B1) resets Q, S (button on B2) sets it"
+place 0 1 0 stone
+place 1 1 0 redstone_wall_torch facing=east
+line 2 1 0 to 2 1 2 redstone_wire
+place 2 1 3 stone
+place 1 1 3 redstone_wall_torch facing=west
+line 0 1 3 to 0 1 1 redstone_wire
+place -1 1 0 stone_button face=wall facing=west
+place 3 1 3 stone_button face=wall facing=east
+place 1 1 -1 redstone_lamp
+place 1 1 4 redstone_lamp
+label B1 0 1 0 "the block of torch T1 (Q)"
+label B2 2 1 3 "the block of torch T2 (not Q)"
+label R -1 1 0 "reset button, on B1"
+label S 3 1 3 "set button, on B2"
+label Q 1 1 -1 "lamp: Q, lit by T1"
+label NQ 1 1 4 "lamp: not Q, lit by T2"
+settle
+show
+target new latch "R resets Q, S sets it again; both states hold"
+target latch do at 2 use @R
+target latch expect @Q lit=false within 3..8
+target latch expect @NQ lit=true during 10..40
+target latch do at 40 use @S
+target latch expect @Q lit=true during 50..80
+target latch expect @NQ lit=false during 50..80
+check
