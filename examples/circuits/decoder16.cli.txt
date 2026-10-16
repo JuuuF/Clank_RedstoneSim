@@ -1,0 +1,273 @@
+# Circuit: 1-of-16 signal-strength decoder. Contract: doc/redstone/circuits.md,
+# "Signal-strength decoder".
+#
+# Module (box 0 1 0 .. 16 1 8): @IN, a barrel at 0 1 4 (replace it by the analog source:
+# a container, or a block powered with the strength), is read by the comparator 1 1 4
+# into a wire line along z=4 (cells c = 0..14 at x = c+2: power S - c). Every cell has a
+# repeater tap on each side: T(c) = 15 while S >= c+1 (a thermometer code). Output m is
+# a subtracting comparator with T(m-1) behind it and T(m) at its side: on only while
+# S = m. Odd m on the south side, even m on the north; on each side the comparators
+# alternate between a near row and a far row (with repeaters making up the delay), so no
+# side wire touches two comparators. O0 = NOT T(0): a torch, padded by a delay-2 repeater.
+#   @O0 .. @O15  output m: O0 at 2 1 0; even m >= 2 at m+1 1 0 (pointing north);
+#                odd m at m+1 1 8 (pointing south). 15 while S = m, else 0.
+# All outputs change 10 ticks after the input barrel (8 after the wire line), in one tick.
+#   redsim-cli decoder16.redsim.json < examples/circuits/decoder16.cli.txt
+new size 48 force
+note "1-of-16 decoder: output @Om is on while the analog input @IN reads m (10 ticks after it changes)"
+
+set 0 1 4 barrel
+place 1 1 4 comparator out=east
+line 2 1 4 to 16 1 4 redstone_wire
+place 2 1 3 repeater out=north
+place 2 1 5 repeater out=south
+place 3 1 3 repeater out=north
+place 3 1 5 repeater out=south
+place 4 1 3 repeater out=north
+place 4 1 5 repeater out=south
+place 5 1 3 repeater out=north
+place 5 1 5 repeater out=south
+place 6 1 3 repeater out=north
+place 6 1 5 repeater out=south
+place 7 1 3 repeater out=north
+place 7 1 5 repeater out=south
+place 8 1 3 repeater out=north
+place 8 1 5 repeater out=south
+place 9 1 3 repeater out=north
+place 9 1 5 repeater out=south
+place 10 1 3 repeater out=north
+place 10 1 5 repeater out=south
+place 11 1 3 repeater out=north
+place 11 1 5 repeater out=south
+place 12 1 3 repeater out=north
+place 12 1 5 repeater out=south
+place 13 1 3 repeater out=north
+place 13 1 5 repeater out=south
+place 14 1 3 repeater out=north
+place 14 1 5 repeater out=south
+place 15 1 3 repeater out=north
+place 15 1 5 repeater out=south
+place 16 1 3 repeater out=north
+place 16 1 5 repeater out=south
+place 2 1 6 comparator out=south mode=subtract
+place 3 1 6 redstone_wire
+place 2 1 7 repeater out=south
+place 2 1 8 repeater out=south
+place 4 1 6 repeater out=south
+place 4 1 7 repeater out=south
+place 4 1 8 comparator out=south mode=subtract
+place 5 1 6 repeater out=south
+place 5 1 7 repeater out=south
+place 5 1 8 redstone_wire
+place 6 1 6 comparator out=south mode=subtract
+place 7 1 6 redstone_wire
+place 6 1 7 repeater out=south
+place 6 1 8 repeater out=south
+place 8 1 6 repeater out=south
+place 8 1 7 repeater out=south
+place 8 1 8 comparator out=south mode=subtract
+place 9 1 6 repeater out=south
+place 9 1 7 repeater out=south
+place 9 1 8 redstone_wire
+place 10 1 6 comparator out=south mode=subtract
+place 11 1 6 redstone_wire
+place 10 1 7 repeater out=south
+place 10 1 8 repeater out=south
+place 12 1 6 repeater out=south
+place 12 1 7 repeater out=south
+place 12 1 8 comparator out=south mode=subtract
+place 13 1 6 repeater out=south
+place 13 1 7 repeater out=south
+place 13 1 8 redstone_wire
+place 14 1 6 comparator out=south mode=subtract
+place 15 1 6 redstone_wire
+place 14 1 7 repeater out=south
+place 14 1 8 repeater out=south
+place 16 1 6 repeater out=south
+place 16 1 7 repeater out=south
+place 16 1 8 repeater out=south
+place 3 1 2 comparator out=north mode=subtract
+place 4 1 2 redstone_wire
+place 3 1 1 repeater out=north
+place 3 1 0 repeater out=north
+place 5 1 2 repeater out=north
+place 5 1 1 repeater out=north
+place 5 1 0 comparator out=north mode=subtract
+place 6 1 2 repeater out=north
+place 6 1 1 repeater out=north
+place 6 1 0 redstone_wire
+place 7 1 2 comparator out=north mode=subtract
+place 8 1 2 redstone_wire
+place 7 1 1 repeater out=north
+place 7 1 0 repeater out=north
+place 9 1 2 repeater out=north
+place 9 1 1 repeater out=north
+place 9 1 0 comparator out=north mode=subtract
+place 10 1 2 repeater out=north
+place 10 1 1 repeater out=north
+place 10 1 0 redstone_wire
+place 11 1 2 comparator out=north mode=subtract
+place 12 1 2 redstone_wire
+place 11 1 1 repeater out=north
+place 11 1 0 repeater out=north
+place 13 1 2 repeater out=north
+place 13 1 1 repeater out=north
+place 13 1 0 comparator out=north mode=subtract
+place 14 1 2 repeater out=north
+place 14 1 1 repeater out=north
+place 14 1 0 redstone_wire
+place 15 1 2 comparator out=north mode=subtract
+place 16 1 2 redstone_wire
+place 15 1 1 repeater out=north
+place 15 1 0 repeater out=north
+place 2 1 2 stone
+place 2 1 1 redstone_wall_torch facing=north
+place 2 1 0 repeater out=north delay=2
+label IN 0 1 4 "analog input (barrel)"
+label O0 2 1 0 "on when S = 0"
+label O1 2 1 8 "on when S = 1"
+label O2 3 1 0 "on when S = 2"
+label O3 4 1 8 "on when S = 3"
+label O4 5 1 0 "on when S = 4"
+label O5 6 1 8 "on when S = 5"
+label O6 7 1 0 "on when S = 6"
+label O7 8 1 8 "on when S = 7"
+label O8 9 1 0 "on when S = 8"
+label O9 10 1 8 "on when S = 9"
+label O10 11 1 0 "on when S = 10"
+label O11 12 1 8 "on when S = 11"
+label O12 13 1 0 "on when S = 12"
+label O13 14 1 8 "on when S = 13"
+label O14 15 1 0 "on when S = 14"
+label O15 16 1 8 "on when S = 15"
+group decoder16 0 1 0 16 1 8 in @IN IN out @O0 O0 out @O1 O1 out @O2 O2 out @O3 O3 out @O4 O4 out @O5 O5 out @O6 O6 out @O7 O7 out @O8 O8 out @O9 O9 out @O10 O10 out @O11 O11 out @O12 O12 out @O13 O13 out @O14 O14 out @O15 O15
+settle
+prefab save decoder16 0 1 0 16 1 8
+
+# Control (outside the module), why the comparators alternate between near and far rows:
+# one wire between two subtracting comparators is a side input of both.
+source 0 1 13 barrel 9
+source 2 1 13 barrel 9
+place 0 1 14 comparator out=south mode=subtract
+place 2 1 14 comparator out=south mode=subtract
+place 1 1 14 redstone_wire
+place 1 1 13 repeater out=south
+place 1 1 12 lever face=floor
+label CTL_L 1 1 12 "control: lever powering the shared side wire"
+label CTL_E1 0 1 14 "control: comparator west of the wire"
+label CTL_E2 2 1 14 "control: comparator east of the wire"
+settle
+
+target new sweep "S = 0, then 1, 2, ..., 15 every 20 ticks: exactly output S is on, 10 ticks after each change, switching in one tick"
+target sweep do at 20 source @IN barrel 1
+target sweep do at 40 source @IN barrel 2
+target sweep do at 60 source @IN barrel 3
+target sweep do at 80 source @IN barrel 4
+target sweep do at 100 source @IN barrel 5
+target sweep do at 120 source @IN barrel 6
+target sweep do at 140 source @IN barrel 7
+target sweep do at 160 source @IN barrel 8
+target sweep do at 180 source @IN barrel 9
+target sweep do at 200 source @IN barrel 10
+target sweep do at 220 source @IN barrel 11
+target sweep do at 240 source @IN barrel 12
+target sweep do at 260 source @IN barrel 13
+target sweep do at 280 source @IN barrel 14
+target sweep do at 300 source @IN barrel 15
+target sweep expect @O0 power>=1 during 0..29
+target sweep expect @O0 power=0 during 30..340
+target sweep expect @O1 power=0 during 0..29
+target sweep expect @O1 power>=1 during 30..49
+target sweep expect @O1 power=0 during 50..340
+target sweep expect @O2 power=0 during 0..49
+target sweep expect @O2 power>=1 during 50..69
+target sweep expect @O2 power=0 during 70..340
+target sweep expect @O3 power=0 during 0..69
+target sweep expect @O3 power>=1 during 70..89
+target sweep expect @O3 power=0 during 90..340
+target sweep expect @O4 power=0 during 0..89
+target sweep expect @O4 power>=1 during 90..109
+target sweep expect @O4 power=0 during 110..340
+target sweep expect @O5 power=0 during 0..109
+target sweep expect @O5 power>=1 during 110..129
+target sweep expect @O5 power=0 during 130..340
+target sweep expect @O6 power=0 during 0..129
+target sweep expect @O6 power>=1 during 130..149
+target sweep expect @O6 power=0 during 150..340
+target sweep expect @O7 power=0 during 0..149
+target sweep expect @O7 power>=1 during 150..169
+target sweep expect @O7 power=0 during 170..340
+target sweep expect @O8 power=0 during 0..169
+target sweep expect @O8 power>=1 during 170..189
+target sweep expect @O8 power=0 during 190..340
+target sweep expect @O9 power=0 during 0..189
+target sweep expect @O9 power>=1 during 190..209
+target sweep expect @O9 power=0 during 210..340
+target sweep expect @O10 power=0 during 0..209
+target sweep expect @O10 power>=1 during 210..229
+target sweep expect @O10 power=0 during 230..340
+target sweep expect @O11 power=0 during 0..229
+target sweep expect @O11 power>=1 during 230..249
+target sweep expect @O11 power=0 during 250..340
+target sweep expect @O12 power=0 during 0..249
+target sweep expect @O12 power>=1 during 250..269
+target sweep expect @O12 power=0 during 270..340
+target sweep expect @O13 power=0 during 0..269
+target sweep expect @O13 power>=1 during 270..289
+target sweep expect @O13 power=0 during 290..340
+target sweep expect @O14 power=0 during 0..289
+target sweep expect @O14 power>=1 during 290..309
+target sweep expect @O14 power=0 during 310..340
+target sweep expect @O15 power=0 during 0..309
+target sweep expect @O15 power>=1 during 310..340
+
+target new jumps "S jumps 0 → 13 → 2 → 15 → 0 → 8 → 7 → 9 → 1: no other output ever flashes"
+target jumps do at 20 source @IN barrel 13
+target jumps do at 40 source @IN barrel 2
+target jumps do at 60 source @IN barrel 15
+target jumps do at 80 container @IN empty
+target jumps do at 100 source @IN barrel 8
+target jumps do at 120 source @IN barrel 7
+target jumps do at 140 source @IN barrel 9
+target jumps do at 160 source @IN barrel 1
+target jumps expect @O0 power>=1 during 0..29
+target jumps expect @O0 power=0 during 30..89
+target jumps expect @O0 power>=1 during 90..109
+target jumps expect @O0 power=0 during 110..200
+target jumps expect @O1 power=0 during 0..169
+target jumps expect @O1 power>=1 during 170..200
+target jumps expect @O2 power=0 during 0..49
+target jumps expect @O2 power>=1 during 50..69
+target jumps expect @O2 power=0 during 70..200
+target jumps expect @O3 power=0 during 0..200
+target jumps expect @O4 power=0 during 0..200
+target jumps expect @O5 power=0 during 0..200
+target jumps expect @O6 power=0 during 0..200
+target jumps expect @O7 power=0 during 0..129
+target jumps expect @O7 power>=1 during 130..149
+target jumps expect @O7 power=0 during 150..200
+target jumps expect @O8 power=0 during 0..109
+target jumps expect @O8 power>=1 during 110..129
+target jumps expect @O8 power=0 during 130..200
+target jumps expect @O9 power=0 during 0..149
+target jumps expect @O9 power>=1 during 150..169
+target jumps expect @O9 power=0 during 170..200
+target jumps expect @O10 power=0 during 0..200
+target jumps expect @O11 power=0 during 0..200
+target jumps expect @O12 power=0 during 0..200
+target jumps expect @O13 power=0 during 0..29
+target jumps expect @O13 power>=1 during 30..49
+target jumps expect @O13 power=0 during 50..200
+target jumps expect @O14 power=0 during 0..200
+target jumps expect @O15 power=0 during 0..69
+target jumps expect @O15 power>=1 during 70..89
+target jumps expect @O15 power=0 during 90..200
+
+target new sharedside "control: the wire between two comparators blocks both (each reads 9 - 15 = 0 from 2 ticks after the repeater turns on)"
+target sharedside do at 5 use @CTL_L
+target sharedside expect @CTL_E1 power=9 during 1..8
+target sharedside expect @CTL_E2 power=9 during 1..8
+target sharedside expect @CTL_E1 power=0 during 9..20
+target sharedside expect @CTL_E2 power=0 during 9..20
+
+check

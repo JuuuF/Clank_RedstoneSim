@@ -98,7 +98,9 @@ V [[R-020-vertical-signals]]
 | Comparator → comparator | unchanged | V R-005 |
 
 **Comparator side inputs** (the larger of the two sides counts): wire beside it (at its
-power), a redstone block, a repeater or comparator pointing into the side. **Not** side
+power; wire always connects to a comparator, so one wire between two comparators feeds
+both, V `decoder16` control), a redstone block, a repeater or comparator pointing into the
+side. **Not** side
 inputs: torches, levers, buttons, powered solid blocks. An observer's 2-tick pulse at a
 side was lost (comparator with nothing in front, R-005), as it is at the rear (R-003; it
 passes the rear of a comparator that feeds a repeater or comparator, R-012).

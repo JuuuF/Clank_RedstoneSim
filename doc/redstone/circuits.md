@@ -50,6 +50,8 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | react to a container's fill level | [[#Threshold detector]] |
 | remember a strength (0–15) | [[#Peak-hold register]] |
 | add two strengths | [[#Analog adder]] (subtract: one comparator, R-005) |
+| pick one of two strengths by a select signal | [[#Analog multiplexer]] |
+| one output per strength 0–15 (a counter or fill display, a selector) | [[#Signal-strength decoder]] |
 | two signal paths must cross | [[#Crossing]] |
 | move a structure by itself | [[#Flying machine]] |
 | push a block two cells and pull it back | [[#Double piston extender]] |
@@ -71,6 +73,8 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Threshold detector]] | on while an analog signal (a container's fill) ≥ k | 3×1×3 | 4 | `threshold` |
 | [[#Peak-hold register]] | analog memory: keeps the largest strength written | 3×1×4 | 2–8 | `peak_hold` |
 | [[#Analog adder]] | min(15, A + B) of two strengths | 4×1×4 | 6–8 | `analog_adder` |
+| [[#Analog multiplexer]] | OUT = SEL ? B : A, strength kept | 6×1×5 | 4 data, 6 select | `analog_mux` |
+| [[#Signal-strength decoder]] | 1 of 16 outputs on: the one numbered S | 17×1×9 | 10 | `decoder16` |
 | **Wiring** | | | | |
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
 | [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
@@ -291,6 +295,72 @@ C2 = C1 − B, C3 = 15 − C2 = A + B (another redstone block behind C3, C2 at i
 - **Constraints:** strengths travel comparator to comparator only: wire would lose 1 per
   block. Keep wire and redstone blocks away from the input comparators' sides (they would
   be side inputs, R-005); that is why C3 points into a stone.
+
+### Analog multiplexer
+
+Two subtracting comparators gate the inputs: CA = A − 15·SEL, CB = B − 15·¬SEL. Both point
+into one stone; a comparator reading the stone gives the larger, which is the selected
+input. A repeater (SEL) and a torch (¬SEL), both 2 ticks, switch the two gates in the
+same tick. `analog_mux.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| SEL | 0 0 1 | wire; drive it from the **west** (on = select B) |
+| A | 4 0 0 | input A: an analog block (container …) read by CA, or a block powered with the strength |
+| B | 4 0 4 | input B, the same |
+| OUT | 5 0 2 | comparator facing east: strength A while SEL is off, B while SEL is on |
+
+- **Behavior:** tested A = 5, B = 11: OUT 5, then 11 after SEL; changes of the unselected
+  input do nothing; the selected one passes with its strength (3, 9, 14); A = 15 is
+  blocked completely while B = 0 is selected; 0 and 15 pass.
+- **Latency:** 4 ticks from the selected input (2 comparators), 6 from SEL.
+- **No glitch:** switching SEL goes straight from one value to the other (tested every 10
+  ticks, OUT never 0 in between).
+- **SEL pulses must last 3+ ticks** (V, failure cases in the targets): a 1-tick pulse is
+  lost (the torch ignores it, and CA misses the repeater's 2-tick pulse, R-003); a 2-tick
+  lever pulse switches only CB, so OUT is max(A, B) for 2 ticks instead of B.
+- **Constraints:** if A or B is a solid block carrying a strength below 15, nothing
+  behind it (4 0 −1, 4 0 5) may be a container: the comparator would read that instead
+  (R-005). 5 0 1 and 5 0 3 must stay air: they are side inputs of CA, CB and OUT.
+- **Composition (I):** OUT may point straight into another module's input block (a
+  comparator keeps the strength); a 4:1 selector is two of them feeding a third, with
+  comparators to route between them. Not built yet ([[backlog]]).
+
+### Signal-strength decoder
+
+A thermometer code from a wire line, then one subtracting comparator per value. The input
+strength S feeds a wire line whose cell c carries S − c; a repeater tap on each cell gives
+T(c) = 15 while S ≥ c + 1. Output m is a subtracting comparator with T(m − 1) behind it
+and T(m) at its side: on only while S = m (output 0 is a torch: ¬T(0)). `decoder16.cli.txt`.
+**Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| IN | 0 0 4 | the analog input: a barrel in the build; any container, or a block powered with the strength (a comparator reads it) |
+| O0 | 2 0 0 | repeater facing north: 15 while S = 0 |
+| Om, even m ≥ 2 | m+1 0 0 | facing north (a comparator or a repeater): 15 while S = m |
+| Om, odd m | m+1 0 8 | facing south: 15 while S = m |
+
+- **Behavior:** tested with every value 0 → 15 in steps (exactly one output on, the one
+  numbered S, checked every tick) and with jumps 0 → 13 → 2 → 15 → 0 → 8 → 7 → 9 → 1 (no
+  other output ever flashes).
+- **Latency:** 10 ticks from the input barrel to every output (8 from the wire line); all
+  outputs switch in the same tick, so no two are ever on together.
+- **Layout rules that make it work** (each one found necessary while designing it):
+  - Every cell needs two taps (it is the rear of one output and the side of the next), so
+    taps sit on both sides of the line: odd outputs south, even north.
+  - A wire feeding a comparator's side feeds **every** comparator beside it (wire
+    connects to comparators on any side, and they read it; V: the script's `sharedside`
+    control). Comparators in one row would share their side wires, so on each side they
+    alternate between a near and a far row; repeaters make up the far row's extra
+    distance, keeping all paths 8 ticks.
+  - A powered solid block beside a comparator is not a side input (R-005), so the O0
+    stone may touch O2's comparator.
+- **State:** none. **Constraints:** the input changes only through the comparator 1 0 4
+  (a container or a block); the wire line must keep its cells (no wire next to it).
+- **Uses:** counter or fill-level displays, selecting one of 16 actions by a strength
+  (with [[#Analog multiplexer]] for the reverse), item-count logic with
+  [[#Threshold detector]].
 
 ## Wiring
 
@@ -828,6 +898,9 @@ may drive which inputs, timing budgets. Known so far:
 - **Never rely on the order in which one wire change reaches several components**
   (pistons racing, ties between equal-priority ticks): it depends on the position of the
   build ([[R-017-wire-order]]). Give the paths different delays instead.
+- **A wire beside a comparator is its side input, and a wire between two comparators is
+  a side input of both** (V `decoder16` control). Feed comparators in a row through
+  repeaters pointing into their sides, or stagger them so no wire touches two.
 - **Balance path delays** into any gate whose inputs may change in the same tick: an
   input that arrives 2 ticks early makes a 2-tick glitch (a false 1 or a dropout). Add
   delay-1 repeaters to the faster paths ([[R-010-hazards]]).
