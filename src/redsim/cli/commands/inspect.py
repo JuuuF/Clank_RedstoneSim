@@ -516,15 +516,15 @@ def trace(session: Session, args: Args) -> Output:
 
 
 def _positions_to_watch(session: Session, args: Args) -> list[Pos]:
-    positions = []
+    """The positions to show, each once (two labels may name the same position)."""
+    positions: list[Pos] = []
     while args.more() and args.peek() != "ticks":
         positions.append(args.pos())
-    if positions:
-        return positions
-    doc = session.doc
-    found: list[Pos] = [label.pos for _, label in sorted(doc.labels.items())]
-    found += [p for p in doc.monitors if p not in found]
-    return found
+    if not positions:
+        doc = session.doc
+        positions = [label.pos for _, label in sorted(doc.labels.items())]
+        positions += list(doc.monitors)
+    return list(dict.fromkeys(positions))
 
 
 @command(

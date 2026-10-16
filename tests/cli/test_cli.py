@@ -123,6 +123,14 @@ def test_moving_and_deleting_edits(rs: Run) -> None:
     assert "the timeline is empty" in rs("edits")
 
 
+def test_waves_shows_a_position_named_by_two_labels_once(rs: Run) -> None:
+    rs.batch("place 0 1 0 lever face=floor; place 1 1 0 redstone_lamp")
+    rs.batch("label A 1 1 0; label B 1 1 0; at 2 use 0 1 0; run 6")
+    for out in (rs("waves"), rs("waves", "@A", "@B")):
+        rows = [line for line in out.splitlines() if "redstone_lamp" in line]
+        assert rows == ["@A redstone_lamp  ..fffff"], out
+
+
 def test_pulses_drive_inputs(rs: Run) -> None:
     rs.batch("place 0 1 0 redstone_lamp; label L 0 1 0")
     rs("pulse", "@L", "at", "2", "for", "3")
