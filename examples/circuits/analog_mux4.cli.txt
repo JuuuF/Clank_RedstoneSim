@@ -1,0 +1,120 @@
+# Circuit: 4:1 analog selector (OUT = the strength of X0..X3 picked by S1 S0). Contract:
+# doc/redstone/circuits.md, "4:1 analog selector". Three analog_mux copies (run from the
+# repository root: it imports examples/circuits/analog_mux.nbt).
+#
+# Module (box -2 1 -8 .. 6 3 12):
+#   @S0  -2 3 2   address bit 0: wire on the top layer, drive it from the west (strength 8+)
+#   @S1  -2 1 1   address bit 1: wire, drive it from the west
+#   @X0  6 1 -2   inputs: analog blocks (barrels here) or blocks powered with the strength;
+#   @X1  2 1 -2     X0 and X3 are fed from the east, X1 and X2 from the west
+#   @X2  2 1 6
+#   @X3  6 1 6
+#   @OUT 5 1 2    comparator facing east: X[2*S1 + S0]
+# How it works:
+#   mux2 (0 1 0, as pasted) picks between its A stone 4 1 0 (S1 off) and B stone 4 1 4.
+#   mux0 (2 1 -6, rotate 1) picks X0 / X1 by S0; its OUT comparator 4 1 -1 points south
+#     straight into mux2's A stone. mux1 (2 1 5, rotate 3) picks X2 / X3; its OUT 4 1 5
+#     points north into mux2's B stone. Comparators keep the strength: no routing at all.
+#   S0 must reach mux0's SEL (north edge, 5 1 -6) and mux1's (south edge, 3 1 10): it runs
+#     on the top layer (y=3, supports on y=2) east along z=2, then north and south along
+#     x=4 over the three muxes (repeaters 4 3 0 and 4 3 4), and steps down onto the SEL
+#     wires. The bottom layer stays free: every port is reached from outside.
+#   Balance: S0 passes a repeater and two muxes (12 ticks); S1's delay-3 repeater -1 1 1
+#     makes it 12 too, so both bits may change in the same tick without a wrong value.
+# Latency: X (selected) -> OUT 8 ticks; S0 or S1 -> OUT 12.
+# Test harness outside the box: levers @LS0, @LS1; lamp after OUT.
+#   redsim-cli analog_mux4.redsim.json < examples/circuits/analog_mux4.cli.txt
+new size 40 force
+note "4:1 analog selector: @OUT gives the strength of X0..X3 picked by S1 S0 (12 ticks after an address change, 8 after the selected input)"
+import examples/circuits/analog_mux.nbt at 0 1 0
+import examples/circuits/analog_mux.nbt at 2 1 -6 rotate 1
+import examples/circuits/analog_mux.nbt at 2 1 5 rotate 3
+# mux2's inputs are the first stage's outputs: stones, not barrels
+set 4 1 0 stone
+set 4 1 4 stone
+source 6 1 -2 barrel 3
+source 2 1 -2 barrel 7
+source 2 1 6 barrel 11
+source 6 1 6 barrel 14
+# S1: port wire, delay-3 repeater into mux2's SEL wire 0 1 1
+place -2 1 1 redstone_wire
+place -1 1 1 repeater out=east delay=3
+# S0: supports on y=2, the lane on y=3, steps down onto the SEL wires
+fill -2 2 2 3 2 2 stone
+fill 4 2 -8 4 2 12 stone
+set 5 1 -8 stone
+set 3 1 12 stone
+line -2 3 2 to 3 3 2 redstone_wire
+line 4 3 -8 to 4 3 -1 redstone_wire
+place 4 3 0 repeater out=north
+line 4 3 1 to 4 3 3 redstone_wire
+place 4 3 4 repeater out=south
+line 4 3 5 to 4 3 12 redstone_wire
+place 5 2 -8 redstone_wire
+place 5 1 -7 redstone_wire
+place 3 2 12 redstone_wire
+place 3 1 11 redstone_wire
+label S0 -2 3 2 "address bit 0: wire on the top layer, driven from the west"
+label S1 -2 1 1 "address bit 1: wire, driven from the west"
+label X0 6 1 -2 "input X0 (barrel; fed from the east)"
+label X1 2 1 -2 "input X1 (barrel; fed from the west)"
+label X2 2 1 6 "input X2 (barrel; fed from the west)"
+label X3 6 1 6 "input X3 (barrel; fed from the east)"
+label O0 4 1 -1 "mux0's output: X0 or X1"
+label O1 4 1 5 "mux1's output: X2 or X3"
+label OUT 5 1 2 "output: the selected strength"
+group analog_mux4 -2 1 -8 6 3 12 in @S0 S0 in @S1 S1 in @X0 X0 in @X1 X1 in @X2 X2 in @X3 X3 out @OUT OUT
+settle
+prefab save analog_mux4 -2 1 -8 6 3 12
+# harness
+set -3 2 2 stone
+place -3 3 2 lever face=floor
+place -3 1 1 lever face=floor
+place 6 1 2 redstone_lamp
+label LS0 -3 3 2 "test lever S0"
+label LS1 -3 1 1 "test lever S1"
+settle
+
+target new select "X0..X3 = 3, 7, 11, 14: S0 on at 10 (7 at 22), S1 on at 40 (14 at 52), S0 off at 70 (11 at 82), S1 off at 100 (3 at 112)"
+target select do at 10 use @LS0
+target select do at 40 use @LS1
+target select do at 70 use @LS0
+target select do at 100 use @LS1
+target select expect @OUT power=3 during 0..21
+target select expect @OUT power=7 during 22..51
+target select expect @OUT power=14 during 52..81
+target select expect @OUT power=11 during 82..111
+target select expect @OUT power=3 during 112..130
+
+target new together "both bits switched in one tick go straight to the new input: 00 -> 11 at 10 (14 from 22), 11 -> 00 at 40 (3 from 52), 00 -> 01 at 60, 01 -> 10 at 90 (11 from 102)"
+target together do at 10 use @LS0
+target together do at 10 use @LS1
+target together do at 40 use @LS0
+target together do at 40 use @LS1
+target together do at 60 use @LS0
+target together do at 90 use @LS0
+target together do at 90 use @LS1
+target together expect @OUT power=3 during 0..21
+target together expect @OUT power=14 during 22..51
+target together expect @OUT power=3 during 52..71
+target together expect @OUT power=7 during 72..101
+target together expect @OUT power=11 during 102..120
+
+target new data "the selected input passes in 8 ticks, the others change nothing: address 10, X2 to 9 at 20 (OUT 9 at 28); X0, X1, X3 changed at 40"
+target data do use @LS1
+target data do at 20 source @X2 barrel 9
+target data do at 40 source @X0 barrel 1
+target data do at 40 source @X1 barrel 2
+target data do at 40 source @X3 barrel 4
+target data expect @OUT power=11 during 14..27
+target data expect @OUT power=9 during 28..60
+
+target new unbalanced "failure case found while building: S1's repeater at delay 1 (S1 8 ticks, S0 12): 00 -> 11 at 20 shows X2 (11) for 4 ticks before X3"
+target unbalanced do set -1 1 1 repeater facing=west delay=1
+target unbalanced do at 20 use @LS0
+target unbalanced do at 20 use @LS1
+target unbalanced expect @OUT power=3 during 10..27
+target unbalanced expect @OUT power=11 during 28..31
+target unbalanced expect @OUT power=14 during 32..50
+
+check

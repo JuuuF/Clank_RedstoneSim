@@ -50,7 +50,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | react to a container's fill level | [[#Threshold detector]] |
 | remember a strength (0–15) | [[#Peak-hold register]] |
 | add two strengths | [[#Analog adder]] (subtract: one comparator, R-005) |
-| pick one of two strengths by a select signal | [[#Analog multiplexer]] |
+| pick one of two strengths by a select signal | [[#Analog multiplexer]]; one of four by a 2-bit address: [[#4:1 analog selector]] |
 | one output per strength 0–15 (a counter or fill display, a selector) | [[#Signal-strength decoder]] |
 | add binary numbers | [[#Full adder]] (one bit), [[#4-bit adder]] (copies chained) |
 | two signal paths must cross | [[#Crossing]] |
@@ -75,6 +75,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Peak-hold register]] | analog memory: keeps the largest strength written | 3×1×4 | 2–8 | `peak_hold` |
 | [[#Analog adder]] | min(15, A + B) of two strengths | 4×1×4 | 6–8 | `analog_adder` |
 | [[#Analog multiplexer]] | OUT = SEL ? B : A, strength kept | 6×1×5 | 4 data, 6 select | `analog_mux` |
+| [[#4:1 analog selector]] | OUT = X[2·S1 + S0], strength kept (composition) | 9×3×21 | 8 data, 12 address | `analog_mux4` |
 | [[#Signal-strength decoder]] | 1 of 16 outputs on: the one numbered S | 17×1×9 | 10 | `decoder16` |
 | **Wiring** | | | | |
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
@@ -326,9 +327,52 @@ same tick. `analog_mux.cli.txt`. **Verified.**
 - **Constraints:** if A or B is a solid block carrying a strength below 15, nothing
   behind it (4 0 −1, 4 0 5) may be a container: the comparator would read that instead
   (R-005). 5 0 1 and 5 0 3 must stay air: they are side inputs of CA, CB and OUT.
-- **Composition (I):** OUT may point straight into another module's input block (a
-  comparator keeps the strength); a 4:1 selector is two of them feeding a third, with
-  comparators to route between them. Not built yet ([[backlog]]).
+- **Composition (V):** OUT may point straight into another module's input block (a
+  comparator keeps the strength): [[#4:1 analog selector]] is three copies, two of them
+  turned so their OUT points into the third's A and B stones.
+
+### 4:1 analog selector
+
+Picks one of four strengths by a 2-bit address: three [[#Analog multiplexer]] copies
+pasted so that the first stage's outputs point straight into the second stage's inputs.
+`analog_mux4.cli.txt` (imports `analog_mux.nbt`; run from the repository root).
+**Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| S0 | 0 2 10 | wire on the top layer (script −2 3 2); drive it from the west, strength 8 or more |
+| S1 | 0 0 9 | wire (script −2 1 1); drive it from the west |
+| X0, X1 | 8 0 6, 4 0 6 | inputs (script 6 1 −2, 2 1 −2): analog blocks (barrels in the paste) or blocks powered with the strength; X0 fed from the east, X1 from the west |
+| X2, X3 | 4 0 14, 8 0 14 | the same (script 2 1 6, 6 1 6); X2 from the west, X3 from the east |
+| OUT | 7 0 10 | comparator facing east (script 5 1 2): the strength of X[2·S1 + S0] |
+
+(Offsets from the module's lowest corner, −2 1 −8 in the script.)
+
+- **Layout:** mux2 as pasted picks between its A stone (S1 off) and B stone. mux0 (pasted
+  `rotate 1`, north of mux2) picks X0 / X1 by S0, and its OUT comparator points south
+  straight into mux2's A stone; mux1 (`rotate 3`, south) picks X2 / X3 and points north
+  into mux2's B stone. No routing between the stages: a comparator keeps the strength,
+  and the stone it points into is what the next gate reads. mux2's A and B must be stones
+  (the paste brings barrels: a comparator reads a container's contents, not the power).
+- **Address wiring:** S0 has to reach the far edges of both first-stage muxes (a mux's
+  SEL is opposite its OUT). It runs on the top layer (y=3 on supports at y=2): east along
+  z=2, then north and south along x=4 straight over the three muxes, with a repeater on
+  each branch, and steps down onto the SEL wires. A wire on the bottom layer would have
+  walled in mux2's SEL and the X1, X2 inputs; on the top layer every port is reached
+  from outside under the supports.
+- **Behavior:** X = 3, 7, 11, 14: every address gives its input (target `select`); a
+  change of the selected input passes, the other three do nothing (`data`).
+- **Latency:** selected input → OUT 8 ticks (two muxes); S0 → OUT 12 (a repeater, then two
+  muxes); S1 → OUT 12 (its delay-3 repeater, then one mux).
+- **Balanced address:** both address bits may change in the same tick: OUT goes straight
+  from the old input to the new one (00 → 11, 11 → 00, 01 → 10 tested, target
+  `together`). **Failure case found while building** (target `unbalanced`): with S1's
+  repeater at delay 1, S1 takes 8 ticks and S0 12, and 00 → 11 shows X2 for 4 ticks
+  before X3 (mux2 switches before the first stage does). Address pulses must last 3+
+  ticks, as for [[#Analog multiplexer]].
+- **Uses:** reading one of four analog memories ([[#Peak-hold register]] outputs as the X
+  inputs), a 2-bit-addressed signal-strength bus. Larger: 8:1 is two of these into one
+  more mux, with S2 delayed to match.
 
 ### Signal-strength decoder
 
@@ -994,6 +1038,13 @@ may drive which inputs, timing budgets. Known so far:
 - **Cross by level:** give long signals their own layer (a wire passes under a support
   block, a block sits over a wire) instead of crossing in the plane; an XOR's output must
   leave vertically ([[#Full adder]]).
+- **Turn modules so an output points into the next input:** a pasted module may be
+  rotated (R-022), and a comparator output pointing straight into the next module's input
+  stone needs no routing and keeps an analog strength ([[#4:1 analog selector]]).
+- **A control signal shared by modules on opposite sides goes on its own top layer**, or
+  it walls in whatever lies between them ([[#4:1 analog selector]]'s S0).
 - **Balance path delays** into any gate whose inputs may change in the same tick: an
   input that arrives 2 ticks early makes a 2-tick glitch (a false 1 or a dropout). Add
-  delay-1 repeaters to the faster paths ([[R-010-hazards]]).
+  delay-1 repeaters to the faster paths ([[R-010-hazards]]). The same holds for select
+  and address lines of different depth: delay the shallower one so all arrive together
+  ([[#4:1 analog selector]]: S1 waits 6 ticks for S0).
