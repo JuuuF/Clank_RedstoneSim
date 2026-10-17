@@ -160,8 +160,15 @@ built from them; a circuit library of 32 contracted modules and contraptions (ga
 analog threshold, wiring, pulse shapers, memory, clocks, counter, monostable, piston
 doors, combination lock, flying machine), each pasteable from its `.nbt`.
 
-*2026-10-16 (second session):* R-018 (pistons making 0-tick pulses, game-verified as
-EXP-057) closes the roadmap's experiment list: 22 records, R-001…R-022. Open questions
+*2026-10-16/17 (second session):* R-018 (pistons making 0-tick pulses, game-verified as
+EXP-057) closes the roadmap's experiment list: 22 records, R-001…R-022. Four new library
+modules: `analog_mux` (2:1 selector keeping strength), `decoder16` (1-of-16 signal-strength
+decoder), `full_adder` and the composition `adder4` (4-bit ripple-carry adder from four
+pasted full adders, all 512 additions checked): 36 modules in all. Layout generators for
+the full adder and the adder live in `tools/circuitgen/`.
+
+**Next** (details in [[backlog]]): Q13 a faster carry, Q12 a 4:1 analog selector, Q10 a
+re-armable piston 0-tick pulse generator, a flush piston door, Q11 instant piston wire. Open questions
 and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,
 water, randomness) is listed in [[differences]].
 

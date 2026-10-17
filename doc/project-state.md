@@ -71,7 +71,7 @@ page is the summary to start from.*
   timings, power rules, wire shapes, signal strength, locking, burnout, observers,
   pistons, hazards, hoppers, order inside a tick, 0-ticks and piston-made 0-ticks, moving
   observers, falling blocks, vertical signals, latch chains, rotated modules) and a
-  library of 32 contracted circuits in `examples/circuits/` (scripts, worlds and `.nbt`
+  library of 36 contracted circuits (up to a 4-bit adder) in `examples/circuits/` (scripts, worlds and `.nbt`
   modules; `tools/make_circuits.py`). `tests/cli/test_research.py` re-runs all of it.
 - **Minecraft worlds:** File → Open Minecraft world… opens a Java 26.x save around the
   player and streams further chunks in around the camera up to a view distance; blocks the

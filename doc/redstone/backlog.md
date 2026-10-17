@@ -43,13 +43,15 @@ with the record that answered it.
    - [x] hopper clock (long periods, stop input)
    - [x] analog adder (three subtracting comparators)
    - [x] signal strength decoder (1-of-16, `decoder16`), analog 2:1 multiplexer (`analog_mux`)
-5. **Compositions:** [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a flush door.
+5. **Compositions:** [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a flush door.
 
 ## Open questions
 
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
 | Q10 | A re-armable piston 0-tick (or 1-tick) pulse generator: the R-018 ones are one-shot (the BUD piston stays out, the redstone block is moved away) | a library module for 0-tick pulses on demand | after the decoder and adder |
+| Q13 | A faster carry: the full adder's carry path is 8 ticks per bit (CIN repeater, G2, the COUT repeater, the top-layer repeater); a layout where the next copy's G2 reads YC directly could reach 2–4 | larger adders, arithmetic units | next |
+| Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (6/8 ticks) with the A/B paths (8/12) without slowing the carry | adders feeding edge-triggered logic | later |
 | Q12 | A 4:1 analog selector from three `analog_mux` (or `decoder16` outputs gating comparators onto one block): routing between pasted modules | composition test; addressable analog memory | after the adder |
 | Q11 | Chains of 0-tick piston moves: can a spat block wake the next stage in the same block-event phase, so a signal crosses many blocks in 0 ticks ("instant wire")? | fastest possible long-distance signals | later |
 

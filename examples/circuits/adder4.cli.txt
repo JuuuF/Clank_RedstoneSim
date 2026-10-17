@@ -1,0 +1,82 @@
+# Composition: 4-bit ripple-carry adder from four pasted full adders. Contract:
+# doc/redstone/circuits.md, "4-bit adder". Run from the repository root (it imports
+# examples/circuits/full_adder.nbt).
+#
+# Copy i (bit i, least significant first) is pasted with its corner at -3+17i 1 -5, so its
+# carry-out wire (13+17i 3 0) touches the next copy's carry-in wire (14+17i 3 0).
+#   @A0..@A3, @B0..@B3  levers on the input wires (7+17i 3 -6, 11+17i 3 -6)
+#   @CIN  lever on bit 0's carry in (-4 3 0)
+#   @S0..@S3  sum wires (1+17i 1 7), lamps south of them
+#   @COUT repeater after bit 3's carry out (65 3 0), lamp behind it
+# All 512 input combinations were checked once (rows generated from A + B + CIN; about two
+# minutes); this script checks 48 of them, including every longest carry chain.
+#   redsim-cli adder4.redsim.json < examples/circuits/adder4.cli.txt
+new size 160 force
+note "4-bit adder: S3..S0 + COUT = A + B + CIN (bit 0 at the west). Outputs valid 40 ticks after the inputs change"
+import examples/circuits/full_adder.nbt at -3 1 -5
+import examples/circuits/full_adder.nbt at 14 1 -5
+import examples/circuits/full_adder.nbt at 31 1 -5
+import examples/circuits/full_adder.nbt at 48 1 -5
+set 7 2 -6 stone
+place 7 3 -6 lever face=floor
+label A0 7 3 -6 "input A0 (lever)"
+set 11 2 -6 stone
+place 11 3 -6 lever face=floor
+label B0 11 3 -6 "input B0 (lever)"
+place 1 1 8 redstone_lamp
+label S0 1 1 7 "sum bit 0"
+set 24 2 -6 stone
+place 24 3 -6 lever face=floor
+label A1 24 3 -6 "input A1 (lever)"
+set 28 2 -6 stone
+place 28 3 -6 lever face=floor
+label B1 28 3 -6 "input B1 (lever)"
+place 18 1 8 redstone_lamp
+label S1 18 1 7 "sum bit 1"
+set 41 2 -6 stone
+place 41 3 -6 lever face=floor
+label A2 41 3 -6 "input A2 (lever)"
+set 45 2 -6 stone
+place 45 3 -6 lever face=floor
+label B2 45 3 -6 "input B2 (lever)"
+place 35 1 8 redstone_lamp
+label S2 35 1 7 "sum bit 2"
+set 58 2 -6 stone
+place 58 3 -6 lever face=floor
+label A3 58 3 -6 "input A3 (lever)"
+set 62 2 -6 stone
+place 62 3 -6 lever face=floor
+label B3 62 3 -6 "input B3 (lever)"
+place 52 1 8 redstone_lamp
+label S3 52 1 7 "sum bit 3"
+set -4 2 0 stone
+place -4 3 0 lever face=floor
+label CIN -4 3 0 "carry in (lever)"
+set 65 2 0 stone
+place 65 3 0 repeater out=east
+set 66 2 0 stone
+place 66 3 0 redstone_lamp
+label COUT 65 3 0 "carry out (repeater)"
+settle
+
+target new add "S3..S0 + COUT = A + B + CIN: 48 cases, all longest carry chains included"
+target add truth @A0 @A1 @A2 @A3 @B0 @B1 @B2 @B3 @CIN -> @S0 @S1 @S2 @S3 @COUT rows 000000000:00000 000011110:11110 000011111:00001 100001110:11110 100001111:00001 100011110:00001 010001000:00100 010001011:10110 010010110:11110 010010111:00001 110000110:11110 110000111:00001 001011010:11110 001011011:00001 101011001:10010 101001010:11110 101001011:00001 011000001:11100 011010010:11110 011010011:00001 111000010:11110 111000011:00001 111010010:00001 111011011:11001 000101100:01110 000111100:11110 000111101:00001 000100010:00001 100101100:11110 100101101:00001 100110011:11001 010110100:11110 010110101:00001 110100100:11110 110100101:00001 001111000:11110 001111001:00001 001110010:10101 001111110:11011 101101000:11110 101101001:00001 011110000:11110 011110001:00001 111100000:11110 111100001:00001 111110000:00001 111111110:01111 111111111:11111 settle 40
+
+target new ripple "A = 1111, B = 0000, CIN on at 10: the carry ripples 8 ticks per bit: S0 off at 16, S1 24, S2 32, S3 40, COUT on at 44"
+target ripple do use @A0
+target ripple do use @A1
+target ripple do use @A2
+target ripple do use @A3
+target ripple do at 10 use @CIN
+target ripple expect @S0 power>=1 during 8..15
+target ripple expect @S0 power=0 during 16..60
+target ripple expect @S1 power>=1 during 8..23
+target ripple expect @S1 power=0 during 24..60
+target ripple expect @S2 power>=1 during 8..31
+target ripple expect @S2 power=0 during 32..60
+target ripple expect @S3 power>=1 during 8..39
+target ripple expect @S3 power=0 during 40..60
+target ripple expect @COUT powered=false during 0..43
+target ripple expect @COUT powered=true during 44..60
+
+check
