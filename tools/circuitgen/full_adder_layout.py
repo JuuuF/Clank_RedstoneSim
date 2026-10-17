@@ -73,8 +73,6 @@ def slice_lines(ox: int = 0, oz: int = 0) -> list[str]:
         # S: wire under YS at level 2 and its continuation
         (1, 1, 2),
         (1, 1, 3),
-        # Cout: repeater north of YC at level 3
-        (1, 2, -1),
     ]
     for p in supports:
         block(*p)
@@ -133,8 +131,6 @@ def slice_lines(ox: int = 0, oz: int = 0) -> list[str]:
     wire(1, 2, 2)
     wire(1, 2, 3)
     wire(1, 1, 4)
-    # ---- Cout: repeater north of YC
-    place(1, 3, -1, "repeater out=north")
     return out
 
 
@@ -145,7 +141,7 @@ if __name__ == "__main__":
 def module_lines(ox: int = 0, oz: int = 0) -> list[str]:
     """The slice plus its ports: A/B columns from the north edge (z=-5), the C input wire
     at -3 3 0 with the C route round the south to the C-east port, S at level 1 to the
-    south edge, and Cout over the top (level 5) to the east edge (13 3 0)."""
+    south edge, and Cout from the wire on YC over the top (level 5) to the east edge (13 4 0)."""
     out = slice_lines(ox, oz)
 
     def put(cmd, x, y, z, what):
@@ -165,38 +161,32 @@ def module_lines(ox: int = 0, oz: int = 0) -> list[str]:
         for z in (-5, -4, -3, -2):
             block(x, 2, z)
             wire(x, 3, z)
-    # C input wire and the C route: west column x=-3 z=0..6 (repeater at z=5), row z=6, up x=5
+    # C input wire and the C route: repeater -3 3 1 (C may arrive weak), west column x=-3
+    # z=2..5, row z=5 (over the S wire), up x=5 to the C-east port: 15 wires, the most one
+    # repeater reaches
     block(-3, 2, 0)
     wire(-3, 3, 0)
-    for z in range(1, 5):
+    block(-3, 2, 1)
+    place(-3, 3, 1, "repeater out=south")
+    for z in range(2, 6):
         block(-3, 2, z)
         wire(-3, 3, z)
-    block(-3, 2, 5)
-    place(-3, 3, 5, "repeater out=south")
-    for x in range(-3, 6):
-        block(x, 2, 6)
-        wire(x, 3, 6)
-    for z in (5, 4, 3):
+    for x in range(-2, 6):
+        block(x, 2, 5)
+        wire(x, 3, 5)
+    for z in (4, 3):
         block(5, 2, z)
         wire(5, 3, z)
     # S: level 1 from 1 1 4 to the south edge 1 1 7
     for z in (5, 6, 7):
         wire(1, 1, z)
-    # Cout: from the repeater 1 3 -1: wire 1 3 -2, up to level 4 and 5, east at level 5
-    block(1, 2, -2)
-    wire(1, 3, -2)
-    block(1, 3, -3)
-    wire(1, 4, -3)
-    for x in range(1, 14):
-        block(x, 4, -4)
-    for x in range(1, 12):
-        wire(x, 5, -4)
-    place(12, 5, -4, "repeater out=east")
-    wire(13, 5, -4)
-    # down to level 3 at the east edge: 13 4 -3, 13 3 -2, 13 3 -1, 13 3 0
-    block(13, 3, -3)
-    wire(13, 4, -3)
-    for z in (-2, -1, 0):
-        block(13, 2, z)
-        wire(13, 3, z)
+    # Cout: wire on YC (15), up to the top layer, straight east over the core, the A port and
+    # the XOR, down onto the stone 13 3 0: 13 4 0 is 3, the next copy's CIN wire 14 3 0 is 2
+    wire(1, 4, 0)
+    for x in range(2, 13):
+        block(x, 4, 0)
+    for x in range(2, 13):
+        wire(x, 5, 0)
+    block(13, 3, 0)
+    wire(13, 4, 0)
     return out

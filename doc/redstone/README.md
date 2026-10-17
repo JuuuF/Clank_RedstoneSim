@@ -167,8 +167,14 @@ decoder), `full_adder` and the composition `adder4` (4-bit ripple-carry adder fr
 pasted full adders, all 512 additions checked): 36 modules in all. Layout generators for
 the full adder and the adder live in `tools/circuitgen/`.
 
-**Next** (details in [[backlog]]): Q13 a faster carry, Q12 a 4:1 analog selector, Q10 a
-re-armable piston 0-tick pulse generator, a flush piston door, Q11 instant piston wire. Open questions
+*2026-10-17 (third session):* Q13: the full adder's carry takes 4 ticks per bit instead of 8
+(no repeater between copies: YC's wire runs 15 blocks straight over the top to the next
+copy's CIN repeater); the 4-bit adder settles in 24 ticks instead of 40 (all 512 additions
+checked again).
+
+**Next** (details in [[backlog]]): Q12 a 4:1 analog selector, Q10 a re-armable piston
+0-tick pulse generator, a flush piston door, Q14 a glitch-free adder, Q15 a 2-tick carry,
+Q11 instant piston wire. Open questions
 and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,
 water, randomness) is listed in [[differences]].
 

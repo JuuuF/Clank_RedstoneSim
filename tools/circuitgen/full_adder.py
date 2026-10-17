@@ -17,7 +17,8 @@ head = """# Circuit: full adder (S = A xor B xor C, COUT = majority). Contract: 
 #   @A    7 3 -5   input A: wire, drive it from the north (7 3 -6)
 #   @B    11 3 -5  input B: wire, drive it from the north (11 3 -6)
 #   @CIN  -3 3 0   carry in: wire, drive it from the west (-4 3 0)
-#   @COUT 13 3 0   carry out: wire at the east edge (the next copy's CIN wire touches it)
+#   @COUT 13 4 0   carry out: wire at the east edge, strength 3 (it steps down onto the next
+#                  copy's CIN wire 14 3 0)
 #   @S    1 1 7    sum: wire on the bottom layer at the south edge, pointing south
 # How it works (all comparators subtract; H = A xor B):
 #   XOR: comparators 9 3 0 (A - B) and 9 3 2 (B - A) into the stone 9 3 1 = H; all four
@@ -30,12 +31,14 @@ head = """# Circuit: full adder (S = A xor B xor C, COUT = majority). Contract: 
 #     with H) and G2 = C - NOT H (0 3 0): COUT = H ? C : A. YS (1 3 2) gets G3 = C - H
 #     (2 3 2) and G4 = NOT C - NOT H (0 3 2): S = H xor C. G1/G3 share the H wire between
 #     them, G2/G4 the NOT-H wire.
-#   C: the CIN repeater -2 3 0 powers the C stone -1 3 0 (G2's rear); the wire under it
-#     feeds the torch -1 2 2 (NOT C, powers G4's stone -1 3 2); a wire round the south
-#     (repeater -3 3 5) brings C to G3's stone 3 3 2.
-#   COUT: repeater 1 3 -1 north of YC, up to the top layer (y=5), east over the A and B
-#     wires (repeater 12 5 -4), down to 13 3 0.
-# Latency: A or B -> S 8 ticks, -> COUT 12; CIN -> S 6, -> COUT 8. Single input changes
+#   C: CIN may arrive weak (2 from the previous copy). The CIN repeater -2 3 0 powers the
+#     C stone -1 3 0 (G2's rear); the wire under it feeds the torch -1 2 2 (NOT C, powers
+#     G4's stone -1 3 2); the repeater -3 3 1 and a wire round the south (z=5, 15 wires)
+#     bring C to G3's stone 3 3 2.
+#   COUT: the wire on YC (1 4 0, full strength) climbs to the top layer (y=5) and runs
+#     straight east over the core, the A port and the XOR, down to 13 4 0. No repeater:
+#     the carry path is the CIN repeater and G2, 4 ticks.
+# Latency: A or B -> S 8 ticks, -> COUT 8; CIN -> S 6, -> COUT 4. Single input changes
 # never glitch; several inputs changing together can glitch for 2-4 ticks before settling.
 # Test harness outside the box: levers @LA, @LB, @LCIN; lamp under S; repeater + lamp on COUT.
 #   redsim-cli full_adder.redsim.json < examples/circuits/full_adder.cli.txt
@@ -46,7 +49,7 @@ body = module_lines()
 tail = """label A 7 3 -5 "input A: wire, driven from the north"
 label B 11 3 -5 "input B: wire, driven from the north"
 label CIN -3 3 0 "carry in: wire, driven from the west"
-label COUT 13 3 0 "carry out: wire at the east edge"
+label COUT 13 4 0 "carry out: wire at the east edge (strength 3)"
 label S 1 1 7 "sum: wire on the bottom layer, pointing south"
 label H 9 3 1 "A xor B"
 label YC 1 3 0 "carry stone: H ? C : A"
@@ -74,7 +77,7 @@ settle
 target new truth "S = A xor B xor CIN, COUT = majority"
 target truth truth @LA @LB @LCIN -> @S @COUT rows 000:00 001:10 010:10 011:01 100:10 101:01 110:01 111:11 settle 16
 
-target new latency "A on at 5 (S at 13), CIN on at 30 (S off at 36, COUT on at 38), B on at 55 (S on at 63), CIN off at 80 (S off 86), A off at 105 (COUT off 117, S on 113)"
+target new latency "A on at 5 (S at 13), CIN on at 30 (S off at 36, COUT on at 34), B on at 55 (S on at 63), CIN off at 80 (S off 86), A off at 105 (COUT off 113, S on 113)"
 target latency do at 5 use @LA
 target latency do at 30 use @LCIN
 target latency do at 55 use @LB
@@ -83,12 +86,12 @@ target latency do at 105 use @LA
 target latency expect @S power=0 during 0..12
 target latency expect @S power>=1 during 13..35
 target latency expect @S power=0 during 36..62
-target latency expect @COUT power=0 during 0..37
-target latency expect @COUT power>=1 during 38..116
+target latency expect @COUT power=0 during 0..33
+target latency expect @COUT power>=1 during 34..112
 target latency expect @S power>=1 during 63..85
 target latency expect @S power=0 during 86..112
 target latency expect @S power>=1 during 113..130
-target latency expect @COUT power=0 during 117..130
+target latency expect @COUT power=0 during 113..130
 
 target new hazards "the two hazards the design removes: A alone never makes a false carry (G1 waits for H); A turning on while CIN is on switches COUT on once, without a dropout (H and NOT H switch together)"
 target hazards do at 5 use @LA
@@ -96,8 +99,8 @@ target hazards expect @COUT power=0 during 0..40
 target hazards do at 45 use @LA
 target hazards do at 60 use @LCIN
 target hazards do at 80 use @LA
-target hazards expect @COUT power=0 during 41..91
-target hazards expect @COUT power>=1 during 92..130
+target hazards expect @COUT power=0 during 41..87
+target hazards expect @COUT power>=1 during 88..130
 
 check
 """

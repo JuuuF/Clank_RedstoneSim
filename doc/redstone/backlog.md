@@ -50,8 +50,8 @@ with the record that answered it.
 | # | Question | Why it matters | Planned in |
 |---|---|---|---|
 | Q10 | A re-armable piston 0-tick (or 1-tick) pulse generator: the R-018 ones are one-shot (the BUD piston stays out, the redstone block is moved away) | a library module for 0-tick pulses on demand | after the decoder and adder |
-| Q13 | A faster carry: the full adder's carry path is 8 ticks per bit (CIN repeater, G2, the COUT repeater, the top-layer repeater); a layout where the next copy's G2 reads YC directly could reach 2–4 | larger adders, arithmetic units | next |
-| Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (6/8 ticks) with the A/B paths (8/12) without slowing the carry | adders feeding edge-triggered logic | later |
+| Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (S 6, COUT 4 ticks) with the A/B paths (8/8) without slowing the carry | adders feeding edge-triggered logic | later |
+| Q15 | A 2-tick carry: the next bit's G2 reading YC directly, so no repeater (and no 17-block wire) between bits: a bit-sliced adder with the bits 2 blocks apart along the carry, or a carry skip over 4 bits (COUT = CIN when all four H are on) | 32-bit arithmetic, ALUs | later |
 | Q12 | A 4:1 analog selector from three `analog_mux` (or `decoder16` outputs gating comparators onto one block): routing between pasted modules | composition test; addressable analog memory | after the adder |
 | Q11 | Chains of 0-tick piston moves: can a spat block wake the next stage in the same block-event phase, so a signal crosses many blocks in 0 ticks ("instant wire")? | fastest possible long-distance signals | later |
 
@@ -84,3 +84,4 @@ with the record that answered it.
 | Q5: a 2-tick pulse passes iff the receiver's tick runs first (priority, then order); piston races: first powered wins | [[timing]] | [[R-012-same-tick-order]] |
 | Q3: comparators (and torches, pistons) ignore 0-tick pulses; repeaters, lamps, bulbs, droppers react | [[timing]] | [[R-013-zero-tick]] |
 | Can pistons make 0-tick pulses? Yes: a spat block pushed out by a BUD piston in the same block-event phase; pistons updated before it ends still move (a sticky one in 0 ticks) | [[timing]], [[components]] | [[R-018-piston-zero-tick]] |
+| Q13: a faster carry: 4 ticks per bit (the CIN repeater and G2); YC's wire runs 15 blocks straight over the top to the next copy's CIN repeater, no repeater between copies | [[circuits]] composition rules | `full_adder`, `adder4` targets |

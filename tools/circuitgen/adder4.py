@@ -48,16 +48,16 @@ L = [
 # examples/circuits/full_adder.nbt).
 #
 # Copy i (bit i, least significant first) is pasted with its corner at -3+17i 1 -5, so its
-# carry-out wire (13+17i 3 0) touches the next copy's carry-in wire (14+17i 3 0).
+# carry-out wire (13+17i 4 0) steps down onto the next copy's carry-in wire (14+17i 3 0).
 #   @A0..@A3, @B0..@B3  levers on the input wires (7+17i 3 -6, 11+17i 3 -6)
 #   @CIN  lever on bit 0's carry in (-4 3 0)
 #   @S0..@S3  sum wires (1+17i 1 7), lamps south of them
 #   @COUT repeater after bit 3's carry out (65 3 0), lamp behind it
-# All 512 input combinations were checked once (rows generated from A + B + CIN; about two
-# minutes); this script checks 48 of them, including every longest carry chain.
+# All 512 input combinations were checked once (rows generated from A + B + CIN; about a
+# minute); this script checks 48 of them, including every longest carry chain.
 #   redsim-cli adder4.redsim.json < examples/circuits/adder4.cli.txt
 new size 160 force
-note "4-bit adder: S3..S0 + COUT = A + B + CIN (bit 0 at the west). Outputs valid 40 ticks after the inputs change"'''
+note "4-bit adder: S3..S0 + COUT = A + B + CIN (bit 0 at the west). Outputs valid 24 ticks after the inputs change"'''
 ]
 for i in range(4):
     L.append(f"import examples/circuits/full_adder.nbt at {-3 + W * i} 1 -5")
@@ -81,9 +81,9 @@ L += [
     "settle",
     "",
     'target new add "S3..S0 + COUT = A + B + CIN: 48 cases, all longest carry chains included"',
-    f"target add truth @A0 @A1 @A2 @A3 @B0 @B1 @B2 @B3 @CIN -> @S0 @S1 @S2 @S3 @COUT rows {rows} settle 40",
+    f"target add truth @A0 @A1 @A2 @A3 @B0 @B1 @B2 @B3 @CIN -> @S0 @S1 @S2 @S3 @COUT rows {rows} settle 24",
     "",
-    'target new ripple "A = 1111, B = 0000, CIN on at 10: the carry ripples 8 ticks per bit: S0 off at 16, S1 24, S2 32, S3 40, COUT on at 44"',
+    'target new ripple "A = 1111, B = 0000, CIN on at 10: the carry ripples 4 ticks per bit: S0 off at 16, S1 20, S2 24, S3 28, COUT on at 28"',
     "target ripple do use @A0",
     "target ripple do use @A1",
     "target ripple do use @A2",
@@ -91,14 +91,14 @@ L += [
     "target ripple do at 10 use @CIN",
     "target ripple expect @S0 power>=1 during 8..15",
     "target ripple expect @S0 power=0 during 16..60",
-    "target ripple expect @S1 power>=1 during 8..23",
-    "target ripple expect @S1 power=0 during 24..60",
-    "target ripple expect @S2 power>=1 during 8..31",
-    "target ripple expect @S2 power=0 during 32..60",
-    "target ripple expect @S3 power>=1 during 8..39",
-    "target ripple expect @S3 power=0 during 40..60",
-    "target ripple expect @COUT powered=false during 0..43",
-    "target ripple expect @COUT powered=true during 44..60",
+    "target ripple expect @S1 power>=1 during 8..19",
+    "target ripple expect @S1 power=0 during 20..60",
+    "target ripple expect @S2 power>=1 during 8..23",
+    "target ripple expect @S2 power=0 during 24..60",
+    "target ripple expect @S3 power>=1 during 8..27",
+    "target ripple expect @S3 power=0 during 28..60",
+    "target ripple expect @COUT powered=false during 0..27",
+    "target ripple expect @COUT powered=true during 28..60",
     "",
     "check",
 ]
