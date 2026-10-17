@@ -176,7 +176,8 @@ multiplexers, with balanced address paths: 37 modules in all. Q11: R-023, the in
 piston wire (a sticky-piston chain collapses in one tick; G EXP-058): 23 records. Q16:
 `instant_wire`, a rising edge 39 blocks (any length) in 0 ticks. `dac4` (4 bits to a
 strength, balanced: all 240 changes glitch-free) and the composition `bin_decoder16`
-(dac4 + decoder16): 40 modules.
+(dac4 + decoder16). `ram4`: a 4x1 RAM from a literal crossbar (taps from floor columns
+into top-layer lines), reads balanced to 32 ticks: 41 modules.
 
 **Next** (details in [[backlog]]): Q19 a lookup table / 7-segment display and an ADC, Q10 a
 re-armable piston 0-tick pulse generator, a 3x3 flush door (Q18), Q14 a glitch-free adder,

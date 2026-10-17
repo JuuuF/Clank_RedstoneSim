@@ -47,6 +47,7 @@ with the record that answered it.
    - [x] 4:1 analog selector from three pasted multiplexers (`analog_mux4`)
    - [x] instant wire: a rising edge 39+ blocks in 0 ticks (`instant_wire`, R-023)
    - [x] 4-bit DAC: binary to strength, balanced (`dac4`)
+   - [x] 4x1 RAM from a literal crossbar (`ram4`)
 5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a 3x3 flush door (Q18; the 2x2 door is flush already).
 
 ## Open questions
