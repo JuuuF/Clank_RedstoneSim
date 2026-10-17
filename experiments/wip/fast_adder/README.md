@@ -1,5 +1,10 @@
 # Work in progress: a fast 4-bit adder (backlog Q15)
 
+**Paused 2026-10-18** (owner: do not get stuck; other items first). Next ideas: inject K from
+the north through a torch block fed by two repeaters A' and B' (removes the long X wire to the
+south); a negotiated-congestion router; or 4 wires of line per bit (wider slices) in 3-bit
+blocks.
+
 Worlds to open in the editor (`redsim FILE`) or inspect with `redsim-cli FILE …`. Each has a
 `note` saying what it shows. Failed and unfinished stages are kept on purpose.
 
