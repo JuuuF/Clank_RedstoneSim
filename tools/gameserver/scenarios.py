@@ -1964,6 +1964,69 @@ PISTON_ZERO_TICK = Scenario(
     },
 )  # fmt: skip
 
+#: R-023 (doc/redstone/records/R-023-instant-piston-wire.md): a chain of extended sticky
+#: pistons, each holding a redstone block against the back of the next one (row A: stages 3
+#: blocks apart; row B: stages linked by 14-wire lines), collapses within one tick when the
+#: first one loses power: each retract removes a block in the block-event phase, and the
+#: piston it depowers queues its own retract in the same phase. Re-extending is 3 ticks a
+#: stage (the pushed block lands in the block-entity phase, the next push waits a tick).
+#: Row C turns both ends around: the input pushes the first block away, the last stage
+#: uncovers a wire step.
+INSTANT_PISTON_WIRE = Scenario(
+    name="instant_piston_wire",
+    description=(
+        "A chain of sticky pistons holding redstone blocks against the next piston collapses "
+        "in one tick when its input goes (row A: 5 stages 3 apart; row B: 3 stages linked by "
+        "14-block wires; row C: rising edge in through a push, rising edge out by uncutting a "
+        "wire step); re-extending takes 3 ticks per stage."
+    ),
+    size=(40, 13),
+    setup=(
+        [((1 + 3 * k, 1, 1), "minecraft:sticky_piston[facing=east]") for k in range(5)]
+        + [((2 + 3 * k, 1, 1), RB) for k in range(5)]
+        + [((3 + 3 * k, 1, 2), "minecraft:redstone_wire") for k in range(5)]
+        + [((1 + 17 * k, 1, 6), "minecraft:sticky_piston[facing=east]") for k in range(3)]
+        + [((2 + 17 * k, 1, 6), RB) for k in range(3)]
+        + [((x + 17 * k, 1, 6), "minecraft:redstone_wire") for k in range(2) for x in range(4, 18)]
+        + [((38, 1, 6), "minecraft:redstone_wire")]
+        # Row C (y=2): the input pushes R0 away from P1 (instant on its rising edge); the
+        # last stage pulls a stone off the step from the upper wire 12 2 10 to the lower
+        # wire 11 1 10, which then lights at once.
+        + [((2, 2, 10), RB), ((4, 2, 10), RB), ((7, 2, 10), RB), ((10, 2, 10), "minecraft:stone")]
+        + [
+            ((12, 1, 10), "minecraft:stone"),
+            ((13, 2, 10), RB),
+            ((12, 2, 10), "minecraft:redstone_wire"),
+        ]
+        + [((11, 1, 10), "minecraft:redstone_wire"), ((10, 1, 10), "minecraft:redstone_wire")]
+        + [((5, 1, 10), "minecraft:redstone_wire"), ((8, 1, 10), "minecraft:redstone_wire")]
+        + [((2, 2, 11), "minecraft:sticky_piston[facing=north]")]
+        + [((3 * k, 2, 10), "minecraft:sticky_piston[facing=east]") for k in (1, 2, 3)]
+    ),
+    watch=(
+        [(3 + 3 * k, 1, 2) for k in range(5)]
+        + [(1 + 3 * k, 1, 1) for k in range(5)]
+        + [(3 + 3 * k, 1, 1) for k in range(5)]
+        + [(4, 1, 6), (21, 1, 6), (38, 1, 6), (37, 1, 6)]
+        + [
+            (2, 2, 9),
+            (2, 2, 10),
+            (5, 1, 10),
+            (8, 1, 10),
+            (10, 2, 10),
+            (11, 2, 10),
+            (11, 1, 10),
+            (10, 1, 10),
+        ]
+    ),
+    ticks=64,
+    inputs={
+        1: [((0, 1, 1), RB), ((0, 1, 6), RB)],
+        30: [((0, 1, 1), AIR), ((0, 1, 6), AIR), ((1, 2, 11), RB)],
+        45: [((0, 1, 1), RB), ((0, 1, 6), RB), ((1, 2, 11), AIR)],
+    },
+)
+
 ALL = [
     PISTON_ZERO_TICK,
     CAMPFIRES,
@@ -2021,6 +2084,7 @@ ALL = [
     CHESTS,
     PRESSURE_PLATES,
     PISTON_SCHEDULED_PULSES,
+    INSTANT_PISTON_WIRE,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

@@ -117,6 +117,11 @@ Evidence labels: [[redstone/README#Scope and trust]].
   a normal piston's head goes out and back in one tick and its block lands 2 ticks
   later. A 0-tick pulse between ticks (a player, [[R-013-zero-tick]]) never moves one.
   V R-018, G EXP-057
+- **Chains collapse at once:** a piston's block event updates the cells its blocks leave
+  inside the event (a `moving_piston` gives no power), and a piston depowered by that
+  queues its retract into the same block-event phase. Extended sticky pistons holding
+  redstone blocks against each other's backs all retract in one tick (instant wire);
+  re-extending takes 3 ticks a stage. V [[R-023-instant-piston-wire]], G EXP-058
 
 ## Dropper, dispenser
 

@@ -46,6 +46,17 @@ places the block at its destination at once, at its retract: a 1-tick lever puls
 block in place 1 tick earlier than a full push (Δ 2 instead of 3 from the lever), a 2-tick
 lever pulse at the normal time, an observer's pulse 2 ticks after the start. V, G EXP-016.
 
+## Instant transmission by pistons (R-023)
+
+A chain of extended sticky pistons, each holding a redstone block against the back of the
+next piston, collapses in **0 ticks** when its first piston moves: every piston it
+depowers retracts in the same block-event phase. 3 blocks per stage, or up to 17 with a
+wire line (≤ 15 blocks, also instant) between the stages; 38 blocks were tested. Only the
+edge that removes power is instant; re-arming takes **3 ticks per stage**. Turn the ends
+around: an input piston that pushes the first block away (rising edge in), a last stage
+that pulls a stone off a wire step (rising edge out). V [[R-023-instant-piston-wire]],
+G EXP-058.
+
 ## Durations of manual sources
 
 | Source | On for | Evidence |

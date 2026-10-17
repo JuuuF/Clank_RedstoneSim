@@ -34,7 +34,7 @@ knowledge base fails loudly if the simulator ever stops behaving as written here
 - **Version:** Minecraft Java Edition 26.3, the version the simulator ports. Nothing here
   is claimed for other versions or for Bedrock Edition.
 - **Authority:** the simulator reproduces the mechanics it implements exactly (ported
-  from the decompiled source; 55 scenarios and 60 random circuits compared tick by tick
+  from the decompiled source; 57 scenarios and 60 random circuits compared tick by tick
   with a real 26.3 server, [[experiments/index]]). An experiment here is therefore
   evidence about the game *for the mechanics the simulator implements*. What it does not
   implement (water, items on the ground, mobs, minecarts, light, randomness) is listed
@@ -151,6 +151,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-020-vertical-signals]] | Sending a signal up: stairs, ladders, torch towers, observer columns | [[signals]] | verified |
 | [[R-021-unlock-window]] | How long a chain of latches may be unlocked (shift registers) | [[components]], [[circuits]] | verified |
 | [[R-022-rotated-modules]] | Library modules pasted in any rotation keep their contracts | [[circuits]] | verified |
+| [[R-023-instant-piston-wire]] | Sticky-piston chains that collapse in one tick: instant transmission of one edge | [[timing]], [[components]] Piston | verified |
 
 ## Status
 
@@ -171,10 +172,11 @@ the full adder and the adder live in `tools/circuitgen/`.
 (no repeater between copies: YC's wire runs 15 blocks straight over the top to the next
 copy's CIN repeater); the 4-bit adder settles in 24 ticks instead of 40 (all 512 additions
 checked again). Q12: `analog_mux4`, a 4:1 analog selector from three pasted, turned
-multiplexers, with balanced address paths: 37 modules in all.
+multiplexers, with balanced address paths: 37 modules in all. Q11: R-023, the instant
+piston wire (a sticky-piston chain collapses in one tick; G EXP-058): 23 records.
 
-**Next** (details in [[backlog]]): Q10 a re-armable piston 0-tick pulse generator, a flush
-piston door, Q14 a glitch-free adder, Q15 a 2-tick carry, Q11 instant piston wire. Open questions
+**Next** (details in [[backlog]]): Q16 an instant-wire module, Q10 a re-armable piston
+0-tick pulse generator, a flush piston door, Q14 a glitch-free adder, Q15 a 2-tick carry. Open questions
 and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,
 water, randomness) is listed in [[differences]].
 

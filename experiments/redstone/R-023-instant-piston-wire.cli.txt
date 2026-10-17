@@ -1,0 +1,133 @@
+# R-023: instant piston wire (doc/redstone/records/R-023-instant-piston-wire.md)
+# A chain of extended sticky pistons, each holding a redstone block against the back of the
+# next one, collapses in a single tick when the first one moves: a moved block's old cell is
+# updated inside the piston's block event, and the piston it depowers queues its own retract
+# in the same block-event phase. Re-extending takes 3 ticks a stage.
+#   Row A (z=1): five stages 3 blocks apart (pistons 1+3k 1 1), probe wires 3+3k 1 2.
+#   Row B (z=6): three stages linked by 14-wire lines (pistons 1, 18, 35): 38 blocks.
+#   Row C (y=2, z=10): the input pushes the first block away (instant on its rising edge);
+#     the last stage pulls a stone off the step from the upper wire 12 2 10 down to the
+#     output wire 11 1 10, which lights at once.
+# Same layout as the game-server scenario instant_piston_wire (G: matched tick by tick).
+#   redsim-cli r023.redsim.json < experiments/redstone/R-023-instant-piston-wire.cli.txt
+new size 96 force
+note "R-023: a sticky-piston chain collapses in one tick (one edge crosses any length at once); re-extending is 3 ticks a stage"
+# Row A
+place 1 1 1 sticky_piston facing=east
+set 2 1 1 redstone_block
+place 3 1 2 redstone_wire
+label A0 3 1 2 "probe after stage 0"
+place 4 1 1 sticky_piston facing=east
+set 5 1 1 redstone_block
+place 6 1 2 redstone_wire
+label A1 6 1 2 "probe after stage 1"
+place 7 1 1 sticky_piston facing=east
+set 8 1 1 redstone_block
+place 9 1 2 redstone_wire
+label A2 9 1 2 "probe after stage 2"
+place 10 1 1 sticky_piston facing=east
+set 11 1 1 redstone_block
+place 12 1 2 redstone_wire
+label A3 12 1 2 "probe after stage 3"
+place 13 1 1 sticky_piston facing=east
+set 14 1 1 redstone_block
+place 15 1 2 redstone_wire
+label A4 15 1 2 "probe after stage 4"
+place 0 1 1 lever face=floor
+label LA 0 1 1 "input A (lever)"
+# Row B
+place 1 1 6 sticky_piston facing=east
+set 2 1 6 redstone_block
+line 4 1 6 to 17 1 6 redstone_wire
+place 18 1 6 sticky_piston facing=east
+set 19 1 6 redstone_block
+line 21 1 6 to 34 1 6 redstone_wire
+place 35 1 6 sticky_piston facing=east
+set 36 1 6 redstone_block
+place 38 1 6 redstone_wire
+label B0 4 1 6 "probe after stage 0"
+label B1 21 1 6 "probe after stage 1 (block 21)"
+label B2 38 1 6 "probe after stage 2 (block 38)"
+place 0 1 6 lever face=floor
+label LB 0 1 6 "input B (lever)"
+# Row C
+set 2 2 10 redstone_block
+set 4 2 10 redstone_block
+set 7 2 10 redstone_block
+set 10 2 10 stone
+set 12 1 10 stone
+set 13 2 10 redstone_block
+place 12 2 10 redstone_wire
+place 11 1 10 redstone_wire
+place 10 1 10 redstone_wire
+place 5 1 10 redstone_wire
+place 8 1 10 redstone_wire
+place 2 2 11 sticky_piston facing=north
+place 3 2 10 sticky_piston facing=east
+place 6 2 10 sticky_piston facing=east
+place 9 2 10 sticky_piston facing=east
+set 1 1 11 stone
+place 1 2 11 lever face=floor
+label LC 1 2 11 "input C (lever)"
+label C1 5 1 10 "probe under stage 1's block"
+label C2 8 1 10 "probe under stage 2's block"
+label CUT 11 2 10 "the stone over the step"
+label COUT 11 1 10 "output C: the lower wire of the step"
+use @LA
+use @LB
+settle
+
+target new collapse "inputs at 10: rows A and B lose power, row C gets it: every probe of A and B is off at 11, C's output is on at 11"
+target collapse do at 10 use @LA
+target collapse do at 10 use @LB
+target collapse do at 10 use @LC
+target collapse expect @A0 power>=1 during 0..10
+target collapse expect @A0 power=0 during 11..24
+target collapse expect @A1 power>=1 during 0..10
+target collapse expect @A1 power=0 during 11..24
+target collapse expect @A2 power>=1 during 0..10
+target collapse expect @A2 power=0 during 11..24
+target collapse expect @A3 power>=1 during 0..10
+target collapse expect @A3 power=0 during 11..24
+target collapse expect @A4 power>=1 during 0..10
+target collapse expect @A4 power=0 during 11..24
+target collapse expect @B0 power>=1 during 0..10
+target collapse expect @B0 power=0 during 11..24
+target collapse expect @B1 power>=1 during 0..10
+target collapse expect @B1 power=0 during 11..24
+target collapse expect @B2 power>=1 during 0..10
+target collapse expect @B2 power=0 during 11..24
+target collapse expect @C1 power>=1 during 0..10
+target collapse expect @C1 power=0 during 11..24
+target collapse expect @C2 power>=1 during 0..10
+target collapse expect @C2 power=0 during 11..24
+target collapse expect @COUT power=0 during 0..10
+target collapse expect @COUT power>=1 during 11..24
+
+target new reset "inputs back at 10: each stage re-extends 3 ticks after the one before (A on at 13, 16, 19, 22, 25); C's output goes off when the stone is back, 12 ticks"
+target reset do use @LA
+target reset do use @LB
+target reset do use @LC
+target reset do at 10 use @LA
+target reset do at 10 use @LB
+target reset do at 10 use @LC
+target reset expect @A0 power=0 during 4..12
+target reset expect @A0 power>=1 during 13..40
+target reset expect @A1 power=0 during 4..15
+target reset expect @A1 power>=1 during 16..40
+target reset expect @A2 power=0 during 4..18
+target reset expect @A2 power>=1 during 19..40
+target reset expect @A3 power=0 during 4..21
+target reset expect @A3 power>=1 during 22..40
+target reset expect @A4 power=0 during 4..24
+target reset expect @A4 power>=1 during 25..40
+target reset expect @B0 power=0 during 4..12
+target reset expect @B0 power>=1 during 13..40
+target reset expect @B1 power=0 during 4..15
+target reset expect @B1 power>=1 during 16..40
+target reset expect @B2 power=0 during 4..18
+target reset expect @B2 power>=1 during 19..40
+target reset expect @COUT power>=1 during 4..21
+target reset expect @COUT power=0 during 22..40
+
+check

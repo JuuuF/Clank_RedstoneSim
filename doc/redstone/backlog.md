@@ -31,6 +31,7 @@ with the record that answered it.
    - [x] R-021 latch chains: the unlock window
    - [x] R-022 rotated module pastes
    - [x] R-017 wire update order: position-dependent races (Q6)
+   - [x] R-023 instant piston wire: chains that collapse in one tick (Q11)
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
@@ -53,7 +54,7 @@ with the record that answered it.
 | Q10 | A re-armable piston 0-tick (or 1-tick) pulse generator: the R-018 ones are one-shot (the BUD piston stays out, the redstone block is moved away) | a library module for 0-tick pulses on demand | after the decoder and adder |
 | Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (S 6, COUT 4 ticks) with the A/B paths (8/8) without slowing the carry | adders feeding edge-triggered logic | later |
 | Q15 | A 2-tick carry: the next bit's G2 reading YC directly, so no repeater (and no 17-block wire) between bits: a bit-sliced adder with the bits 2 blocks apart along the carry, or a carry skip over 4 bits (COUT = CIN when all four H are on) | 32-bit arithmetic, ALUs | later |
-| Q11 | Chains of 0-tick piston moves: can a spat block wake the next stage in the same block-event phase, so a signal crosses many blocks in 0 ticks ("instant wire")? | fastest possible long-distance signals | later |
+| Q16 | An instant-wire module from R-023: rising edge in (input pushes the first block away), rising edge out (last stage uncuts a wire step), stages joined by 15-wire lines; contract: 0-tick edge, re-arm 3 ticks a stage; can two chains carry both edges instantly? | instant long-distance signals for doors, flying machines, synchronised pistons | next |
 
 ## Hypotheses waiting for a test
 
@@ -86,3 +87,4 @@ with the record that answered it.
 | Can pistons make 0-tick pulses? Yes: a spat block pushed out by a BUD piston in the same block-event phase; pistons updated before it ends still move (a sticky one in 0 ticks) | [[timing]], [[components]] | [[R-018-piston-zero-tick]] |
 | Q13: a faster carry: 4 ticks per bit (the CIN repeater and G2); YC's wire runs 15 blocks straight over the top to the next copy's CIN repeater, no repeater between copies | [[circuits]] composition rules | `full_adder`, `adder4` targets |
 | Q12: a 4:1 analog selector: three `analog_mux` pasted turned, outputs pointing straight into the next inputs; S0 on its own top layer; S1 delayed so both address bits may change together | [[circuits]] composition rules | `analog_mux4` targets |
+| Q11: yes for one edge: extended sticky pistons holding redstone blocks against each other's backs collapse in one tick (any length; 17 blocks a stage with wire); re-arming 3 ticks a stage | [[timing]], [[components]] | [[R-023-instant-piston-wire]] |

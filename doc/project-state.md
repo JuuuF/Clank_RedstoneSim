@@ -28,7 +28,7 @@ page is the summary to start from.*
   pressure plates (stone, 12 woods, weighted).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
-  All 55 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
+  All 57 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
   live edits) match ([[experiments/index]]).
 - **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
   and a rebindable keymap ([[controls]], with a keymap editor and Mac defaults); BUILD

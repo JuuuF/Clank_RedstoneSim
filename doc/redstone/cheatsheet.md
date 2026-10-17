@@ -46,6 +46,10 @@ All times in **game ticks** (20 per second). Details: [[timing]], [[signals]],
   inside a tick, it moves pistons updated before it ends (order W, E, down, up, N, S):
   a sticky one moves its block in 0 ticks ([[R-018-piston-zero-tick]]).
 - Copper bulbs and droppers react once per pulse, any length.
+- **Instant wire:** extended sticky pistons, each holding a redstone block against the
+  next one's back, all retract in one tick: power removal crosses any distance in 0 ticks
+  (3 blocks a stage, 17 with wire between); re-arming is 3 ticks a stage
+  ([[R-023-instant-piston-wire]]).
 
 ## Components
 
