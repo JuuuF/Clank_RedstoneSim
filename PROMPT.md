@@ -491,9 +491,16 @@ Updated 2026-10-17 (end of the third session). Start at `doc/redstone/README.md`
   - `workflow.md`: from a spoken requirement to a tested contraption.
   - `cheatsheet.md`: a one-page summary.
 
+**Fourth session (2026-10-17/18), in progress: the fast adder (Q15).**
+
+- R-024 (`experiments/redstone/R-024-analog-carry-lines.cli.txt`): two analog wire lines with one glass step per bit give every carry of 4 bits 2 ticks after the injections (all 162 patterns).
+- The per-bit core around them works with levers (`experiments/wip/fast_adder/02`, `03`: 162/162): read comparator, analog C wire, two delay-1 repeaters, XOR with two H torches; injections: G wall torch over the G line, K repeater from the south. Planned latency: S at 10 ticks for all 4 bits (ripple adder: 24).
+- **Open:** the input logic per bit (not-A, not-B, NOR, the notH delay repeaters) and the wires A, B, S must fit a 3-wide periodic slice. Tools in the scratch snapshot `experiments/wip/fast_adder/scripts/`: `pchk.py` (static checker: joined wires, diagonal leaks, strong-power leaks, weakly powered read blocks; compares wires by absolute bit), `router.py` (BFS router in physical coordinates, bit-tagged wires, several partial paths per cell), `build7.py`/`build8.py` (layouts; build8 also randomizes component positions). Best so far: 8 of 11 routes (`06-...`). The README there lists every stage and the lessons. Ideas not tried yet: inject K from the north with a repeater into the K torch block (removes the long X wire south, needs A or B merged by glass diodes), or a negotiated-congestion router.
+- Owner's request (§12 step 5): export every finding and stage as worlds in `experiments/wip/<topic>/`, failures too.
+
 Next open items (`backlog.md`):
 
 - Q20: a 7-segment lamp display for `seg7` (routing 7 lines into a lamp digit; the enclosed middle segment is the hard part: a lamp lights from a block weakly powered by a wire on it, and power does not step down off glass, so give the digit gaps between segments).
 - Q18: a 3x3 flush door (the backlog has the analysis of why the center block is hard).
 - Q10: a re-armable piston 0-tick pulse generator; Q17: both edges instant (a 0-tick latch at the end of two chains).
-- Q14: glitch-free multi-input changes in the full adder; Q15: a 2-tick carry (bit-sliced layout or carry skip).
+- Q15 (in progress, above); Q14: glitch-free multi-input changes in the full adder (the fast adder is designed glitch-free).
