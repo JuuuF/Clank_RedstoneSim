@@ -77,6 +77,11 @@ All times in **game ticks** (20 per second). Details: [[timing]], [[signals]],
 - `place` is a player: a copper bulb placed next to power lights; pasted modules keep
   their states and need no updates; settle after building ([[cli]] pitfalls).
 - Paste library modules in any rotation ([[R-022-rotated-modules]]).
+- Many signals to many lines: a **crossbar** (signals on the floor, lines on the top layer,
+  a tap = repeater, stone, wire on the stone stepping up into the line); bring a module's
+  outputs out to rows by **nested corners** (the outermost turns first) ([[circuits]]
+  4x1 RAM, Lookup table).
+- A paste includes its air: paste the module whose cells must win last.
 
 ## Which module
 

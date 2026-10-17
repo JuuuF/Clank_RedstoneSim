@@ -103,6 +103,13 @@ Pitfalls found while doing this (also in [[cli]] section 13):
   powers instead.
 - Two labels on one position made `waves` print a doubled, shifted row (fixed
   2026-10-16); give each position one label anyway.
+- `set` of a block identical to the one there does nothing, as `/setblock` in the game: a
+  barrel set over a barrel keeps its contents (and its comparator reading). Put another
+  block first (`set … stone`, then `set … barrel` for an empty one); `source` changes a
+  container's strength in place ([[circuits]] Lookup table, `adc4`).
+- `make_circuits` exports a module's `.nbt` from the finished world: test levers inside the
+  module's box end up in the paste. Keep ports at the box edge and the harness outside
+  (`dac4`'s input wires run to its west edge for this).
 - `set` of an observer makes it fire once (ticks 2–3), as `/setblock` does in the game: the
   new block's shape update shows it its own front. `place` it instead
   ([[R-018-piston-zero-tick]], G EXP-057).
