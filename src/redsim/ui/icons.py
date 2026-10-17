@@ -133,16 +133,24 @@ ITEM_IDS = {
 }
 
 
+#: Decoded textures by name (reading one from the jar and decoding it takes ~40 µs, and a
+#: prefab preview asks for one per face).
+_TEXTURES: dict[str, QImage | None] = {}
+
+
 def _texture_image(texture: str) -> QImage | None:
+    if texture in _TEXTURES:
+        return _TEXTURES[texture]
     assets = Assets.find()
     data = assets.texture_bytes(texture) if assets is not None else None
-    if data is None:
-        return None
-    image = QImage.fromData(data)
-    if image.isNull():
-        return None
-    if image.height() > image.width():  # animated: first frame
-        image = image.copy(0, 0, image.width(), image.width())
+    image: QImage | None = None
+    if data is not None:
+        image = QImage.fromData(data)
+        if image.isNull():
+            image = None
+        elif image.height() > image.width():  # animated: first frame
+            image = image.copy(0, 0, image.width(), image.width())
+    _TEXTURES[texture] = image
     return image
 
 
@@ -201,6 +209,18 @@ def render_quads(quads: list[Quad], size: int, tint: Any = None) -> QPixmap:
             painter.restore()
     painter.end()
     return pixmap
+
+
+#: Tinted textures by (texture, tint): grass, leaves and dust are tinted per face.
+_TINTED: dict[tuple[str, tuple[float, ...]], QImage] = {}
+
+
+def _tinted_texture(texture: str, image: QImage, color: tuple[float, float, float]) -> QImage:
+    key = (texture, tuple(color))
+    tinted = _TINTED.get(key)
+    if tinted is None:
+        tinted = _TINTED[key] = _tinted(image, color)
+    return tinted
 
 
 def _tinted(image: QImage, color: tuple[float, float, float]) -> QImage:
@@ -271,59 +291,111 @@ def item_pixmap(item_id: str, size: int = 32) -> QPixmap:
     return pixmap
 
 
-#: Prefab previews made so far, by their blocks (rendering takes a moment).
-_PREFAB_PREVIEWS: dict[Any, QPixmap] = {}
-#: Larger prefabs are drawn from their outermost blocks only (the hidden inside costs time).
-PREVIEW_MAX_BLOCKS = 3000
+#: Prefab previews made so far, by their blocks (rendering takes a moment). Images, not
+#: pixmaps: a world's loading thread draws them too (``prefab_image``).
+_PREFAB_PREVIEWS: dict[Any, QImage] = {}
+#: The pixmaps by prefab object (the Circuit panel asks again after every change): the
+#: object, so that a reused id() is not mistaken for it, and the preview.
+_PREVIEWS_BY_ID: dict[tuple[int, int], tuple[Any, QPixmap]] = {}
+#: Below this many pixels per block, blocks are drawn as their colored boxes.
+FLAT_BELOW_PX = 5.0
+
+
+def cached_prefab_pixmap(prefab: Any, size: int = 64) -> QPixmap | None:
+    """The preview of ``prefab`` if it was drawn already (cheap: by object)."""
+    entry = _PREVIEWS_BY_ID.get((id(prefab), size))
+    return entry[1] if entry is not None and entry[0] is prefab else None
+
+
+def prefab_image(prefab: Any, size: int = 64) -> QImage:
+    """The preview of ``prefab`` as an image; safe to call from a loading thread (it paints
+    on a QImage) and cached by the prefab's blocks."""
+    entries = [
+        (dx, dy, dz, text)
+        for dx, dy, dz, text, _ in prefab.blocks
+        if not text.startswith("minecraft:air")
+    ]
+    key = (size, hash(tuple(entries)), len(entries))
+    image = _PREFAB_PREVIEWS.get(key)
+    if image is None:
+        states = {(dx, dy, dz): blocks.parse_state(text) for dx, dy, dz, text in entries}
+        image = _render_prefab(states, size)
+        if len(_PREFAB_PREVIEWS) > 200:
+            _PREFAB_PREVIEWS.clear()
+        _PREFAB_PREVIEWS[key] = image
+    return image
 
 
 def prefab_pixmap(prefab: Any, size: int = 64) -> QPixmap:
     """A prefab in the isometric view of the inventory icons (textured with the game's
     assets, else the colored box models), scaled to fit ``size``."""
-    states = {
-        (dx, dy, dz): blocks.parse_state(text)
-        for dx, dy, dz, text, _ in prefab.blocks
-        if not text.startswith("minecraft:air")
-    }
-    key = (size, tuple(sorted((pos, repr(state)) for pos, state in states.items())))
-    cached = _PREFAB_PREVIEWS.get(key)
+    cached = cached_prefab_pixmap(prefab, size)
     if cached is not None:
         return cached
-    pixmap = _render_prefab(states, size)
-    if len(_PREFAB_PREVIEWS) > 200:
-        _PREFAB_PREVIEWS.clear()
-    _PREFAB_PREVIEWS[key] = pixmap
+    pixmap = QPixmap.fromImage(prefab_image(prefab, size))
+    if len(_PREVIEWS_BY_ID) > 200:
+        _PREVIEWS_BY_ID.clear()
+    _PREVIEWS_BY_ID[(id(prefab), size)] = (prefab, pixmap)
     return pixmap
 
 
 _VISIBLE = {Direction.UP: (0, 1, 0), Direction.EAST: (1, 0, 0), Direction.SOUTH: (0, 0, 1)}
 
 
-def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) -> QPixmap:
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
+def _visible_blocks(
+    states: dict[tuple[int, int, int], BlockState], opaque: set[tuple[int, int, int]]
+) -> dict[tuple[int, int, int], BlockState]:
+    """The blocks the isometric view can see. A step of (1, 1, 1) lands on the same spot
+    of the icon plane, nearer to the viewer, so a block with an opaque cube anywhere along
+    that diagonal in front of it is hidden completely."""
+    front: dict[tuple[int, int], int] = {}  # per diagonal: the nearest opaque cube's y
+    for x, y, z in opaque:
+        key = (x - y, z - y)
+        if front.get(key, y - 1) < y:
+            front[key] = y
+    return {
+        pos: state
+        for pos, state in states.items()
+        if front.get((pos[0] - pos[1], pos[2] - pos[1]), pos[1]) <= pos[1]
+    }
+
+
+def _pixels_per_block(states: dict[tuple[int, int, int], BlockState], size: int) -> float:
+    """How wide one block is in a preview of ``size`` (from the blocks' bounding box)."""
+    xs = [x for x, _, _ in states]
+    ys = [y for _, y, _ in states]
+    zs = [z for _, _, z in states]
+    corners = [
+        _project(x, y, z)
+        for x in (min(xs), max(xs) + 1)
+        for y in (min(ys), max(ys) + 1)
+        for z in (min(zs), max(zs) + 1)
+    ]
+    width = max(p.x() for p in corners) - min(p.x() for p in corners)
+    height = max(p.y() for p in corners) - min(p.y() for p in corners)
+    return size * 0.94 / max(width, height, 1e-6)
+
+
+def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) -> QImage:
+    canvas = QImage(size, size, QImage.Format.Format_ARGB32_Premultiplied)
+    canvas.fill(Qt.GlobalColor.transparent)
     if not states:
-        return pixmap
-    if len(states) > PREVIEW_MAX_BLOCKS:  # keep the blocks with an open side towards the view
-        states = {
-            pos: state
-            for pos, state in states.items()
-            if any(
-                (pos[0] + s[0], pos[1] + s[1], pos[2] + s[2]) not in states
-                for s in _VISIBLE.values()
-            )
-        }
-    assets = Assets.find()
-    from redsim.ui.geometry import tint_color
+        return canvas
+    from redsim.ui.geometry import is_full_opaque, tint_color
 
     full = {pos for pos, state in states.items() if state.is_collision_shape_full_block()}
-    #: Depth, corners, the quad (None: a colored box face), its tint or shade, box color.
-    faces: list[tuple[float, list[tuple[float, float, float]], Any, Any, Any]] = []
+    opaque = {pos for pos in full if is_full_opaque(block_boxes(states[pos]))}  # not glass
+    states = _visible_blocks(states, opaque)
+    assets = Assets.find()
+    # Blocks only a few pixels wide: their colored boxes (the textures would not show).
+    flat = assets is None or _pixels_per_block(states, size) < FLAT_BELOW_PX
+    #: Depth, projected corners, the quad (None: a colored box face), its tint or shade,
+    #: the box color.
+    faces: list[tuple[float, list[QPointF], Any, Any, Any]] = []
     for (bx, by, bz), state in states.items():
-        if assets is not None:
-            quads = assets.block_quads(state)
+        if not flat:
             tint = tint_color(state, 0)
-            for quad in quads:
+            for quad in assets.block_quads(state):  # type: ignore[union-attr]
                 step = _VISIBLE.get(quad.facing)
                 if step is None:
                     continue
@@ -331,16 +403,19 @@ def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) ->
                     continue
                 corners = [(x + bx, y + by, z + bz) for x, y, z in quad.corners]
                 depth = sum(c[0] + c[1] + c[2] for c in corners) / 4
-                faces.append((depth, corners, quad, tint, None))
-        else:
-            for box in block_boxes(state):
-                for corners, shade in _faces(box):
-                    moved = [(x + bx, y + by, z + bz) for x, y, z in corners]
-                    depth = sum(c[0] + c[1] + c[2] for c in moved) / 4
-                    faces.append((depth, moved, None, shade, box.color))
-    points = [_project(*c) for _, corners, *_ in faces for c in corners]
+                faces.append((depth, [_project(*c) for c in corners], quad, tint, None))
+            continue
+        cube = (bx, by, bz) in opaque
+        for box in block_boxes(state):
+            for (corners, shade), step in zip(_faces(box), _VISIBLE.values(), strict=True):
+                if cube and (bx + step[0], by + step[1], bz + step[2]) in opaque:
+                    continue  # covered by the neighbor on that side
+                moved = [(x + bx, y + by, z + bz) for x, y, z in corners]
+                depth = sum(c[0] + c[1] + c[2] for c in moved) / 4
+                faces.append((depth, [_project(*c) for c in moved], None, shade, box.color))
+    points = [point for _, projected, *_ in faces for point in projected]
     if not points:
-        return pixmap
+        return canvas
     left = min(p.x() for p in points)
     right = max(p.x() for p in points)
     top = min(p.y() for p in points)
@@ -352,15 +427,15 @@ def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) ->
         .scale(scale, scale)
         .translate(-(left + right) / 2, -(top + bottom) / 2)
     )
-    painter = QPainter(pixmap)
+    painter = QPainter(canvas)
     painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+    painter.setPen(Qt.PenStyle.NoPen)
     shades = {Direction.UP: 1.0, Direction.EAST: 0.78, Direction.SOUTH: 0.6}
-    for _, corners, quad, extra, color in sorted(faces, key=lambda face: face[0]):
-        target = QPolygonF([_project(*corner) for corner in corners])
+    for _, points, quad, extra, color in sorted(faces, key=lambda face: face[0]):
+        target = QPolygonF(points)
         if quad is None:  # a colored box face
             r, g, b, a = color
             painter.setTransform(base)
-            painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(
                 QColor.fromRgbF(min(1.0, r * extra), min(1.0, g * extra), min(1.0, b * extra), a)
             )
@@ -370,7 +445,7 @@ def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) ->
         if image is None:
             continue
         if quad.tint >= 0:
-            image = _tinted(image, extra)
+            image = _tinted_texture(quad.texture, image, extra)
         source = QPolygonF([QPointF(u * image.width(), v * image.height()) for u, v in quad.uvs])
         mapping = QTransform()
         if not QTransform.quadToQuad(source, target, mapping):
@@ -385,8 +460,7 @@ def _render_prefab(states: dict[tuple[int, int, int], BlockState], size: int) ->
         shade = shades[quad.facing] if quad.shade else 1.0
         if shade < 1.0:
             painter.setTransform(base)
-            painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QColor(0, 0, 0, int(255 * (1 - shade))))
             painter.drawPolygon(target)
     painter.end()
-    return pixmap
+    return canvas
