@@ -422,7 +422,7 @@ Phase One (Section 3) is done; its results are written down. Do not re-inspect t
 2. Run the smoke test: `~/anaconda3/envs/redsim/bin/python -m pytest tests/cli/test_research.py -q` (about 20 s; every experiment and circuit script must pass).
 3. Pick the highest-value open backlog item, write its question and plan, and work through Section 5. Read only the reference sections the item needs (Section 13).
 4. After each finished item: record, reference pages, backlog, the status in `doc/redstone/README.md`, then commit and push (Section 13, "Git").
-5. Before your session ends, update "What exists now" below, so the next agent starts where you stopped.
+5. Before your session ends, update "What exists now" below and commit PROMPT.md with the docs (it is tracked), so the next agent starts where you stopped. State belongs in the repository docs; agent memory holds only the owner's standing rules (game parity, git, quota, server sandbox).
 
 ## 13. Working efficiently in this repository
 
@@ -458,7 +458,7 @@ Context and quota are limited: every file you print and every long command outpu
 
 **Git**
 
-- Work on the branch `research/redstone-kb`, with one commit per finished item. Push the branch after every commit, and fast-forward `main` (`git push origin HEAD:main`) once tests and `ruff check` pass. `.undo` files stay out of git (ignored).
+- Work on the branch `research/redstone-kb`, with one commit per finished item. Push the branch after every commit, and fast-forward `main` (`git push origin HEAD:main`) once tests and `ruff check` pass. `.undo` files stay out of git (ignored). Run `git status` before committing: the owner sometimes stages files themselves.
 
 ## 14. Sub-agents: when they help
 
