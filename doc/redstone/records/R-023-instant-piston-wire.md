@@ -78,7 +78,6 @@
   - Unlike the 0-tick pulses of [[R-018-piston-zero-tick]], no ordering race is involved:
     each piston is depowered by the stage before it, and the queue runs in order.
   Confidence: high (V; G EXP-058; S).
-- **Open** ([[backlog]]): a pasteable instant-wire module (rising edge in, rising edge out)
-  with its re-arm time as a contract; two chains to carry both edges instantly; vertical
-  and turning stages.
-- **Used by:** [[timing]], [[components]].
+- **Open** ([[backlog]]): both edges instantly (Q17: needs a 0-tick latch at the end);
+  vertical and turning stages.
+- **Used by:** [[timing]], [[components]], [[circuits]] Instant wire (`instant_wire`).

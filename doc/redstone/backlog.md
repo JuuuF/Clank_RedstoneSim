@@ -45,6 +45,7 @@ with the record that answered it.
    - [x] analog adder (three subtracting comparators)
    - [x] signal strength decoder (1-of-16, `decoder16`), analog 2:1 multiplexer (`analog_mux`)
    - [x] 4:1 analog selector from three pasted multiplexers (`analog_mux4`)
+   - [x] instant wire: a rising edge 39+ blocks in 0 ticks (`instant_wire`, R-023)
 5. **Compositions:** [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a flush door.
 
 ## Open questions
@@ -54,7 +55,7 @@ with the record that answered it.
 | Q10 | A re-armable piston 0-tick (or 1-tick) pulse generator: the R-018 ones are one-shot (the BUD piston stays out, the redstone block is moved away) | a library module for 0-tick pulses on demand | after the decoder and adder |
 | Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (S 6, COUT 4 ticks) with the A/B paths (8/8) without slowing the carry | adders feeding edge-triggered logic | later |
 | Q15 | A 2-tick carry: the next bit's G2 reading YC directly, so no repeater (and no 17-block wire) between bits: a bit-sliced adder with the bits 2 blocks apart along the carry, or a carry skip over 4 bits (COUT = CIN when all four H are on) | 32-bit arithmetic, ALUs | later |
-| Q16 | An instant-wire module from R-023: rising edge in (input pushes the first block away), rising edge out (last stage uncuts a wire step), stages joined by 15-wire lines; contract: 0-tick edge, re-arm 3 ticks a stage; can two chains carry both edges instantly? | instant long-distance signals for doors, flying machines, synchronised pistons | next |
+| Q17 | Both edges instant: the instant wire carries only its rising edge (re-arming takes 3 ticks a stage). Two chains cannot be combined at the output without memory; a latch that switches in 0 ticks (0-tick piston moves, R-018) at the end could take a rising-edge chain and a falling-edge chain | instant signals that also end at once | later |
 
 ## Hypotheses waiting for a test
 
@@ -88,3 +89,4 @@ with the record that answered it.
 | Q13: a faster carry: 4 ticks per bit (the CIN repeater and G2); YC's wire runs 15 blocks straight over the top to the next copy's CIN repeater, no repeater between copies | [[circuits]] composition rules | `full_adder`, `adder4` targets |
 | Q12: a 4:1 analog selector: three `analog_mux` pasted turned, outputs pointing straight into the next inputs; S0 on its own top layer; S1 delayed so both address bits may change together | [[circuits]] composition rules | `analog_mux4` targets |
 | Q11: yes for one edge: extended sticky pistons holding redstone blocks against each other's backs collapse in one tick (any length; 17 blocks a stage with wire); re-arming 3 ticks a stage | [[timing]], [[components]] | [[R-023-instant-piston-wire]] |
+| Q16: an instant-wire module: head pushes the first block away, stages joined by 14-wire lines, tail uncuts a wire step; 0 ticks on, 3·(stages + 2) off; failure cases short pulses and early re-triggers | [[circuits]] | `instant_wire` targets |

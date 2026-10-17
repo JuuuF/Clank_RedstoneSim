@@ -173,10 +173,11 @@ the full adder and the adder live in `tools/circuitgen/`.
 copy's CIN repeater); the 4-bit adder settles in 24 ticks instead of 40 (all 512 additions
 checked again). Q12: `analog_mux4`, a 4:1 analog selector from three pasted, turned
 multiplexers, with balanced address paths: 37 modules in all. Q11: R-023, the instant
-piston wire (a sticky-piston chain collapses in one tick; G EXP-058): 23 records.
+piston wire (a sticky-piston chain collapses in one tick; G EXP-058): 23 records. Q16:
+`instant_wire`, a rising edge 39 blocks (any length) in 0 ticks: 38 modules.
 
-**Next** (details in [[backlog]]): Q16 an instant-wire module, Q10 a re-armable piston
-0-tick pulse generator, a flush piston door, Q14 a glitch-free adder, Q15 a 2-tick carry. Open questions
+**Next** (details in [[backlog]]): Q10 a re-armable piston 0-tick pulse generator, a flush
+piston door, Q14 a glitch-free adder, Q15 a 2-tick carry, Q17 both edges instant. Open questions
 and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,
 water, randomness) is listed in [[differences]].
 
