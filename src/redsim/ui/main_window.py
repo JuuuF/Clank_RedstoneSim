@@ -43,6 +43,7 @@ from redsim.ui.icons import block_icon
 from redsim.ui.inventory import InventoryBar
 from redsim.ui.keymap import SPECS, Keymap, default_path
 from redsim.ui.keymap_editor import KeymapEditor
+from redsim.ui.loading import PreparedView
 from redsim.ui.names import block_name
 from redsim.ui.pacing import RateMeter, TickPacer
 from redsim.ui.panel_world import WorldPanel
@@ -1035,7 +1036,8 @@ class MainWindow(
 
     # ------------------------------------------------------------------ files
 
-    def _set_document(self, document: Document) -> None:
+    def _set_document(self, document: Document, prepared: PreparedView | None = None) -> None:
+        """Show ``document``; ``prepared``: its view, made by the loading thread."""
         self.simulation.stop()
         self.block_popup.close()
         self.document = document
@@ -1043,7 +1045,7 @@ class MainWindow(
         self._tick_steps = []
         canvas = self.simulation.canvas
         canvas.selected, canvas.selected_pulses = set(), set()
-        self.viewport.set_document(document)
+        self.viewport.set_document(document, prepared)
         self.sections.set_document(document)
         self._apply_saved_camera()
         self._changed()

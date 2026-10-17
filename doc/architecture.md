@@ -51,7 +51,7 @@ src/redsim/
 │                          files), player-like placement, sections, clipboard/prefabs (regions,
 │                          rotation), groups with exposed ports
 └── ui/                    PySide6 application: viewport (camera, picking, renderer), panels,
-                           main window, app entry point (`python -m redsim`)
+                           main window, loading screen, app entry point (`python -m redsim`)
 tests/                     pytest suites (core, world, sim); tests/sim/probe.py = test-only blocks
 tools/
 ├── java_oracle/           HashOrderOracle.java (real-JVM check for javahash)
@@ -336,6 +336,19 @@ uses the screen center). The renderer never writes world state.
   chunks (culling looks across borders). Only dirty chunks are rebuilt and re-uploaded.
   Chunks with moving pistons are rebuilt on every update, because their look follows the
   block entity's progress.
+- **First builds in bulk.** When a `ChunkedMesh` has nothing yet (an opened world, new
+  textures), `_build_all` groups the blocks by chunk once and `Mesher.cube_faces` makes the
+  faces of every block that is not a moving piston and has no see-through faces with
+  numpy over the whole world: neighbor and corner fullness by `searchsorted` over encoded
+  positions, the same corner shading and noise, split per chunk. Only the rest goes
+  through the block-by-block loop. The faces are equal to the loop's (tests in
+  `test_geometry.py`); a 78 000-block world meshes in about half the time.
+- **Opening a world** happens in a loading thread ([[decisions]] ADR-028,
+  `ui/loading.py`): it reads the file, re-runs recorded edits, builds the chunk meshes
+  with a copy of the view's `Mesher` (its block models and face templates, `Mesher.copy`)
+  and draws the prefab previews; the viewport then takes the meshes as they are and
+  uploads them whole on the next frame (`_upload_all`, also used when Qt recreates the GL
+  context: the CPU meshes stay).
 - **Moving pistons** are not in the chunks: `ChunkedMesh.moving_mesh` draws them as one
   small mesh every frame, at the partial tick (`Mesher.partial_tick`), grouped by state.
 - **Heavy ticks in parts.** At a set speed the run loop simulates at most

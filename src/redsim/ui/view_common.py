@@ -15,12 +15,14 @@ from PySide6.QtGui import (
 
 from redsim.core.pos import Pos
 from redsim.editor.clipboard import Region
+from redsim.sim.level import Level
 from redsim.ui import theme
 from redsim.ui.assets import Assets
 from redsim.ui.atlas import Atlas
 from redsim.ui.selection_tools import (
     Handle,
 )
+from redsim.world import blocks
 
 BACKGROUND = (0.53, 0.70, 0.86, 1.0)
 
@@ -209,6 +211,24 @@ def game_textures() -> tuple[Assets | None, Atlas | None]:
     if assets is None:
         return None, None
     return assets, Atlas.for_blocks(assets)
+
+
+def foreign_atlas(level: Level, assets: Assets | None, atlas: Atlas | None) -> Atlas | None:
+    """A new atlas if blocks of ``level`` the simulator does not model (from a Minecraft
+    world) have textures ``atlas`` lacks, else None. Safe in a loading thread (QImage)."""
+    if assets is None or atlas is None:
+        return None
+    foreign = {
+        state.block.id
+        for state in set(level.blocks.values())
+        if state.block.id not in blocks.REGISTRY
+    }
+    missing = {
+        block_id
+        for block_id in foreign
+        if not all(atlas.has(t) for t in assets.block_textures(block_id))
+    }
+    return Atlas.for_blocks(assets, foreign) if missing else None
 
 
 #: The layer grid around a build target or paste: reach (blocks) and strongest alpha.

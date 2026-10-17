@@ -363,6 +363,24 @@ up in the view (`Viewport.locate`); pulses are selected on the timeline (click,
 Shift/Ctrl+click), deleted with Del, moved together, and dragged onto another line to
 power another block (`Document.edit_pulses`, one undo step).
 
+## Loading screen (2026-10-17)
+
+Owner: "loading worlds takes a long time and the simulator does not respond during that
+time. Try to look into adding a loading screen, showing how far it is with loading the
+world. Also think about ways to increase the performance while loading since the builds
+may get even bigger in the future."
+
+**Done:** opening a world (Select World, Browse…, a file on the command line, Minecraft
+saves) shows a loading screen like the game's: dirt, the world's name, what it is doing
+("Reading the file", "Building the world: 12,000 of 26,318 blocks", "Re-running the
+recorded edits", "Loading chunks", "Building the view: 120 of 448 chunks", "Drawing the
+prefab previews") and a white progress bar. The window stays responsive; Esc cancels and
+keeps the world that was open. Everything loads in a background thread and is handed to
+the window at once ([[decisions]] ADR-028). The biggest freeze was the Circuit panel's
+prefab preview (10 s for `seg7`), now 0.3 s and drawn during loading; chunk meshes are
+built in bulk with numpy (about twice as fast) and a load starts with the view's block
+models. Measured: `seg7` 11 s frozen → 1.6 s; a 78 000-block world 1.3 s.
+
 ## Looks
 
 - Later, not now: the final product should look like a **technical version of Minecraft**,

@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from PySide6.QtCore import QEvent, QObject, QPoint, QRect, Qt, QTimer, Signal
@@ -84,12 +84,15 @@ from redsim.ui.view_common import (
     _from_trackpad,
     _layer_grid,
     _modifier_names,
+    foreign_atlas,
     game_textures,
 )
+
+if TYPE_CHECKING:
+    from redsim.ui.loading import PreparedView
 from redsim.ui.viewport_edit import EditTools, _grab_any, _MoveDrag, _StackDrag
 from redsim.ui.viewport_scene import SceneGeometry
 from redsim.ui.viewport_text import LabelRange, TextOverlays
-from redsim.world import blocks
 from redsim.world.block import Block, BlockState
 
 
@@ -214,6 +217,7 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         )
         self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
         self._mesh_revision = -1
+        self._upload_all = False  # chunk meshes to upload whole on the next frame
         #: Lines of text drawn over the top-left corner (run status, achieved rates).
         self.overlay_text: list[str] = []
         self.frame_rate = RateMeter()
@@ -258,9 +262,10 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             self._update_build_ghost()
         self.update()
 
-    def set_document(self, document: Document) -> None:
+    def set_document(self, document: Document, prepared: PreparedView | None = None) -> None:
         """Show another document: nothing of the old one's view state stays (selections,
-        a paste preview, drags, hover, highlights)."""
+        a paste preview, drags, hover, highlights). ``prepared``: its chunk meshes (and
+        atlas) made by the loading thread, shown as they are."""
         if self.paste_preview is not None:
             self.cancel_paste()
         self.document = document
@@ -283,34 +288,37 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         self._press = None
         self._drag_action = None
         self._mesh_revision = -1  # the diff against the old world drops what is gone
-        self._cover_foreign_textures()
+        if prepared is not None:
+            self._use_atlas(prepared.atlas)
+            self.world_mesh = prepared.mesh
+            self._upload_all = True  # its chunks are made, not yet on the GPU
+        else:
+            self._cover_foreign_textures()
         self.update()
 
     def _cover_foreign_textures(self) -> None:
         """Blocks of an opened Minecraft world the simulator does not model have textures
         the atlas lacks: rebuild it with them (once per new set of blocks)."""
-        if self.assets is None or self.atlas is None:
+        atlas = foreign_atlas(self.document.level, self.assets, self.atlas)
+        if atlas is None:
             return
-        foreign = {
-            state.block.id
-            for state in set(self.document.level.blocks.values())
-            if state.block.id not in blocks.REGISTRY
-        }
-        missing = {
-            block_id
-            for block_id in foreign
-            if not all(self.atlas.has(t) for t in self.assets.block_textures(block_id))
-        }
-        if not missing:
-            return
-        self.atlas = Atlas.for_blocks(self.assets, foreign)
+        self._use_atlas(atlas)
         self.world_mesh = ChunkedMesh(Mesher(self.assets, self.atlas))
-        self._build_meshes.clear()
-        self._red_meshes.clear()
         if self.renderer is not None:
             self.makeCurrent()
             for key in list(self.renderer.chunks):
                 self.renderer.remove_chunk(key)
+            self.doneCurrent()
+
+    def _use_atlas(self, atlas: Atlas | None) -> None:
+        """Draw with ``atlas`` from now on (a no-op if it is the current one)."""
+        if atlas is self.atlas:
+            return
+        self.atlas = atlas
+        self._build_meshes.clear()
+        self._red_meshes.clear()
+        if self.renderer is not None:
+            self.makeCurrent()
             self._upload_atlas()
             self.doneCurrent()
 
@@ -327,7 +335,8 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
         # data must be uploaded again.
         self.renderer = Renderer()
         self._upload_atlas()
-        self.world_mesh.reset()
+        # The chunk meshes on the CPU side are still right: only the GPU lost them.
+        self._upload_all = True
         self._mesh_revision = -1
         context = self.context()
         if context is not None:  # free GPU textures while the context still exists
@@ -459,6 +468,10 @@ class Viewport(EditTools, SceneGeometry, TextOverlays, QOpenGLWidget):
             ]:
                 renderer.remove_chunk(stale)
             self._mesh_revision = self.document.revision
+        if self._upload_all:  # chunk meshes made elsewhere (loading) or a new GL context
+            for key, mesh in self.world_mesh.chunks.items():
+                renderer.set_chunk(key, mesh.opaque, mesh.translucent, mesh.solid)
+            self._upload_all = False
         hidden = self._hidden_blocks()
         if hidden != self.world_mesh.hidden:
             # A pending move shows its blocks only where they go (owner, 2026-10-14).

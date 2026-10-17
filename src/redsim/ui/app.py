@@ -28,6 +28,7 @@ def configure_gl() -> None:
 def main(argv: list[str] | None = None) -> int:
     configure_platform()
     configure_gl()
+    from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
     from redsim.ui.main_window import MainWindow
@@ -36,11 +37,11 @@ def main(argv: list[str] | None = None) -> int:
     app = QApplication(args)
     app.setApplicationName("Redstone Simulator")
     window = MainWindow()
-    if len(args) > 1:
-        window.open_path(Path(args[1]))
     if not window.restore_layout():
         window.resize(1400, 900)
     window.show()
+    if len(args) > 1:  # behind the loading screen, once the window is up
+        QTimer.singleShot(0, lambda: window.load_path(Path(args[1])))
     return app.exec()
 
 

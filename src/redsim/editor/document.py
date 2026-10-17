@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from redsim.core.pos import Pos, offset
+from redsim.core.progress import Report
 from redsim.editor import sources
 from redsim.editor.annotations import Sections
 from redsim.editor.clipboard import Prefab, Region, bounding_box
@@ -641,8 +642,9 @@ class Document(HistoryOps, SequenceOps):
         self.dirty = False
 
     @staticmethod
-    def open(path: Path) -> Document:
-        engine, extra = save_io.load(path)
+    def open(path: Path, progress: Report | None = None) -> Document:
+        """Open a saved world; ``progress`` hears how far it is (``core/progress.py``)."""
+        engine, extra = save_io.load(path, progress)
         old_signs = extra.get("signs") or {}
         adopt_signs(engine.level, old_signs)
         raw_sections = extra.pop("sections", None)
@@ -685,7 +687,7 @@ class Document(HistoryOps, SequenceOps):
         if isinstance(history, dict) and "base" in history:
             # Re-run the recorded edits from the saved build (the file's own state is
             # the result at the saved tick, recomputed here).
-            base_engine = save_io.engine_from_json(history["base"])
+            base_engine = save_io.engine_from_json(history["base"], progress)
             adopt_signs(base_engine.level, old_signs)
             base = base_engine.snapshot()
             plan: Plan = {
@@ -693,7 +695,7 @@ class Document(HistoryOps, SequenceOps):
                 for tick, actions in history["plan"].items()
             }
             end, tick = int(history.get("end_tick", 0)), int(history.get("tick", 0))
-            document._rebuild(HistoryState(base, plan, end, tick))
+            document._rebuild(HistoryState(base, plan, end, tick), progress)
             document.dirty = False
         return document
 

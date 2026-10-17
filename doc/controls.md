@@ -447,7 +447,8 @@ macOS and Windows locations, and the project's example saves, newest first, with
 save's icon, last-played date and version) and a tab with simulation worlds (recently
 opened or saved `.redsim.json` files with a thumbnail of the view, and the examples).
 Type to search, ↑/↓ to choose, Enter or a double click opens; **Browse…** opens any other
-file or save folder. Opening a Minecraft save shows the area around the player; further chunks load
+file or save folder. A world opens behind a **loading screen** that shows how far it is; **Esc**
+cancels it (the world that was open stays). Opening a Minecraft save shows the area around the player; further chunks load
 around the camera (Preferences → Minecraft worlds). File → Save as Minecraft world…
 writes the current state into a copy of the save next to the original (it asks for the
 copy's name; the original stays untouched), pending scheduled ticks included; open the

@@ -16,6 +16,7 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 | O11 | **Owner checks** | rounds 7–9, Mac support | The owner tests Mac support and reviews rounds 7–9, the polish pass, the popup and the frame rate on real hardware. Optional: a short manual game session to verify levers and buttons with a player ([[experiments/index]]). |
 
 | O12 | **Small loose ends** | rounds 9–12 | 0-tick behavior not checked against the real game. Done 2026-10-14: the Select World screen's stray "r" (the text cursor on the placeholder's "T"), its game look (dirt, stone buttons and tabs from the jar), thumbnails made when an older world is opened, colored groups for every timeline category; the timeline height is remembered. |
+| O13 | **Loading screen; faster loading of big builds** | 2026-10-17 | Done: worlds open in a loading thread behind a game-style loading screen with progress (Esc cancels, ADR-028); prefab previews 30× faster and cached; first mesh builds in bulk with numpy (about 2× faster), a warm mesher per load, GPU re-uploads without re-meshing. `seg7`: 11 s frozen → 1.6 s responsive. Open: meshing in worker processes and a mesh cache for much bigger builds; the owner's check on the desktop. |
 
 ## Done after the list was compiled
 

@@ -18,6 +18,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from redsim.core.progress import Report
 from redsim.mcworld import nbt
 from redsim.mcworld.stream import ChunkLoad, WorldStream
 
@@ -153,7 +154,12 @@ def block_states(texts: dict[Pos, str]) -> dict[Pos, Any]:
     return {pos: state_from_text(text) for pos, text in texts.items()}
 
 
-def open_world(path: Path, radius: int = 4, center: tuple[int, int] | None = None) -> OpenedWorld:
+def open_world(
+    path: Path,
+    radius: int = 4,
+    center: tuple[int, int] | None = None,
+    progress: Report | None = None,
+) -> OpenedWorld:
     """Open a save as a document with the chunks within ``radius`` of ``center`` (a chunk;
     default: the player's): blocks as they are (no updates, like the game loading a
     chunk), block entities from their NBT, pending scheduled ticks, and the camera at the
@@ -165,7 +171,9 @@ def open_world(path: Path, radius: int = 4, center: tuple[int, int] | None = Non
 
     info = read_save(path)
     stream = WorldStream(info)
-    load = stream.load(stream.wanted(center if center is not None else player_chunk(info), radius))
+    load = stream.load(
+        stream.wanted(center if center is not None else player_chunk(info), radius), progress
+    )
     engine = Engine()
     level = engine.level
     level.blocks.update(block_states(load.blocks))

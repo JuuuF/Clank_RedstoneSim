@@ -224,7 +224,11 @@ tests the Mac support themselves. Status and what is left:
 4. **Owner review** of rounds 7–8, the polish pass, the popup and Mac support on real
    hardware.
 5. **Editing comfort:** a "compare two ticks" view (blocks that differ highlighted).
-6. **Scale:** with the compiled build the engine is about 2× faster; keyframes are full
+6. **Loading big worlds** (owner, 2026-10-17; [[decisions]] ADR-028): done: a loading thread
+   with a game-style loading screen and progress, faster previews and bulk meshing. Next if
+   builds grow by another order of magnitude: chunk meshes in worker processes (the GIL
+   limits threads to responsiveness), a mesh cache next to the world file.
+7. **Scale:** with the compiled build the engine is about 2× faster; keyframes are full
    level copies (a streamed world at view distance 12: ~12 MB each, at most 34 kept,
    about 500 MB in all). Delta keyframes against the base would make them cheap; they
    must keep `Level.blocks` a real dict (compiled code) and receive streamed chunks.

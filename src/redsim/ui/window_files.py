@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from PySide6.QtCore import Qt, QTimer
@@ -18,11 +18,12 @@ from PySide6.QtWidgets import (
 )
 
 from redsim.editor.document import Document
-from redsim.mcworld.importer import attach_world, open_world, stream_chunks
+from redsim.mcworld.importer import OpenedWorld, attach_world, stream_chunks
 from redsim.mcworld.index import Build, scan_builds
 from redsim.mcworld.writer import save_world_copy
 from redsim.ui import pixel_icons, theme
 from redsim.ui.camera import Camera
+from redsim.ui.loading import LoadedWorld, LoadingRun, PreparedView, minecraft_job, world_job
 from redsim.ui.names import block_name
 from redsim.ui.window_common import FILE_FILTER, STREAM_BUDGET_S, _plain_cube
 from redsim.ui.world_builds import BuildsDialog
@@ -47,6 +48,9 @@ FAR_JUMP = 96.0
 
 class FileActions:
     """Part of ``MainWindow`` (a mixin; its methods run on it)."""
+
+    #: The world being loaded behind the loading screen, if any.
+    loading: LoadingRun | None = None
 
     def _confirm_discard(self, closing: bool = False) -> bool:
         """Ask before unsaved changes would be lost; True means go ahead. The tutorial
@@ -107,27 +111,33 @@ class FileActions:
         if kind == MINECRAFT:
             view.open_minecraft_world(path)
         else:
-            view.open_path(path)
+            view.load_path(path)
 
     def _open_minecraft_world(self) -> None:
         """Import the area around the player of a Minecraft Java save (doc/world-import.md)."""
         view = cast("MainWindow", self)
         view._open(MINECRAFT)
 
-    def open_minecraft_world(self, folder: Path, radius: int = 4) -> None:
+    def open_minecraft_world(self, folder: Path, radius: int = 4) -> LoadingRun | None:
+        """Open the area around the player of a Minecraft save behind the loading screen."""
         view = cast("MainWindow", self)
         if not (folder / "level.dat").exists():
             QMessageBox.critical(view, "Not a Minecraft world", f"{folder} has no level.dat.")
-            return
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            opened = open_world(folder, radius)
-        except (OSError, ValueError, KeyError) as exc:
-            QMessageBox.critical(view, "Cannot open the world", str(exc))
-            return
-        finally:
-            QApplication.restoreOverrideCursor()
-        view._set_document(opened.document)
+            return None
+        job = minecraft_job(folder, radius, view.viewport.world_mesh.mesher.copy())
+        return view._start_loading(
+            "Loading Minecraft world",
+            folder.name,
+            ["chunks", "meshes"],
+            job,
+            lambda loaded: view._finish_minecraft(folder, loaded),
+            "Cannot open the world",
+        )
+
+    def _finish_minecraft(self, folder: Path, loaded: LoadedWorld) -> None:
+        view = cast("MainWindow", self)
+        opened: OpenedWorld = loaded.extra["opened"]
+        view._set_document(opened.document, loaded.prepared)
         remember_world(folder, MINECRAFT)
         approx = [
             f"{block_name(i)} ×{n}" for i, n in opened.foreign.most_common() if not _plain_cube(i)
@@ -139,6 +149,37 @@ class FileActions:
             f"{len(opened.document.level.blocks)} blocks ({stream.skipped()} buried terrain "
             f"blocks left out); more load around the camera.{note}"
         )
+
+    def _start_loading(
+        self,
+        title: str,
+        subtitle: str,
+        stages: list[str],
+        job: Any,
+        finished: Any,
+        error_title: str,
+    ) -> LoadingRun | None:
+        """Run ``job`` in a loading thread behind the loading screen (doc/ui-direction.md,
+        loading screen); ``finished`` gets its result on the GUI thread. One at a time."""
+        view = cast("MainWindow", self)
+        if view.loading is not None and view.loading.running:
+            return None
+        view.simulation.stop()
+        view.block_popup.close()
+
+        def failed(error: BaseException | None) -> None:
+            view.loading = None
+            if error is None:
+                view._message("Loading cancelled; the world before stays open.")
+            else:
+                QMessageBox.critical(view, error_title, f"{type(error).__name__}: {error}")
+
+        def done(result: Any) -> None:
+            view.loading = None
+            finished(result)
+
+        view.loading = LoadingRun(view, title, subtitle, stages, job, done, failed)
+        return view.loading
 
     def _stream_world(self) -> None:
         """Load the next chunks of an opened world around the camera (a little per call,
@@ -230,15 +271,38 @@ class FileActions:
             f"{report.chunks} chunks.{note}"
         )
 
+    def load_path(self, path: Path) -> LoadingRun | None:
+        """Open a world behind the loading screen: it loads in a background thread, the
+        window stays responsive and shows how far it is (Esc cancels)."""
+        from redsim.ui.panel_circuit import PREVIEW_SIZE
+
+        view = cast("MainWindow", self)
+        job = world_job(path, view.viewport.world_mesh.mesher.copy(), PREVIEW_SIZE)
+        return view._start_loading(
+            "Loading world",
+            path.name,
+            ["read", "world", "meshes", "previews"],
+            job,
+            lambda loaded: view._finish_open(path, loaded.document, loaded.prepared),
+            "Cannot open file",
+        )
+
     def open_path(self, path: Path) -> None:
+        """Open a world at once (no loading screen; the window waits)."""
         view = cast("MainWindow", self)
         try:
             document = Document.open(path)
         except (OSError, ValueError, KeyError) as exc:
             QMessageBox.critical(view, "Cannot open file", str(exc))
             return
+        view._finish_open(path, document)
+
+    def _finish_open(
+        self, path: Path, document: Document, prepared: PreparedView | None = None
+    ) -> None:
+        view = cast("MainWindow", self)
         stream = attach_world(document)
-        view._set_document(document)
+        view._set_document(document, prepared)
         remember_world(path, SIMULATION)
         if stream is not None:
             view._message(

@@ -515,3 +515,48 @@ with one re-run) keep correct undo states.
 every step visible to a person; the same file opens in the editor with its labels and
 targets. Each invocation re-simulates the recorded history when it opens the file, which
 costs milliseconds for typical contraptions.
+
+## ADR-028
+
+**Opening worlds in a loading thread, behind a loading screen**
+
+**Date:** 2026-10-17 · **Status:** accepted · **Context:** the owner: "loading worlds takes
+a long time and the simulator does not respond during that time. Try to look into adding
+a loading screen, showing how far it is with loading the world. Also think about ways to
+increase the performance while loading since the builds may get even bigger." Measured
+before: opening `seg7` (14 000 blocks) froze the window for 11 s: 10 s drawing the
+Circuit panel's prefab preview (every face read its texture from the jar again), 1.2 s
+of chunk meshes in the first frame, 0.03 s for the file itself.
+
+**Decision:**
+
+- **One loading thread per open** (`ui/loading.py`, the first thread in the code base).
+  It runs only code without Qt widgets: `Document.open` (reading, recorded edits re-run),
+  `ChunkedMesh.update` with a copy of the view's mesher, `icons.prefab_image` (QImage,
+  which Qt allows off the GUI thread), `Atlas.for_blocks` for Minecraft worlds. It shares
+  nothing it changes with the GUI: the document is new, the mesher a copy made on the
+  GUI thread. When it is done, the GUI thread takes everything over at once
+  (`MainWindow._finish_open`, `Viewport.set_document(document, prepared)`).
+- **Progress through plain callbacks** (`core/progress.py`: `report(stage, done,
+  total)`), passed down to `save_io.load`, `Document.open`, the history replay,
+  `WorldStream.load` and `ChunkedMesh.update`; layers below the UI know nothing about the
+  screen. The GUI polls the progress every 33 ms. Cancelling sets a flag; the next report
+  raises `LoadCancelled` in the thread and the old world stays open.
+- **The loading screen** looks like the game's (dirt, pixel font, a white bar) and covers
+  the whole window; it swallows all input while shown (no shortcut can touch a document
+  half-way), Esc cancels. One load at a time.
+- **`open_path` stays synchronous** (tests, scripts); `load_path` and
+  `open_minecraft_world` use the loading thread, and so does a world given on the command
+  line (after the window is shown).
+- **Faster loading:** prefab previews cache decoded and tinted textures, skip blocks hidden
+  along the view diagonal, draw blocks only a few pixels wide as their colored boxes, and
+  are cached by object (the panel asked for them after every edit, re-parsing every
+  block); first mesh builds go through `_build_all` and the bulk `Mesher.cube_faces`;
+  a new `Mesher` starts from a copy of the view's models and templates.
+
+**Consequences:** `seg7` opens in 1.6 s and the window stays responsive (frames every
+10 ms while it loads, a pause of up to ~100 ms when the preview is drawn); a 78 000-block
+world (3.3 MB) opens in 1.3 s. Python threads share the GIL: the gain is responsiveness,
+not parallel speed; for much bigger builds, meshing in worker processes and keeping
+meshes between sessions are the next steps (owner's backlog, [[roadmap]]).
+

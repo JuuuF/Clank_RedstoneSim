@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, cast
 
+from redsim.core.progress import Report
 from redsim.editor.document_common import edit_row
 from redsim.editor.monitor import monitor_value
 from redsim.sim.engine import Action, EngineSnapshot, StepInfo
@@ -113,14 +114,25 @@ class HistoryOps:
         view = cast("Document", self)
         return [state.label for state in reversed(view._undo)]
 
-    def _rebuild(self, state: HistoryState) -> list[tuple[int, Action, str]]:
-        """Re-create the history from a base and an edit plan, re-running the simulation."""
+    def _rebuild(
+        self, state: HistoryState, progress: Report | None = None
+    ) -> list[tuple[int, Action, str]]:
+        """Re-create the history from a base and an edit plan, re-running the simulation
+        (``progress`` hears each tick: ``history``, tick, last tick)."""
         view = cast("Document", self)
         view.tick_steps, view.edit_ticks = {}, {}
         for values in view.samples.values():
             values.clear()
         history = view.history
-        failures = history.rewrite(state.base, state.plan, state.end_tick, view._observe)
+        observe = view._observe
+        if progress is not None:
+            last = max([state.end_tick, *state.plan]) if state.plan else state.end_tick
+
+            def observe() -> None:
+                view._observe()
+                progress("history", history.tick(), last)
+
+        failures = history.rewrite(state.base, state.plan, state.end_tick, observe)
         view.edit_ticks = {i: t - history.base_time for i, t in history.input_times.items()}
         view.seek_tick(min(state.tick, view.end_tick))
         view._changed()

@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from redsim.core.pos import Pos
+from redsim.core.progress import Report
 from redsim.sim.engine import Engine, Phase
 from redsim.sim.level import Level, TickerWrapper, _BoundTicker
 from redsim.sim.ticks import ScheduledTick, TickPriority
@@ -30,6 +31,8 @@ from redsim.world.block_entity import BLOCK_ENTITY_TYPES, BlockEntity
 
 FORMAT = "redsim-save"
 VERSION = 1
+#: Blocks read between two progress reports.
+REPORT_BLOCKS = 16384
 
 
 def _pos(value: list[int]) -> Pos:
@@ -146,7 +149,7 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
     }
 
 
-def engine_from_json(data: dict[str, Any]) -> Engine:
+def engine_from_json(data: dict[str, Any], progress: Report | None = None) -> Engine:
     if data.get("format") != FORMAT:
         raise ValueError("not a redsim save file")
     if int(data.get("version", 0)) > VERSION:
@@ -161,8 +164,15 @@ def engine_from_json(data: dict[str, Any]) -> Engine:
     level.sub_tick_count = int(raw["sub_tick_count"])
     level.trace.game_time = level.game_time
     palette = [blocks.parse_state(text) for text in raw["palette"]]
-    for x, y, z, index in raw["blocks"]:
-        level.blocks[(int(x), int(y), int(z))] = palette[index]
+    entries, placed = raw["blocks"], level.blocks
+    for start in range(0, len(entries), REPORT_BLOCKS):
+        if progress is not None:
+            progress("world", start, len(entries))
+        placed.update(
+            {(x, y, z): palette[i] for x, y, z, i in entries[start : start + REPORT_BLOCKS]}
+        )
+    if progress is not None:
+        progress("world", len(entries), len(entries))
 
     entities: list[BlockEntity] = []
     for entry in raw["block_entities"]:
@@ -226,6 +236,10 @@ def save(path: Path, engine: Engine, extra: dict[str, Any] | None = None) -> Non
     path.write_text(json.dumps(document, indent=1) + "\n")
 
 
-def load(path: Path) -> tuple[Engine, dict[str, Any]]:
+def load(path: Path, progress: Report | None = None) -> tuple[Engine, dict[str, Any]]:
+    if progress is not None:
+        progress("read", 0, 1)
     document = json.loads(path.read_text())
-    return engine_from_json(document), dict(document.get("extra", {}))
+    if progress is not None:
+        progress("read", 1, 1)
+    return engine_from_json(document, progress), dict(document.get("extra", {}))

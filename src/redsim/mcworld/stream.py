@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from redsim.core.progress import Report
 from redsim.mcworld.chunk import AIR, palette_entry, state_text
 from redsim.mcworld.region import RegionFile, region_of
 
@@ -191,12 +192,18 @@ class WorldStream:
         return total
 
     # ------------------------------------------------------------------ loading
-    def load(self, chunks: Iterable[tuple[int, int]]) -> ChunkLoad:
-        """Load these chunks (loaded and missing ones are skipped)."""
+    def load(self, chunks: Iterable[tuple[int, int]], progress: Report | None = None) -> ChunkLoad:
+        """Load these chunks (loaded and missing ones are skipped); ``progress`` hears each
+        one (``chunks``, done, total)."""
         result = ChunkLoad()
-        for cx, cz in chunks:
+        wanted = list(chunks)
+        for done, (cx, cz) in enumerate(wanted):
+            if progress is not None:
+                progress("chunks", done, len(wanted))
             if (cx, cz) not in self.loaded and (cx, cz) not in self.missing:
                 result.merge(self._load_one(cx, cz))
+        if progress is not None:
+            progress("chunks", len(wanted), len(wanted))
         return result
 
     def reload_some(self, budget: float) -> int:
