@@ -6,10 +6,16 @@ description: Build, run, inspect and test Minecraft Java redstone contraptions w
 # Using redsim-cli
 
 The simulator's command line works on `.redsim.json` world files: every command opens the
-world, acts and saves it. Read **doc/cli.md** (the guide) before building and
-**doc/cli-reference.md** for exact command syntax (`redsim-cli help COMMAND` prints the
-same text). Run it as `redsim-cli WORLD …` (installed) or
-`PYTHONPATH=src python -m redsim.cli WORLD …` from the repository root.
+world, acts and saves it. **doc/cli.md** is the guide (sections 4 and 5 before building)
+and **doc/cli-reference.md** the exact syntax; both are long, so read one section at a time
+(`grep -n "^##" FILE`, then `sed -n`), or `redsim-cli help COMMAND` for one command. Run it
+as `redsim-cli WORLD …` (installed; in this checkout `~/anaconda3/envs/redsim/bin/redsim-cli`)
+or `PYTHONPATH=src python -m redsim.cli WORLD …` from the repository root.
+
+Keep output small: a script echoes every command, so filter it
+(`… < script 2>&1 | sed -n '/^> check/,$p'`); probe with `--dry-run -c "…"` and name the
+`waves` rows and ticks you need (at most 400 ticks per call); use `--json` when a script
+should judge the output.
 
 Before designing, use the redstone knowledge base **doc/redstone/** (README.md first):
 measured timings (`timing.md`), power rules (`signals.md`), component behavior
