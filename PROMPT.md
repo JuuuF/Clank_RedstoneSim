@@ -414,40 +414,86 @@ Apply these standards to all findings and designs:
 
 Do not declare a mechanic fully understood merely because one simple example works. Do not declare the knowledge base complete while important unsupported assumptions remain. Progress should be measured by validated coverage, quality of evidence, reusable abstractions, and successful engineering outcomes.
 
-## 12. Immediate Instructions
+## 12. Immediate Instructions (continuing agents)
 
-Begin now.
+Phase One (Section 3) is done; its results are written down. Do not re-inspect the whole repository. Resume:
 
-1. Inspect the repository, read the relevant documentation, and learn the real `redsim-cli` workflow.
-2. Determine the available components, observation mechanisms, simulation formats, and known limitations.
-3. Identify the existing documentation structure and establish a practical research index if needed.
-4. Run a minimal smoke test to verify that the simulator works as documented.
-5. Create an initial experimental roadmap that progresses from basic component behavior to interactions, timing, state, and reusable primitives.
-6. Start experimenting with redstone. Choose foundational questions whose answers will support many later contraptions.
-7. Record every meaningful finding in the appropriate documentation as you work.
-8. Build and validate the first small, reusable circuit primitives.
-9. Continue iteratively, expanding both the mechanics knowledge base and the set of contraptions you can reliably build.
+1. Read `doc/redstone/README.md` (index, evidence labels, experiment method, status) and `doc/redstone/backlog.md` (roadmap, open questions). Skim `doc/redstone/cheatsheet.md` (one page). Load the project skill `redsim-cli` (`.claude/skills/redsim-cli/SKILL.md`, 39 lines) instead of reading `doc/cli.md` in full.
+2. Run the smoke test: `~/anaconda3/envs/redsim/bin/python -m pytest tests/cli/test_research.py -q` (about 20 s; every experiment and circuit script must pass).
+3. Pick the highest-value open backlog item, write its question and plan, and work through Section 5. Read only the reference sections the item needs (Section 13).
+4. After each finished item: record, reference pages, backlog, the status in `doc/redstone/README.md`, then commit and push (Section 13, "Git").
+5. Before your session ends, update "What exists now" below, so the next agent starts where you stopped.
 
-At the end of your initial working session, leave behind concrete artifacts: an environment and tooling reference, an initial set of reproducible experiments, documented findings, an updated research backlog, and at least one validated circuit primitive if the available simulator functionality permits it.
+## 13. Working efficiently in this repository
 
-**Your guiding principle:** Do not merely build circuits that happen to work. Discover why they work, identify the conditions under which they fail, preserve that knowledge in reproducible form, and use it to engineer increasingly complex systems with predictable behavior.
+Context and quota are limited: every file you print and every long command output stays in your context for the rest of the session. These rules come from the earlier sessions.
+
+**Reading**
+
+- Never print a large file whole. `doc/redstone/circuits.md` (~1000 lines), `doc/cli-reference.md` (~1500) and `doc/cli.md` (~800) are references: list their headings (`grep -n "^##" FILE`) and print one section (`sed -n '/^### Name/,/^### /p' FILE`), or `redsim-cli help COMMAND` for one command.
+- Game source is in `data/minecraft_src/server-src/`: `grep -n` for the method and print only it. The simulator's port is in `src/redsim/world/blocks/`.
+
+**Running the CLI**
+
+- `redsim-cli` is not on PATH: use `~/anaconda3/envs/redsim/bin/redsim-cli` (the Python is `~/anaconda3/envs/redsim/bin/python`). Put scratch worlds in your scratchpad directory.
+- A build script echoes every command and its result. Filter: `… < script 2>&1 | sed -n '/^> check/,$p'` for the verdict, or `grep -v "^placed\|^set \|^> place\|^> set\|^> label\|^@"` for errors and notes.
+- Probe without saving: `--dry-run -c "…; run N; waves @A @B ticks 0..60"`. Name the rows you need; `waves` shows at most 400 ticks per call. For many checks, use `--json` and parse the output in a small Python script instead of reading text.
+- `trace T near POS radius R` keeps one tick's order readable; `changes POS` and `delays FROM TO` are cheaper than full `waves`.
+- Cost: a truth-table case of a ~2000-block build takes ~0.2 s. Keep checks in library scripts under ~10 s (`tests/cli/test_research.py` runs them all). Run exhaustive checks once, and record that they passed and how to rerun them.
+
+**Designing circuits (lessons that cost a lot to learn)**
+
+- Test the logic core first, with levers on every internal signal and a `truth` target; only then add routing. Iterate on routing in the simulator, not in your head: if a planar layout fails twice, use levels as lanes (logic on y=3, supports on y=2, a free bottom layer y=1, a top layer y=5 to cross). A wire can pass under a support block, and a block can sit over a wire.
+- Generate large or repetitive layouts with a Python generator in `tools/circuitgen/` that writes the `.cli.txt` script. The script stays the checked artifact. Then `PYTHONPATH=src python -m tools.make_circuits NAME` writes the world and `.nbt`.
+- Known traps (details in the reference pages):
+  - a subtracting comparator blocks only if its side is at least its rear (feed sides at full strength);
+  - one wire between two comparators is a side input of both;
+  - an XOR's output must leave vertically;
+  - balance path delays (H with not H, A with H);
+  - `set` of an observer makes it fire;
+  - build edits inside a target (`do` without `at`) are not settled, so outputs appear a few ticks late;
+  - `new size N` covers x and z from −N/2 to N/2−1;
+  - truth rows list input bits in the order the inputs are named.
+- New game mechanics: confirm them on the sandboxed server. Add a `Scenario` to `tools/gameserver/scenarios.py` (`ALL` list), run `python -m tools.gameserver.run NAME` (about 1 min), and commit the recording in `experiments/results/`; `tests/sim/test_game_verified.py` replays it. A setup block placed with `/setblock` runs its shape update (observers fire).
+
+**Git**
+
+- Work on the branch `research/redstone-kb`, with one commit per finished item. Push the branch after every commit, and fast-forward `main` (`git push origin HEAD:main`) once tests and `ruff check` pass. `.undo` files stay out of git (ignored).
+
+## 14. Sub-agents: when they help
+
+A sub-agent (the Agent tool) has its own context window: what it reads and runs never enters yours, and you get back only its final report. It starts cold and must re-read whatever it needs, so it costs more in total. It pays off only when the task is large, self-contained and output-heavy.
+
+- **Delegate:**
+  - one backlog item with a clear deliverable: an experiment (script + record + reference lines) or a library module (script + world/.nbt + contract section);
+  - long verification runs (exhaustive truth tables, glitch sweeps, game-server comparisons) whose logs you do not need;
+  - broad searches of the game source or the docs.
+- **Do not delegate:**
+  - small edits and quick probes;
+  - choosing what to work on next;
+  - anything that needs the conversation so far;
+  - updating the shared indexes (README status, backlog, circuits index, "What exists now").
+- **Brief it like a colleague who knows nothing:** the question or interface spec; which files and sections to read (not "read the docs"); the conventions above (Sections 13 and 6); the exact deliverables and where they go; "do not commit"; and the report you want back: at most ~200 words, with verdicts, file paths and open issues, not logs.
+- **Coordinate:** you keep the plan, review the files it wrote (`git diff --stat`, then targeted reads), run the tests, update the indexes and commit. Run independent items in parallel only if they write different files; give each its own worktree (`isolation: "worktree"`) when they might touch the same ones.
 
 ## What exists now
 
-Start at doc/redstone/README.md (index, method, status) and doc/redstone/backlog.md (roadmap, open questions Q10–Q14).
+Updated 2026-10-17. Start at `doc/redstone/README.md` and `doc/redstone/backlog.md`.
 
-- 22 experiment records (R-001…R-022). Each has a script in experiments/redstone/ that ends in a check of what was observed, and tests/cli/test_research.py re-runs them all. R-018 (pistons making 0-tick pulses) is also confirmed on the real 26.3 server (EXP-057, tools/gameserver).
-- A circuit library of 36 modules and contraptions in examples/circuits/, including an analog 2:1 multiplexer, a 1-of-16 signal-strength decoder, a full adder and a 4-bit ripple-carry adder made of four pasted full adders (all 512 additions checked). Each one has a script, a world file you can open in the editor, a .nbt file to paste elsewhere (except pure compositions), and a written contract in circuits.md (inputs, outputs, timing, failure cases). The full adder's layout is generated by tools/circuitgen/.
-- Reference and guide pages in doc/redstone/:
-  - timing.md: delays of every component, 0-tick pulses (also piston-made).
-  - signals.md: what powers what.
-  - components.md: per-component behaviour.
-  - circuits.md: the circuit library and the rules for combining modules (side inputs at full strength, crossing by level, balancing delays…).
-  - workflow.md: a worked example from a spoken requirement to a tested contraption.
-  - cheatsheet.md: a one-page summary.
+- **Experiments:** 22 records (R-001…R-022) in `doc/redstone/records/`, each with a script in `experiments/redstone/` that ends in a check of what was observed; `tests/cli/test_research.py` re-runs them all. R-018 (pistons making 0-tick pulses) is also confirmed on the real 26.3 server (EXP-057).
+- **Circuit library:** 36 modules and contraptions in `examples/circuits/`, from gates, latches and clocks to an analog 2:1 multiplexer, a 1-of-16 signal-strength decoder, a full adder and a 4-bit ripple-carry adder made of four pasted full adders (all 512 additions checked once). Each has a script, a world file for the editor, a `.nbt` to paste (except pure compositions) and a contract in `circuits.md` (ports, timing, failure cases). The full adder's layout is generated by `tools/circuitgen/`.
+- **Reference and guide pages** in `doc/redstone/`:
+  - `timing.md`: delays of every component, 0-tick pulses (also piston-made).
+  - `signals.md`: what powers what.
+  - `components.md`: per-component behaviour.
+  - `circuits.md`: the library and the rules for combining modules.
+  - `workflow.md`: from a spoken requirement to a tested contraption.
+  - `cheatsheet.md`: a one-page summary.
 
-Next open items (backlog.md):
-- a faster carry for the adder (now 8 ticks per bit; Q13)
-- a 4:1 analog selector from three multiplexers (Q12)
-- a re-armable piston 0-tick pulse generator (Q10), instant piston wire (Q11)
-- a flush piston door
+Next open items (`backlog.md`):
+
+- Q13: a faster carry for the adder (8 ticks per bit now; 2–4 should be possible).
+- Q12: a 4:1 analog selector from three multiplexers (a routing and composition test).
+- Q14: glitch-free multi-input changes in the full adder.
+- Q10: a re-armable piston 0-tick pulse generator; Q11: instant piston wire.
+- A flush piston door.
