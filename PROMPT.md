@@ -478,21 +478,21 @@ A sub-agent (the Agent tool) has its own context window: what it reads and runs 
 
 ## What exists now
 
-Updated 2026-10-17 (third session). Start at `doc/redstone/README.md` and `doc/redstone/backlog.md`.
+Updated 2026-10-17 (end of the third session). Start at `doc/redstone/README.md` and `doc/redstone/backlog.md`.
 
 - **Experiments:** 23 records (R-001…R-023) in `doc/redstone/records/`, each with a script in `experiments/redstone/` that ends in a check of what was observed; `tests/cli/test_research.py` re-runs them all. R-018 (pistons making 0-tick pulses, EXP-057) and R-023 (instant piston wire: a sticky-piston chain collapses in one tick, EXP-058) are also confirmed on the real 26.3 server.
-- **Circuit library:** 41 modules and contraptions in `examples/circuits/`, from gates, latches and clocks to an analog 2:1 multiplexer and a 4:1 selector made of three pasted, turned copies (`analog_mux4`), a 1-of-16 signal-strength decoder, a 4-bit DAC (`dac4`) and with it a binary 4-to-16 decoder (`bin_decoder16`), a 4x1 RAM built on a literal crossbar (`ram4`), a full adder with a 4-tick carry and a 4-bit ripple-carry adder (all 512 additions checked, settles in 24 ticks), and an instant wire (`instant_wire`: a rising edge 39 blocks in 0 ticks). Each has a script, a world file for the editor, a `.nbt` to paste (except pure compositions) and a contract in `circuits.md` (ports, timing, failure cases). Layout generators in `tools/circuitgen/` (full adder, adder4, instant wire, dac4, ram4).
+- **Circuit library:** 43 modules and contraptions in `examples/circuits/`, from gates, latches and clocks to an analog 2:1 multiplexer and a 4:1 selector made of three pasted, turned copies (`analog_mux4`), a 1-of-16 signal-strength decoder, a 4-bit DAC (`dac4`) and with it a binary 4-to-16 decoder (`bin_decoder16`), lookup tables on the decoder (`seg7`: hex 7-segment decoder; `adc4`: strength to 4 bits), a 4x1 RAM on a literal crossbar (`ram4`), a full adder with a 4-tick carry and a 4-bit ripple-carry adder (all 512 additions checked, settles in 24 ticks), and an instant wire (`instant_wire`: a rising edge 39 blocks in 0 ticks). Each has a script, a world file for the editor, a `.nbt` to paste (except pure compositions) and a contract in `circuits.md` (ports, timing, failure cases). Layout generators in `tools/circuitgen/` (full adder, adder4, instant wire, dac4, ram4, rom16).
 - **Reference and guide pages** in `doc/redstone/`:
   - `timing.md`: delays of every component, 0-tick pulses (also piston-made), instant transmission by pistons.
   - `signals.md`: what powers what.
   - `components.md`: per-component behaviour.
-  - `circuits.md`: the library and the rules for combining modules (one repeater per chained stage at the receiving end; turn modules so outputs point into inputs; shared controls on their own top layer; balance select paths).
+  - `circuits.md`: the library and the rules for combining modules (one repeater per chained stage at the receiving end; turn modules so outputs point into inputs; shared controls on their own top layer; balance select paths; crossbar taps; a paste includes its air).
   - `workflow.md`: from a spoken requirement to a tested contraption.
   - `cheatsheet.md`: a one-page summary.
 
 Next open items (`backlog.md`):
 
-- Q19: a lookup table (ROM) on `decoder16` with a tap crossbar: a 7-segment decoder and an ADC (in progress in the third session).
+- Q20: a 7-segment lamp display for `seg7` (routing 7 lines into a lamp digit; the enclosed middle segment is the hard part: a lamp lights from a block weakly powered by a wire on it, and power does not step down off glass, so give the digit gaps between segments).
 - Q18: a 3x3 flush door (the backlog has the analysis of why the center block is hard).
 - Q10: a re-armable piston 0-tick pulse generator; Q17: both edges instant (a 0-tick latch at the end of two chains).
 - Q14: glitch-free multi-input changes in the full adder; Q15: a 2-tick carry (bit-sliced layout or carry skip).
