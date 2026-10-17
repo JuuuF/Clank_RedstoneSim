@@ -11,9 +11,25 @@ Worlds to open in the editor (`redsim FILE`) or inspect with `redsim-cli FILE â€
 | `03b-strong-levers-fail.redsim.json` | **fails** (110/162) | the same with the H levers standing on the H-torch blocks: a lever powers its block strongly, and that block also powers the previous bit's C wire next to it, so the previous bit's sum breaks. Lesson: blocks fed from outside must be powered weakly (wire on top) |
 | `04-routed-slice-unfinished.redsim.json` | unfinished, not functional | one bit slice laid out by the wire router (`scripts/router.py`), copied 4 times: NAB (not-A or not-B) into the G torch block, the notH feed into the H torches, part of the south input logic. A, B, S and part of notH are not routed yet |
 | `05-north-deck-partial.redsim.json` | unfinished, not functional | second router attempt: the input logic (not-A, not-B, X = NOR(A,B), G_n, the delay repeaters for notH) on a deck above the XOR north of the lines; routed in physical coordinates with each wire tagged by its bit (the first router mixed up wires of neighbouring bits). NAB into the G block, part of X, S and A are routed; X to the K repeater, G_n, notH and B are not (the deck around z -3..-6 is too crowded for the greedy router) |
+| `06-north-deck-own-slice-partial.redsim.json` | unfinished, not functional | third layout: the G torch now hangs on the cap block above c3 inside its own slice (in 03-05 it hung on the next slice's corner, which crammed the G block, the NAB end and G_n into the column that also carries the notH line); S's start, the notH line along the H-torch blocks and their caps are placed by hand. 8 of 11 routes; NAB, A into the NOR block and notH still collide |
 
 Try: `redsim-cli 03-relocated-injections.redsim.json check`, or
 `redsim-cli 03b-strong-levers-fail.redsim.json --dry-run -c "target sum load 101100110011000111:11101; run 16; waves @S0 @S1 @S2 @S3 ticks 0..16"`.
+
+## What the router taught me
+
+- In a periodic 3-wide slice every column touches the other two (the next bit starts right
+  after), so at each depth each level can carry **one** signal; signals one level apart in
+  different columns need a solid block above the lower one. A slice of 13 levels holds
+  roughly 6-10 parallel signals at one depth.
+- A wire crossing into the next bit's slice must be told apart from that bit's own copy of
+  the same wire: the router now works in physical coordinates and tags every wire with its
+  bit (the first versions mixed neighbouring bits up, and could even end on the wrong bit's
+  block).
+- Blocks that are read from outside (torch blocks, repeater rears) must be powered weakly
+  (a wire on top); strong power leaks into every wire beside the block (03b).
+- Greedy shortest-path routing gets stuck in crowded corners: reserved landing cells must
+  never get support blocks, and keeping several partial paths per cell matters.
 
 ## The design so far
 
