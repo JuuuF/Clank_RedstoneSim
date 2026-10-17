@@ -190,3 +190,89 @@ def test_falling_blocks_are_drawn_between_their_positions() -> None:
     assert len(mesh.opaque) and mesh.animated
     heights = mesh.opaque[:, 1]
     assert heights.min() == 4.5 and heights.max() == 5.5  # halfway between 5 and 4
+
+
+def _random_world(seed: int) -> Level:
+    """Floors, walls and circuit parts, with gaps (faces across chunk borders included)."""
+    rng = random.Random(seed)
+    pool = [
+        blocks.STONE.default_state,
+        blocks.STONE.default_state,
+        blocks.GLASS.default_state,
+        blocks.SLIME_BLOCK.default_state,
+        blocks.REDSTONE_WIRE.cross_state,
+        blocks.parse_state("repeater[delay=2,facing=east]"),
+        blocks.parse_state("comparator[facing=north]"),
+        blocks.parse_state("redstone_lamp[lit=true]"),
+        blocks.parse_state("redstone_wall_torch[facing=west]"),
+        blocks.parse_state("lever[face=floor,facing=north]"),
+        blocks.parse_state("sticky_piston[facing=up]"),
+        blocks.parse_state("observer[facing=south]"),
+        blocks.parse_state("hopper[facing=down]"),
+        blocks.parse_state("stone_pressure_plate"),
+    ]
+    level = Level()
+    for x in range(-20, 20):
+        for z in range(-20, 20):
+            level.blocks[(x, 0, z)] = blocks.STONE.default_state
+    for _ in range(900):
+        pos = (rng.randrange(-20, 20), rng.randrange(1, 9), rng.randrange(-20, 20))
+        level.blocks[pos] = rng.choice(pool)
+    return level
+
+
+def _bulk_and_loop(mesher_factory: object, level: Level) -> tuple[ChunkedMesh, ChunkedMesh]:
+    bulk = ChunkedMesh(mesher_factory())  # type: ignore[operator]
+    bulk.update(level)
+    loop = ChunkedMesh(mesher_factory())  # type: ignore[operator]
+    loop.bulk = False
+    loop.update(level)
+    return bulk, loop
+
+
+def test_bulk_meshes_equal_the_block_loop() -> None:
+    """A first build meshes the simple blocks with numpy (``Mesher.cube_faces``): the same
+    faces, positions and shading (corner shading and noise) as the block-by-block loop."""
+    from redsim.ui.geometry import Mesher
+
+    for seed in (1, 2, 3):
+        level = _random_world(seed)
+        bulk, loop = _bulk_and_loop(Mesher, level)
+        assert set(bulk.chunks) == set(loop.chunks)
+        for key in loop.chunks:
+            assert _faces([bulk.chunks[key]]) == _faces([loop.chunks[key]]), key
+            assert len(bulk.chunks[key].solid) == len(loop.chunks[key].solid)
+
+
+def test_bulk_meshes_equal_the_block_loop_with_the_game_textures() -> None:
+    import pytest
+
+    from redsim.ui.geometry import Mesher
+
+    pytest.importorskip("PySide6.QtGui")
+    from redsim.ui.view_common import game_textures
+
+    assets, atlas = game_textures()
+    if atlas is None:
+        pytest.skip("client jar not available")
+    level = _random_world(4)
+    bulk, loop = _bulk_and_loop(lambda: Mesher(assets, atlas), level)
+    assert _faces(list(bulk.chunks.values())) == _faces(list(loop.chunks.values()))
+
+
+def test_a_copied_mesher_starts_warm_and_shares_nothing_it_changes() -> None:
+    from redsim.ui.geometry import Mesher
+
+    level = _random_world(5)
+    first = Mesher()
+    ChunkedMesh(first).update(level)
+    twin = first.copy()
+    assert twin._models == first._models and len(twin._template_rows) == len(first._template_rows)
+    made = len(first._template_rows)
+    twin.build(level, [(0, 30, 0)])  # nothing there: no change
+    level.blocks[(0, 30, 0)] = blocks.parse_state("target")  # a model neither has made
+    twin.build(level, [(0, 30, 0)])
+    assert len(twin._template_rows) > made and len(first._template_rows) == made
+    assert _faces([twin.build(level, list(level.blocks))]) == _faces(
+        [Mesher().build(level, list(level.blocks))]
+    )

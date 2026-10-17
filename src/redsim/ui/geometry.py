@@ -5,6 +5,7 @@ The renderer only reads world state; it never writes it.
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -15,6 +16,7 @@ import numpy.typing as npt
 
 from redsim.core.direction import ALL, Direction
 from redsim.core.pos import Pos
+from redsim.core.progress import Report
 from redsim.sim.level import Level
 from redsim.ui.assets import Assets, Quad
 from redsim.ui.style import Box, Color, block_boxes, moving_boxes, wire_color
@@ -257,10 +259,26 @@ class Mesher:
         self._templates = np.zeros((0, 6, VERTEX_SIZE), dtype=np.float32)
         self._models: dict[BlockState, _Model] = {}
         self._full: dict[BlockState, bool] = {}
+        self._simple: dict[BlockState, bool] = {}  # see ``_simple_cube``
         #: How far the running simulation is into the next tick (0..1): moving blocks are
         #: drawn between their last two positions, like the game's partial tick.
         self.partial_tick = 1.0  # paused: the state at the end of the tick
         self._pieces: dict[BlockState, tuple[np.ndarray, np.ndarray]] = {}
+
+    def copy(self) -> Mesher:
+        """A mesher with the same atlas and everything made so far (block models, face
+        templates): a world loading in another thread starts warm, without sharing these
+        with the one in use. Call it on the thread that uses this mesher."""
+        twin = Mesher(self.assets, self.atlas)
+        twin._template_ids = dict(self._template_ids)
+        twin._template_rows = list(self._template_rows)
+        twin._template_corners = list(self._template_corners)
+        twin._templates = self._templates
+        twin._models = dict(self._models)
+        twin._full = dict(self._full)
+        twin._simple = dict(self._simple)
+        twin._pieces = dict(self._pieces)
+        return twin
 
     def render_progress(self, entity: PistonMovingBlockEntity) -> float:
         """``getProgress(partialTick)``: between the last and the current progress."""
@@ -344,11 +362,13 @@ class Mesher:
         positions: Iterable[Pos],
         moving: bool = True,
         hidden: frozenset[Pos] = frozenset(),
+        cubes: tuple[FloatArray, FloatArray] | None = None,
     ) -> Mesh:
         """Mesh of the blocks at ``positions`` (faces against full neighbors are culled).
         With ``moving=False`` moving pistons are left out and listed in ``Mesh.moving``
         (the viewport draws them apart, every frame). ``hidden`` blocks are left out as if
-        they were air (a pending move shows them at their new place only)."""
+        they were air (a pending move shows them at their new place only). ``cubes``: the
+        opaque and solid vertices of more blocks, made by ``cube_faces``."""
         states: Any = _Without(level.blocks, hidden) if hidden else level.blocks
         models = self._models
         is_full = self._is_full
@@ -431,6 +451,9 @@ class Mesher:
             for pos in dynamic:
                 self._moving(level, pos, opaque, translucent)
         solid = self._assemble(s_ids, s_pos, s_counts, s_shade)
+        if cubes is not None:
+            opaque.append(cubes[0])
+            solid = np.concatenate([solid, cubes[1]]) if len(solid) else cubes[1]
         return Mesh(
             _stack(opaque),
             _stack(translucent),
@@ -562,6 +585,143 @@ class Mesher:
             for direction in ALL:
                 target.append(_pad(_triangles(lo, hi, direction, color)))
 
+    def _simple_cube(self, state: BlockState) -> bool:
+        """A block ``cube_faces`` meshes in bulk: not moving, no see-through faces, and if
+        it is a full cube (corner shading), every face culled by a full neighbor."""
+        simple = self._simple.get(state)
+        if simple is None:
+            model = self._models.get(state) or self._model(state)
+            simple = (
+                state.block is not blocks.MOVING_PISTON
+                and not model.has_translucent
+                and (not self._is_full(state) or not model.opaque[6])
+            )
+            self._simple[state] = simple
+        return simple
+
+    def cube_faces(
+        self, level: Level
+    ) -> tuple[dict[ChunkKey, tuple[FloatArray, FloatArray]], set[Pos]]:
+        """The faces of all simple blocks of ``level`` (``_simple_cube``: all but moving
+        pistons and see-through blocks) at once, with numpy: per chunk their (opaque, solid)
+        vertices, and the blocks' positions. The same faces and shading as ``build`` makes
+        block by block (``test_bulk_meshes_equal_the_block_loop``), several times faster."""
+        states = level.blocks
+        values = list(states.values())
+        simple = np.fromiter((self._simple_cube(v) for v in values), dtype=bool, count=len(values))
+        if not simple.any():
+            return {}, set()
+        everything = np.fromiter(
+            itertools.chain.from_iterable(states), dtype=np.int64, count=3 * len(values)
+        ).reshape(-1, 3)
+        low = everything.min(axis=0) - 2
+        dims = everything.max(axis=0) - low + 3
+
+        def encode(cells: np.ndarray) -> np.ndarray:
+            moved = cells - low
+            return (moved[:, 0] * dims[1] + moved[:, 1]) * dims[2] + moved[:, 2]
+
+        is_full = self._is_full
+        full = np.fromiter((is_full(v) for v in values), dtype=bool, count=len(values))
+        full_codes = np.sort(encode(everything[full]))
+
+        def full_at(cells: np.ndarray) -> np.ndarray:
+            codes = encode(cells)
+            at = np.minimum(np.searchsorted(full_codes, codes), len(full_codes) - 1)
+            return full_codes[at] == codes
+
+        chosen = np.nonzero(simple)[0]
+        cells = everything[chosen]
+        kinds: dict[BlockState, int] = {}
+        kind = np.fromiter(
+            (kinds.setdefault(values[i], len(kinds)) for i in chosen),
+            dtype=np.int64,
+            count=len(chosen),
+        )
+        table = list(kinds)
+        cube = np.array([is_full(state) for state in table], dtype=bool)  # corner shading
+        keep = ~cube | np.array([state.block.id in XRAY_KEEP for state in table], dtype=bool)
+        # block_noise for every cube (the same integer steps, so the same floats)
+        h = (
+            cells[:, 0] * 374761393 + cells[:, 1] * 668265263 + cells[:, 2] * 2147483647
+        ) & 0xFFFFFFFF
+        h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+        h ^= h >> 16
+        noise = 0.95 + 0.1 * (h & 0xFFFF) / 0xFFFF
+        ao = np.array(AO_LEVELS, dtype=np.float64)
+        ids: list[np.ndarray] = []
+        owners: list[np.ndarray] = []  # index into ``cells`` per face
+        shades: list[np.ndarray] = []  # (faces, 6)
+        corners_of = self._template_corners
+        models = [self._models[state] for state in table]
+        for index, step in enumerate(_STEPS):
+            open_side = ~full_at(cells + np.array(step, dtype=np.int64))
+            if not open_side.any():
+                continue
+            seen = np.nonzero(open_side)[0]
+            shaded = cube[kind[seen]]  # full cubes: corner shading; the others: 1.0
+            levels = np.ones((len(seen), 4), dtype=np.float64)
+            at = cells[seen[shaded]]
+            for corner, (side1, side2, diagonal) in enumerate(CORNERS[index]):
+                a = full_at(at + np.array(side1, dtype=np.int64))
+                b = full_at(at + np.array(side2, dtype=np.int64))
+                c = full_at(at + np.array(diagonal, dtype=np.int64))
+                occluded = np.where(a & b, 3, a.astype(np.int64) + b + c)
+                levels[shaded, corner] = ao[occluded] * noise[seen[shaded]]
+            for k, model in enumerate(models):
+                face_ids = model.opaque[index]
+                if not face_ids:
+                    continue
+                mine = kind[seen] == k
+                if not mine.any():
+                    continue
+                rows = seen[mine]
+                for face_id in face_ids:
+                    corners = corners_of[face_id]
+                    if not cube[k]:
+                        shade = np.ones((len(rows), 6), dtype=np.float64)
+                    elif corners is None:
+                        shade = np.repeat(noise[rows][:, None], 6, axis=1)
+                    else:
+                        shade = levels[mine][:, list(corners)]
+                    ids.append(np.full(len(rows), face_id, dtype=np.intp))
+                    owners.append(rows)
+                    shades.append(shade)
+        for k, model in enumerate(models):  # faces no neighbor culls (not of full cubes)
+            if not model.opaque[6]:
+                continue
+            rows = np.nonzero(kind == k)[0]
+            for face_id in model.opaque[6]:
+                ids.append(np.full(len(rows), face_id, dtype=np.intp))
+                owners.append(rows)
+                shades.append(np.ones((len(rows), 6), dtype=np.float64))
+        if len(self._templates) != len(self._template_rows):
+            self._templates = np.stack(self._template_rows)
+        positions = set(map(tuple, cells.tolist()))
+        if not ids:
+            return {}, positions
+        all_ids = np.concatenate(ids)
+        owner = np.concatenate(owners)
+        vertices = self._templates[all_ids]  # (faces, 6, 9)
+        vertices[:, :, :3] += cells[owner].astype(np.float32)[:, None, :]
+        vertices[:, :, 3:6] *= np.concatenate(shades).astype(np.float32)[:, :, None]
+        chunk = cells[owner] >> CHUNK_SHIFT
+        to_opaque = keep[kind[owner]]
+        order = np.lexsort((to_opaque, chunk[:, 2], chunk[:, 1], chunk[:, 0]))
+        chunk, to_opaque, vertices = chunk[order], to_opaque[order], vertices[order]
+        starts = np.flatnonzero(np.any(np.diff(chunk, axis=0) != 0, axis=1)) + 1
+        out: dict[ChunkKey, tuple[FloatArray, FloatArray]] = {}
+        for begin, end in zip(
+            np.concatenate([[0], starts]), np.concatenate([starts, [len(chunk)]]), strict=True
+        ):
+            key = (int(chunk[begin, 0]), int(chunk[begin, 1]), int(chunk[begin, 2]))
+            part, opaque_part = vertices[begin:end], to_opaque[begin:end]
+            out[key] = (
+                part[opaque_part].reshape(-1, VERTEX_SIZE),
+                part[~opaque_part].reshape(-1, VERTEX_SIZE),
+            )
+        return out, positions
+
     def _assemble(
         self,
         ids: list[int],
@@ -650,6 +810,8 @@ class ChunkedMesh:
         self._moving: dict[ChunkKey, list[Pos]] = {}  # moving pistons per chunk
         #: Blocks left out of the meshes (the source of a pending move, see ``hide``).
         self.hidden: frozenset[Pos] = frozenset()
+        #: A first build meshes the simple full cubes in bulk (``Mesher.cube_faces``).
+        self.bulk = True
 
     def reset(self) -> None:
         self.hidden = frozenset()
@@ -669,11 +831,14 @@ class ChunkedMesh:
     def has_moving(self) -> bool:
         return bool(self._moving)
 
-    def update(self, level: Level) -> set[ChunkKey]:
-        """Bring the chunks up to date; returns the keys whose mesh changed or was removed."""
+    def update(self, level: Level, progress: Report | None = None) -> set[ChunkKey]:
+        """Bring the chunks up to date; returns the keys whose mesh changed or was removed.
+        ``progress`` hears each chunk built (``meshes``, done, total)."""
         current = level.blocks
         known = self._known
         touched = level.take_touched()
+        if not known and not self.chunks:  # a first build: every block is new
+            return self._build_all(level, progress)
         changed: set[Pos] = set()
         if level is self._level:  # the same level: what it reports as touched
             for pos in touched:
@@ -704,7 +869,42 @@ class ChunkedMesh:
                 dirty.add(key)
                 for dx, dy, dz in _STEPS:
                     dirty.add(chunk_of((x + dx, y + dy, z + dz)))
-        self._rebuild(level, dirty)
+        self._rebuild(level, dirty, progress)
+        return dirty
+
+    def _build_all(self, level: Level, progress: Report | None) -> set[ChunkKey]:
+        """All chunks of ``level`` at once (the per-block diff and neighbor marking of
+        ``update`` is for small changes; here only chunks with blocks have a mesh)."""
+        members: dict[ChunkKey, set[Pos]] = {}
+        shift = CHUNK_SHIFT
+        for pos in level.blocks:
+            key = (pos[0] >> shift, pos[1] >> shift, pos[2] >> shift)
+            chunk = members.get(key)
+            if chunk is None:
+                chunk = members[key] = set()
+            chunk.add(pos)
+        self._members = members
+        self._known = dict(level.blocks)
+        self._level = level
+        dirty = set(members)
+        if self.hidden or not self.bulk:
+            self._rebuild(level, dirty, progress)
+            return dirty
+        cubes, simple = self.mesher.cube_faces(level)
+        for done, key in enumerate(dirty):
+            if progress is not None:
+                progress("meshes", done, len(dirty))
+            rest = members[key] - simple
+            part = cubes.get(key)
+            if rest or part is None:
+                mesh = self.mesher.build(level, rest, moving=False, cubes=part)
+            else:  # only cubes: their faces are the mesh
+                mesh = Mesh(_stack([part[0]]), _stack([_EMPTY]), solid=part[1])
+            self.chunks[key] = mesh
+            if mesh.moving:
+                self._moving[key] = mesh.moving
+        if progress is not None:
+            progress("meshes", len(dirty), len(dirty))
         return dirty
 
     def hide(self, level: Level, hidden: frozenset[Pos]) -> set[ChunkKey]:
@@ -722,8 +922,10 @@ class ChunkedMesh:
         self._rebuild(level, dirty)
         return dirty
 
-    def _rebuild(self, level: Level, dirty: set[ChunkKey]) -> None:
-        for key in dirty:
+    def _rebuild(self, level: Level, dirty: set[ChunkKey], progress: Report | None = None) -> None:
+        for done, key in enumerate(dirty):
+            if progress is not None:
+                progress("meshes", done, len(dirty))
             positions = self._members.get(key)
             if not positions:
                 self._members.pop(key, None)
@@ -736,6 +938,8 @@ class ChunkedMesh:
                 self._moving[key] = mesh.moving
             else:
                 self._moving.pop(key, None)
+        if progress is not None:
+            progress("meshes", len(dirty), len(dirty))
 
 
 def _triangles(lo: np.ndarray, hi: np.ndarray, direction: Direction, color: Color) -> np.ndarray:
