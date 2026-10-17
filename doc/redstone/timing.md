@@ -57,6 +57,16 @@ around: an input piston that pushes the first block away (rising edge in), a las
 that pulls a stone off a wire step (rising edge out). V [[R-023-instant-piston-wire]],
 G EXP-058.
 
+## Parallel carries on analog lines (R-024)
+
+Ripple carries cost a delay per bit (4 ticks in `full_adder`). Two wire lines, G and K,
+with one step onto glass per bit (a one-way diode, R-019), carry all carries at once: bit
+j injects 15 into G when it generates, into K when it kills; at bit i the line whose
+nearest injection is closer below is stronger, and one subtracting comparator per bit
+(rear G, side K) gives C_i. **Every carry of 4 bits settles 2 ticks after the
+injections**, whatever its distance. Three wires a bit: 4 bits and CIN fit the 15-block
+wire range; the outputs are analog (2..14). V [[R-024-analog-carry-lines]].
+
 ## Durations of manual sources
 
 | Source | On for | Evidence |

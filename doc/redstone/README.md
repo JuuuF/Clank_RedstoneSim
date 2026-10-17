@@ -159,6 +159,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-021-unlock-window]] | How long a chain of latches may be unlocked (shift registers) | [[components]], [[circuits]] | verified |
 | [[R-022-rotated-modules]] | Library modules pasted in any rotation keep their contracts | [[circuits]] | verified |
 | [[R-023-instant-piston-wire]] | Sticky-piston chains that collapse in one tick: instant transmission of one edge | [[timing]], [[components]] Piston | verified |
+| [[R-024-analog-carry-lines]] | Two analog wire lines with glass diodes give every carry of 4 bits at once | [[timing]], [[circuits]] | verified |
 
 ## Status
 

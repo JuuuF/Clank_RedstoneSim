@@ -1,0 +1,164 @@
+# R-024: analog carry lines (doc/redstone/records/R-024-analog-carry-lines.md)
+# Two wire lines carry every carry of a 4-bit adder at once. Each bit of the line is three wires
+# (a lower wire on stone, a wire on glass one higher, a wire on stone): the step up onto glass
+# passes power one way only (R-019), so each bit's injection reaches only the bits above it.
+# Bit j injects 15 into the G line if it generates a carry (A=B=1), into the K line if it kills
+# it (A=B=0). Strength falls 1 per wire, so at bit i the line whose nearest injection lies
+# closest below i is the stronger one; a subtracting comparator per bit (rear: G line through
+# its support block, side: a wire stepping down from the K line) is on iff C_i = 1.
+#   G line z=0: lower wires 3j 3 0, glass 3j+1 3 0, stone 3j+2 3 0; K line z=2 shifted +1 in x.
+#   Injections: repeaters 3j+1 4 -1 (G, facing south), 3j+2 4 3 (K, facing north), levers on
+#   blocks behind them; CIN: CG (G start -1 4 0) and CK (K start 0 4 2).
+#   Reads: comparators 3j+1 2 0 (@C0..@C4) facing east; spur wires 3j+1 2 1.
+#   redsim-cli r024.redsim.json < experiments/redstone/R-024-analog-carry-lines.cli.txt
+new size 48 force
+note "R-024: two analog carry lines with glass diodes give every carry of 4 bits in parallel, 2 ticks after the injections"
+set -1 3 0 stone
+set 0 2 0 stone
+set 1 3 0 glass
+set 2 3 0 stone
+set 3 2 0 stone
+set 4 3 0 glass
+set 5 3 0 stone
+set 6 2 0 stone
+set 7 3 0 glass
+set 8 3 0 stone
+set 9 2 0 stone
+set 10 3 0 glass
+set 11 3 0 stone
+set 12 2 0 stone
+place -1 4 0 redstone_wire
+place 0 3 0 redstone_wire
+place 1 4 0 redstone_wire
+place 2 4 0 redstone_wire
+place 3 3 0 redstone_wire
+place 4 4 0 redstone_wire
+place 5 4 0 redstone_wire
+place 6 3 0 redstone_wire
+place 7 4 0 redstone_wire
+place 8 4 0 redstone_wire
+place 9 3 0 redstone_wire
+place 10 4 0 redstone_wire
+place 11 4 0 redstone_wire
+place 12 3 0 redstone_wire
+set 0 3 2 stone
+set 1 2 2 stone
+set 2 3 2 glass
+set 3 3 2 stone
+set 4 2 2 stone
+set 5 3 2 glass
+set 6 3 2 stone
+set 7 2 2 stone
+set 8 3 2 glass
+set 9 3 2 stone
+set 10 2 2 stone
+set 11 3 2 glass
+set 12 3 2 stone
+set 13 2 2 stone
+place 0 4 2 redstone_wire
+place 1 3 2 redstone_wire
+place 2 4 2 redstone_wire
+place 3 4 2 redstone_wire
+place 4 3 2 redstone_wire
+place 5 4 2 redstone_wire
+place 6 4 2 redstone_wire
+place 7 3 2 redstone_wire
+place 8 4 2 redstone_wire
+place 9 4 2 redstone_wire
+place 10 3 2 redstone_wire
+place 11 4 2 redstone_wire
+place 12 4 2 redstone_wire
+place 13 3 2 redstone_wire
+set -1 3 -1 stone
+place -1 4 -1 repeater out=south
+set -1 4 -2 stone
+place -1 5 -2 lever face=floor
+label CG -1 5 -2
+set 0 3 3 stone
+place 0 4 3 repeater out=north
+set 0 4 4 stone
+place 0 5 4 lever face=floor
+label CK 0 5 4
+set 1 3 -1 stone
+place 1 4 -1 repeater out=south
+set 1 4 -2 stone
+place 1 5 -2 lever face=floor
+label G0 1 5 -2
+set 2 3 3 stone
+place 2 4 3 repeater out=north
+set 2 4 4 stone
+place 2 5 4 lever face=floor
+label K0 2 5 4
+set 4 3 -1 stone
+place 4 4 -1 repeater out=south
+set 4 4 -2 stone
+place 4 5 -2 lever face=floor
+label G1 4 5 -2
+set 5 3 3 stone
+place 5 4 3 repeater out=north
+set 5 4 4 stone
+place 5 5 4 lever face=floor
+label K1 5 5 4
+set 7 3 -1 stone
+place 7 4 -1 repeater out=south
+set 7 4 -2 stone
+place 7 5 -2 lever face=floor
+label G2 7 5 -2
+set 8 3 3 stone
+place 8 4 3 repeater out=north
+set 8 4 4 stone
+place 8 5 4 lever face=floor
+label K2 8 5 4
+set 10 3 -1 stone
+place 10 4 -1 repeater out=south
+set 10 4 -2 stone
+place 10 5 -2 lever face=floor
+label G3 10 5 -2
+set 11 3 3 stone
+place 11 4 3 repeater out=north
+set 11 4 4 stone
+place 11 5 4 lever face=floor
+label K3 11 5 4
+set 1 1 0 stone
+set 1 1 1 stone
+place 1 2 0 comparator out=east mode=subtract
+place 1 2 1 redstone_wire
+label C0 1 2 0
+set 4 1 0 stone
+set 4 1 1 stone
+place 4 2 0 comparator out=east mode=subtract
+place 4 2 1 redstone_wire
+label C1 4 2 0
+set 7 1 0 stone
+set 7 1 1 stone
+place 7 2 0 comparator out=east mode=subtract
+place 7 2 1 redstone_wire
+label C2 7 2 0
+set 10 1 0 stone
+set 10 1 1 stone
+place 10 2 0 comparator out=east mode=subtract
+place 10 2 1 redstone_wire
+label C3 10 2 0
+set 13 1 0 stone
+set 13 1 1 stone
+place 13 2 0 comparator out=east mode=subtract
+place 13 2 1 redstone_wire
+label C4 13 2 0
+settle
+target new carry "C_j = nearest non-propagate below j is G (CIN as bit -1)"
+target carry truth @CG @CK @G0 @K0 @G1 @K1 @G2 @K2 @G3 @K3 -> @C0 @C1 @C2 @C3 @C4 rows 0100000000:00000 0100000010:00001 0100000001:00000 0100001000:00011 0100001010:00011 0100001001:00010 0100000100:00000 0100000110:00001 0100000101:00000 0100100000:00111 0100100010:00111 0100100001:00110 0100101000:00111 0100101010:00111 0100101001:00110 0100100100:00100 0100100110:00101 0100100101:00100 0100010000:00000 0100010010:00001 0100010001:00000 0100011000:00011 0100011010:00011 0100011001:00010 0100010100:00000 0100010110:00001 0100010101:00000 0110000000:01111 0110000010:01111 0110000001:01110 0110001000:01111 0110001010:01111 0110001001:01110 0110000100:01100 0110000110:01101 0110000101:01100 0110100000:01111 0110100010:01111 0110100001:01110 0110101000:01111 0110101010:01111 0110101001:01110 0110100100:01100 0110100110:01101 0110100101:01100 0110010000:01000 0110010010:01001 0110010001:01000 0110011000:01011 0110011010:01011 0110011001:01010 0110010100:01000 0110010110:01001 0110010101:01000 0101000000:00000 0101000010:00001 0101000001:00000 0101001000:00011 0101001010:00011 0101001001:00010 0101000100:00000 0101000110:00001 0101000101:00000 0101100000:00111 0101100010:00111 0101100001:00110 0101101000:00111 0101101010:00111 0101101001:00110 0101100100:00100 0101100110:00101 0101100101:00100 0101010000:00000 0101010010:00001 0101010001:00000 0101011000:00011 0101011010:00011 0101011001:00010 0101010100:00000 0101010110:00001 0101010101:00000 1000000000:11111 1000000010:11111 1000000001:11110 1000001000:11111 1000001010:11111 1000001001:11110 1000000100:11100 1000000110:11101 1000000101:11100 1000100000:11111 1000100010:11111 1000100001:11110 1000101000:11111 1000101010:11111 1000101001:11110 1000100100:11100 1000100110:11101 1000100101:11100 1000010000:11000 1000010010:11001 1000010001:11000 1000011000:11011 1000011010:11011 1000011001:11010 1000010100:11000 1000010110:11001 1000010101:11000 1010000000:11111 1010000010:11111 1010000001:11110 1010001000:11111 1010001010:11111 1010001001:11110 1010000100:11100 1010000110:11101 1010000101:11100 1010100000:11111 1010100010:11111 1010100001:11110 1010101000:11111 1010101010:11111 1010101001:11110 1010100100:11100 1010100110:11101 1010100101:11100 1010010000:11000 1010010010:11001 1010010001:11000 1010011000:11011 1010011010:11011 1010011001:11010 1010010100:11000 1010010110:11001 1010010101:11000 1001000000:10000 1001000010:10001 1001000001:10000 1001001000:10011 1001001010:10011 1001001001:10010 1001000100:10000 1001000110:10001 1001000101:10000 1001100000:10111 1001100010:10111 1001100001:10110 1001101000:10111 1001101010:10111 1001101001:10110 1001100100:10100 1001100110:10101 1001100101:10100 1001010000:10000 1001010010:10001 1001010001:10000 1001011000:10011 1001011010:10011 1001011001:10010 1001010100:10000 1001010110:10001 1001010101:10000
+target new parallel "all propagate, CIN on at 1: every carry is on at 5, the farthest at strength 2"
+target parallel do at 1 use @CG
+target parallel expect @C0 power=0 at 4
+target parallel expect @C4 power=0 at 4
+target parallel expect @C0 power=14 at 5
+target parallel expect @C4 power=2 at 5
+target new margin "G at bit 0 against a K CIN: C1 is on at strength 3, the smallest on-value"
+target margin do at 1 use @CK
+target margin do at 1 use @G0
+target margin do at 1 use @K1
+target margin do at 1 use @K2
+target margin do at 1 use @K3
+target margin expect @C1 power=3 at 8
+target margin expect @C2 power=0 at 8
+check
