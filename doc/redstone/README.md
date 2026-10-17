@@ -177,9 +177,10 @@ piston wire (a sticky-piston chain collapses in one tick; G EXP-058): 23 records
 `instant_wire`, a rising edge 39 blocks (any length) in 0 ticks. `dac4` (4 bits to a
 strength, balanced: all 240 changes glitch-free) and the composition `bin_decoder16`
 (dac4 + decoder16). `ram4`: a 4x1 RAM from a literal crossbar (taps from floor columns
-into top-layer lines), reads balanced to 32 ticks: 41 modules.
+into top-layer lines), reads balanced to 32 ticks. Q19: lookup tables on decoder16 (rows by
+nested corners, a tap crossbar), `seg7` (hex 7-segment decoder) and `adc4` (ADC): 43 modules.
 
-**Next** (details in [[backlog]]): Q19 a lookup table / 7-segment display and an ADC, Q10 a
+**Next** (details in [[backlog]]): Q20 a 7-segment lamp display, Q10 a
 re-armable piston 0-tick pulse generator, a 3x3 flush door (Q18), Q14 a glitch-free adder,
 Q15 a 2-tick carry, Q17 both edges instant. Open questions
 and the next steps are in [[backlog]]. What the knowledge base cannot cover (entities,

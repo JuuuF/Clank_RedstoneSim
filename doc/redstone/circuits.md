@@ -54,6 +54,8 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | one output per strength 0–15 (a counter or fill display, a selector) | [[#Signal-strength decoder]] |
 | turn 4 bits into a strength 0–15 | [[#4-bit DAC]] |
 | one output per 4-bit number (addresses, displays) | [[#Binary decoder]] |
+| a 4-bit number on a 7-segment display (the segment lines) | [[#Lookup table]] (`seg7`) |
+| a strength as 4 bits; any function of 4 bits | [[#Lookup table]] (`adc4`, the generator) |
 | add binary numbers | [[#Full adder]] (one bit), [[#4-bit adder]] (copies chained) |
 | two signal paths must cross | [[#Crossing]] |
 | a signal far away with no delay (40+ blocks in 0 ticks) | [[#Instant wire]] |
@@ -104,6 +106,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Full adder]] | S = A ⊕ B ⊕ C, COUT = majority; copies chain | 17×5×13 | S 6–8, COUT 4–8 | `full_adder` |
 | [[#4-bit adder]] | S3..S0 + COUT = A + B + CIN (composition) | 68×5×13 | 24 worst case | `adder4` |
 | [[#Binary decoder]] | output N on while the 4 bits read N (composition) | 23×1×11 | 22 | `bin_decoder16` |
+| [[#Lookup table]] | 16-word table: hex 7-segment decoder; ADC (strength → bits) | 44×3×43, 30×3×43 | 46, 28 | `seg7`, `adc4` |
 | **Contraptions and compositions** | | | | |
 | [[#4-bit counter]] | counts rising edges (composition) | 14×1×1 | bit k: 2+4k | `counter4` |
 | [[#Monostable]] | one edge → output on for exactly D ticks (64) | 5×1×8 | 4 | `monostable` |
@@ -1128,6 +1131,44 @@ root). **Verified.**
 - **Uses:** addressing (one of 16 memory cells or actions), lighting one lamp per value,
   the first half of a lookup table or 7-segment display (each segment an OR of outputs,
   [[backlog]]).
+
+### Lookup table
+
+Any table of 16 words: [[#Signal-strength decoder]] gives one line per value, the lines
+turn into 16 rows on the floor, and each row taps the output lines of its word's 1 bits.
+Two tables from `tools/circuitgen/rom16.py`: **`seg7`**, a hex 7-segment decoder (four
+bits through [[#Binary decoder]], segments a..g out), and **`adc4`**, an ADC (a strength
+in decoder16's input, its value as four bits out). **Verified.**
+
+| Port | Script position | Kind |
+|---|---|---|
+| seg7 B0..B3 | −1 1 4, −1 1 −4, −1 1 2, −1 1 −2 | dac4's inputs (levers @L0..@L3 at x = −2) |
+| seg7 a..g | 24+3k 3 21, k = 0..6 | repeaters facing south: segment k lit |
+| adc4 IN | 4 1 0 | decoder16's input: a container or a block powered with the strength |
+| adc4 B0..B3 | 24+3k 3 21, k = 0..3 | repeaters facing south: bit k |
+
+(Boxes: seg7 −1 1 −21 .. 42 3 21, adc4 4 1 −21 .. 33 3 21; both pasteable.)
+
+- **Rows by nested corners:** decoder16's outputs leave it to the north (even values) and
+  south (odd); each runs out to its own row z (±6 … ±20, 2 apart), turns east and runs
+  to the table. The output **farthest east turns first**, so no row crosses another
+  output's path. Each path has exactly two repeaters (one leaving the decoder, one after
+  the corner), so all 16 rows are equally late. O0 sits beside O2: a stone on its output
+  cell powers the wire west of it (O2's first cell is a repeater, which ignores it).
+- **OR plane:** each output line runs along z on the top layer (y=3) over the rows; a row
+  crossing it passes a repeater and a stone, and a wire on the stone (where the word has
+  that bit) steps up into the line: the crossbar tap of [[#4x1 RAM]]. Each line has
+  repeaters at z = −7, 7 and 21 (between rows), placed so that the farthest tap of every
+  segment still reaches the next repeater: **found while building**: with repeaters at
+  −9 and 5, the tap at z = 6 (digit F's) arrived at the end with 0.
+- **Behavior:** seg7: the 16-row truth table (`digits`); adc4: all 16 strengths in a mixed
+  order (`values`).
+- **Latency:** seg7 settled **46 ticks** after the bits change (measured: the truth table
+  passes at 47, fails at 44), adc4 **28** after the strength; from 30 (seg7) or 18 (adc4)
+  the outputs may **flicker** until then, as a row's taps reach the lines at 2 ticks per
+  crossing and through 1–3 line repeaters. Read them after the settle time, or latch them.
+- **Other tables:** edit the table in the generator (16 words, up to as many output lines
+  as fit; each line adds 3 blocks in x and 2 ticks).
 
 ## Composition rules
 

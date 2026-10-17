@@ -48,6 +48,7 @@ with the record that answered it.
    - [x] instant wire: a rising edge 39+ blocks in 0 ticks (`instant_wire`, R-023)
    - [x] 4-bit DAC: binary to strength, balanced (`dac4`)
    - [x] 4x1 RAM from a literal crossbar (`ram4`)
+   - [x] lookup table: hex 7-segment decoder and ADC (`seg7`, `adc4`)
 5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a 3x3 flush door (Q18; the 2x2 door is flush already).
 
 ## Open questions
@@ -59,7 +60,7 @@ with the record that answered it.
 | Q15 | A 2-tick carry: the next bit's G2 reading YC directly, so no repeater (and no 17-block wire) between bits: a bit-sliced adder with the bits 2 blocks apart along the carry, or a carry skip over 4 bits (COUT = CIN when all four H are on) | 32-bit arithmetic, ALUs | later |
 | Q17 | Both edges instant: the instant wire carries only its rising edge (re-arming takes 3 ticks a stage). Two chains cannot be combined at the output without memory; a latch that switches in 0 ticks (0-tick piston moves, R-018) at the end could take a rising-edge chain and a falling-edge chain | instant signals that also end at once | later |
 | Q18 | A 3x3 flush door. The 8 outer blocks are easy (sides pulled sideways, top up, bottom down into the floor); the **center** must travel 2 cells, and plain sticky pistons cannot do it: a piston pulls only the block it touches, a pocket it pulls into is then blocked by that block (pull block 1 into a 2-deep pocket, pull the piston back, re-extend and pull again: the first block now sits between the piston and the center), and after the others have moved the center can only be reached by a head entering the doorway. Candidates: a slime or honey link (center and top move together; visible in the door), a block swapper below the floor (move the bottom block sideways out of the column, then a double extender pulls the center down 2), or a thick wall whose pockets turn (move a block out of the row before pulling the next) | the most requested big door | later |
-| Q19 | A lookup table / 7-segment display: OR chosen outputs of `bin_decoder16` onto output lines through diodes (a crossbar on two levels: repeaters as taps); and the reverse of `dac4`, an ADC (strength → 4 bits: compare against 8, subtract, compare against 4, …) | displays, any 4-input function, item counts as binary | next |
+| Q20 | A 7-segment lamp display for `seg7`: 7 lines into a digit of lamps (3 per segment; wires on top of lamps light them; adjacent segments' wires must not touch, cut steps with blocks); glitch-free outputs (latch the segments after the settle time) | showing numbers | next |
 
 ## Hypotheses waiting for a test
 
@@ -94,3 +95,4 @@ with the record that answered it.
 | Q12: a 4:1 analog selector: three `analog_mux` pasted turned, outputs pointing straight into the next inputs; S0 on its own top layer; S1 delayed so both address bits may change together | [[circuits]] composition rules | `analog_mux4` targets |
 | Q11: yes for one edge: extended sticky pistons holding redstone blocks against each other's backs collapse in one tick (any length; 17 blocks a stage with wire); re-arming 3 ticks a stage | [[timing]], [[components]] | [[R-023-instant-piston-wire]] |
 | Q16: an instant-wire module: head pushes the first block away, stages joined by 14-wire lines, tail uncuts a wire step; 0 ticks on, 3·(stages + 2) off; failure cases short pulses and early re-triggers | [[circuits]] | `instant_wire` targets |
+| Q19: a 16-word lookup table: decoder16's lines as rows (nested corners), a tap crossbar as the OR plane; `seg7` (hex 7-segment decoder) and `adc4` (strength to bits) | [[circuits]] | `seg7`, `adc4` targets |
