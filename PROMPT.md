@@ -422,7 +422,8 @@ Phase One (Section 3) is done; its results are written down. Do not re-inspect t
 2. Run the smoke test: `~/anaconda3/envs/redsim/bin/python -m pytest tests/cli/test_research.py -q` (about 20 s; every experiment and circuit script must pass).
 3. Pick the highest-value open backlog item, write its question and plan, and work through Section 5. Read only the reference sections the item needs (Section 13).
 4. After each finished item: record, reference pages, backlog, the status in `doc/redstone/README.md`, then commit and push (Section 13, "Git").
-5. Before your session ends, update "What exists now" below and commit PROMPT.md with the docs (it is tracked), so the next agent starts where you stopped. State belongs in the repository docs; agent memory holds only the owner's standing rules (game parity, git, quota, server sandbox).
+5. **Export what you work on as worlds, as you go** (owner's request, 2026-10-17): whenever you find something out or reach a stage of a build, also when it does not work yet, save it as a `.redsim.json` world in `experiments/wip/<topic>/` with a `note` saying what it shows and whether it works, list it in that folder's `README.md`, and commit and push it. The owner opens these in the editor to follow your progress; failed and unfinished stages belong there too. Finished results still go to their proper places (records, `examples/circuits/`).
+6. Before your session ends, update "What exists now" below and commit PROMPT.md with the docs (it is tracked), so the next agent starts where you stopped. State belongs in the repository docs; agent memory holds only the owner's standing rules (game parity, git, quota, server sandbox).
 
 ## 13. Working efficiently in this repository
 

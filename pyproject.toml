@@ -27,6 +27,8 @@ addopts = "-q"
 [tool.ruff]
 line-length = 100
 src = ["src", "tests", "tools", "."]
+# snapshots of an agent's scratch scripts next to work-in-progress worlds
+extend-exclude = ["experiments/wip"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM"]
