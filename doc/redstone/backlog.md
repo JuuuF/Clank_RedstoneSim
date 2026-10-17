@@ -46,7 +46,8 @@ with the record that answered it.
    - [x] signal strength decoder (1-of-16, `decoder16`), analog 2:1 multiplexer (`analog_mux`)
    - [x] 4:1 analog selector from three pasted multiplexers (`analog_mux4`)
    - [x] instant wire: a rising edge 39+ blocks in 0 ticks (`instant_wire`, R-023)
-5. **Compositions:** [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a flush door.
+   - [x] 4-bit DAC: binary to strength, balanced (`dac4`)
+5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a 3x3 flush door (Q18; the 2x2 door is flush already).
 
 ## Open questions
 
@@ -56,6 +57,8 @@ with the record that answered it.
 | Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (S 6, COUT 4 ticks) with the A/B paths (8/8) without slowing the carry | adders feeding edge-triggered logic | later |
 | Q15 | A 2-tick carry: the next bit's G2 reading YC directly, so no repeater (and no 17-block wire) between bits: a bit-sliced adder with the bits 2 blocks apart along the carry, or a carry skip over 4 bits (COUT = CIN when all four H are on) | 32-bit arithmetic, ALUs | later |
 | Q17 | Both edges instant: the instant wire carries only its rising edge (re-arming takes 3 ticks a stage). Two chains cannot be combined at the output without memory; a latch that switches in 0 ticks (0-tick piston moves, R-018) at the end could take a rising-edge chain and a falling-edge chain | instant signals that also end at once | later |
+| Q18 | A 3x3 flush door. The 8 outer blocks are easy (sides pulled sideways, top up, bottom down into the floor); the **center** must travel 2 cells, and plain sticky pistons cannot do it: a piston pulls only the block it touches, a pocket it pulls into is then blocked by that block (pull block 1 into a 2-deep pocket, pull the piston back, re-extend and pull again: the first block now sits between the piston and the center), and after the others have moved the center can only be reached by a head entering the doorway. Candidates: a slime or honey link (center and top move together; visible in the door), a block swapper below the floor (move the bottom block sideways out of the column, then a double extender pulls the center down 2), or a thick wall whose pockets turn (move a block out of the row before pulling the next) | the most requested big door | later |
+| Q19 | A lookup table / 7-segment display: OR chosen outputs of `bin_decoder16` onto output lines through diodes (a crossbar on two levels: repeaters as taps); and the reverse of `dac4`, an ADC (strength → 4 bits: compare against 8, subtract, compare against 4, …) | displays, any 4-input function, item counts as binary | next |
 
 ## Hypotheses waiting for a test
 
