@@ -223,13 +223,20 @@ def module(safe=False):
         S(-3, 1, 8, "stone"); rep(-3, 2, 8, "east", 4)
         for (x, z) in ((-2, 8), (-2, 7), (-1, 7)):
             S(x, 1, z, "stone"); P(x, 2, z, "redstone_wire")
-        S(2, 1, 6, "stone"); rep(2, 2, 6, "south", 4)                 # ONL side: trunk 8 late
+        # ONL side: the trunk 22 ticks late, around the south. Both lock delays must be within 6
+        # ticks of each other: each lock compares the output with a delayed copy of itself, so it
+        # only works if the level before lasted at least its delay (with 8 here, a re-open 12-14
+        # ticks after a close and a re-close 12 later slipped through)
         S(2, 1, 7, "stone"); P(2, 2, 7, "comparator", "out=west", "mode=subtract")
+        for z, d in ((6, 4), (7, 4), (8, 1)):
+            S(4, 1, z, "stone"); rep(4, 2, z, "south", d)
+        S(4, 2, 9, "stone"); S(3, 1, 9, "stone"); rep(3, 2, 9, "west", 1)
+        S(2, 2, 9, "stone"); S(2, 1, 8, "stone"); rep(2, 2, 8, "north", 1)
         for z in (6, 7):                                              # ONL rear: trunk wire
             S(3, 1, z, "stone"); P(3, 2, z, "redstone_wire")
         for n, p, d in (("IN", (1, 2, 9), "input block: power it to open (the lever @L is the test harness)"),
                         ("L", (1, 3, 9), "test lever on the input block"), ("X", (1, 2, 7), "lockout repeater"),
-                        ("OFFL", (0, 2, 7), "lock while an open runs"), ("ONL", (2, 2, 7), "lock while a close runs")):
+                        ("OFFL", (0, 2, 7), "lock while an open runs"), ("ONL", (2, 2, 7), "lock while a close runs (28 ticks)")):
             L.append(f'label {n} {at(*p)} "{d}"')
     for x in (0, 1, 2):
         for y in (4, 5, 6):

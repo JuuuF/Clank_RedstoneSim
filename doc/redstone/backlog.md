@@ -51,7 +51,7 @@ with the record that answered it.
    - [x] 4-bit DAC: binary to strength, balanced (`dac4`)
    - [x] 4x1 RAM from a literal crossbar (`ram4`)
    - [x] lookup table: hex 7-segment decoder and ADC (`seg7`, `adc4`)
-5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [x] 3x3 flush door (`door_3x3`, Q18, R-025).
+5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [x] 3x3 flush door (`door_3x3`, Q18, R-025); [x] lockout (`lockout`, Q22).
 
 ## Open questions
 
@@ -62,7 +62,6 @@ with the record that answered it.
 | Q15 | A fast carry. **Found (R-024):** two analog wire lines with glass diodes give all carries of 4 bits 2 ticks after the injections. **Paused (2026-10-18):** the per-bit core works with levers (S at 10 ticks planned, `experiments/wip/fast_adder/02`, `03`); the input logic (not-A, not-B, NOR, notH delays) and the A, B, S wires do not yet fit the 3-wide periodic slice: the best router layouts leave 2-3 of 11 wires unrouted. Next ideas: inject K from the north through a torch block fed by two repeaters A', B' (no long X wire south); a negotiated-congestion router; or a wider slice by giving each bit 4 wires of line and splitting into 3-bit blocks. State and tools: `experiments/wip/fast_adder/README.md` | 32-bit arithmetic, ALUs | paused |
 | Q17 | Both edges instant: the instant wire carries only its rising edge (re-arming takes 3 ticks a stage). Two chains cannot be combined at the output without memory; a latch that switches in 0 ticks (0-tick piston moves, R-018) at the end could take a rising-edge chain and a falling-edge chain | instant signals that also end at once | later |
 | Q21 | A faster 3x3 door open: `door_3x3` clears all nine cells 32 ticks after its input (28 without the lockout). The remaining waits are one tick each where a step waits for a landing on the 2-tick repeater grid; self-timed triggers (observers on W and A, landing checks as in R-025) could remove them | fast doors | later |
-| Q22 | The lockout as a module: a repeater locked by two subtracting comparators on its own output holds each output level for a minimum time (any input timing in, clean sequences out). In `door_3x3` it is 4 ticks late, holds off 26 and on 10; make the times parameters and test it alone | any sequenced contraption (doors, extenders) | next |
 | Q20 | A 7-segment lamp display for `seg7`: 7 lines into a digit of lamps (3 per segment; wires on top of lamps light them; adjacent segments' wires must not touch, cut steps with blocks); glitch-free outputs (latch the segments after the settle time) | showing numbers | next |
 
 ## Hypotheses waiting for a test
@@ -101,3 +100,4 @@ with the record that answered it.
 | Q19: a 16-word lookup table: decoder16's lines as rows (nested corners), a tap crossbar as the OR plane; `seg7` (hex 7-segment decoder) and `adc4` (strength to bits) | [[circuits]] | `seg7`, `adc4` targets |
 | Q18: a 3x3 flush door: the center goes down two cells in two steps through a gap made by a third piston; B's hold and the final pull by quasi-connectivity through a floor block, W's asymmetric timing by a repeater lock | [[circuits]] | `door_3x3` targets, [[R-025-piston-door-timing]] |
 | Q21 (part): an input-safe 3x3 door: a lockout repeater between the input torch and the trunk, locked after each change of its own output while the sequence runs; locks react 2 ticks after the change, the lockout repeater needs 4 | [[circuits]] | `door_3x3` targets `stone`, `spam`, `burnout` |
+| Q22: the lockout as a module: a repeater locked by two subtracting comparators reading its own output and a delayed copy; levels held D + 6; both D within 6 ticks of each other | [[circuits]] | `lockout` targets |

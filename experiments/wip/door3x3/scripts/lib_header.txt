@@ -14,8 +14,9 @@
 #   C into the floor.
 # Controller (behind, z 3..11): the input torch feeds the lockout repeater @X, which feeds a
 # wire trunk (z 7) with short repeater branches. @X is locked after each change of its output:
-# by @OFFL while an open runs (26 ticks), by @ONL while a close runs (10 ticks); a request in
-# between waits and is read when the lock ends, so no input timing can break the door.
+# by @OFFL while an open runs (26 ticks), by @ONL while a close runs (24 ticks); a request in
+# between waits and is read when the lock ends, so no input timing can break the door. Both
+# lock delays must be within 6 ticks of each other (each lock reads a delayed copy of the output).
 # The spit is an observer behind B watching a wire spur. B's hold is the floor block 7 3 2
 # (quasi-connectivity: B extends exactly when M lands under C). W's driver is locked by a
 # delayed copy of the trunk, so W stays out until B has pulled M down. A's pulse is a

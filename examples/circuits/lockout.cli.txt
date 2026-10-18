@@ -1,0 +1,109 @@
+# Contraption: lockout (minimum on and off times). Contract: doc/redstone/circuits.md, "Lockout".
+#
+# Module (box 0 1 0 .. 7 1 6, one layer):
+#   @A    0 1 4  input wire; drive it from the west (test lever @L at -1 1 4)
+#   @OUT  7 1 4  output repeater facing east: A 6 ticks late, each level held at least 30 ticks
+# Inside: lockout repeater @X (2 1 4, delay 2) from A to the output wire (3..6 1 4). Two
+# subtracting comparators point into X's sides and lock it after each change of the wire:
+#   @OFFL (2 1 3): side = the wire (14), rear = the wire 24 ticks late (repeaters 3 1 2,
+#     3 1 1, 2 1 0, then three wires: 12, weaker than the side): locks X after it turns off;
+#   @ONL (2 1 5): side = the wire 24 ticks late (repeaters 5 1 5, 4 1 5, 3 1 5), rear = the
+#     wire through 2 1 6 (6): locks X after it turns on.
+# A request while X is locked waits; X reads A again when the lock ends. X's 4 ticks matter:
+# it cannot change again sooner than 4 ticks after its last change, and the locks engage 2
+# ticks after it (wire inputs), so no request slips through. Tuning: click the three
+# repeaters of each lock (D = 6..24 ticks, held D + 6); keep both D within 6 ticks of each
+# other (each lock reads a delayed copy of the output: it only works if the level before
+# lasted at least its D).
+#   redsim-cli lockout.redsim.json < examples/circuits/lockout.cli.txt
+new size 16 force
+note "Lockout: @OUT follows @A 6 ticks late but holds each level at least 30 ticks; gaps under 4 ticks are filled"
+place 0 1 4 redstone_wire
+place 1 1 4 redstone_wire
+place 2 1 4 repeater out=east delay=2
+place 3 1 4 redstone_wire
+place 4 1 4 redstone_wire
+place 5 1 4 redstone_wire
+place 6 1 4 redstone_wire
+place 7 1 4 repeater out=east
+place 3 1 3 redstone_wire
+place 2 1 3 comparator out=south mode=subtract
+place 3 1 2 repeater out=north delay=4
+place 3 1 1 repeater out=north delay=4
+set 3 1 0 stone
+place 2 1 0 repeater out=west delay=4
+place 1 1 0 redstone_wire
+place 1 1 1 redstone_wire
+place 1 1 2 redstone_wire
+place 2 1 2 redstone_wire
+place 6 1 5 redstone_wire
+place 5 1 5 repeater out=west delay=4
+place 4 1 5 repeater out=west delay=4
+place 3 1 5 repeater out=west delay=4
+place 2 1 5 comparator out=north mode=subtract
+place 6 1 6 redstone_wire
+place 5 1 6 redstone_wire
+place 4 1 6 redstone_wire
+place 3 1 6 redstone_wire
+place 2 1 6 redstone_wire
+label A 0 1 4 "input wire, driven from the west"
+label X 2 1 4 "lockout repeater (delay 2)"
+label OFFL 2 1 3 "off lock: side = the output wire (14), rear = it 24 ticks late (12)"
+label ONL 2 1 5 "on lock: side = the output wire 24 ticks late (repeater), rear = the wire (6)"
+label OUT 7 1 4 "output repeater facing east"
+group lockout 0 1 0 7 1 6 in @A A out @OUT OUT
+# harness
+place -1 1 4 lever face=floor
+label L -1 1 4 "test lever"
+settle
+prefab save lockout 0 1 0 7 1 6
+
+target new follow "long inputs pass 6 ticks late"
+target follow do at 5 use @L
+target follow do at 60 use @L
+target follow expect @OUT powered=false during 0..10
+target follow expect @OUT powered=true during 11..65
+target follow expect @OUT powered=false during 66..100
+
+target new pulse "a 1-tick input pulse gives the minimum on time, 30 ticks"
+target pulse do at 5 use @L
+target pulse do at 6 use @L
+target pulse expect @OUT powered=true during 11..40
+target pulse expect @OUT powered=false during 41..80
+
+target new gap "a 5-tick gap gives the minimum off time, 30 ticks"
+target gap do at 5 use @L
+target gap do at 60 use @L
+target gap do at 65 use @L
+target gap do at 130 use @L
+target gap expect @OUT powered=true during 11..65
+target gap expect @OUT powered=false during 66..95
+target gap expect @OUT powered=true during 96..135
+target gap expect @OUT powered=false during 136..160
+
+target new fill "gaps under 4 ticks are filled"
+target fill do at 5 use @L
+target fill do at 60 use @L
+target fill do at 62 use @L
+target fill do at 130 use @L
+target fill expect @OUT powered=true during 11..135
+
+target new spam "a lever flipped every 5 ticks from 5 to 65 (ends on): levels of 35 and 30 ticks, then on"
+target spam do at 5 use @L
+target spam do at 10 use @L
+target spam do at 15 use @L
+target spam do at 20 use @L
+target spam do at 25 use @L
+target spam do at 30 use @L
+target spam do at 35 use @L
+target spam do at 40 use @L
+target spam do at 45 use @L
+target spam do at 50 use @L
+target spam do at 55 use @L
+target spam do at 60 use @L
+target spam do at 65 use @L
+target spam expect @OUT powered=true during 11..45
+target spam expect @OUT powered=false during 46..75
+target spam expect @OUT powered=true during 76..150
+
+check

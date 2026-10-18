@@ -6,7 +6,7 @@
   "min_y": -64,
   "max_y": 319,
   "game_time": 0,
-  "sub_tick_count": 292,
+  "sub_tick_count": 301,
   "palette": [
    "minecraft:smooth_stone",
    "minecraft:stone",
@@ -56,19 +56,20 @@
    "minecraft:redstone_wire[north=side,east=side,south=side,west=side,power=14]",
    "minecraft:redstone_wire[north=side,east=none,south=side,west=side,power=15]",
    "minecraft:redstone_wall_torch[facing=north,lit=true]",
+   "minecraft:stone_button[face=wall,facing=south,powered=false]",
    "minecraft:piston_head[facing=up,type=sticky,short=false]",
    "minecraft:lever[face=floor,facing=north,powered=false]",
    "minecraft:piston_head[facing=down,type=sticky,short=false]",
    "minecraft:sticky_piston[facing=down,extended=true]",
    "minecraft:comparator[facing=east,mode=subtract,powered=false]",
-   "minecraft:stone_button[face=wall,facing=east,powered=false]",
    "minecraft:piston_head[facing=west,type=sticky,short=false]",
    "minecraft:repeater[facing=south,delay=1,locked=true,powered=true]",
    "minecraft:redstone_wire[north=side,east=side,south=side,west=side,power=12]",
    "minecraft:redstone_wire[north=side,east=none,south=none,west=side,power=10]",
-   "minecraft:sticky_piston[facing=west,extended=true]",
    "minecraft:repeater[facing=east,delay=1,locked=false,powered=true]",
-   "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=11]",
+   "minecraft:sticky_piston[facing=west,extended=true]",
+   "minecraft:redstone_wire[north=none,east=side,south=side,west=side,power=11]",
+   "minecraft:repeater[facing=north,delay=1,locked=false,powered=true]",
    "minecraft:redstone_wire[north=side,east=side,south=none,west=side,power=10]",
    "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=12]",
    "minecraft:redstone_wire[north=none,east=side,south=none,west=up,power=13]",
@@ -7783,6 +7784,12 @@
    ],
    [
     8,
+    2,
+    12,
+    48
+   ],
+   [
+    8,
     3,
     1,
     1
@@ -7791,7 +7798,7 @@
     8,
     3,
     2,
-    48
+    49
    ],
    [
     8,
@@ -7803,7 +7810,7 @@
     8,
     3,
     11,
-    49
+    50
    ],
    [
     8,
@@ -7827,13 +7834,13 @@
     8,
     7,
     2,
-    50
+    51
    ],
    [
     8,
     8,
     2,
-    51
+    52
    ],
    [
     9,
@@ -8084,38 +8091,38 @@
    [
     9,
     1,
-    8,
+    9,
     1
    ],
    [
     9,
     1,
-    9,
+    10,
     1
    ],
    [
     9,
     2,
     7,
-    36
-   ],
-   [
-    9,
-    2,
-    8,
-    15
+    29
    ],
    [
     9,
     2,
     9,
-    52
+    53
+   ],
+   [
+    9,
+    2,
+    10,
+    2
    ],
    [
     9,
     2,
     11,
-    53
+    1
    ],
    [
     9,
@@ -8433,6 +8440,12 @@
     10,
     1,
     9,
+    1
+   ],
+   [
+    10,
+    1,
+    11,
     1
    ],
    [
@@ -8485,6 +8498,12 @@
    ],
    [
     10,
+    2,
+    11,
+    58
+   ],
+   [
+    10,
     3,
     1,
     1
@@ -8493,7 +8512,7 @@
     10,
     3,
     2,
-    58
+    59
    ],
    [
     10,
@@ -8779,9 +8798,27 @@
    ],
    [
     11,
+    1,
+    8,
+    1
+   ],
+   [
+    11,
+    1,
+    9,
+    1
+   ],
+   [
+    11,
+    1,
+    10,
+    1
+   ],
+   [
+    11,
     2,
     3,
-    59
+    58
    ],
    [
     11,
@@ -8791,21 +8828,45 @@
    ],
    [
     11,
+    2,
+    8,
+    15
+   ],
+   [
+    11,
+    2,
+    9,
+    15
+   ],
+   [
+    11,
+    2,
+    10,
+    61
+   ],
+   [
+    11,
+    2,
+    11,
+    1
+   ],
+   [
+    11,
     4,
     2,
-    58
+    59
    ],
    [
     11,
     5,
     2,
-    58
+    59
    ],
    [
     11,
     6,
     2,
-    58
+    59
    ],
    [
     11,
@@ -9117,7 +9178,7 @@
     12,
     2,
     7,
-    61
+    62
    ],
    [
     12,
@@ -9405,7 +9466,7 @@
     13,
     6,
     2,
-    62
+    63
    ],
    [
     14,
@@ -9669,7 +9730,7 @@
     14,
     5,
     2,
-    63
+    64
    ],
    [
     15,
@@ -9933,7 +9994,7 @@
     15,
     4,
     2,
-    64
+    65
    ],
    [
     16,
@@ -10239,13 +10300,13 @@
     16,
     2,
     7,
-    65
+    66
    ],
    [
     16,
     3,
     2,
-    66
+    67
    ],
    [
     17,
@@ -11040,14 +11101,14 @@
      2,
      10
     ],
-    -82
+    -96
    ]
   ],
   "max_chained_neighbor_updates": 1000000
  },
  "engine": {
   "phase": "BETWEEN_TICKS",
-  "step_index": 668,
+  "step_index": 707,
   "be_index": 0
  },
  "extra": {
@@ -11257,10 +11318,20 @@
     "place 5 2 9 redstone_wire",
     "set 6 1 9 stone",
     "place 6 2 9 redstone_wire",
-    "set 9 1 8 stone",
-    "place 9 2 8 repeater out=south delay=4",
     "set 9 1 9 stone",
     "place 9 2 9 comparator out=west mode=subtract",
+    "set 11 1 8 stone",
+    "place 11 2 8 repeater out=south delay=4",
+    "set 11 1 9 stone",
+    "place 11 2 9 repeater out=south delay=4",
+    "set 11 1 10 stone",
+    "place 11 2 10 repeater out=south delay=1",
+    "set 11 2 11 stone",
+    "set 10 1 11 stone",
+    "place 10 2 11 repeater out=west delay=1",
+    "set 9 2 11 stone",
+    "set 9 1 10 stone",
+    "place 9 2 10 repeater out=north delay=1",
     "set 10 1 8 stone",
     "place 10 2 8 redstone_wire",
     "set 10 1 9 stone",
@@ -11269,7 +11340,7 @@
     "label L 8 3 11 'test lever on the input block'",
     "label X 8 2 9 'lockout repeater'",
     "label OFFL 7 2 9 'lock while an open runs'",
-    "label ONL 9 2 9 'lock while a close runs'",
+    "label ONL 9 2 9 'lock while a close runs (28 ticks)'",
     "label D00 7 4 2 'door cell (x 0, row 0)'",
     "label D01 7 5 2 'door cell (x 0, row 1)'",
     "label D02 7 6 2 'door cell (x 0, row 2)'",
@@ -11279,16 +11350,16 @@
     "label D20 9 4 2 'door cell (x 2, row 0)'",
     "label D21 9 5 2 'door cell (x 2, row 1)'",
     "label D22 9 6 2 'door cell (x 2, row 2)'",
-    "place 9 2 11 stone_button face=wall facing=east",
+    "place 8 2 12 stone_button face=wall facing=south",
     "place 7 2 11 oak_button face=wall facing=west",
-    "label SB 9 2 11 'test stone button (20 ticks)'",
+    "label SB 8 2 12 'test stone button (20 ticks)'",
     "label OB 7 2 11 'test oak button (30 ticks)'",
     "settle",
     "at 2 use 8 3 11",
     "seek 40",
     "rebase",
-    "prefab save door_3x3 0 1 0 16 8 11",
-    "group door_3x3 0 1 0 16 8 11 in @IN IN out @D11 C",
+    "prefab save door_3x3 0 1 0 16 8 12",
+    "group door_3x3 0 1 0 16 8 12 in @IN IN out @D11 C",
     "target new lever 'open: side cells clear 8 ticks after the lever, all nine 32 after; close: solid 17 ticks after'",
     "target lever do at 5 use @L",
     "target lever do at 60 use @L",
@@ -11370,6 +11441,40 @@
     "target spam expect @D20 block=smooth_stone at 190",
     "target spam expect @D21 block=smooth_stone at 190",
     "target spam expect @D22 block=smooth_stone at 190",
+    "target new reopen 'close at 60, re-open 12 ticks later, re-close 12 after that: ends closed, then cycles (with lock delays of 8 and 24 this stuck)'",
+    "target reopen do at 5 use @L",
+    "target reopen do at 60 use @L",
+    "target reopen do at 72 use @L",
+    "target reopen do at 84 use @L",
+    "target reopen do at 200 use @L",
+    "target reopen do at 260 use @L",
+    "target reopen expect @D00 block=smooth_stone at 199",
+    "target reopen expect @D01 block=smooth_stone at 199",
+    "target reopen expect @D02 block=smooth_stone at 199",
+    "target reopen expect @D10 block=smooth_stone at 199",
+    "target reopen expect @D11 block=smooth_stone at 199",
+    "target reopen expect @D12 block=smooth_stone at 199",
+    "target reopen expect @D20 block=smooth_stone at 199",
+    "target reopen expect @D21 block=smooth_stone at 199",
+    "target reopen expect @D22 block=smooth_stone at 199",
+    "target reopen expect @D00 block=air at 245",
+    "target reopen expect @D01 block=air at 245",
+    "target reopen expect @D02 block=air at 245",
+    "target reopen expect @D10 block=air at 245",
+    "target reopen expect @D11 block=air at 245",
+    "target reopen expect @D12 block=air at 245",
+    "target reopen expect @D20 block=air at 245",
+    "target reopen expect @D21 block=air at 245",
+    "target reopen expect @D22 block=air at 245",
+    "target reopen expect @D00 block=smooth_stone at 290",
+    "target reopen expect @D01 block=smooth_stone at 290",
+    "target reopen expect @D02 block=smooth_stone at 290",
+    "target reopen expect @D10 block=smooth_stone at 290",
+    "target reopen expect @D11 block=smooth_stone at 290",
+    "target reopen expect @D12 block=smooth_stone at 290",
+    "target reopen expect @D20 block=smooth_stone at 290",
+    "target reopen expect @D21 block=smooth_stone at 290",
+    "target reopen expect @D22 block=smooth_stone at 290",
     "target new burnout 'failure case: 16 flips within 48 ticks burn out the input torch (8 turn-offs in 60 ticks, R-007): the door opens and stays open until the torch relights'",
     "target burnout do at 5 use @L",
     "target burnout do at 8 use @L",
@@ -11424,7 +11529,7 @@
     "high": [
      16,
      8,
-     11
+     12
     ],
     "ports": [
      {
@@ -11455,7 +11560,7 @@
     "size": [
      17,
      8,
-     12
+     13
     ],
     "blocks": [
      [
@@ -18310,7 +18415,7 @@
       9,
       1,
       7,
-      "minecraft:redstone_wire[north=none,east=side,south=side,west=side,power=13]",
+      "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=13]",
       null
      ],
      [
@@ -18324,7 +18429,7 @@
       11,
       1,
       7,
-      "minecraft:redstone_wire[north=none,east=side,south=none,west=side,power=11]",
+      "minecraft:redstone_wire[north=none,east=side,south=side,west=side,power=11]",
       null
      ],
      [
@@ -19143,7 +19248,7 @@
       9,
       0,
       8,
-      "minecraft:stone",
+      "minecraft:air",
       null
      ],
      [
@@ -19157,7 +19262,7 @@
       11,
       0,
       8,
-      "minecraft:air",
+      "minecraft:stone",
       null
      ],
      [
@@ -19262,7 +19367,7 @@
       9,
       1,
       8,
-      "minecraft:repeater[facing=north,delay=4,locked=false,powered=true]",
+      "minecraft:air",
       null
      ],
      [
@@ -19276,7 +19381,7 @@
       11,
       1,
       8,
-      "minecraft:air",
+      "minecraft:repeater[facing=north,delay=4,locked=false,powered=true]",
       null
      ],
      [
@@ -20109,7 +20214,7 @@
       11,
       0,
       9,
-      "minecraft:air",
+      "minecraft:stone",
       null
      ],
      [
@@ -20232,7 +20337,7 @@
       11,
       1,
       9,
-      "minecraft:air",
+      "minecraft:repeater[facing=north,delay=4,locked=false,powered=true]",
       null
      ],
      [
@@ -21051,7 +21156,7 @@
       9,
       0,
       10,
-      "minecraft:air",
+      "minecraft:stone",
       null
      ],
      [
@@ -21065,7 +21170,7 @@
       11,
       0,
       10,
-      "minecraft:air",
+      "minecraft:stone",
       null
      ],
      [
@@ -21170,7 +21275,7 @@
       9,
       1,
       10,
-      "minecraft:air",
+      "minecraft:repeater[facing=south,delay=1,locked=false,powered=true]",
       null
      ],
      [
@@ -21184,7 +21289,7 @@
       11,
       1,
       10,
-      "minecraft:air",
+      "minecraft:repeater[facing=north,delay=1,locked=false,powered=true]",
       null
      ],
      [
@@ -22010,7 +22115,7 @@
       10,
       0,
       11,
-      "minecraft:air",
+      "minecraft:stone",
       null
      ],
      [
@@ -22122,21 +22227,21 @@
       9,
       1,
       11,
-      "minecraft:stone_button[face=wall,facing=east,powered=false]",
+      "minecraft:stone",
       null
      ],
      [
       10,
       1,
       11,
-      "minecraft:air",
+      "minecraft:repeater[facing=east,delay=1,locked=false,powered=true]",
       null
      ],
      [
       11,
       1,
       11,
-      "minecraft:air",
+      "minecraft:stone",
       null
      ],
      [
@@ -22887,6 +22992,958 @@
       11,
       "minecraft:air",
       null
+     ],
+     [
+      0,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      0,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      1,
+      12,
+      "minecraft:stone_button[face=wall,facing=south,powered=false]",
+      null
+     ],
+     [
+      9,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      1,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      2,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      3,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      4,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      5,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      6,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      0,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      1,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      2,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      3,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      4,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      5,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      6,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      7,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      8,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      9,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      10,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      11,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      12,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      13,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      14,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      15,
+      7,
+      12,
+      "minecraft:air",
+      null
+     ],
+     [
+      16,
+      7,
+      12,
+      "minecraft:air",
+      null
      ]
     ]
    }
@@ -22976,7 +24033,7 @@
      2,
      9
     ],
-    "note": "lock while a close runs"
+    "note": "lock while a close runs (28 ticks)"
    },
    "D00": {
     "pos": [
@@ -23052,9 +24109,9 @@
    },
    "SB": {
     "pos": [
-     9,
+     8,
      2,
-     11
+     12
     ],
     "note": "test stone button (20 ticks)"
    },
@@ -23178,6 +24235,50 @@
        "expect @D20 block=smooth_stone at 190",
        "expect @D21 block=smooth_stone at 190",
        "expect @D22 block=smooth_stone at 190"
+      ]
+     }
+    ]
+   },
+   {
+    "name": "reopen",
+    "description": "close at 60, re-open 12 ticks later, re-close 12 after that: ends closed, then cycles (with lock delays of 8 and 24 this stuck)",
+    "cases": [
+     {
+      "name": "main",
+      "lines": [
+       "at 5 use @L",
+       "at 60 use @L",
+       "at 72 use @L",
+       "at 84 use @L",
+       "at 200 use @L",
+       "at 260 use @L",
+       "expect @D00 block=smooth_stone at 199",
+       "expect @D01 block=smooth_stone at 199",
+       "expect @D02 block=smooth_stone at 199",
+       "expect @D10 block=smooth_stone at 199",
+       "expect @D11 block=smooth_stone at 199",
+       "expect @D12 block=smooth_stone at 199",
+       "expect @D20 block=smooth_stone at 199",
+       "expect @D21 block=smooth_stone at 199",
+       "expect @D22 block=smooth_stone at 199",
+       "expect @D00 block=air at 245",
+       "expect @D01 block=air at 245",
+       "expect @D02 block=air at 245",
+       "expect @D10 block=air at 245",
+       "expect @D11 block=air at 245",
+       "expect @D12 block=air at 245",
+       "expect @D20 block=air at 245",
+       "expect @D21 block=air at 245",
+       "expect @D22 block=air at 245",
+       "expect @D00 block=smooth_stone at 290",
+       "expect @D01 block=smooth_stone at 290",
+       "expect @D02 block=smooth_stone at 290",
+       "expect @D10 block=smooth_stone at 290",
+       "expect @D11 block=smooth_stone at 290",
+       "expect @D12 block=smooth_stone at 290",
+       "expect @D20 block=smooth_stone at 290",
+       "expect @D21 block=smooth_stone at 290",
+       "expect @D22 block=smooth_stone at 290"
       ]
      }
     ]

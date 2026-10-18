@@ -92,6 +92,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
 | [[#Fade timer]] | on until 54 ticks after the last input (retriggerable) | 4×1×4 | 12 | `fade_timer` |
 | [[#Both-edge detector]] | 2-tick pulse on every change of A | 2×1×1 | 2 | `both_edges` |
+| [[#Lockout]] | follows A but holds each level ≥ 30 ticks (any input timing) | 8×1×7 | 6 | `lockout` |
 | **Memory** | | | | |
 | [[#T flip-flop]] | toggles on each rising edge | 2×1×1 | 2 | `t_flipflop` |
 | [[#RS latch]] | set / reset memory | 3×1×4 | set 4, reset 2 | `rs_latch` |
@@ -611,6 +612,45 @@ The input fills the ring with 15; the output is on while anything is left.
 
 ## Memory
 
+### Lockout
+
+A repeater that locks itself after each change of its output: the output follows A, but
+every level lasts at least D + 6 ticks, whatever A does. For anything that runs a
+sequence and must not be interrupted (a door, an extender): put it in front of the input.
+`lockout.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| A | 0 0 4 | input wire; drive it from the west (script 0 1 4) |
+| OUT | 7 0 4 | output repeater facing east (script 7 1 4) |
+
+- **Behavior:** OUT follows A **6 ticks** late; each on level and each off level lasts at
+  least **30 ticks** (D = 24). A shorter pulse comes out 30 long, a gap of 4–29 ticks comes
+  out 30 long, and gaps under 4 ticks are filled. A change of A while the output is held
+  waits and is applied when the hold ends (A is read again then). Tested: the five
+  targets, and 60 random flip sequences per setting (`scripts/rtest.py` in
+  `experiments/wip/door3x3/`): the output ends equal to A, and no level is shorter.
+- **How:** lockout repeater X (delay 2) from A to the output wire. Two subtracting
+  comparators point into X's sides:
+  - OFFL: side = the output wire, rear = the wire D late. It is on for D + 2 ticks after
+    the output turns off.
+  - ONL: rear = the wire, side = the wire D late through a repeater. It is on for D + 2
+    after the output turns on.
+
+  A lock engages 2 ticks after X changes (wire inputs), and X cannot change again sooner
+  than 4 ticks after its last change. A new request therefore always meets the lock
+  (with X at delay 1, or a repeater in a lock's input, short requests slip through).
+- **Tuning:** click the three repeaters of each lock: D = 6..24 ticks, held D + 6
+  (tested: D = 6 → 12, D = 24 → 30). **Keep both D within 6 ticks of each other:** each
+  lock compares the output with its own delayed copy, so it only works if the level
+  before it lasted at least its D. With D = 14 (on) and 24 (off), random flips gave levels
+  of 4 and 5 ticks.
+- **Strengths:** OFFL's rear wire (12) must be weaker than its side wire (14), or the
+  comparator leaks 1 and locks X for good; ONL's side is a repeater (15) against a weak
+  rear wire (6).
+- **Used by:** [[#3x3 flush door]] (with D = 24 and 22 between its input torch and its
+  trunk).
+
 ### T flip-flop
 
 A copper bulb toggles on every rising edge of its power; a comparator reads it.
@@ -949,8 +989,10 @@ failures included, are worlds in that folder). **Verified.**
   nine **32 ticks** later; input off → all nine solid **17 ticks** later (sides after 10).
   The center leaves last because it passes through the bottom-middle cell on its way down.
 - **Any input timing works:** a request that comes while a sequence runs waits and is
-  carried out after it (tested: every open request and every close gap of 1–30 ticks, a
-  lever flipped every 3 ticks, a stone button: it opens fully 37..42 and closes by 52).
+  carried out after it. Tested: every open request and every close gap of 1–30 ticks, 45
+  close / re-open / re-close patterns, 120 random flip sequences
+  (`experiments/wip/door3x3/scripts/suite*.py`), a lever flipped every 3 ticks, and a stone
+  button (it opens fully 37..42 and closes by 52).
 - **Center column:** C (center) and M (bottom middle) rest in the floor when open (C 8 3 2,
   M 9 3 2). Under C: sticky piston B (8 2 2) standing on sticky piston A (8 1 2); W
   (10 3 2) pushes M west. Close: B gets a 2-tick pulse and **spits** C up one; W pushes M
@@ -967,16 +1009,23 @@ failures included, are worlds in that folder). **Verified.**
   by one of two subtracting comparators pointing into its sides:
   - @OFFL: rear = the trunk 24 ticks late, side = the trunk; locked for 26 ticks after
     @X turns off, while the open runs;
-  - @ONL: rear = the trunk, side = the trunk 8 ticks late; locked for 10 ticks after @X
-    turns on, while the close runs.
+  - @ONL: rear = the trunk, side = the trunk 22 ticks late; locked for 24 ticks after @X
+    turns on (the close itself needs 17).
 
   Each lock engages 2 ticks after @X's output changes (wire inputs, no repeater), and
   @X cannot change again sooner than 4 ticks after its last change, so a new request
-  always meets the lock and is read when the lock ends. **Found on the way:** with @X at
-  delay 1 and repeaters in the locks' inputs, requests of 2–4 ticks slipped through. Two
-  more rules: @OFFL's rear wire must be weaker than its side wire (13 against 14), or the
-  comparator leaks 1 and locks @X for good. And if @X were locked on the trunk's raw
-  input instead of its own output, its own legitimate change would be dropped too.
+  always meets the lock and is read when the lock ends. **Found on the way:**
+  - With @X at delay 1 and repeaters in the locks' inputs, requests of 2–4 ticks slipped
+    through.
+  - **Both lock delays must be within 6 ticks of each other.** Each lock compares the
+    output with a delayed copy of itself, so it only works if the level before it lasted
+    at least its delay. With 8 for the close lock and 24 for the open lock, a re-open 12–14
+    ticks after a close followed by a re-close 12 ticks later stuck the door (now target
+    `reopen`).
+  - @OFFL's rear wire must be weaker than its side wire (13 against 14), or the comparator
+    leaks 1 and locks @X for good.
+  - If @X were locked on the trunk's raw input instead of its own output, its own
+    legitimate change would be dropped too.
 - **Controller** (behind the wall): the trunk feeds short repeater branches.
   - The spit is an observer behind B watching a wire spur. A repeater keeps a 2-tick pulse
     (a comparator edge detector would give 4 or more, which pulls C back instead of
