@@ -57,12 +57,24 @@ fully closed at 26–29, open at one corner for 8 ticks, and settled only at 40.
 same happens in the opening (59, 69, 79). The game does the same: the whole door
 matches the simulator at every tick (EXP-075).
 
+**The door needs the flicker** (inferred from the pulse table, not tested by a
+change). Each pulse of the corner piston is 2 ticks long, so what it does depends on
+where the block is. Next to the head's cell, a pulse pushes the block in and leaves
+it. One cell further, the head extends into the empty cell and, retracting, pulls the
+block back out. Closing gives in, out, in (18 spat, 28 pulled, 38 spat), opening out,
+in, out (59, 69, 79). With only the lamp's two visible changes there would be two
+pulses per half-cycle. Closing would end with the corner pulled out again at 38, and
+opening with it pushed back in at 79. The third pulse, the flicker's, makes the count
+odd and the corner end right.
+
 Lessons:
 
 - A single-plane layout is the most compact way to build a 3x3 flush door: storage,
   pistons and logic share the doorway's wall.
 - A lamp used as a pulse stretcher can flicker within a tick when two pulses come
-  exactly its delay apart. An observer on it sees the flicker, though no frame does.
+  exactly its delay apart. An observer on it sees the flicker, though no frame does
+  ([[../../records/R-028-lamp-flicker]]). Here the design depends on it: a timing
+  that works by an in-tick order no frame shows is fragile to any change of one tick.
 - "Fully closed" is not "done": Sacred's doorway is first full at tick 21 with a piston
   head in it, and the door settles at 40 ([[../metrics]] reports both).
 
