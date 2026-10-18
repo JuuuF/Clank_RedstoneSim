@@ -121,7 +121,9 @@ by engine step**, and around each block event the moving-block entities are comp
 
 The ablation turned every conducting block above the floor into glass, one at a time:
 1112 variants in 16 doors ([[robustness]]). Before looking at the results, layer 2 sorts
-each block by the role it plays in the designed run:
+each block by the role it plays in the designed run (`ablation.glass_roles`;
+`python -m tools.doorlab.ablation --predict --out .sandbox/doors/ablation WORLD` scores
+the saved results):
 
 | role (layer 2) | glass breaks the door (or changes its timing) |
 |---|---|

@@ -215,6 +215,11 @@ def test_ablation_and_trim_2x2(tmp_path: Path) -> None:
     assert by_change["remove lever"] == {"breaks": 1}
     # A head is part of its piston: never removed alone (that leaves a headless piston).
     assert "remove piston_head" not in by_change
+    # Layer 2's glass roles: a conductor with no role (never powered, no wire cutter, not
+    # immovable) never matters.
+    glass = {tuple(r["pos"]): r["result"] for r in result["results"] if r["change"] == "glass"}
+    roles = ablation.glass_roles(path, list(glass))
+    assert glass and all(glass[p] in ("inert", "internal") for p, k in roles.items() if k == "none")
     trim = ablation.trim(path, result["results"])
     assert trim["kept_after_all"] == []
     assert trim["blocks_after"] <= trim["blocks_before"]

@@ -44,7 +44,7 @@ read-only and experiments work on copies.
 | `patterns` | 3 | the mechanism census ([[patterns]]) |
 | `inventory` | — | `python -m tools.doorlab.inventory`: writes `experiments/doors/inventory.json` and [[inventory]] |
 | `mechanism` | 3 | the mechanism / controller split, the contract, the stripped door ([[mechanism]]) |
-| `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` ([[robustness]]) |
+| `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` (keeps supports); `--predict`: layer 2's role of each glass variant against the result ([[robustness]], [[representation]]) |
 | `inputs` | 3 | every gap between the two input flips; `--recover`: one more designed cycle after each gap that did not end clean; `--repeat`: the designed cycle twice ([[robustness]]) |
 | `metrics` | 3 | `python -m tools.doorlab.metrics`: the objectives per door and the dominance per doorway size; writes `experiments/doors/metrics.json` and [[metrics]] |
 

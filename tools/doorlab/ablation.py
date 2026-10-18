@@ -23,6 +23,12 @@ slack (the build could be smaller there). A few blocks are needed only to hold o
 ``trim`` (``--trim``) removes the blocks whose removal was inert one by one *together*,
 keeping each only if the door still replays inert with all earlier removals: the
 smallest build this one-block search finds with exactly the same behavior.
+
+``glass_roles`` (``--predict``, with ``--out`` holding the results) says what the
+interaction model expects of each ``glass`` variant before it is run: a conductor that
+is powered at some tick of the designed run may matter; one that is never powered
+matters only as a wire cutter (wire under it and beside it) or as an immovable stopper;
+any other is harmless. It prints how the measured results fall into these roles.
 """
 
 from __future__ import annotations
@@ -34,7 +40,7 @@ import time
 from collections import Counter
 from typing import Any
 
-from redsim.core.direction import Direction
+from redsim.core.direction import HORIZONTAL, Direction
 from redsim.core.pos import offset
 from redsim.world import blocks
 from tools.doorlab import canonical, corpus, interactions, replay, transform
@@ -222,14 +228,56 @@ def trim(path: Any, results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+IMMOVABLE = ("minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:bedrock")
+
+
+def glass_roles(path: Any, positions: list[Pos]) -> dict[Pos, str]:
+    """Layer 2's role of each conductor for the ``glass`` change: ``powered`` (receives
+    power at some tick of the designed run), ``cutter``, ``immovable`` or ``none``."""
+    doc = canonical.rebuild(canonical.from_file(path))
+    doc.seek_tick(doc.end_tick)
+    powered: set[Pos] = set()
+    for t in range(doc.end_tick + 1):
+        doc.seek_tick(t)
+        powered |= {p for p in positions if doc.level.has_neighbor_signal(p)}
+    doc.seek_tick(0)
+    level = doc.level
+
+    def wire(p: Pos) -> bool:
+        return level.get_block_state(p).block.id == "minecraft:redstone_wire"
+
+    def role(p: Pos) -> str:
+        if p in powered:
+            return "powered"
+        if wire(offset(p, Direction.DOWN)) and any(wire(offset(p, d)) for d in HORIZONTAL):
+            return "cutter"
+        return "immovable" if level.get_block_state(p).block.id in IMMOVABLE else "none"
+
+    return {p: role(p) for p in positions}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("worlds", nargs="+")
     parser.add_argument("--out", help="folder for the JSON results")
     parser.add_argument("--trim", action="store_true", help="also remove all inert blocks together")
+    parser.add_argument(
+        "--predict", action="store_true", help="with --out: score layer 2's glass roles"
+    )
     args = parser.parse_args()
     for name in args.worlds:
         path = corpus.find(name)
+        if args.predict:
+            with open(f"{args.out}/{corpus.parse_name(path).slug}.json") as handle:
+                saved = json.load(handle)["results"]
+            glass = {tuple(r["pos"]): r["result"] for r in saved if r["change"] == "glass"}
+            roles = glass_roles(path, list(glass))
+            score = Counter((roles[p], res in ("breaks", "timing")) for p, res in glass.items())
+            print(corpus.parse_name(path).slug + ": " + ", ".join(
+                f"{k} {score[(k, True)]} of {score[(k, True)] + score[(k, False)]} break"
+                for k in ("powered", "cutter", "immovable", "none")
+            ))  # fmt: skip
+            continue
         r = run(path)
         print(f"{r['world']}: {r['variants']} variants in {r['seconds']}s: {r['totals']}")
         for key, counts in r["summary"].items():
