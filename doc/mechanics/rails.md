@@ -2,10 +2,12 @@
 
 - **Status:** researched, implemented (`src/redsim/world/blocks/rail.py`), unit-tested and
   confirmed in game: shapes (EXP-035), powered/activator propagation (EXP-036), and inside
-  40 random circuits (EXP-031). Detector rails are not implemented: they only change when a
-  minecart rides over them, and the simulator has no entities.
+  40 random circuits (EXP-031). Detector rails are implemented without minecarts (the
+  simulator has none): they never power, but they shape like straight rails, are signal
+  sources (wire connects to them) and update comparators at each check (EXP-067, and in
+  LegDen's doors, EXP-068).
 - **Source:** `net/minecraft/world/level/block/BaseRailBlock.java`, `RailState.java`,
-  `RailBlock.java`, `PoweredRailBlock.java`.
+  `RailBlock.java`, `PoweredRailBlock.java`, `DetectorRailBlock.java`.
 
 ## Shapes (`RailState`)
 

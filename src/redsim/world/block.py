@@ -152,6 +152,14 @@ class BlockState:
     def get_block_support_shape(self) -> Shape:
         return self._shape("support")
 
+    def get_collision_shape_in(self, level: Level, pos: Pos) -> Shape:
+        """``getCollisionShape(level, pos)`` (``CollisionContext.empty()``): a block with a
+        dynamic shape is asked with the level (a moving piston's shape comes from its
+        block entity)."""
+        if self.block.dynamic_shape:
+            return self.block.get_dynamic_support_shape(self, level, pos)
+        return self.get_collision_shape()
+
     def is_collision_shape_full_block(self) -> bool:
         return self.get_collision_shape().is_full_block()
 
@@ -358,6 +366,10 @@ class Block:
 
     def new_block_entity(self, pos: Pos, state: BlockState) -> BlockEntity | None:
         return None
+
+    def block_entity_ticks(self, state: BlockState) -> bool:
+        """``getTicker`` is not null: the block entity ticks in this state."""
+        return self.has_ticker
 
     # --- shapes ------------------------------------------------------------------------------
     def get_shape(self, state: BlockState) -> Shape:

@@ -157,3 +157,27 @@ def test_placing_a_given_state_still_applies_the_placement_rules() -> None:
     assert repr(doc.state_at((2, 1, 3))) == (
         "minecraft:campfire[lit=true,signal_fire=false,waterlogged=false,facing=east]"
     )
+
+
+def test_a_wall_reads_a_moving_piston_above_it_with_the_level() -> None:
+    """LegDen's 8x8 door (EXP-068): a retracting sticky piston above a wall becomes a moving
+    piston whose collision shape (from its block entity) is the extended base, so the
+    wall's sides under it stay tall; the context-free shape of a moving piston is empty."""
+    from redsim.sim.engine import Action, Engine
+
+    engine = Engine()
+    for pos, text in (
+        ((0, 0, 0), "stone"), ((1, 0, 0), "stone"), ((1, 0, -1), "stone"),
+        ((1, 0, 1), "observer[facing=north]"),
+        ((1, 1, 0), "sticky_piston[facing=north,extended=true]"),
+        ((1, 1, -1), "piston_head[facing=north,type=sticky]"), ((2, 1, 0), "redstone_block"),
+        ((1, 0, 0), "stone_brick_wall"),
+    ):  # fmt: skip
+        engine.apply(Action("setblock", pos, text))
+    wall = engine.level.get_block_state((1, 0, 0)).properties_dict()
+    assert (wall["north"], wall["west"], wall["south"]) == ("low", "tall", "tall")
+    engine.apply(Action("setblock", (2, 1, 0), "air"))  # the piston retracts
+    engine.run_tick()
+    assert engine.level.get_block_state((1, 1, 0)).block.id == "minecraft:moving_piston"
+    wall = engine.level.get_block_state((1, 0, 0)).properties_dict()
+    assert (wall["west"], wall["south"]) == ("tall", "tall")

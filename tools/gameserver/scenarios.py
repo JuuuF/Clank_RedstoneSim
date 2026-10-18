@@ -2754,7 +2754,133 @@ LIGHTNING_RODS = Scenario(
     },  # fmt: skip
 )
 
+CRAFTERS_JUKEBOXES = Scenario(
+    name="crafters_jukeboxes",
+    description=(
+        "Crafters: power flips 'triggered' (an observer watching it pulses a lamp each "
+        "time); a comparator reads filled and disabled slots (4); a powered crafter without "
+        "a recipe crafts nothing. Jukeboxes: wire connects to them; a disc put in by /item "
+        "replace plays (15 to the wire beside it, a comparator reads the disc's value 11); "
+        "one saved near the end of its song stops. Detector rails: wire connects, a "
+        "comparator reads 0, a powered one put by /setblock turns off at once (no minecart)."
+    ),
+    size=(7, 13),
+    setup=[
+        ((2, 1, 1), "minecraft:crafter[orientation=north_up]"),
+        ((3, 1, 1), "minecraft:observer[facing=west]"),
+        ((4, 1, 1), LAMP),
+        (
+            (2, 1, 3),
+            "minecraft:crafter[orientation=up_north]",
+            {
+                "Items": [
+                    {"Slot": 0, "id": "minecraft:dirt", "count": 1},
+                    {"Slot": 4, "id": "minecraft:dirt", "count": 1},
+                ],
+                "disabled_slots": [1, 2],
+                "triggered": 0,
+                "crafting_ticks_remaining": 0,
+            },
+        ),
+        ((2, 1, 4), "minecraft:comparator[facing=north]"),
+        ((2, 1, 5), LAMP),
+        ((2, 1, 7), "minecraft:jukebox"),
+        ((1, 1, 7), "minecraft:redstone_wire"),
+        ((3, 1, 7), "minecraft:comparator[facing=west]"),
+        ((4, 1, 7), LAMP),
+        (
+            (2, 1, 8),
+            "minecraft:jukebox[has_record=true]",
+            {
+                "RecordItem": {"id": "minecraft:music_disc_11", "count": 1},
+                "ticks_since_song_started": 1430,
+            },
+        ),
+        ((2, 1, 9), "minecraft:redstone_wire"),
+        ((2, 1, 11), "minecraft:detector_rail"),
+        ((1, 1, 11), "minecraft:redstone_wire"),
+        ((3, 1, 11), "minecraft:comparator[facing=west]"),
+        ((4, 1, 11), LAMP),
+        ((2, 1, 12), "minecraft:detector_rail[powered=true]"),
+    ],  # fmt: skip
+    watch=[
+        (2, 1, 1),
+        (3, 1, 1),
+        (4, 1, 1),
+        (2, 1, 3),
+        (2, 1, 4),
+        (2, 1, 5),
+        (2, 1, 7),
+        (1, 1, 7),
+        (3, 1, 7),
+        (4, 1, 7),
+        (2, 1, 8),
+        (2, 1, 9),
+        (2, 1, 11),
+        (1, 1, 11),
+        (3, 1, 11),
+        (4, 1, 11),
+        (2, 1, 12),
+    ],  # fmt: skip
+    ticks=40,
+    inputs={
+        3: [((1, 1, 1), RB)],
+        15: [((1, 1, 1), AIR)],
+        20: [((1, 1, 3), RB)],
+    },
+    commands={
+        5: [("item", (2, 1, 7), 0, ("minecraft:music_disc_11", 1))],
+        30: [("item", (2, 1, 7), 0, (None, 1))],
+    },
+)
+
+WALLS_UNDER_MOVING_BLOCKS = Scenario(
+    name="walls_under_moving_blocks",
+    description=(
+        "A wall reads the collision shape of the block above with the level: when the "
+        "extended sticky piston above it retracts, the moving piston keeps the extended "
+        "base's shape, so the wall's sides stay tall (LegDen's 8x8 door); a stone pushed "
+        "across the top of another wall (half a block per tick) makes its sides tall once "
+        "it arrives. Observers watching the walls light lamps when their shape changes."
+    ),
+    size=(6, 12),
+    setup=[
+        ((1, 1, 1), STONE),
+        ((2, 1, 0), STONE),
+        ((2, 1, 2), "minecraft:observer[facing=north]"),
+        ((2, 1, 3), LAMP),
+        ((2, 2, 1), "minecraft:sticky_piston[facing=north,extended=true]"),
+        ((2, 2, 0), "minecraft:piston_head[facing=north,type=sticky]"),
+        ((3, 2, 1), RB),
+        ((2, 1, 1), "minecraft:stone_brick_wall"),
+        ((1, 1, 8), STONE),
+        ((3, 1, 8), STONE),
+        ((2, 1, 7), "minecraft:observer[facing=south]"),
+        ((2, 1, 6), LAMP),
+        ((2, 2, 10), "minecraft:piston[facing=north]"),
+        ((2, 2, 9), STONE),
+        ((2, 1, 8), "minecraft:cobblestone_wall"),
+    ],  # fmt: skip
+    watch=[
+        (2, 1, 1),
+        (2, 2, 1),
+        (2, 2, 0),
+        (2, 1, 2),
+        (2, 1, 3),
+        (2, 1, 8),
+        (2, 2, 8),
+        (2, 2, 9),
+        (2, 2, 10),
+        (2, 1, 7),
+        (2, 1, 6),
+    ],  # fmt: skip
+    ticks=24,
+    inputs={6: [((3, 2, 1), AIR)], 12: [((2, 2, 11), RB)]},
+)
+
 ALL = [
+    WALLS_UNDER_MOVING_BLOCKS,
+    CRAFTERS_JUKEBOXES,
     LIGHTNING_RODS,
     TRIPWIRES,
     SCAFFOLDING,

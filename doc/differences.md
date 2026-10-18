@@ -93,7 +93,10 @@ falling block that act on the same block in the same tick may come in another or
 | Note block | Plays a custom head's sound | A head's block entity is not simulated: fails like a head without a sound | `note_block.py` |
 | Sign | Block entity ticker (who may edit) | No ticker (no effect on the world) | `sign.py` |
 | Buttons | Arrows hold wooden buttons down | No arrows | `attached.py` |
-| Rails | Detector rails (need minecarts); waterlogged rails | Not simulated; `waterlogged` always false | `rail.py` |
+| Rails | Minecarts press detector rails; waterlogged rails | No minecarts, so detector rails never power (otherwise as in the game); `waterlogged` always false | `rail.py` |
+| Crafters: crafting | A crafter whose grid matches a recipe crafts when triggered: the result goes out of its front, one item per slot is used up, `crafting` for 6 ticks | No recipes: the attempt always fails (exact for empty grids and grids that match no recipe) | `crafter.py` |
+| Crafters and jukeboxes: hoppers | Hoppers and droppers fill crafters one item at a time (evenly) and put discs into jukeboxes and take them out | Hoppers and droppers leave them alone | `crafter.py`, `jukebox.py`, `hopper.py` (`container_at`) |
+| Jukebox: ejected disc | Drops as an item | Disappears (items are not simulated) | `jukebox.py` |
 | Doors, trapdoors, gates, fences, walls | Wind charges open doors; water; leads on fences | Not simulated | `openable.py`, `connecting.py` |
 | Catalog blocks | Silverfish in infested blocks; carved pumpkins making golems; ice turning into water when broken; sponges | Not simulated (carved pumpkins and jack o'lanterns stay foreign) | `catalog.py` |
 | Copper bulbs | Oxidation (random ticks), light level | Not simulated (all oxidation stages behave the same, as in the game's logic) | `copper_bulb.py` |

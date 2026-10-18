@@ -73,7 +73,7 @@ REDSTONE = (
     )),
     ("Outputs", (
         "redstone_lamp", "copper_bulb", "note_block", "piston", "sticky_piston", "dispenser",
-        "dropper", "target",
+        "dropper", "target", "crafter",
     )),
     ("Movement", (
         "piston", "sticky_piston", "slime_block", "honey_block", "obsidian",
@@ -82,14 +82,14 @@ REDSTONE = (
     ("Read by comparators", (
         "barrel", "chest", "trapped_chest", "hopper", "dropper", "dispenser", "lectern",
         "cake", "composter", "cauldron", "water_cauldron", "lava_cauldron", "furnace",
-        "blast_furnace", "smoker",
+        "blast_furnace", "smoker", "crafter", "jukebox",
     )),
     ("Items", ("hopper", "dropper", "dispenser", "chest", "trapped_chest", "barrel")),
     ("Doors", (
         "iron_door", "iron_trapdoor", "oak_door", "oak_trapdoor", "oak_fence_gate",
         "copper_door", "copper_trapdoor",
     )),
-    ("Rails", ("rail", "powered_rail", "activator_rail")),
+    ("Rails", ("rail", "powered_rail", "activator_rail", "detector_rail")),
     ("Gravity", (
         "sand", "red_sand", "gravel", "white_concrete_powder", "anvil", "chipped_anvil",
         "damaged_anvil", "dragon_egg", "scaffolding",

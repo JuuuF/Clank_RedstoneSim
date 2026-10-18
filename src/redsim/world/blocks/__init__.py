@@ -28,7 +28,7 @@ from redsim.world.blocks.pressure_plate import (
     PressurePlateBlock,
     WeightedPressurePlateBlock,
 )
-from redsim.world.blocks.rail import PoweredRailBlock, RailBlock
+from redsim.world.blocks.rail import DetectorRailBlock, PoweredRailBlock, RailBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
 from redsim.world.blocks.scaffolding import ScaffoldingBlock
 from redsim.world.blocks.sign import WOODS, StandingSignBlock, WallSignBlock
@@ -138,6 +138,7 @@ OBSERVER = register(ObserverBlock())
 RAIL = register(RailBlock())
 POWERED_RAIL = register(PoweredRailBlock("minecraft:powered_rail"))
 ACTIVATOR_RAIL = register(PoweredRailBlock("minecraft:activator_rail"))
+DETECTOR_RAIL = register(DetectorRailBlock())
 TARGET = register(TargetBlock())
 NOTE_BLOCK = register(NoteBlock())
 DISPENSER = register(DispenserBlock())
@@ -193,6 +194,7 @@ __all__ = [
     "LECTERN",
     "LEVER",
     "COPPER_BULB",
+    "DETECTOR_RAIL",
     "COPPER_BULBS",
     "CHEST",
     "DISPENSER",

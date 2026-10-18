@@ -226,7 +226,7 @@ def block_boxes(state: BlockState) -> list[Box]:
         return [Box((1 + 2 * bites, 0, 1), (15, 8, 15), rgb(0.95, 0.90, 0.88))]
     if block_id == "minecraft:barrel":
         return face_any(_barrel(), state.get(FACING))
-    if block_id in ("minecraft:rail", "minecraft:powered_rail", "minecraft:activator_rail"):
+    if block_id in RAIL_METAL:
         return _rail(block_id, state)
     if block_id == "minecraft:hopper":
         return _hopper(state)
@@ -345,6 +345,7 @@ RAIL_METAL = {
     "minecraft:rail": rgb(0.62, 0.62, 0.64),
     "minecraft:powered_rail": rgb(0.86, 0.70, 0.22),
     "minecraft:activator_rail": rgb(0.40, 0.36, 0.36),
+    "minecraft:detector_rail": rgb(0.55, 0.45, 0.40),
 }
 
 

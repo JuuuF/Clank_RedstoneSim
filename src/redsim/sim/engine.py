@@ -70,7 +70,8 @@ class Action:
       ``ServerPlayerGameMode.destroyBlock``, ``useWithoutItem``); ``break`` with
       ``payload={"shears": True}``: holding shears (tripwire is cut, disarmed).
     * ``setblock``: the ``/setblock`` command in replace mode (``SetBlockCommand.setBlock``);
-      ``payload={"nbt": {...}}`` adds block-entity data like ``/setblock … {…}``.
+      ``payload={"nbt": {...}}`` adds block-entity data like ``/setblock … {…}``, and
+      ``"strict": True`` is ``/setblock … strict`` (no updates, no ``onPlace``).
     * ``set_block``: a raw ``Level.setBlock`` with explicit flags (editor tool, not vanilla).
     * ``fill``: ``/fill <pos> <payload["to"]> <state>`` in replace mode (``FillCommand``).
     * ``clone``: place a captured region at ``pos`` like ``/clone`` (replace mode) would place
@@ -434,7 +435,8 @@ class Engine:
             elif action.kind == "setblock":
                 assert action.state is not None
                 nbt = action.payload.get("nbt") if action.payload else None
-                if not self._setblock_command(action.pos, action.state, nbt):
+                strict = bool(action.payload.get("strict", False)) if action.payload else False
+                if not self._setblock_command(action.pos, action.state, nbt, strict):
                     info.detail["info"] = "setblock: no change"
             elif action.kind == "sign_text":
                 from redsim.world.blocks.sign import SignBlockEntity
@@ -542,23 +544,30 @@ class Engine:
         if placed.is_(state.block):
             placed.block.set_placed_by(level, pos, placed)
 
-    def _setblock_command(self, pos: Pos, text: str, nbt: dict[str, Any] | None = None) -> bool:
-        """``SetBlockCommand.setBlock`` (replace mode, not strict): ``BlockInput.place`` with
-        flags 2|256 (shape-adjusted state, explicit properties re-applied, then the block
-        entity data loaded; ``setChanged`` only if the data changed, ``BlockInput`` L79), then
-        ``updateNeighboursOnBlockSet``."""
+    def _setblock_command(
+        self, pos: Pos, text: str, nbt: dict[str, Any] | None = None, strict: bool = False
+    ) -> bool:
+        """``SetBlockCommand.setBlock`` (replace mode): ``BlockInput.place`` with flags
+        2|256 (shape-adjusted state, explicit properties re-applied, then the block entity
+        data loaded; ``setChanged`` only if the data changed, ``BlockInput`` L79), then
+        ``updateNeighboursOnBlockSet``. ``strict`` (``/setblock … strict``): flags 2|816,
+        the state exactly as written (``KNOWN_SHAPE``), no ``onPlace``, no updates."""
         from redsim.world.blocks import parse_state_explicit
 
         level = self.level
         state, explicit = parse_state_explicit(text)
         old_state = level.get_block_state(pos)
-        placed = level.update_from_neighbour_shapes(state, pos)
-        if placed.is_air:
+        if strict:
             placed = state
-        if placed is not state:
-            for prop in explicit:
-                placed = placed.with_(prop, state.get(prop))
-        flags = UpdateFlags.CLIENTS | UpdateFlags.SKIP_BLOCK_ENTITY_SIDEEFFECTS
+            flags = UpdateFlags.CLIENTS | STRICT_FLAGS
+        else:
+            placed = level.update_from_neighbour_shapes(state, pos)
+            if placed.is_air:
+                placed = state
+            if placed is not state:
+                for prop in explicit:
+                    placed = placed.with_(prop, state.get(prop))
+            flags = UpdateFlags.CLIENTS | UpdateFlags.SKIP_BLOCK_ENTITY_SIDEEFFECTS
         affected = level.set_block(pos, placed, flags)
         if nbt is not None:
             entity = level.get_block_entity(pos)
@@ -572,7 +581,8 @@ class Engine:
                         level.update_neighbour_for_output_signal(pos, current.block)
         if not affected:
             return False  # "Could not set the block": no neighbor updates either
-        level.update_neighbours_on_block_set(pos, old_state)
+        if not strict:
+            level.update_neighbours_on_block_set(pos, old_state)
         return True
 
     def _container_item(self, pos: Pos, payload: dict[str, Any]) -> None:

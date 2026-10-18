@@ -177,6 +177,14 @@ def container_at(level: Level, pos: Pos) -> ContainerBlockEntity | None:
         # only fuel goes into slot 1) and cook what they get; neither is simulated, so
         # hoppers and droppers leave them alone (doc/differences.md).
         return None
+    from redsim.world.blocks.crafter import is_crafter
+    from redsim.world.blocks.jukebox import is_jukebox
+
+    if is_crafter(entity) or is_jukebox(entity):
+        # Not as in the game: crafters take items one at a time into their fullest-first
+        # slots (``canPlaceItem``) and jukeboxes take only discs; those rules are not
+        # ported, so hoppers and droppers leave them alone (doc/differences.md).
+        return None
     return entity if isinstance(entity, ContainerBlockEntity) else None
 
 

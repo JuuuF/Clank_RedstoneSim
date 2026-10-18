@@ -613,7 +613,7 @@ class Level:
 
     def _update_block_entity_ticker(self, be: BlockEntity) -> None:
         """``LevelChunk.updateBlockEntityTicker`` (L709)."""
-        if not be.block_state.block.has_ticker:
+        if not be.block_state.block.block_entity_ticks(be.block_state):
             self._remove_block_entity_ticker(be.pos)
             return
         ticker = _BoundTicker(be)

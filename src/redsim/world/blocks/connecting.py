@@ -275,7 +275,7 @@ class WallBlock(_GameBlock):
         connected = {d: self._side(level, pos, d) for d in SIDES}
         top_pos = offset(pos, Direction.UP)
         state = ctx.requested.with_(WATERLOGGED, False)
-        return self._update(state, level.get_block_state(top_pos), connected)
+        return self._update(state, level, top_pos, level.get_block_state(top_pos), connected)
 
     def update_shape(
         self,
@@ -290,17 +290,24 @@ class WallBlock(_GameBlock):
             return state
         connected = {d: state.get(WALL_SIDES[d]) != "none" for d in SIDES}
         if direction is Direction.UP:  # topUpdate
-            return self._update(state, neighbor, connected)
+            return self._update(state, level, neighbor_pos, neighbor, connected)
         sturdy = neighbor.is_face_sturdy(level, neighbor_pos, direction.opposite)
         connected[direction] = self.connects_to(neighbor, sturdy, direction.opposite)
-        above = level.get_block_state(offset(pos, Direction.UP))
-        return self._update(state, above, connected)  # sideUpdate
+        top_pos = offset(pos, Direction.UP)
+        return self._update(state, level, top_pos, level.get_block_state(top_pos), connected)
 
     def _update(
-        self, state: BlockState, top: BlockState, connected: dict[Direction, bool]
+        self,
+        state: BlockState,
+        level: Level,
+        top_pos: Pos,
+        top: BlockState,
+        connected: dict[Direction, bool],
     ) -> BlockState:
-        """``updateShape(level, state, topPos, topNeighbour, north, east, south, west)``."""
-        above = top.get_collision_shape().face_slice(Direction.DOWN)
+        """``updateShape(level, state, topPos, topNeighbour, north, east, south, west)``: the
+        top neighbor's ``getCollisionShape(level, topPos)`` (a moving piston's comes from its
+        block entity), its face toward the wall."""
+        above = top.get_collision_shape_in(level, top_pos).face_slice(Direction.DOWN)
         for direction, on in connected.items():
             side = ("tall" if _covers(above, _TEST_WALL[direction]) else "low") if on else "none"
             state = state.with_(WALL_SIDES[direction], side)

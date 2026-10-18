@@ -60,6 +60,9 @@ class Scenario:
     watch_items: bool = False
     #: Also compare every falling block entity (state, exact position and motion).
     watch_entities: bool = False
+    #: Build the setup with ``/setblock … strict`` (no updates, no ``onPlace``: the blocks
+    #: are exactly as written, like a saved world when it loads), in any order.
+    strict_setup: bool = False
 
     def fingerprint(self) -> str:
         """Hash of everything that determines the run (recordings go stale if it changes)."""
@@ -76,6 +79,8 @@ class Scenario:
             parts.append("watch_items")
         if self.watch_entities:
             parts.append("watch_entities")
+        if self.strict_setup:
+            parts.append("strict_setup")
         payload = json.dumps(parts)
         return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
@@ -126,8 +131,10 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
     engine.level.game_time = start_time
     build_terrain(engine, origin, scenario.size)
     for rel, state, *nbt in scenario.setup:
-        payload = {"nbt": nbt[0]} if nbt else None
-        engine.apply(Action("setblock", absolute(origin, rel), state, payload=payload))
+        payload: dict[str, Any] = {"nbt": nbt[0]} if nbt else {}
+        if scenario.strict_setup:
+            payload["strict"] = True
+        engine.apply(Action("setblock", absolute(origin, rel), state, payload=payload or None))
     frames = [observe_sim(engine, scenario, origin)]
     for tick in range(scenario.ticks):
         for rel, state in scenario.inputs.get(tick, []):
@@ -266,14 +273,16 @@ def entity_text(state: str, position: tuple[float, ...], motion: tuple[float, ..
 
 
 # ---------------------------------------------------------------- game side
-def prepare_area(server: GameServer, origin: Pos, size: tuple[int, int], margin: int = 2) -> None:
+def prepare_area(
+    server: GameServer, origin: Pos, size: tuple[int, int], margin: int = 2, height: int = 12
+) -> None:
     x0, z0 = origin[0] - margin, origin[2] - margin
     x1, z1 = origin[0] + size[0] + margin - 1, origin[2] + size[1] + margin - 1
     server.run(
         [
             f"fill {x0} -63 {z0} {x1} -62 {z1} minecraft:stone strict",
             f"fill {x0} {FLOOR_Y} {z0} {x1} {FLOOR_Y} {z1} minecraft:stone strict",
-            f"fill {x0} {FLOOR_Y + 1} {z0} {x1} {FLOOR_Y + 12} {z1} minecraft:air strict",
+            f"fill {x0} {FLOOR_Y + 1} {z0} {x1} {FLOOR_Y + height} {z1} minecraft:air strict",
             "kill @e[type=minecraft:item]",
             "kill @e[type=minecraft:falling_block]",
         ]
@@ -409,12 +418,15 @@ def check_outputs(results: list[Any]) -> None:
 def run_game(
     server: GameServer, scenario: Scenario, origin: Pos, sim_frames: list[dict[str, str]]
 ) -> list[dict[str, str]]:
-    prepare_area(server, origin, scenario.size)
+    top = max((rel[1] for rel, *_ in scenario.setup), default=0)
+    prepare_area(server, origin, scenario.size, height=max(12, top + 4))
+    strict = " strict" if scenario.strict_setup else ""
     check_outputs(
         server.run(
             [
                 f"setblock {' '.join(map(str, absolute(origin, rel)))} {s}"
                 + (snbt(game_nbt(nbt[0])) if nbt else "")
+                + strict
                 for rel, s, *nbt in scenario.setup
             ]
         )
@@ -441,8 +453,8 @@ class _IntArray(list):
     """An NBT int array (``[I; 1, 2]``)."""
 
 
-#: Block-entity keys the game stores as int arrays (campfires).
-INT_ARRAYS = ("CookingTimes", "CookingTotalTimes")
+#: Block-entity keys the game stores as int arrays (campfires, crafters).
+INT_ARRAYS = ("CookingTimes", "CookingTotalTimes", "disabled_slots")
 
 
 def game_nbt(nbt: dict[str, Any]) -> dict[str, Any]:
@@ -483,7 +495,9 @@ def snbt(value: Any) -> str:
 
 
 # ---------------------------------------------------------------- driver
-def compare(server: GameServer, scenario: Scenario, origin: Pos) -> dict[str, Any]:
+def compare(
+    server: GameServer, scenario: Scenario, origin: Pos, results_dir: Path = RESULTS_DIR
+) -> dict[str, Any]:
     start_time = server.game_time()
     sim_frames = run_sim(scenario, origin, start_time)
     game_frames = run_game(server, scenario, origin, sim_frames)
@@ -507,12 +521,12 @@ def compare(server: GameServer, scenario: Scenario, origin: Pos) -> dict[str, An
             for r in records
         ],
     }
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     text = json.dumps(result, indent=1) + "\n"
     if scenario.name.startswith("fuzz_"):
         # Random circuits watch whole volumes: store compressed (about 100× smaller).
         data = gzip.compress(text.encode(), compresslevel=9, mtime=0)
-        (RESULTS_DIR / f"{scenario.name}.json.gz").write_bytes(data)
+        (results_dir / f"{scenario.name}.json.gz").write_bytes(data)
     else:
-        (RESULTS_DIR / f"{scenario.name}.json").write_text(text)
+        (results_dir / f"{scenario.name}.json").write_text(text)
     return result

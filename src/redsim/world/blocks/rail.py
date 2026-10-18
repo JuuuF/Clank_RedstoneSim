@@ -18,8 +18,14 @@ Sources (``data/minecraft_src/client-src/net/minecraft/world/level/block/``):
   (``findPoweredRailSignal``/``isSameRailWithPower``); a change updates the block below
   (and above for slopes).
 
-Not as in the game: waterlogging is not simulated (always false here), and detector rails
-are not modeled (they need minecarts).
+* ``DetectorRailBlock.java``: a straight rail that is a signal source (so wire connects
+  to it), powered while a minecart is on it (``checkPressed``, rechecked every 20 ticks),
+  with a comparator output from the minecart's contents. Minecarts are not simulated, so a
+  detector rail stays unpowered (as in the game without minecarts); every ``checkPressed``
+  (placing it, an entity inside, a pending recheck) still updates comparators around it.
+
+Not as in the game: waterlogging is not simulated (always false here), and minecarts do not
+exist, so detector rails never detect one.
 """
 
 from __future__ import annotations
@@ -251,6 +257,89 @@ class PoweredRailBlock(BaseRailBlock):
             level.update_neighbors_at(below(pos), self)
             if state.get(RAIL_SHAPE_STRAIGHT) in SLOPES:
                 level.update_neighbors_at(above(pos), self)
+
+
+class DetectorRailBlock(BaseRailBlock):
+    """``DetectorRailBlock`` without minecarts (none are simulated)."""
+
+    properties = (RAIL_SHAPE_STRAIGHT, POWERED, WATERLOGGED)
+    shape_property = RAIL_SHAPE_STRAIGHT
+    is_straight = True
+    #: ``PRESSED_CHECK_PERIOD``.
+    pressed_check_period = 20
+
+    def __init__(self) -> None:
+        super().__init__("minecraft:detector_rail")
+        self.register_default_state(
+            self.default_state.with_(POWERED, False)
+            .with_(RAIL_SHAPE_STRAIGHT, NS)
+            .with_(WATERLOGGED, False)
+        )
+
+    def is_signal_source(self, state: BlockState) -> bool:
+        return True
+
+    def own_signal(self, state: BlockState, level: Level, pos: Pos) -> int:
+        return 15 if state.get(POWERED) else 0
+
+    def get_direct_signal(
+        self, state: BlockState, level: Level, pos: Pos, direction: Direction
+    ) -> int:
+        return 15 if state.get(POWERED) and direction is Direction.UP else 0
+
+    def has_analog_output_signal(self, state: BlockState) -> bool:
+        return True
+
+    def get_analog_output_signal(
+        self, state: BlockState, level: Level, pos: Pos, direction: Direction
+    ) -> int:
+        """The minecart's command block or contents while powered: no minecarts, 0."""
+        return 0
+
+    def entity_inside_entity(
+        self, state: BlockState, level: Level, pos: Pos, entity: object
+    ) -> None:
+        """``entityInside`` (a falling block passing through it)."""
+        if not state.get(POWERED):
+            self.check_pressed(level, pos, state)
+
+    def tick(self, state: BlockState, level: Level, pos: Pos) -> None:
+        if state.get(POWERED):
+            self.check_pressed(level, pos, state)
+
+    def check_pressed(self, level: Level, pos: Pos, state: BlockState) -> None:
+        """``checkPressed``: pressed while a minecart is in its search box. Not as in the
+        game: there are no minecarts, so it is never pressed (a powered one, put by
+        ``/setblock``, turns off at its next check)."""
+        if not self.can_survive(state, level, pos) or level.get_block_state(pos).block is not self:
+            return
+        was_pressed = bool(state.get(POWERED))
+        should_be_pressed = False
+        if was_pressed and not should_be_pressed:
+            new_state = state.with_(POWERED, False)
+            level.set_block_and_update(pos, new_state)
+            self.update_power_to_connected(level, pos, new_state)
+            level.update_neighbors_at(pos, self)
+            level.update_neighbors_at(below(pos), self)
+        level.update_neighbour_for_output_signal(pos, self)
+
+    def update_power_to_connected(self, level: Level, pos: Pos, state: BlockState) -> None:
+        """``updatePowerToConnected``: the rails it connects to get a neighbor update."""
+        for connection in RailState(level, pos, state).connections:
+            neighbor = level.get_block_state(connection)
+            level.neighbor_changed_full(neighbor, connection, neighbor.block, False)
+
+    def on_place(
+        self,
+        state: BlockState,
+        level: Level,
+        pos: Pos,
+        old_state: BlockState,
+        moved_by_piston: bool,
+    ) -> None:
+        if old_state.block is not state.block:
+            updated = self.update_state_first(state, level, pos, moved_by_piston)
+            self.check_pressed(level, pos, updated)
 
 
 class RailState:

@@ -27,7 +27,8 @@ page is the summary to start from.*
   blocks, copper bulbs (all 8), dispensers, droppers, chests (double, trapped) and
   pressure plates (stone, 12 woods, weighted); on 2026-10-18: cauldrons, furnaces,
   tripwire hooks and tripwire, scaffolding ([[mechanics/tripwire-and-scaffolding]]),
-  lightning rods ([[mechanics/lightning-rod]]).
+  lightning rods ([[mechanics/lightning-rod]]), crafters, jukeboxes and detector rails
+  ([[mechanics/crafter-and-jukebox]]).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
   All 64 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
@@ -146,6 +147,7 @@ page is the summary to start from.*
 | campfire, soul campfire (+ block entity: 4 food slots) | `campfire.py` | signal fire from hay, immovable, cooking and cooling, saves | EXP-056 |
 | cauldron, water/lava/powder snow cauldron; furnace, blast furnace, smoker (+ block entity: 3 slots) | `cauldron.py`, `furnace.py` | comparator signals (level; contents with the game's item stack sizes), pushing, conducting, saves | EXP-062 |
 | tripwire hook, tripwire; scaffolding | `tripwire.py`, `scaffolding.py` | lines and attachment, entity visitors and falling blocks pressing the wire, breaking pulses, shears, disarmed wire; distance, breaking and falling, support, collision by entity | EXP-064, EXP-065 |
+| crafter, jukebox (+ block entities), detector rail | `crafter.py`, `jukebox.py`, `rail.py` | triggered state and observers, comparator counts, disabled slots, no recipes; discs, songs, signal source; detector rail without minecarts | EXP-067, EXP-068 |
 | lightning rods (8 ids) | `lightning_rod.py` | strike (editor action), 8-tick power, strong power into its block, cleaning, piston moves, wire connection | EXP-066 |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
@@ -177,7 +179,7 @@ code, is listed in [[differences]]; the points below are the broad ones.
 - Levers and buttons cannot be operated on the dedicated server (no player), so player
   interaction paths (`BlockItem.place`, `useWithoutItem`) are verified by source reading and
   unit tests, not in game.
-- Entities: only falling blocks (`sim/entities.py`). No minecarts (so no detector rails),
+- Entities: only falling blocks (`sim/entities.py`). No minecarts (detector rails never power),
   no item entities (the test server runs with `block_drops false` and `entity_drops false`),
   no projectiles except the target-block hit action.
 - Containers: barrels, hoppers, chests, dispensers and droppers (no composters, furnaces,
@@ -216,8 +218,8 @@ tests the Mac support themselves. Status and what is left:
 
 1. **Missing blocks: done** (note blocks, copper bulbs, dispensers/droppers, chests,
    pressure plates, scheduled-tick piston pulses, all game-verified). Left, lower priority:
-   dispense effects (entities, fluids, placing), detector rails (need minecarts), daylight
-   sensors (need time of day and sky light), composters and furnaces.
+   dispense effects (entities, fluids, placing), daylight sensors (need time of day and sky
+   light), crafting recipes (crafters never craft).
 2. **World loading: mostly done.** Streaming around the camera works (phase 3 of
    [[world-import]]). Left: an index of the save's builds with "go to the builds" (the
    palette scan already exists in `mcworld/chunk.py`), an on-disk cache keyed by chunk
