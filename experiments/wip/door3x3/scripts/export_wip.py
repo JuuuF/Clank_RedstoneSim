@@ -64,3 +64,18 @@ save("05b-input-timing-fails.redsim.json", gen("fast", "h0=6", "bu=wire", "final
      "half-way); gap2, gap9..13, gap18..24: the input off for too short a time while closed "
      "(B's quasi-connected hold returns without an update, or the open stops with a piston head in "
      "the doorway). Load a failing target and seek to tick 78 or 129 to see the stuck state.")
+_cells = [f"D{x}{r}" for x in range(3) for r in range(3)]
+_t06 = "\n".join(
+    ['target new lever "lever on at 5: clear by 33; off at 60: solid by 73"',
+     "target lever do at 5 use @L", "target lever do at 60 use @L"]
+    + [f"target lever expect @{c} block=air during 33..63" for c in _cells]
+    + [f"target lever expect @{c} block=smooth_stone during 73..90" for c in _cells]
+    + ['target new short "FAILS on purpose: the lever on for only 20 ticks (like a stone button); expected: open, then closed by 80"',
+       "target short do at 5 use @L", "target short do at 25 use @L"]
+    + [f"target short expect @{c} block=smooth_stone at 80" for c in _cells]
+    + ["check"])
+save("06-module-without-lockout.redsim.json", gen("module").rstrip("\n") + "\n" + _t06,
+     "WIP 06 (target lever works; target short FAILS on purpose): the module before the lockout. Power the "
+     "input block @IN (lever @L) to open: clear 28 ticks after, solid 13 after the lever goes off. An open "
+     "request of 20 ticks (target short) re-closes during the open sequence and the door sticks with the "
+     "center cell empty. The library door (examples/circuits/door_3x3) adds a lockout repeater that fixes it.")

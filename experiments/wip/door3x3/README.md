@@ -17,6 +17,8 @@ Worlds to open in the editor (`redsim FILE`) or inspect with `redsim-cli FILE â€
 | `04-controller-first.redsim.json` | works | the door with its controller, one input `@IN` (on = closed): closed 16 ticks after `@IN` rises, clear 37 ticks after it falls |
 | `05-fast-controller.redsim.json` | works | the faster controller: B's hold through quasi-connectivity (B extends when M lands), the spit observer behind B, wire for the observer's pulses: closed after 11 ticks, clear after 26 |
 | `05b-input-timing-fails.redsim.json` | **fails on purpose** (26 of 45) | the 05 door with too-short inputs: close pulses under 7 ticks (`short1`..`short6`), open gaps of 2, 9-13, 18-24 ticks (`gapâ€¦`) leave it stuck |
+| `06-module-without-lockout.redsim.json` | lever works; `short` **fails on purpose** | the module before the lockout (input block and torch, closed build by rebase): clear 28 / solid 13 ticks after the lever; a 20-tick open request sticks it |
+| `../../../examples/circuits/door_3x3.redsim.json` | works (library) | the input-safe door: lockout repeater @X locked by @OFFL / @ONL after each change of its output; clear 32 / solid 17; any input timing (scripts/suite.py: 60 cases) |
 
 Try: `redsim-cli 04-controller-first.redsim.json check`, or
 `redsim-cli 04-controller-first.redsim.json --dry-run -c "target cycle load; seek 26; show z=0 from -8 0 0 to 10 9 0"`.
@@ -85,4 +87,4 @@ Try: `redsim-cli 04-controller-first.redsim.json check`, or
 
 ## Next
 
-Backlog Q21: an input-safe version (lockout) and a faster open.
+Done: the input-safe version (lockout, in the library module). Open: backlog Q21 (a faster open), Q22 (the lockout as its own module). Scripts: `door.py` (generator), `make_lib.py` (writes the library script), `suite.py` (input-timing suite: `python suite.py safe`), `measure.py` (close/open ticks of a variant).

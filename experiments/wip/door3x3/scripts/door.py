@@ -1,11 +1,15 @@
 """3x3 flush door generator. Doorway x 0..2, y 4..6, z 0; floor top y 3."""
 import sys
 L = []
-def S(x, y, z, b): L.append(f"set {x} {y} {z} {b}")
-def P(x, y, z, b, *pr): L.append(f"place {x} {y} {z} {b} {' '.join(pr)}".rstrip())
+OFF = [0, 0, 0]                 # shift of the whole build (the module uses 7 0 2)
+def at(x, y, z): return f"{x + OFF[0]} {y + OFF[1]} {z + OFF[2]}"
+def S(x, y, z, b): L.append(f"set {at(x, y, z)} {b}")
+def P(x, y, z, b, *pr): L.append(f"place {at(x, y, z)} {b} {' '.join(pr)}".rstrip())
 DOOR = "smooth_stone"
 CTRL = False
 FAST = False
+MODULE = False
+SAFE = False
 
 def mechanics():
     # middle column (open state): A, B, C on the floor, M beside it, W pushes M west
@@ -187,7 +191,49 @@ def controller_fast(h0=8, bu_wire=False, final_wire=False):
     P(1, 2, 1, "observer", "out=north")  # last: placed earlier, it sees its spur being built
     for n, p in (("IN", (1, 2, 5)), ("SPIT", (1, 2, 1)), ("HOLD", (-2, 2, 1)), ("W", (3, 2, 1)),
                  ("A", (0, 1, 0)), ("OBS", (1, 1, -1)), ("LOCK", (4, 2, 1))):
-        L.append(f"label {n} {p[0]} {p[1]} {p[2]}")
+        if MODULE and n == "IN":
+            continue
+        L.append(f"label {n} {at(*p)}")
+
+def module(safe=False):
+    """Stage 06: the library module. Input block 1 2 7 (power it to open); a wall torch on it
+    feeds the trunk, so the door is closed while the input is off. Built open with the test
+    lever on, closed by flipping the lever off, then rebased: tick 0 is the closed door.
+    safe: a lockout repeater X between the torch and the trunk (input block 1 2 9), locked
+    after every edge of its own output: by comparator OFFL (rear the trunk 24 ticks late,
+    side the trunk) while an open runs, by ONL (rear the trunk, side the trunk 8 ticks late)
+    while a close runs."""
+    if not safe:
+        S(1, 2, 7, "stone"); P(1, 2, 6, "redstone_wall_torch", "facing=north")
+        P(1, 3, 7, "lever", "face=floor", "powered=true")
+        L.append(f'label IN {at(1, 2, 7)} "input block: power it to open (the lever @L is the test harness)"')
+        L.append(f'label L {at(1, 3, 7)} "test lever on the input block"')
+    else:
+        S(1, 2, 9, "stone"); P(1, 2, 8, "redstone_wall_torch", "facing=north")
+        P(1, 3, 9, "lever", "face=floor", "powered=true")
+        # X (4 ticks) can change again only 4 ticks after its last change; each lock engages 2
+        # ticks after X's output changes (wire inputs), so a new request always meets the lock
+        S(1, 1, 7, "stone"); rep(1, 2, 7, "north", 2)                 # X: the lockout repeater
+        S(1, 1, 6, "stone"); P(1, 2, 6, "redstone_wire")             # X -> trunk
+        S(0, 1, 6, "stone"); P(0, 2, 6, "redstone_wire")             # OFFL side: trunk wire (14)
+        S(0, 1, 7, "stone"); P(0, 2, 7, "comparator", "out=east", "mode=subtract")
+        S(-4, 1, 6, "stone"); rep(-4, 2, 6, "south", 4)              # OFFL rear: 8+8+8, then two
+        S(-4, 1, 7, "stone"); rep(-4, 2, 7, "south", 4)              # wires (13, weaker than the side)
+        S(-4, 2, 8, "stone")
+        S(-3, 1, 8, "stone"); rep(-3, 2, 8, "east", 4)
+        for (x, z) in ((-2, 8), (-2, 7), (-1, 7)):
+            S(x, 1, z, "stone"); P(x, 2, z, "redstone_wire")
+        S(2, 1, 6, "stone"); rep(2, 2, 6, "south", 4)                 # ONL side: trunk 8 late
+        S(2, 1, 7, "stone"); P(2, 2, 7, "comparator", "out=west", "mode=subtract")
+        for z in (6, 7):                                              # ONL rear: trunk wire
+            S(3, 1, z, "stone"); P(3, 2, z, "redstone_wire")
+        for n, p, d in (("IN", (1, 2, 9), "input block: power it to open (the lever @L is the test harness)"),
+                        ("L", (1, 3, 9), "test lever on the input block"), ("X", (1, 2, 7), "lockout repeater"),
+                        ("OFFL", (0, 2, 7), "lock while an open runs"), ("ONL", (2, 2, 7), "lock while a close runs")):
+            L.append(f'label {n} {at(*p)} "{d}"')
+    for x in (0, 1, 2):
+        for y in (4, 5, 6):
+            L.append(f'label D{x}{y - 4} {at(x, y, 0)} "door cell (x {x}, row {y - 4})"')
 
 def fail_targets():
     """Input-timing limits: close pulses of 1..14 ticks, open gaps of 1..30 ticks."""
@@ -224,7 +270,12 @@ if __name__ == "__main__":
     stage = sys.argv[1]
     L.append("new size 40 force")
     CTRL = stage != "mech"
-    FAST = stage == "fast"
+    MODULE = stage in ("module", "safe")
+    SAFE = stage == "safe"
+    FAST = stage in ("fast", "module", "safe")
+    if MODULE:
+        OFF[:] = [7, 0, 2]
+        sys.argv[2:] = ["h0=6", "bu=wire", "final=none"]
     mechanics()
     if FAST:
         opts = dict(a.split("=") for a in sys.argv[2:] if "=" in a)
@@ -232,7 +283,14 @@ if __name__ == "__main__":
                         {"wire": True, "none": "none"}.get(opts.get("final"), False))
     elif CTRL:
         controller()
+    if MODULE:
+        module(SAFE)
     L.append("settle")
+    if MODULE:
+        L.insert(1, 'note "3x3 flush piston door: power the input block @IN to open (the test lever @L on it); off = closed"')
+        L.append(f"at 2 use {at(1, 3, 9 if SAFE else 7)}")
+        L.append("seek 40")
+        L.append("rebase")
     if stage == "ctrl":
         L.insert(1, 'note "3x3 flush door, stage 3: controller; @IN on = closed (test input)"')
         ctrl_target("cycle", 10, 70)
