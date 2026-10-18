@@ -1834,6 +1834,101 @@ GRAVITY_PISTONS = Scenario(
     watch_entities=True,
 )
 
+
+def _furnace_items(*stacks: tuple[int, str, int]) -> dict[str, Any]:
+    return {"Items": [{"Slot": slot, "id": item, "count": count} for slot, item, count in stacks]}
+
+
+#: Cauldrons and furnaces as comparator sources (cauldron.py, furnace.py; the 5x5 vault lamp
+#: door reads a water cauldron a piston moves and furnaces through blocks). Row 1: a
+#: comparator (z=2, facing north) reads each source at z=1, a dust at z=3 shows the strength.
+CAULDRONS_FURNACES = Scenario(
+    name="cauldrons_furnaces",
+    description=(
+        "Comparators read cauldrons (empty 0, water and powder snow by level, lava 3) and "
+        "furnaces, blast furnaces and smokers by their contents (a wooden shovel stacks to 1); "
+        "a sticky piston moves a full water cauldron in front of a comparator and back, "
+        "another moves a stone between a comparator and a furnace; a piston cannot push a "
+        "furnace; a cauldron does not conduct a repeater's power."
+    ),
+    size=(18, 10),
+    setup=[
+        ((1, 1, 1), "minecraft:cauldron"),
+        ((3, 1, 1), "minecraft:water_cauldron[level=1]"),
+        ((5, 1, 1), "minecraft:water_cauldron[level=2]"),
+        ((7, 1, 1), "minecraft:water_cauldron[level=3]"),
+        ((9, 1, 1), "minecraft:lava_cauldron"),
+        ((11, 1, 1), "minecraft:powder_snow_cauldron[level=2]"),
+        ((13, 1, 1), "minecraft:furnace", _furnace_items((0, "minecraft:redstone", 1))),
+        (
+            (15, 1, 1),
+            "minecraft:furnace[facing=east]",
+            _furnace_items((1, "minecraft:wooden_shovel", 1)),
+        ),
+        (
+            (17, 1, 1),
+            "minecraft:blast_furnace",
+            _furnace_items((0, "minecraft:cobblestone", 64), (2, "minecraft:stone", 7)),
+        ),
+        *(((x, 1, 2), "minecraft:comparator[facing=north]") for x in range(1, 18, 2)),
+        *(((x, 1, 3), "minecraft:redstone_wire") for x in range(1, 18, 2)),
+        # row 2
+        ((1, 1, 5), "minecraft:smoker", _furnace_items((0, "minecraft:ender_pearl", 8))),
+        ((1, 1, 6), "minecraft:comparator[facing=north]"),
+        ((1, 1, 7), "minecraft:redstone_wire"),
+        ((4, 1, 5), "minecraft:sticky_piston[facing=east]"),
+        ((5, 1, 5), "minecraft:water_cauldron[level=3]"),
+        ((6, 1, 6), "minecraft:comparator[facing=north]"),
+        ((6, 1, 7), "minecraft:redstone_wire"),
+        ((11, 1, 4), "minecraft:furnace", _furnace_items((1, "minecraft:wooden_shovel", 1))),
+        ((9, 1, 5), "minecraft:sticky_piston[facing=east]"),
+        ((10, 1, 5), "minecraft:stone"),
+        ((11, 1, 6), "minecraft:comparator[facing=north]"),
+        ((11, 1, 7), "minecraft:redstone_wire"),
+        ((14, 1, 5), "minecraft:piston[facing=east]"),
+        ((15, 1, 5), "minecraft:furnace", _furnace_items((0, "minecraft:redstone", 3))),
+        # row 3
+        ((2, 1, 9), "minecraft:repeater[facing=west]"),
+        ((3, 1, 9), "minecraft:water_cauldron[level=1]"),
+        ((4, 1, 9), "minecraft:redstone_lamp"),
+    ],  # fmt: skip
+    watch=[
+        *((x, 1, z) for x in range(1, 18, 2) for z in (1, 2, 3)),
+        (1, 1, 5),
+        (1, 1, 6),
+        (1, 1, 7),
+        (4, 1, 5),
+        (5, 1, 5),
+        (6, 1, 5),
+        (6, 1, 6),
+        (6, 1, 7),
+        (11, 1, 4),
+        (9, 1, 5),
+        (10, 1, 5),
+        (11, 1, 5),
+        (11, 1, 6),
+        (11, 1, 7),
+        (14, 1, 5),
+        (15, 1, 5),
+        (16, 1, 5),
+        (2, 1, 9),
+        (3, 1, 9),
+        (4, 1, 9),
+    ],  # fmt: skip
+    ticks=40,
+    inputs={
+        3: [
+            ((3, 1, 5), "minecraft:redstone_block"),
+            ((13, 1, 5), "minecraft:redstone_block"),
+            ((1, 1, 9), "minecraft:redstone_block"),
+        ],
+        6: [((8, 1, 5), "minecraft:redstone_block")],
+        20: [((3, 1, 5), "minecraft:air")],
+        26: [((8, 1, 5), "minecraft:air")],
+    },
+    watch_items=True,
+)
+
 CAMPFIRES = Scenario(
     name="campfires",
     description=(
@@ -2208,8 +2303,16 @@ INSTANT_EDGES = Scenario(
         ((3, 1, 2), "minecraft:stone"),
         ((3, 2, 2), "minecraft:repeater[facing=north,delay=1,locked=false,powered=false]"),
     ],
-    watch=[(23, 1, 11), (23, 2, 9), (25, 2, 9), (3, 2, 3),
-           (3, 2, 10), (3, 2, 1), (4, 2, 4), (21, 2, 9)],
+    watch=[
+        (23, 1, 11),
+        (23, 2, 9),
+        (25, 2, 9),
+        (3, 2, 3),
+        (3, 2, 10),
+        (3, 2, 1),
+        (4, 2, 4),
+        (21, 2, 9),
+    ],
     ticks=180,
     inputs={
         20: [((0, 2, 7), RB)],
@@ -2458,8 +2561,10 @@ DOOR_3X3 = Scenario(
     ticks=210,
     inputs={
         # pistons A and B only after the observers' own /setblock pulse (R-018) is over
-        6: [((8, 1, 2), "minecraft:sticky_piston[facing=up,extended=false]"),
-            ((8, 2, 2), "minecraft:sticky_piston[facing=up,extended=false]")],
+        6: [
+            ((8, 1, 2), "minecraft:sticky_piston[facing=up,extended=false]"),
+            ((8, 2, 2), "minecraft:sticky_piston[facing=up,extended=false]"),
+        ],
         40: [((8, 2, 13), AIR)],
         100: [((8, 2, 13), RB)],
         170: [((8, 2, 13), AIR)],
@@ -2469,6 +2574,7 @@ DOOR_3X3 = Scenario(
 ALL = [
     PISTON_ZERO_TICK,
     CAMPFIRES,
+    CAULDRONS_FURNACES,
     GRAVITY_BLOCKS,
     GRAVITY_PISTONS,
     OPENABLES,

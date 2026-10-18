@@ -295,12 +295,15 @@ JSON `data`: {"pos", "state", "kind", "strength", "tick"}
 
 `container POS SLOT ITEM COUNT | container POS empty`
 
-Set one slot of a barrel, chest, hopper, dropper or dispenser.
+Set one slot of a container (barrel, chest, hopper, dropper, furnace, …).
 
 Puts COUNT of ITEM (an item id like `stone` or `minecraft:redstone`) into slot SLOT
 (0-based) of the container at POS, replacing what was there (`/setblock` with the
 block-entity data, so comparators update; a hopper keeps its transfer cooldown).
 `container POS empty` empties every slot. Stacks are limited to the item's stack size.
+Containers: barrels, chests, trapped chests, hoppers, droppers, dispensers and furnaces
+(furnace, blast furnace, smoker: slot 0 ingredient, 1 fuel, 2 result; they do not cook
+in the simulator, doc/differences.md).
 
 Examples:
 

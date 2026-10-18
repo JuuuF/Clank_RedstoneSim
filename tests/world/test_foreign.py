@@ -4,6 +4,8 @@ settings from the block table: a block with a block entity is never moved by pis
 
 from __future__ import annotations
 
+import pytest
+
 from redsim.editor.document import Document
 from redsim.world import blocks
 from redsim.world.block import Conductor, PushReaction
@@ -14,26 +16,27 @@ P = blocks.parse_state
 
 
 def test_block_entities_are_immovable_and_settings_come_from_the_game() -> None:
-    furnace = P("furnace[facing=east,lit=false]").block
-    assert isinstance(furnace, ForeignBlock)
-    assert furnace.push_reaction is PushReaction.IMMOVEABLE  # it has a block entity
+    jukebox = P("jukebox").block  # (the owner's world had furnaces, simulated since)
+    assert isinstance(jukebox, ForeignBlock)
+    assert jukebox.push_reaction is PushReaction.IMMOVEABLE  # it has a block entity
     assert P("beacon").block.conductor is Conductor.NEVER  # isRedstoneConductor(never)
     assert P("white_bed[part=foot]").block.push_reaction is PushReaction.POPPED
     assert P("end_portal_frame").block.destroy_speed == -1.0
 
 
-def test_slime_leaves_a_furnace_behind() -> None:
-    """A sticky piston pushes a slime block that touches a furnace: the slime moves, the
-    furnace stays (``isPushable`` is false for block entities; pulled blocks that are not
-    pushable are left out of the structure)."""
+@pytest.mark.parametrize("block", ["furnace[facing=north,lit=false]", "jukebox"])
+def test_slime_leaves_a_block_entity_behind(block: str) -> None:
+    """A sticky piston pushes a slime block that touches a furnace (simulated) or a jukebox
+    (foreign): the slime moves, the other block stays (``isPushable`` is false for block
+    entities; pulled blocks that are not pushable are left out of the structure)."""
     doc = Document.new_flat()  # in the air, so the slime does not drag the floor along
     doc.setblock((0, 4, 0), P("sticky_piston[facing=east]"))
     doc.setblock((1, 4, 0), P("slime_block"))
-    doc.setblock((1, 4, 1), P("furnace[facing=north]"))
+    doc.setblock((1, 4, 1), P(block))
     doc.run_ticks(2)
     doc.setblock((-1, 4, 0), P("redstone_block"))  # powers the piston
     doc.run_ticks(4)
     assert doc.state_at((0, 4, 0)).get(EXTENDED)
     assert doc.state_at((2, 4, 0)).is_(blocks.SLIME_BLOCK)  # moved one block east
-    assert repr(doc.state_at((1, 4, 1))) == "minecraft:furnace[facing=north]"  # stayed
+    assert repr(doc.state_at((1, 4, 1))) == f"minecraft:{block}"  # stayed
     assert doc.state_at((2, 4, 1)).is_air

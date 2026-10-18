@@ -342,10 +342,15 @@ class Document(HistoryOps, SequenceOps):
     # ------------------------------------------------------------------ sequences
 
     def set_container_slot(self, pos: Pos, slot: int | None, item: str | None, count: int) -> None:
-        """Set one slot of a barrel or hopper (``slot=None``: empty them all), as
+        """Set one slot of a container (``slot=None``: empty them all), as
         ``/setblock`` with the block entity's data, so comparators update; a hopper keeps
         its transfer cooldown."""
         entity = self.level.get_block_entity(pos, create=False)
+        current = self.state_at(pos)
+        if entity is None and current.has_block_entity:
+            # Not created yet (a world saved while the block was foreign): its data is the
+            # empty one the game creates on first access (``getBlockEntity``).
+            entity = current.block.new_block_entity(pos, current)
         if not isinstance(entity, ContainerBlockEntity):
             raise EditError(f"No container at {pos}.")
         data = entity.to_json()

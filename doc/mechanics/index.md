@@ -23,6 +23,7 @@
 | [[composter-and-signs]] | Composter (levels, 7→8 after 20 ticks, hopper takes bone meal); standing and wall signs (support, piston-blocking, text) | researched | implemented (`world/blocks/composter.py`, `sign.py`) | unit tests; game EXP-048, 049 |
 | [[gravity-blocks]] | Sand, gravel, concrete powder, anvils, dragon egg; falling block entities (physics, collision, landing, plates, pistons pushing and launching them) | researched | implemented (`world/blocks/falling.py`, `sim/entities.py`) | unit tests; game EXP-054, 055 (positions and motion compared) |
 | [[campfire]] | Campfires: signal fire from a hay bale (observers see it), immovable (block entity), food cooking and cooling | researched | implemented (`world/blocks/campfire.py`) | unit tests; game EXP-056 |
+| [[cauldron-and-furnace]] | Cauldrons (signal = level, lava 3; pushable, not conducting) and furnaces, blast furnaces, smokers (signal from their three slots; immovable; no cooking) | researched | implemented (`world/blocks/cauldron.py`, `furnace.py`; item stack sizes generated from the game: `world/items_data.py`) | unit tests; game EXP-062, 063 |
 
 Source locations for all of these: [[research/source-map]]. Quirks: [[quirks]]. Overall
 state: [[project-state]].

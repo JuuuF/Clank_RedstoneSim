@@ -142,6 +142,7 @@ page is the summary to start from.*
 | fences (14), bars and panes (26), walls (32) | `connecting.py` | connections through shape updates (exceptions, fence kinds, gates), wall posts and low/tall sides from the block above, turning and mirroring | EXP-053 |
 | gravity blocks: sand, red sand, gravel, 16 concrete powders, 3 anvils, dragon egg; falling block entities | `falling.py`, `sim/entities.py` | fall delay 2 (egg 5), exact first positions, torch holds, carpet breaks, powder hardens by water, snapshots/saves/history mid-fall, placing blocked by a falling block | EXP-054, EXP-055 (positions and motion compared) |
 | campfire, soul campfire (+ block entity: 4 food slots) | `campfire.py` | signal fire from hay, immovable, cooking and cooling, saves | EXP-056 |
+| cauldron, water/lava/powder snow cauldron; furnace, blast furnace, smoker (+ block entity: 3 slots) | `cauldron.py`, `furnace.py` | comparator signals (level; contents with the game's item stack sizes), pushing, conducting, saves | EXP-062 |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status

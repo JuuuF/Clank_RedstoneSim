@@ -170,6 +170,13 @@ def container_at(level: Level, pos: Pos) -> ContainerBlockEntity | None:
     if isinstance(state.block, ChestBlock):
         return chest_container(level, pos, state, ignore_blocked=True)
     entity = level.get_block_entity(pos)
+    from redsim.world.blocks.furnace import is_furnace
+
+    if is_furnace(entity):
+        # Not as in the game: furnaces are WorldlyContainers (the face decides the slot,
+        # only fuel goes into slot 1) and cook what they get; neither is simulated, so
+        # hoppers and droppers leave them alone (doc/differences.md).
+        return None
     return entity if isinstance(entity, ContainerBlockEntity) else None
 
 

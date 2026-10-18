@@ -123,6 +123,12 @@ computed with the simulator's own float32 formula, I):
 
 The CLI's `source POS barrel N` builds a barrel of reading N directly.
 
+**Small fixed readings in a block that moves or stays:** a furnace (3 slots) reads 1 with
+any single item and 5 with one unstackable item (a wooden shovel, a sword); it is immovable
+(block entity). A cauldron reads its level (water or powder snow 1–3, lava 3, empty 0) and
+pistons move it, so a moving full water cauldron switches a comparator between 3 and 0.
+Doors by Purplers use both; G EXP-062 ([[mechanics/cauldron-and-furnace]]).
+
 ## Quasi-connectivity
 
 Pistons (and, by the source, droppers and dispensers) also count power next to the space

@@ -27,7 +27,7 @@ an entity could do.
 | Sounds, particles, game events | Sounds, vibrations (sculk sensors) | None | No sculk sensors |
 | Menus and items in hand | Anvils, crafting, using items on blocks | The editor has no items in hand: `use` is an empty-hand click | Flint and steel, shovels, buckets, food on campfires, bone meal… are not available |
 | Explosions | TNT, wind charges | None | TNT is a foreign block |
-| Blocks not modeled yet | Their own mechanics | **Foreign blocks** (`foreign.py`): kept as text, drawn with the game's model, inert; pistons treat them by the game's table; their shape is a full cube or nothing (guessed from the name) | A non-full foreign block (bed, cauldron, snow layer, scaffolding, …) supports nothing and has **no collision**: falling blocks fall through it |
+| Blocks not modeled yet | Their own mechanics | **Foreign blocks** (`foreign.py`): kept as text, drawn with the game's model, inert; pistons treat them by the game's table; their shape is a full cube or nothing (guessed from the name) | A non-full foreign block (bed, snow layer, scaffolding, …) supports nothing and has **no collision**: falling blocks fall through it |
 | Idle server | Entities and block entities stop after 300 ticks without players (`emptyTime`) | Always ticking | — |
 | Experimental redstone | `redstone_experiments` changes | Not in scope (ADR-006) | — |
 
@@ -93,6 +93,9 @@ falling block that act on the same block in the same tick may come in another or
 | Catalog blocks | Silverfish in infested blocks; carved pumpkins making golems; ice turning into water when broken; sponges | Not simulated (carved pumpkins and jack o'lanterns stay foreign) | `catalog.py` |
 | Copper bulbs | Oxidation (random ticks), light level | Not simulated (all oxidation stages behave the same, as in the game's logic) | `copper_bulb.py` |
 | Composter | Composting items | Not available | `composter.py` |
+| Furnace, blast furnace, smoker: cooking | Burn fuel and cook the ingredient (recipes, fuel values); `lit` follows | They do not tick: nothing burns or cooks, `lit` stays as it is, contents change only by edits (as in the game when there is no ingredient, or neither fuel nor fire) | `furnace.py` |
+| Furnace, blast furnace, smoker: hoppers | Hoppers and droppers fill them by face (top: ingredient, sides: fuel only) and take the result from below | Hoppers and droppers leave furnaces alone | `furnace.py`, `hopper.py` (`container_at`) |
+| Cauldrons | Buckets, bottles, rain, snow, dripstone and burning mobs change the level; lava hurts mobs | The level changes only by edits | `cauldron.py` |
 | Scheduled ticks | Overdue ticks (more than 65 536 due) are merged per chunk | Reported but not merged per chunk (cannot happen in scope) | `sim/ticks.py` |
 
 ## 5. Opened Minecraft worlds

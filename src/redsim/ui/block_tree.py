@@ -80,7 +80,8 @@ REDSTONE = (
     )),
     ("Read by comparators", (
         "barrel", "chest", "trapped_chest", "hopper", "dropper", "dispenser", "lectern",
-        "cake", "composter",
+        "cake", "composter", "cauldron", "water_cauldron", "lava_cauldron", "furnace",
+        "blast_furnace", "smoker",
     )),
     ("Items", ("hopper", "dropper", "dispenser", "chest", "trapped_chest", "barrel")),
     ("Doors", (
