@@ -54,7 +54,7 @@ designs stay in `.sandbox/doors/` (not committed).
 
 ## Status and roadmap
 
-The mission's deliverables (2026-10-18):
+The mission's deliverables (2026-10-19):
 
 | # | Deliverable | Where | State |
 |---|---|---|---|
@@ -63,8 +63,8 @@ The mission's deliverables (2026-10-18):
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 3 verified (G1–G3), 2 implied by the corpus, 3 untested (G4, G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19 |
 | 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, design principles |
-| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done; game checks EXP-068, EXP-070, EXP-071 |
-| 7 | A demonstrated analysis / construction | [[demonstration]] | the pipeline on `door_3x3`; trimmed builds (EXP-071) |
+| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-073 |
+| 7 | A demonstrated analysis / construction | [[demonstration]], [[metrics]] | the pipeline on `door_3x3`; trimmed builds (EXP-071); the optimization goals measured for all 20 builds, with the dominance per doorway size |
 | 8 | Roadmap | this section | — |
 
 Open items (D-numbers are cited from the pages):
@@ -87,9 +87,10 @@ Open items (D-numbers are cited from the pages):
   belong to the mechanism; stacked pistons need side power (an editor pulse also
   quasi-powers the piston below); then a same-tick order in the contract.
 - **D5** Guide claims G4, G6, G7 ([[guide-5x5]]): build and measure them.
-- **D6** Input safety ([[robustness]]): several doors jam permanently on a too-short gap
-  between the pulls (Mumbo Jumbo: gaps 2–9). Put a lockout like `door_3x3`'s in front of
-  one of them, using its contract as the specification.
+- **D6** Input safety ([[robustness]]): every dataset door jams on a too-short gap
+  between the flips (Mumbo Jumbo: gaps 2–9, of which 3–6 one more cycle does not
+  repair). Put a lockout like `door_3x3`'s in front of one of them, using its contract
+  as the specification and the no-overlap gap as its hold time.
 - **D7** Server checks of the remaining trimmed builds: `run_world` needs stand-ins for
   floor levers and buttons (Lutal, Kwipla).
 - ~~D8~~ Nile's seamless glass door alternates between two rest states (a glass block
@@ -98,5 +99,12 @@ Open items (D-numbers are cited from the pages):
 - **D9** Purplers' enchanting-table door recycles one redstone dust through droppers, the
   ground and a hopper; the simulator has no item entities ([[../../differences]]), so
   the dust is lost after the first cycle and later cycles in the simulator are not
-  evidence ([[robustness]]). Needs item entities, or a check of how far the first cycle
-  is affected.
+  evidence ([[robustness]]). Needs item entities, or a game run of the first cycle
+  (its input is a button: needs D7's stand-in first).
+- **D10** Lasting jams ([[robustness]]): in 150 of 272 too-short gaps one more designed
+  cycle leaves the doorway wrong (Kwipla and Nile's 5x5 vault: every one). Find what
+  stays wrong (a block no piston reaches any more? a latch in the wrong state?) with
+  `replay` and `why`, and whether another input sequence repairs it.
+- **D11** A door's real input contract: the safe gap is often far below the no-overlap gap
+  (Sacred 21 vs 40, the seamless door 16 vs 43). Find, per door, which first-sequence
+  moves the second sequence must wait for: the door's real input contract.

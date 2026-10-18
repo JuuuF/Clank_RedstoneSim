@@ -69,7 +69,7 @@ the controller:
 | Box above the floor | 189 | 1768 |
 | Close | 10 ticks | 17 ticks |
 | Open | 24 ticks | 32 ticks (28 without the lockout) |
-| Shortest safe gap between the pulls | 10 ticks (gaps 2–9 jam permanently) | any |
+| Shortest safe gap between the pulls | 10 ticks (gaps 2–9 jam; one more cycle repairs 2 and 7–9, not 3–6) | any |
 | Same in all orientations and positions | yes | yes |
 | Center block's way down | P1 pulls it down one, P2 lowers P1, P1 pulls again | B pulls it down one, A lowers B, B pulls again |
 
