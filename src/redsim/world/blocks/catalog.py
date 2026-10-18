@@ -545,7 +545,8 @@ _register_openable_and_connecting()
 def _register_falling() -> None:
     """Gravity blocks (``falling.py``), campfires (``campfire.py``), cauldrons
     (``cauldron.py``), furnaces (``furnace.py``), lightning rods (``lightning_rod.py``),
-    crafters (``crafter.py``) and jukeboxes (``jukebox.py``), by game class."""
+    crafters (``crafter.py``), jukeboxes (``jukebox.py``) and enchanting tables
+    (``enchanting_table.py``), by game class."""
     from redsim.world.blocks import falling
 
     FACTORIES["SandBlock"] = falling.ColoredFallingBlock
@@ -578,6 +579,10 @@ def _register_falling() -> None:
 
     FACTORIES["CrafterBlock"] = crafter.CrafterBlock
     FACTORIES["JukeboxBlock"] = jukebox.JukeboxBlock
+
+    from redsim.world.blocks import enchanting_table
+
+    FACTORIES["EnchantingTableBlock"] = enchanting_table.EnchantingTableBlock
 
 
 _register_falling()

@@ -2878,7 +2878,31 @@ WALLS_UNDER_MOVING_BLOCKS = Scenario(
     inputs={6: [((3, 2, 1), AIR)], 12: [((2, 2, 11), RB)]},
 )
 
+ENCHANTING_TABLES = Scenario(
+    name="enchanting_tables",
+    description=(
+        "Enchanting tables (12 pixels high, a block entity): a repeater into one does not "
+        "light the lamp behind it (not a conductor); a piston facing one does not extend "
+        "(immovable); sand falling onto one lands on its top, inside the table's cell, "
+        "and breaks (falling block compared every tick)."
+    ),
+    size=(5, 7),
+    setup=[
+        ((1, 1, 1), "minecraft:repeater[facing=west]"),
+        ((2, 1, 1), "minecraft:enchanting_table"),
+        ((3, 1, 1), LAMP),
+        ((1, 1, 3), "minecraft:piston[facing=east]"),
+        ((2, 1, 3), "minecraft:enchanting_table"),
+        ((2, 1, 5), "minecraft:enchanting_table"),
+    ],  # fmt: skip
+    watch=[(1, 1, 1), (2, 1, 1), (3, 1, 1), (1, 1, 3), (2, 1, 3), (2, 1, 5), (2, 4, 5)],
+    ticks=30,
+    watch_entities=True,
+    inputs={2: [((2, 4, 5), "minecraft:sand")], 3: [((0, 1, 1), RB), ((0, 1, 3), RB)]},
+)
+
 ALL = [
+    ENCHANTING_TABLES,
     WALLS_UNDER_MOVING_BLOCKS,
     CRAFTERS_JUKEBOXES,
     LIGHTNING_RODS,

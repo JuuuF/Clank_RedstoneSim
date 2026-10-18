@@ -266,9 +266,11 @@ def canonical_state(text: str) -> str:
 
 def entity_text(state: str, position: tuple[float, ...], motion: tuple[float, ...]) -> str:
     """A falling block as compared: state, exact position and motion (Python ``repr``
-    of the doubles on both sides)."""
-    pos = ",".join(repr(float(v)) for v in position)
-    mot = ",".join(repr(float(v)) for v in motion)
+    of the doubles on both sides). A zero is written as ``0.0``: the game reads the
+    entity through NBT, and ``DoubleTag.valueOf`` turns ``-0.0`` into its shared ``ZERO``
+    (``-0.0 == 0.0`` in Java), so ``data get entity`` never shows ``-0.0``."""
+    pos = ",".join(repr(0.0 if v == 0.0 else float(v)) for v in position)
+    mot = ",".join(repr(0.0 if v == 0.0 else float(v)) for v in motion)
     return f"{canonical_state(state)} pos=({pos}) motion=({mot})"
 
 

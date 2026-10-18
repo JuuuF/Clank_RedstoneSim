@@ -1,0 +1,761 @@
+{
+ "scenario": "enchanting_tables",
+ "description": "Enchanting tables (12 pixels high, a block entity): a repeater into one does not light the lamp behind it (not a conductor); a piston facing one does not extend (immovable); sand falling onto one lands on its top, inside the table's cell, and breaks (falling block compared every tick).",
+ "origin": [
+  24,
+  0,
+  0
+ ],
+ "start_time": 25,
+ "fingerprint": "0f15e5db1a97cdcb",
+ "game_version": "26.3",
+ "ticks": 30,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:sand",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:sand"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-57.04,5.5) motion=(0.0,-0.03920000076293945,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-57.04,5.5) motion=(0.0,-0.03920000076293945,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=false]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-57.11920000076294,5.5) motion=(0.0,-0.0776160022583008,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-57.11920000076294,5.5) motion=(0.0,-0.0776160022583008,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-57.23681600302124,5.5) motion=(0.0,-0.115263684456482,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-57.23681600302124,5.5) motion=(0.0,-0.115263684456482,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-57.39207968747772,5.5) motion=(0.0,-0.15215841372877212,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-57.39207968747772,5.5) motion=(0.0,-0.15215841372877212,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-57.58423810120649,5.5) motion=(0.0,-0.18831524911932757,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-57.58423810120649,5.5) motion=(0.0,-0.18831524911932757,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-57.812553350325814,5.5) motion=(0.0,-0.22374894849170882,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-57.812553350325814,5.5) motion=(0.0,-0.22374894849170882,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-58.076302298817524,5.5) motion=(0.0,-0.2584739745524866,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-58.076302298817524,5.5) motion=(0.0,-0.2584739745524866,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-58.37477627337001,5.5) motion=(0.0,-0.2925045007543761,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-58.37477627337001,5.5) motion=(0.0,-0.2925045007543761,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-58.707280774124385,5.5) motion=(0.0,-0.32585441708130863,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-58.707280774124385,5.5) motion=(0.0,-0.32585441708130863,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": "minecraft:sand pos=(26.5,-59.073135191205694,5.5) motion=(0.0,-0.35853733571780166,0.0)"
+   },
+   "game": {
+    "entities": "minecraft:sand pos=(26.5,-59.073135191205694,5.5) motion=(0.0,-0.35853733571780166,0.0)",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 15,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 16,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 17,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 18,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 19,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 20,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 21,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 22,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 23,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 24,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 25,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 26,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 27,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 28,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 29,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 30,
+   "sim": {
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air",
+    "entities": ""
+   },
+   "game": {
+    "entities": "",
+    "(1, 1, 1)": "minecraft:repeater[facing=west,delay=1,locked=false,powered=true]",
+    "(2, 1, 1)": "minecraft:enchanting_table",
+    "(3, 1, 1)": "minecraft:redstone_lamp[lit=false]",
+    "(1, 1, 3)": "minecraft:piston[facing=east,extended=false]",
+    "(2, 1, 3)": "minecraft:enchanting_table",
+    "(2, 1, 5)": "minecraft:enchanting_table",
+    "(2, 4, 5)": "minecraft:air"
+   },
+   "mismatches": []
+  }
+ ]
+}

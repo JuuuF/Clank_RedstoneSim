@@ -1,0 +1,779 @@
+{
+ "scenario": "walls_under_moving_blocks",
+ "description": "A wall reads the collision shape of the block above with the level: when the extended sticky piston above it retracts, the moving piston keeps the extended base's shape, so the wall's sides stay tall (LegDen's 8x8 door); a stone pushed across the top of another wall (half a block per tick) makes its sides tall once it arrives. Observers watching the walls light lamps when their shape changes.",
+ "origin": [
+  0,
+  0,
+  0
+ ],
+ "start_time": 1,
+ "fingerprint": "f5f69a2ea63c684f",
+ "game_version": "26.3",
+ "ticks": 24,
+ "match": true,
+ "mismatching_ticks": [],
+ "frames": [
+  {
+   "tick": 0,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 1,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 2,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 3,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 4,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 5,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 6,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=true]",
+    "(2, 2, 0)": "minecraft:piston_head[facing=north,type=sticky,short=false]",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 7,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=north,type=sticky]",
+    "(2, 2, 1)#progress": "0.0",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=north,type=sticky]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 2, 1)#progress": "0.0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 8,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=north,type=sticky]",
+    "(2, 2, 1)#progress": "0.5",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=low,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:moving_piston[facing=north,type=sticky]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 2, 1)#progress": "0.5"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 9,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 10,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 11,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 12,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=true]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:air",
+    "(2, 2, 9)": "minecraft:stone",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=false]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 13,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 8)#progress": "0.0",
+    "(2, 2, 9)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 9)#progress": "0.0",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 9)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 2, 8)#progress": "0.0",
+    "(2, 2, 9)#progress": "0.0"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 14,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 8)#progress": "0.5",
+    "(2, 2, 9)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 9)#progress": "0.5",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=low,east=low,west=low,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 9)": "minecraft:moving_piston[facing=north,type=normal]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 2, 8)#progress": "0.5",
+    "(2, 2, 9)#progress": "0.5"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 15,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 16,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=true]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 17,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 18,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=true]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 19,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 20,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 21,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 22,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=true]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 23,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  },
+  {
+   "tick": 24,
+   "sim": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "game": {
+    "(2, 1, 1)": "minecraft:stone_brick_wall[up=true,north=tall,east=none,west=tall,south=tall,waterlogged=false]",
+    "(2, 2, 1)": "minecraft:sticky_piston[facing=north,extended=false]",
+    "(2, 2, 0)": "minecraft:air",
+    "(2, 1, 2)": "minecraft:observer[facing=north,powered=false]",
+    "(2, 1, 3)": "minecraft:redstone_lamp[lit=false]",
+    "(2, 1, 8)": "minecraft:cobblestone_wall[up=true,north=tall,east=tall,west=tall,south=none,waterlogged=false]",
+    "(2, 2, 8)": "minecraft:stone",
+    "(2, 2, 9)": "minecraft:piston_head[facing=north,type=normal,short=false]",
+    "(2, 2, 10)": "minecraft:piston[facing=north,extended=true]",
+    "(2, 1, 7)": "minecraft:observer[facing=south,powered=false]",
+    "(2, 1, 6)": "minecraft:redstone_lamp[lit=false]"
+   },
+   "mismatches": []
+  }
+ ]
+}

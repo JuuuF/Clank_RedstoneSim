@@ -35,8 +35,9 @@ example world: [[tour]].
   rails (plain, powered, activator), target blocks, hoppers, note blocks, copper bulbs,
   droppers, dispensers, chests (double, trapped), pressure plates, doors, fences, walls
   gravity blocks with falling block entities, campfires, cauldrons and furnaces, tripwire
-  hooks and tripwire, scaffolding, lightning rods ([[mechanics/index]]).
-- 831 tests pass. A sandboxed 26.3 server confirms 64 of 64 named scenarios and 60 random
+  hooks and tripwire, scaffolding, lightning rods, crafters, jukeboxes, enchanting tables,
+  detector rails ([[mechanics/index]]).
+- 848 tests pass. A sandboxed 26.3 server confirms 67 of 67 named scenarios and 60 random
   circuits tick for tick, including container contents and hopper cooldowns, and opens
   the simulator's written world copies and structure files correctly.
 - The 3D editor (`redsim`): eight rounds of owner feedback are in ([[ui-direction]]): tick

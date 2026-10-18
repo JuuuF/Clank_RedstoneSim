@@ -50,6 +50,13 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 
 ## Wire
 
+- **Wire connects to (points into) every signal source beside it,** powered or not: besides
+  the components, that includes jukeboxes, detector rails, lightning rods, tripwire hooks
+  and target blocks. Doors place an empty jukebox or a detector rail just to make dust
+  point somewhere (a jukebox is also a full, conducting block). G EXP-066, EXP-067, EXP-068.
+- **Power into an observer's view without a state you can see:** a crafter becomes
+  `triggered` when powered (and untriggered when the power goes) with no neighbor updates
+  but with shape updates, so an observer watching it pulses on both edges. G EXP-067.
 - Power drops by 1 per wire: a lever's 15 reaches 15 wires (the 15th has power 1). V R-001.
 - Wire changes in the same tick as its source (no delay). V R-001.
 - A wire beside, on or under a strongly powered block takes that block's power (15 from

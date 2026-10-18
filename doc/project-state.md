@@ -27,11 +27,11 @@ page is the summary to start from.*
   blocks, copper bulbs (all 8), dispensers, droppers, chests (double, trapped) and
   pressure plates (stone, 12 woods, weighted); on 2026-10-18: cauldrons, furnaces,
   tripwire hooks and tripwire, scaffolding ([[mechanics/tripwire-and-scaffolding]]),
-  lightning rods ([[mechanics/lightning-rod]]), crafters, jukeboxes and detector rails
-  ([[mechanics/crafter-and-jukebox]]).
+  lightning rods ([[mechanics/lightning-rod]]), crafters, jukeboxes, enchanting tables and
+  detector rails ([[mechanics/crafter-and-jukebox]]).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
-  All 64 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
+  All 67 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
   live edits) match ([[experiments/index]]).
 - **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
   and a rebindable keymap ([[controls]], with a keymap editor and Mac defaults); BUILD
@@ -147,13 +147,13 @@ page is the summary to start from.*
 | campfire, soul campfire (+ block entity: 4 food slots) | `campfire.py` | signal fire from hay, immovable, cooking and cooling, saves | EXP-056 |
 | cauldron, water/lava/powder snow cauldron; furnace, blast furnace, smoker (+ block entity: 3 slots) | `cauldron.py`, `furnace.py` | comparator signals (level; contents with the game's item stack sizes), pushing, conducting, saves | EXP-062 |
 | tripwire hook, tripwire; scaffolding | `tripwire.py`, `scaffolding.py` | lines and attachment, entity visitors and falling blocks pressing the wire, breaking pulses, shears, disarmed wire; distance, breaking and falling, support, collision by entity | EXP-064, EXP-065 |
-| crafter, jukebox (+ block entities), detector rail | `crafter.py`, `jukebox.py`, `rail.py` | triggered state and observers, comparator counts, disabled slots, no recipes; discs, songs, signal source; detector rail without minecarts | EXP-067, EXP-068 |
+| crafter, jukebox, enchanting table (+ block entities), detector rail | `crafter.py`, `jukebox.py`, `enchanting_table.py`, `rail.py` | triggered state and observers, comparator counts, disabled slots, no recipes; discs, songs, signal source; detector rail without minecarts | EXP-067, EXP-068 |
 | lightning rods (8 ids) | `lightning_rod.py` | strike (editor action), 8-tick power, strong power into its block, cleaning, piston moves, wire connection | EXP-066 |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status
 
-- `python -m pytest`: **831 tests pass** (2026-10-18, after tripwire and scaffolding;
+- `python -m pytest`: **848 tests pass** (2026-10-18, after tripwire, scaffolding, lightning rods, crafters, jukeboxes;
   698 on 2026-10-16 also on the compiled build), including
   the JDK oracle, the 107 game-recording replays (47 named recordings, 60 random),
   randomized history checks (replay, save/open, undo/redo), every window action in every

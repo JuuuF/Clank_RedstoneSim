@@ -44,3 +44,13 @@ move it.
   saved with it.
 - Hoppers and droppers leave jukeboxes alone in the simulator (in the game they insert and
   take discs).
+
+## Enchanting tables
+
+`enchanting_table` (`world/blocks/enchanting_table.py`), used by Purplers' 3x3 flush
+enchanting table door: a 12-pixel block (`Block.column(16, 0, 12)` for its shape, collision
+and support: the bottom face is sturdy, the top and sides are not) with a block entity, so
+pistons cannot move it; not a conductor. Its block entity keeps only a custom name and
+ticks only on the client. EXP-069: a repeater into one does not light the lamp behind it, a
+piston facing one does not extend, sand landing on one breaks (it ends inside the table's
+cell).

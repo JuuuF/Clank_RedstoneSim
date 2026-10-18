@@ -16,19 +16,19 @@ P = blocks.parse_state
 
 
 def test_block_entities_are_immovable_and_settings_come_from_the_game() -> None:
-    # (The owner's worlds had furnaces and jukeboxes, both simulated since.)
-    enchanting_table = P("enchanting_table").block
-    assert isinstance(enchanting_table, ForeignBlock)
-    assert enchanting_table.push_reaction is PushReaction.IMMOVEABLE  # it has a block entity
+    # (The owner's worlds had furnaces, jukeboxes, enchanting tables: all simulated since.)
+    beehive = P("beehive").block
+    assert isinstance(beehive, ForeignBlock)
+    assert beehive.push_reaction is PushReaction.IMMOVEABLE  # it has a block entity
     assert P("beacon").block.conductor is Conductor.NEVER  # isRedstoneConductor(never)
     assert P("white_bed[part=foot]").block.push_reaction is PushReaction.POPPED
     assert P("end_portal_frame").block.destroy_speed == -1.0
 
 
-@pytest.mark.parametrize("block", ["furnace[facing=north,lit=false]", "enchanting_table"])
+@pytest.mark.parametrize("block", ["furnace[facing=north,lit=false]", "beehive"])
 def test_slime_leaves_a_block_entity_behind(block: str) -> None:
-    """A sticky piston pushes a slime block that touches a furnace (simulated) or an
-    enchanting table (foreign): the slime moves, the other block stays (``isPushable`` is
+    """A sticky piston pushes a slime block that touches a furnace (simulated) or a
+    beehive (foreign): the slime moves, the other block stays (``isPushable`` is
     false for block entities; pulled blocks that are not pushable are left out of the
     structure)."""
     doc = Document.new_flat()  # in the air, so the slime does not drag the floor along
