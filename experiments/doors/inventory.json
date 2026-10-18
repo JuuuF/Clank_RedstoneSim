@@ -1,0 +1,3715 @@
+{
+ "schema": "doorlab.inventory/1",
+ "worlds": [
+  {
+   "id": "1-wide-hidden-staircase-purplers",
+   "file": "other_piston_contraptions/1 Wide Hidden Staircase by Purplers.redsim.json",
+   "category": "other_piston_contraptions",
+   "title": "1 Wide Hidden Staircase",
+   "creator": "Purplers",
+   "nominal_size": null,
+   "broken_sim_in_name": false,
+   "sha256": "f8fb181ff771f2214953d7e55f19f734736c79dfbf052d8b85e9259004491037",
+   "bytes": 132271,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 107,
+    "box": [
+     [
+      -2,
+      1,
+      -5
+     ],
+     [
+      3,
+      4,
+      1
+     ]
+    ],
+    "size": [
+     6,
+     4,
+     7
+    ],
+    "volume": 168,
+    "kinds": {
+     "sandstone": 41,
+     "redstone_wire": 12,
+     "orange_wool": 11,
+     "repeater": 9,
+     "sticky_piston": 7,
+     "blue_wool": 6,
+     "piston": 6,
+     "piston_head": 4,
+     "oak_stairs": 4,
+     "lime_wool": 3,
+     "redstone_torch": 2,
+     "lever": 1,
+     "redstone_wall_torch": 1
+    },
+    "roles": {
+     "structure": 65,
+     "piston": 13,
+     "wire": 12,
+     "repeater": 9,
+     "piston_head": 4,
+     "torch": 3,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      -1,
+      2,
+      -5
+     ],
+     "block": "lever[face=wall,facing=north,powered=false]"
+    }
+   ],
+   "outputs": 7,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 0,
+    "width": 4,
+    "height": 4,
+    "cells": 7,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air",
+     "oak_stairs"
+    ],
+    "build_state": "partial"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      -1,
+      2,
+      -5
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 28,
+     "kind": "use",
+     "pos": [
+      -1,
+      2,
+      -5
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 59,
+   "markers": {
+    "1": "Closing",
+    "27": "Closed",
+    "28": "Opening",
+    "56": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 28,
+    "pistons_that_fire": 13,
+    "pistons_total": 13,
+    "outcomes": {
+     "pulled": 8,
+     "pushed": 14,
+     "retracted": 6
+    },
+    "quasi_connected_extensions": 1,
+    "closed_runs": [
+     [
+      26,
+      35
+     ]
+    ],
+    "open_runs": [],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 27,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 26
+     },
+     {
+      "tick": 28,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 56,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "build frame",
+      "since": 55
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.14
+  },
+  {
+   "id": "3x3-flush-enchanting-table-door-purplers",
+   "file": "other_piston_contraptions/3x3 Flush Enchanting Table Door by Purplers.redsim.json",
+   "category": "other_piston_contraptions",
+   "title": "Flush Enchanting Table Door",
+   "creator": "Purplers",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "70fbe84ff8791442b465b4acbc1c32b8397d1c2354e610fed6a9882e9450ca71",
+   "bytes": 163334,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 220,
+    "box": [
+     [
+      -3,
+      1,
+      -5
+     ],
+     [
+      2,
+      10,
+      0
+     ]
+    ],
+    "size": [
+     6,
+     10,
+     6
+    ],
+    "volume": 360,
+    "kinds": {
+     "bookshelf": 56,
+     "observer": 27,
+     "cyan_wool": 27,
+     "sticky_piston": 27,
+     "stone": 19,
+     "redstone_wire": 18,
+     "repeater": 11,
+     "activator_rail": 6,
+     "piston_head": 5,
+     "smooth_stone_slab": 5,
+     "note_block": 3,
+     "obsidian": 3,
+     "redstone_wall_torch": 3,
+     "redstone_torch": 3,
+     "hopper": 2,
+     "dropper": 2,
+     "enchanting_table": 1,
+     "comparator": 1,
+     "oak_button": 1
+    },
+    "roles": {
+     "analog": 57,
+     "structure": 54,
+     "observer": 27,
+     "piston": 27,
+     "wire": 18,
+     "repeater": 11,
+     "rail": 6,
+     "torch": 6,
+     "piston_head": 5,
+     "bud": 3,
+     "hopper": 2,
+     "dropper": 2,
+     "comparator": 1,
+     "button": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      2,
+      2,
+      -3
+     ],
+     "block": "oak_button[face=wall,facing=east,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -4,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      2,
+      2,
+      -3
+     ],
+     "label": "use oak_button"
+    },
+    {
+     "tick": 63,
+     "kind": "use",
+     "pos": [
+      2,
+      2,
+      -3
+     ],
+     "label": "use oak_button"
+    }
+   ],
+   "end_tick": 137,
+   "markers": {
+    "1": "Closing",
+    "62": "Closed",
+    "63": "Opening",
+    "123": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 289,
+    "pistons_that_fire": 33,
+    "pistons_total": 27,
+    "outcomes": {
+     "extended": 55,
+     "pulled": 55,
+     "pushed": 52,
+     "retracted": 6,
+     "skipped": 75,
+     "spat": 46
+    },
+    "quasi_connected_extensions": 54,
+    "closed_runs": [
+     [
+      37,
+      66
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      2
+     ],
+     [
+      119,
+      137
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 62,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 37
+     },
+     {
+      "tick": 63,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 123,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 119
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.78
+  },
+  {
+   "id": "3x3-seamless-glass-door-nile",
+   "file": "piston_doors/3x3 Seamless Glass Door by Nile",
+   "category": "piston_doors",
+   "title": "Seamless Glass Door",
+   "creator": "Nile",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "0b6121e27f8323345ad2a45cdb3c9fb88fcd912f53c19592459cb362ae4fab56",
+   "bytes": 172002,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 252,
+    "box": [
+     [
+      -2,
+      1,
+      -4
+     ],
+     [
+      5,
+      16,
+      -1
+     ]
+    ],
+    "size": [
+     8,
+     16,
+     4
+    ],
+    "volume": 512,
+    "kinds": {
+     "redstone_wire": 49,
+     "cyan_concrete": 45,
+     "quartz_block": 39,
+     "observer": 27,
+     "sticky_piston": 18,
+     "glass": 18,
+     "piston": 17,
+     "smooth_stone_slab": 13,
+     "note_block": 7,
+     "repeater": 6,
+     "redstone_block": 4,
+     "white_stained_glass": 3,
+     "activator_rail": 2,
+     "stone_brick_wall": 1,
+     "target": 1,
+     "lime_concrete": 1,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 120,
+     "wire": 49,
+     "piston": 35,
+     "observer": 27,
+     "bud": 7,
+     "repeater": 6,
+     "redstone_block": 4,
+     "rail": 2,
+     "target": 1,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      5,
+      16,
+      -1
+     ],
+     "block": "lever[face=wall,facing=south,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -3,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "glass"
+    ],
+    "build_state": "closed"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      5,
+      16,
+      -1
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 46,
+     "kind": "use",
+     "pos": [
+      5,
+      16,
+      -1
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 116,
+   "markers": {
+    "1": "Opening",
+    "45": "Opened",
+    "46": "Closing",
+    "83": "Closed"
+   },
+   "notes": [],
+   "build_pending": {
+    "block_events": 1
+   },
+   "replay": {
+    "piston_events": 297,
+    "pistons_that_fire": 53,
+    "pistons_total": 35,
+    "outcomes": {
+     "extended": 51,
+     "failed": 12,
+     "pulled": 32,
+     "pushed": 43,
+     "retracted": 9,
+     "skipped": 94,
+     "spat": 56
+    },
+    "quasi_connected_extensions": 41,
+    "closed_runs": [
+     [
+      0,
+      9
+     ],
+     [
+      12,
+      13
+     ],
+     [
+      16,
+      17
+     ],
+     [
+      20,
+      20
+     ],
+     [
+      23,
+      23
+     ],
+     [
+      73,
+      76
+     ],
+     [
+      79,
+      116
+     ]
+    ],
+    "open_runs": [
+     [
+      40,
+      53
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 45,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 40
+     },
+     {
+      "tick": 46,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 83,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 79
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 1.29
+  },
+  {
+   "id": "3x3-spiral-vault-door-lutal",
+   "file": "piston_doors/3x3 Spiral Vault Door by Lutal.redsim.json",
+   "category": "piston_doors",
+   "title": "Spiral Vault Door",
+   "creator": "Lutal",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "a73c6ab018eebc1c32c34752a5319435513d6264e79c923121c13482541feff1",
+   "bytes": 200988,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 205,
+    "box": [
+     [
+      -1,
+      1,
+      -8
+     ],
+     [
+      9,
+      8,
+      1
+     ]
+    ],
+    "size": [
+     11,
+     8,
+     10
+    ],
+    "volume": 880,
+    "kinds": {
+     "smooth_quartz": 42,
+     "lime_wool": 41,
+     "redstone_wire": 34,
+     "iron_block": 32,
+     "sticky_piston": 18,
+     "repeater": 9,
+     "observer": 8,
+     "cyan_wool": 5,
+     "black_wool": 5,
+     "target": 5,
+     "sea_lantern": 4,
+     "lever": 1,
+     "piston": 1
+    },
+    "roles": {
+     "structure": 129,
+     "wire": 34,
+     "piston": 19,
+     "repeater": 9,
+     "observer": 8,
+     "target": 5,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      0,
+      4,
+      -2
+     ],
+     "block": "lever[face=floor,facing=east,powered=false]"
+    }
+   ],
+   "outputs": 17,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 3,
+    "width": 3,
+    "height": 3,
+    "cells": 8,
+    "extra_cells": [
+     [
+      4,
+      5,
+      -2
+     ],
+     [
+      5,
+      4,
+      -3
+     ],
+     [
+      5,
+      4,
+      -2
+     ],
+     [
+      5,
+      4,
+      -1
+     ],
+     [
+      5,
+      5,
+      -3
+     ],
+     [
+      5,
+      5,
+      -1
+     ],
+     [
+      5,
+      6,
+      -3
+     ],
+     [
+      5,
+      6,
+      -2
+     ],
+     [
+      5,
+      6,
+      -1
+     ]
+    ],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      0,
+      4,
+      -2
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 22,
+     "kind": "use",
+     "pos": [
+      0,
+      4,
+      -2
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 48,
+   "markers": {
+    "1": "Closing",
+    "21": "Closed",
+    "22": "Opening",
+    "48": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 114,
+    "pistons_that_fire": 20,
+    "pistons_total": 19,
+    "outcomes": {
+     "extended": 21,
+     "pulled": 20,
+     "pushed": 19,
+     "retracted": 3,
+     "skipped": 34,
+     "spat": 17
+    },
+    "quasi_connected_extensions": 4,
+    "closed_runs": [
+     [
+      15,
+      25
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      2
+     ],
+     [
+      36,
+      48
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 21,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 15
+     },
+     {
+      "tick": 22,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 48,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 36
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.43
+  },
+  {
+   "id": "3x3-piston-door-mumbo-jumbo",
+   "file": "piston_doors/3x3 piston door by Mumbo Jumbo.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "Mumbo Jumbo",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "7ed2ee7653fb1ad5d3d73e74d238b95948868f007b748db643fbfe121cbe7567",
+   "bytes": 130524,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 87,
+    "box": [
+     [
+      3,
+      1,
+      -5
+     ],
+     [
+      5,
+      9,
+      1
+     ]
+    ],
+    "size": [
+     3,
+     9,
+     7
+    ],
+    "volume": 189,
+    "kinds": {
+     "redstone_wire": 17,
+     "light_blue_wool": 13,
+     "iron_block": 13,
+     "sticky_piston": 12,
+     "yellow_wool": 11,
+     "sandstone": 9,
+     "repeater": 3,
+     "redstone_wall_torch": 2,
+     "lever": 1,
+     "redstone_torch": 1,
+     "dropper": 1,
+     "comparator": 1,
+     "hopper": 1,
+     "piston_head": 1,
+     "target": 1
+    },
+    "roles": {
+     "structure": 46,
+     "wire": 17,
+     "piston": 12,
+     "repeater": 3,
+     "torch": 3,
+     "lever": 1,
+     "dropper": 1,
+     "comparator": 1,
+     "hopper": 1,
+     "piston_head": 1,
+     "target": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      3,
+      2,
+      -1
+     ],
+     "block": "lever[face=wall,facing=west,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 5,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      3,
+      2,
+      -1
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 13,
+     "kind": "use",
+     "pos": [
+      3,
+      2,
+      -1
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 40,
+   "markers": {
+    "1": "Closing",
+    "12": "Closed",
+    "13": "Opening",
+    "40": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 37,
+    "pistons_that_fire": 13,
+    "pistons_total": 12,
+    "outcomes": {
+     "extended": 2,
+     "failed": 1,
+     "pulled": 16,
+     "pushed": 15,
+     "skipped": 2,
+     "spat": 1
+    },
+    "quasi_connected_extensions": 2,
+    "closed_runs": [
+     [
+      11,
+      13
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      1
+     ],
+     [
+      37,
+      40
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 12,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 11
+     },
+     {
+      "tick": 13,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 40,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 37
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.15
+  },
+  {
+   "id": "3x3-piston-door-rubik",
+   "file": "piston_doors/3x3 piston door by Rubik.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "Rubik",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "6ec5414ce7b725e7f106ace00cc87b252566a6d5b15be53968f0133d103fa0f1",
+   "bytes": 6299071,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 61,
+    "box": [
+     [
+      -13,
+      -58,
+      -4
+     ],
+     [
+      -5,
+      -49,
+      -3
+     ]
+    ],
+    "size": [
+     9,
+     10,
+     2
+    ],
+    "volume": 180,
+    "kinds": {
+     "quartz_block": 26,
+     "redstone_wire": 12,
+     "sticky_piston": 10,
+     "observer": 7,
+     "repeater": 2,
+     "note_block": 2,
+     "lever": 1,
+     "diamond_block": 1
+    },
+    "roles": {
+     "structure": 27,
+     "wire": 12,
+     "piston": 10,
+     "observer": 7,
+     "repeater": 2,
+     "bud": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": -61
+   },
+   "inputs": [
+    {
+     "pos": [
+      -10,
+      -58,
+      -3
+     ],
+     "block": "lever[face=wall,facing=south,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -4,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      -10,
+      -58,
+      -3
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 26,
+     "kind": "use",
+     "pos": [
+      -10,
+      -58,
+      -3
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 68,
+   "markers": {
+    "1": "Closing",
+    "25": "Closed",
+    "26": "Opening",
+    "54": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 63,
+    "pistons_that_fire": 11,
+    "pistons_total": 10,
+    "outcomes": {
+     "extended": 11,
+     "pulled": 13,
+     "pushed": 11,
+     "skipped": 19,
+     "spat": 9
+    },
+    "quasi_connected_extensions": 5,
+    "closed_runs": [
+     [
+      15,
+      29
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      2
+     ],
+     [
+      52,
+      68
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 25,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 15
+     },
+     {
+      "tick": 26,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 54,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 52
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 2.73
+  },
+  {
+   "id": "3x3-piston-door-sacredredstone",
+   "file": "piston_doors/3x3 piston door by SacredRedstone.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "SacredRedstone",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "c5c6586c0488ce57e68f74fc50eee0ef294b192f64f8f367f68d538742530447",
+   "bytes": 118690,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 48,
+    "box": [
+     [
+      3,
+      4,
+      -3
+     ],
+     [
+      4,
+      11,
+      3
+     ]
+    ],
+    "size": [
+     2,
+     8,
+     7
+    ],
+    "volume": 112,
+    "kinds": {
+     "smooth_stone": 12,
+     "observer": 11,
+     "sticky_piston": 10,
+     "blue_wool": 4,
+     "repeater": 4,
+     "redstone_lamp": 2,
+     "lever": 1,
+     "obsidian": 1,
+     "dropper": 1,
+     "comparator": 1,
+     "redstone_wire": 1
+    },
+    "roles": {
+     "structure": 17,
+     "observer": 11,
+     "piston": 10,
+     "repeater": 4,
+     "lamp": 2,
+     "lever": 1,
+     "dropper": 1,
+     "comparator": 1,
+     "wire": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      3,
+      11,
+      -1
+     ],
+     "block": "lever[face=wall,facing=west,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 4,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 2,
+     "kind": "use",
+     "pos": [
+      3,
+      11,
+      -1
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 43,
+     "kind": "use",
+     "pos": [
+      3,
+      11,
+      -1
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 116,
+   "markers": {
+    "1": "Closing",
+    "42": "Closed",
+    "43": "Opening",
+    "87": "Opened"
+   },
+   "notes": [],
+   "build_pending": {
+    "scheduled_ticks": 1,
+    "block_events": 2
+   },
+   "replay": {
+    "piston_events": 109,
+    "pistons_that_fire": 11,
+    "pistons_total": 10,
+    "outcomes": {
+     "extended": 18,
+     "failed": 2,
+     "pulled": 20,
+     "pushed": 19,
+     "skipped": 33,
+     "spat": 17
+    },
+    "quasi_connected_extensions": 10,
+    "closed_runs": [
+     [
+      21,
+      22
+     ],
+     [
+      26,
+      29
+     ],
+     [
+      40,
+      43
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      2
+     ],
+     [
+      85,
+      116
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 42,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 40
+     },
+     {
+      "tick": 43,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 87,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 85
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.17
+  },
+  {
+   "id": "3x3-piston-door-zhus",
+   "file": "piston_doors/3x3 piston door by Zhus.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "Zhus",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "fd45f3203dfdaae2cfb1327ea56e61e4099d685e963601dbea6fda7a95c688a7",
+   "bytes": 118297,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 51,
+    "box": [
+     [
+      2,
+      1,
+      -7
+     ],
+     [
+      3,
+      9,
+      -1
+     ]
+    ],
+    "size": [
+     2,
+     9,
+     7
+    ],
+    "volume": 126,
+    "kinds": {
+     "iron_block": 13,
+     "observer": 10,
+     "sticky_piston": 10,
+     "yellow_wool": 6,
+     "redstone_wire": 6,
+     "dropper": 2,
+     "repeater": 2,
+     "piston": 1,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 19,
+     "piston": 11,
+     "observer": 10,
+     "wire": 6,
+     "dropper": 2,
+     "repeater": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      3,
+      9,
+      -1
+     ],
+     "block": "lever[face=wall,facing=east,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 2,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      3,
+      9,
+      -1
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 18,
+     "kind": "use",
+     "pos": [
+      3,
+      9,
+      -1
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 35,
+   "markers": {
+    "17": "Closed",
+    "18": "Opening",
+    "35": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 61,
+    "pistons_that_fire": 12,
+    "pistons_total": 11,
+    "outcomes": {
+     "extended": 9,
+     "failed": 1,
+     "pulled": 11,
+     "pushed": 12,
+     "skipped": 18,
+     "spat": 10
+    },
+    "quasi_connected_extensions": 6,
+    "closed_runs": [
+     [
+      15,
+      18
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      1
+     ],
+     [
+      32,
+      35
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 17,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 15
+     },
+     {
+      "tick": 18,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 35,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 32
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.1
+  },
+  {
+   "id": "3x3-piston-door-monchicarp",
+   "file": "piston_doors/3x3 piston door by monchiCARP.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "monchiCARP",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "de87bde510477895e3fee43235ef4cc9d39db6356c73c15385dd5b554fb5bc96",
+   "bytes": 123956,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 53,
+    "box": [
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      6,
+      9,
+      1
+     ]
+    ],
+    "size": [
+     7,
+     9,
+     2
+    ],
+    "volume": 126,
+    "kinds": {
+     "white_concrete": 21,
+     "observer": 10,
+     "sticky_piston": 10,
+     "redstone_wire": 5,
+     "dropper": 3,
+     "repeater": 2,
+     "piston": 1,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 21,
+     "piston": 11,
+     "observer": 10,
+     "wire": 5,
+     "dropper": 3,
+     "repeater": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      6,
+      9,
+      1
+     ],
+     "block": "lever[face=wall,facing=south,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": 0,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      6,
+      9,
+      1
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 18,
+     "kind": "use",
+     "pos": [
+      6,
+      9,
+      1
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 35,
+   "markers": {
+    "1": "Closing",
+    "17": "Closed",
+    "18": "Opening",
+    "34": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 60,
+    "pistons_that_fire": 12,
+    "pistons_total": 11,
+    "outcomes": {
+     "extended": 9,
+     "pulled": 11,
+     "pushed": 12,
+     "skipped": 18,
+     "spat": 10
+    },
+    "quasi_connected_extensions": 6,
+    "closed_runs": [
+     [
+      15,
+      18
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      1
+     ],
+     [
+      32,
+      35
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 17,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 15
+     },
+     {
+      "tick": 18,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 34,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 32
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.13
+  },
+  {
+   "id": "3x3-spiral-piston-door-purplers",
+   "file": "piston_doors/3x3 spiral piston door by Purplers.redsim.json",
+   "category": "piston_doors",
+   "title": "spiral piston door",
+   "creator": "Purplers",
+   "nominal_size": "3x3",
+   "broken_sim_in_name": false,
+   "sha256": "277bbe3bff3c08829860200d5286149ae400f6cb9d03c846faa5a81b548c59ee",
+   "bytes": 125096,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 81,
+    "box": [
+     [
+      -1,
+      1,
+      -3
+     ],
+     [
+      1,
+      8,
+      3
+     ]
+    ],
+    "size": [
+     3,
+     8,
+     7
+    ],
+    "volume": 168,
+    "kinds": {
+     "observer": 20,
+     "chiseled_quartz_block": 12,
+     "quartz_block": 12,
+     "sticky_piston": 11,
+     "redstone_wire": 8,
+     "cyan_wool": 8,
+     "repeater": 3,
+     "note_block": 2,
+     "redstone_lamp": 1,
+     "smooth_stone_slab": 1,
+     "piston": 1,
+     "lime_wool": 1,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 34,
+     "observer": 20,
+     "piston": 12,
+     "wire": 8,
+     "repeater": 3,
+     "bud": 2,
+     "lamp": 1,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      1,
+      1,
+      3
+     ],
+     "block": "lever[face=wall,facing=east,powered=false]"
+    }
+   ],
+   "outputs": 9,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": -1,
+    "width": 3,
+    "height": 3,
+    "cells": 9,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      1,
+      1,
+      3
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 23,
+     "kind": "use",
+     "pos": [
+      1,
+      1,
+      3
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 47,
+   "markers": {
+    "1": "Closing",
+    "22": "Closed",
+    "23": "Opening",
+    "47": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 78,
+    "pistons_that_fire": 13,
+    "pistons_total": 12,
+    "outcomes": {
+     "extended": 14,
+     "failed": 2,
+     "pulled": 13,
+     "pushed": 12,
+     "retracted": 2,
+     "skipped": 24,
+     "spat": 11
+    },
+    "quasi_connected_extensions": 6,
+    "closed_runs": [
+     [
+      20,
+      27
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      3
+     ],
+     [
+      44,
+      47
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 22,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 20
+     },
+     {
+      "tick": 23,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 47,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 44
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.11
+  },
+  {
+   "id": "3x4-piston-door-pal1",
+   "file": "piston_doors/3x4 piston door by pal1_.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "pal1_",
+   "nominal_size": "3x4",
+   "broken_sim_in_name": false,
+   "sha256": "783fcc29713564c465bc9051a9feb0aea2c9f5232f754e4244326c242e6aad2c",
+   "bytes": 132087,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 92,
+    "box": [
+     [
+      0,
+      1,
+      -4
+     ],
+     [
+      9,
+      14,
+      -3
+     ]
+    ],
+    "size": [
+     10,
+     14,
+     2
+    ],
+    "volume": 280,
+    "kinds": {
+     "observer": 22,
+     "white_concrete": 18,
+     "sticky_piston": 15,
+     "gold_block": 15,
+     "redstone_wire": 10,
+     "repeater": 5,
+     "hopper": 4,
+     "note_block": 2,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 33,
+     "observer": 22,
+     "piston": 15,
+     "wire": 10,
+     "repeater": 5,
+     "hopper": 4,
+     "bud": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [],
+   "outputs": 12,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -3,
+    "width": 3,
+    "height": 4,
+    "cells": 12,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      6,
+      1,
+      -4
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 38,
+     "kind": "use",
+     "pos": [
+      6,
+      1,
+      -4
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 97,
+   "markers": {
+    "1": "Closing",
+    "37": "Closed",
+    "38": "Opening",
+    "85": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 99,
+    "pistons_that_fire": 17,
+    "pistons_total": 15,
+    "outcomes": {
+     "extended": 17,
+     "pulled": 21,
+     "pushed": 17,
+     "retracted": 1,
+     "skipped": 30,
+     "spat": 13
+    },
+    "quasi_connected_extensions": 10,
+    "closed_runs": [
+     [
+      29,
+      41
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      2
+     ],
+     [
+      82,
+      97
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 37,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 29
+     },
+     {
+      "tick": 38,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 85,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 82
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.2
+  },
+  {
+   "id": "4x4-piston-door-kwipla",
+   "file": "piston_doors/4x4 piston door by Kwipla.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "Kwipla",
+   "nominal_size": "4x4",
+   "broken_sim_in_name": false,
+   "sha256": "70b2ea1fc8d6f270da59bb1a6252f706183a2e104ab57b13cf1090a736732f42",
+   "bytes": 210093,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 158,
+    "box": [
+     [
+      -4,
+      5,
+      -8
+     ],
+     [
+      5,
+      13,
+      3
+     ]
+    ],
+    "size": [
+     10,
+     9,
+     12
+    ],
+    "volume": 1080,
+    "kinds": {
+     "smooth_stone": 39,
+     "iron_block": 30,
+     "redstone_wire": 26,
+     "observer": 25,
+     "sticky_piston": 24,
+     "repeater": 5,
+     "piston": 4,
+     "stone_button": 2,
+     "furnace": 2,
+     "redstone_block": 1
+    },
+    "roles": {
+     "structure": 69,
+     "piston": 28,
+     "wire": 26,
+     "observer": 25,
+     "repeater": 5,
+     "button": 2,
+     "analog": 2,
+     "redstone_block": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      -4,
+      7,
+      -4
+     ],
+     "block": "stone_button[face=floor,facing=east,powered=false]"
+    },
+    {
+     "pos": [
+      5,
+      7,
+      -4
+     ],
+     "block": "stone_button[face=floor,facing=west,powered=false]"
+    }
+   ],
+   "outputs": 16,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 0,
+    "width": 4,
+    "height": 4,
+    "cells": 16,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      -4,
+      7,
+      -4
+     ],
+     "label": "use stone_button"
+    },
+    {
+     "tick": 37,
+     "kind": "use",
+     "pos": [
+      -4,
+      7,
+      -4
+     ],
+     "label": "use stone_button"
+    }
+   ],
+   "end_tick": 115,
+   "markers": {
+    "1": "Closing",
+    "36": "Closed",
+    "37": "Opening",
+    "78": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 200,
+    "pistons_that_fire": 32,
+    "pistons_total": 28,
+    "outcomes": {
+     "extended": 41,
+     "pulled": 37,
+     "pushed": 29,
+     "retracted": 6,
+     "skipped": 58,
+     "spat": 29
+    },
+    "quasi_connected_extensions": 15,
+    "closed_runs": [
+     [
+      28,
+      45
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      9
+     ],
+     [
+      76,
+      115
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 36,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 28
+     },
+     {
+      "tick": 37,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 78,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 76
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.36
+  },
+  {
+   "id": "4x4-piston-door-sydney600mc",
+   "file": "piston_doors/4x4 piston door by Sydney600mc.redsim.json",
+   "category": "piston_doors",
+   "title": "piston door",
+   "creator": "Sydney600mc",
+   "nominal_size": "4x4",
+   "broken_sim_in_name": false,
+   "sha256": "949cee63ff46ea118c7aa1313111fc178b8e91ba22b44d71e930bad8c54b87db",
+   "bytes": 145197,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 125,
+    "box": [
+     [
+      0,
+      1,
+      -6
+     ],
+     [
+      2,
+      9,
+      3
+     ]
+    ],
+    "size": [
+     3,
+     9,
+     10
+    ],
+    "volume": 270,
+    "kinds": {
+     "iron_block": 32,
+     "sticky_piston": 22,
+     "observer": 20,
+     "light_blue_wool": 8,
+     "repeater": 8,
+     "redstone_wire": 8,
+     "yellow_wool": 8,
+     "hopper": 6,
+     "dropper": 4,
+     "piston": 2,
+     "obsidian": 2,
+     "glass": 2,
+     "comparator": 2,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 52,
+     "piston": 24,
+     "observer": 20,
+     "repeater": 8,
+     "wire": 8,
+     "hopper": 6,
+     "dropper": 4,
+     "comparator": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      0,
+      1,
+      -2
+     ],
+     "block": "lever[face=wall,facing=west,powered=false]"
+    }
+   ],
+   "outputs": 16,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 2,
+    "width": 4,
+    "height": 4,
+    "cells": 16,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      0,
+      1,
+      -2
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 31,
+     "kind": "use",
+     "pos": [
+      0,
+      1,
+      -2
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 71,
+   "markers": {
+    "1": "Closing",
+    "30": "Closed",
+    "31": "Opening",
+    "60": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 144,
+    "pistons_that_fire": 28,
+    "pistons_total": 24,
+    "outcomes": {
+     "extended": 26,
+     "pulled": 34,
+     "pushed": 26,
+     "retracted": 2,
+     "skipped": 40,
+     "spat": 16
+    },
+    "quasi_connected_extensions": 12,
+    "closed_runs": [
+     [
+      17,
+      36
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      4
+     ],
+     [
+      57,
+      71
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 30,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 17
+     },
+     {
+      "tick": 31,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 60,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 57
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.19
+  },
+  {
+   "id": "5x5-glass-piston-door-ashevoy",
+   "file": "piston_doors/5x5 Glass Piston Door By ashevoy.redsim.json",
+   "category": "piston_doors",
+   "title": "Glass Piston Door",
+   "creator": "ashevoy",
+   "nominal_size": "5x5",
+   "broken_sim_in_name": false,
+   "sha256": "98c506d75b9d5cf1a25c9d6093e51c880bf33d97acb802e6a788ec790ca55e55",
+   "bytes": 1047254,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 1954,
+    "box": [
+     [
+      -9,
+      1,
+      -13
+     ],
+     [
+      5,
+      23,
+      11
+     ]
+    ],
+    "size": [
+     15,
+     23,
+     25
+    ],
+    "volume": 8625,
+    "kinds": {
+     "redstone_wire": 461,
+     "smooth_quartz": 273,
+     "light_blue_wool": 157,
+     "repeater": 145,
+     "yellow_wool": 140,
+     "sticky_piston": 101,
+     "orange_wool": 96,
+     "observer": 96,
+     "piston": 70,
+     "red_wool": 51,
+     "blue_wool": 50,
+     "cyan_wool": 49,
+     "lime_wool": 48,
+     "glass": 37,
+     "target": 35,
+     "magenta_wool": 28,
+     "cyan_stained_glass": 20,
+     "green_wool": 14,
+     "blue_stained_glass": 10,
+     "yellow_stained_glass": 10,
+     "hopper": 9,
+     "light_blue_stained_glass": 8,
+     "piston_head": 7,
+     "redstone_block": 6,
+     "detector_rail": 6,
+     "red_stained_glass": 5,
+     "redstone_wall_torch": 3,
+     "activator_rail": 3,
+     "iron_trapdoor": 3,
+     "green_stained_glass": 2,
+     "jukebox": 2,
+     "redstone_torch": 2,
+     "comparator": 2,
+     "lever": 1,
+     "tripwire_hook": 1,
+     "note_block": 1,
+     "obsidian": 1,
+     "dropper": 1
+    },
+    "roles": {
+     "structure": 999,
+     "wire": 461,
+     "piston": 171,
+     "repeater": 145,
+     "observer": 96,
+     "target": 35,
+     "hopper": 9,
+     "rail": 9,
+     "piston_head": 7,
+     "redstone_block": 6,
+     "torch": 5,
+     "trapdoor": 3,
+     "analog": 2,
+     "comparator": 2,
+     "lever": 1,
+     "tripwire": 1,
+     "bud": 1,
+     "dropper": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      -8,
+      11,
+      -2
+     ],
+     "block": "lever[face=floor,facing=east,powered=false]"
+    }
+   ],
+   "outputs": 26,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 0,
+    "width": 5,
+    "height": 5,
+    "cells": 25,
+    "extra_cells": [
+     [
+      -1,
+      10,
+      -1
+     ]
+    ],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      -8,
+      11,
+      -2
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 43,
+     "kind": "use",
+     "pos": [
+      -8,
+      11,
+      -2
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 115,
+   "markers": {
+    "1": "Closing",
+    "42": "Closed",
+    "43": "Opening",
+    "101": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 809,
+    "pistons_that_fire": 190,
+    "pistons_total": 171,
+    "outcomes": {
+     "extended": 98,
+     "failed": 3,
+     "pulled": 152,
+     "pushed": 213,
+     "retracted": 68,
+     "skipped": 180,
+     "spat": 95
+    },
+    "quasi_connected_extensions": 91,
+    "closed_runs": [
+     [
+      37,
+      43
+     ],
+     [
+      46,
+      46
+     ],
+     [
+      49,
+      49
+     ],
+     [
+      52,
+      52
+     ],
+     [
+      55,
+      55
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      15
+     ],
+     [
+      80,
+      115
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 42,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 37
+     },
+     {
+      "tick": 43,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 101,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 80
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 4.96
+  },
+  {
+   "id": "5x5-vault-door-nile",
+   "file": "piston_doors/5x5 Vault Door by Nile [broken sim].redsim.json",
+   "category": "piston_doors",
+   "title": "Vault Door",
+   "creator": "Nile",
+   "nominal_size": "5x5",
+   "broken_sim_in_name": true,
+   "sha256": "aad6563e448ef16289f5e5dc8a06e9d4ebee2e5cb27ebebece9b484e5eff27d2",
+   "bytes": 240750,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 425,
+    "box": [
+     [
+      -7,
+      1,
+      -4
+     ],
+     [
+      7,
+      14,
+      0
+     ]
+    ],
+    "size": [
+     15,
+     14,
+     5
+    ],
+    "volume": 1050,
+    "kinds": {
+     "quartz_block": 83,
+     "redstone_wire": 59,
+     "cyan_wool": 55,
+     "sticky_piston": 49,
+     "observer": 40,
+     "smooth_stone_slab": 24,
+     "piston": 20,
+     "target": 14,
+     "redstone_block": 12,
+     "repeater": 9,
+     "note_block": 9,
+     "piston_head": 7,
+     "oak_log": 5,
+     "oak_leaves": 5,
+     "hopper": 5,
+     "comparator": 4,
+     "powered_rail": 4,
+     "waxed_oxidized_copper_bulb": 3,
+     "composter": 3,
+     "honey_block": 3,
+     "slime_block": 3,
+     "jukebox": 2,
+     "stone_button": 2,
+     "lever": 1,
+     "lime_stained_glass": 1,
+     "white_stained_glass": 1,
+     "barrel": 1,
+     "sand": 1
+    },
+    "roles": {
+     "structure": 175,
+     "piston": 69,
+     "wire": 59,
+     "observer": 40,
+     "target": 14,
+     "redstone_block": 12,
+     "repeater": 9,
+     "bud": 9,
+     "piston_head": 7,
+     "analog": 6,
+     "sticky_block": 6,
+     "hopper": 5,
+     "comparator": 4,
+     "rail": 4,
+     "copper_bulb": 3,
+     "button": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      -6,
+      10,
+      -4
+     ],
+     "block": "lever[face=wall,facing=north,powered=true]"
+    }
+   ],
+   "outputs": 25,
+   "other_sections": {
+    "broken piston extension": 1
+   },
+   "doorway": {
+    "normal": "z",
+    "plane": -3,
+    "width": 5,
+    "height": 5,
+    "cells": 16,
+    "extra_cells": [
+     [
+      -1,
+      6,
+      -2
+     ],
+     [
+      -1,
+      7,
+      -2
+     ],
+     [
+      -1,
+      8,
+      -2
+     ],
+     [
+      0,
+      6,
+      -2
+     ],
+     [
+      0,
+      7,
+      -1
+     ],
+     [
+      0,
+      8,
+      -2
+     ],
+     [
+      1,
+      6,
+      -2
+     ],
+     [
+      1,
+      7,
+      -2
+     ],
+     [
+      1,
+      8,
+      -2
+     ]
+    ],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      -6,
+      10,
+      -4
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 18,
+     "kind": "use",
+     "pos": [
+      -6,
+      10,
+      -4
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 36,
+   "markers": {
+    "1": "Closing",
+    "17": "Closed",
+    "18": "Opening",
+    "34": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 339,
+    "pistons_that_fire": 71,
+    "pistons_total": 69,
+    "outcomes": {
+     "extended": 54,
+     "failed": 3,
+     "pulled": 52,
+     "pushed": 71,
+     "retracted": 15,
+     "skipped": 86,
+     "spat": 58
+    },
+    "quasi_connected_extensions": 50,
+    "closed_runs": [
+     [
+      10,
+      18
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      6
+     ],
+     [
+      27,
+      36
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 17,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 10
+     },
+     {
+      "tick": 18,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 34,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 27
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.95
+  },
+  {
+   "id": "5x5-vault-lamp-door-purplers",
+   "file": "piston_doors/5x5 vault lamp door by Purplers.redsim.json",
+   "category": "piston_doors",
+   "title": "vault lamp door",
+   "creator": "Purplers",
+   "nominal_size": "5x5",
+   "broken_sim_in_name": false,
+   "sha256": "556f77dd72228cfc994992de0114599ba240ab53a7b129b8792be514aeea7638",
+   "bytes": 214909,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 373,
+    "box": [
+     [
+      0,
+      1,
+      -6
+     ],
+     [
+      4,
+      12,
+      4
+     ]
+    ],
+    "size": [
+     5,
+     12,
+     11
+    ],
+    "volume": 660,
+    "kinds": {
+     "redstone_wire": 74,
+     "quartz_block": 56,
+     "sticky_piston": 46,
+     "orange_wool": 40,
+     "cyan_wool": 21,
+     "orange_terracotta": 20,
+     "yellow_terracotta": 20,
+     "repeater": 19,
+     "pink_wool": 19,
+     "lime_wool": 19,
+     "smooth_stone_slab": 11,
+     "redstone_wall_torch": 8,
+     "redstone_torch": 5,
+     "piston_head": 3,
+     "redstone_block": 3,
+     "comparator": 3,
+     "redstone_lamp": 2,
+     "furnace": 2,
+     "water_cauldron": 1,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 206,
+     "wire": 74,
+     "piston": 46,
+     "repeater": 19,
+     "torch": 13,
+     "piston_head": 3,
+     "redstone_block": 3,
+     "comparator": 3,
+     "analog": 3,
+     "lamp": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      4,
+      4,
+      -1
+     ],
+     "block": "lever[face=floor,facing=north,powered=true]"
+    }
+   ],
+   "outputs": 25,
+   "other_sections": {},
+   "doorway": {
+    "normal": "x",
+    "plane": 2,
+    "width": 5,
+    "height": 5,
+    "cells": 8,
+    "extra_cells": [
+     [
+      0,
+      6,
+      -1
+     ],
+     [
+      1,
+      5,
+      -1
+     ],
+     [
+      1,
+      6,
+      -2
+     ],
+     [
+      1,
+      6,
+      0
+     ],
+     [
+      1,
+      7,
+      -1
+     ],
+     [
+      3,
+      4,
+      -2
+     ],
+     [
+      3,
+      4,
+      0
+     ],
+     [
+      3,
+      5,
+      -3
+     ],
+     [
+      3,
+      5,
+      1
+     ],
+     [
+      3,
+      7,
+      -3
+     ],
+     [
+      3,
+      7,
+      1
+     ],
+     [
+      3,
+      8,
+      -2
+     ],
+     [
+      3,
+      8,
+      0
+     ],
+     [
+      4,
+      4,
+      -3
+     ],
+     [
+      4,
+      4,
+      1
+     ],
+     [
+      4,
+      8,
+      -3
+     ],
+     [
+      4,
+      8,
+      1
+     ]
+    ],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      4,
+      4,
+      -1
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 14,
+     "kind": "use",
+     "pos": [
+      4,
+      4,
+      -1
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 41,
+   "markers": {
+    "1": "Closing",
+    "13": "Closed",
+    "14": "Opening",
+    "40": "Opened"
+   },
+   "notes": [
+    "2026-10-18: furnace contents restored from the original save (1 11 3: 1 redstone dust, signal 1; 0 11 4: 1 wooden shovel in the fuel slot, signal 5). They were lost when furnaces and cauldrons were foreign blocks; now simulated, the door closes and opens like on the 26.3 server."
+   ],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 149,
+    "pistons_that_fire": 57,
+    "pistons_total": 46,
+    "outcomes": {
+     "extended": 16,
+     "failed": 2,
+     "pulled": 58,
+     "pushed": 46,
+     "retracted": 2,
+     "skipped": 22,
+     "spat": 3
+    },
+    "quasi_connected_extensions": 17,
+    "closed_runs": [
+     [
+      8,
+      15
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      2
+     ],
+     [
+      16,
+      41
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 13,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 8
+     },
+     {
+      "tick": 14,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 40,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 16
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.75
+  },
+  {
+   "id": "7x7-piston-door-legden",
+   "file": "piston_doors/7x7 Piston Door by LegDen [broken sim].redsim.json",
+   "category": "piston_doors",
+   "title": "Piston Door",
+   "creator": "LegDen",
+   "nominal_size": "7x7",
+   "broken_sim_in_name": true,
+   "sha256": "7c8d1f271e5189bb950e367c4fe1d61f8ae6609cb495f35be2cb7fac8b886059",
+   "bytes": 761672,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 2368,
+    "box": [
+     [
+      -11,
+      1,
+      -6
+     ],
+     [
+      11,
+      13,
+      6
+     ]
+    ],
+    "size": [
+     23,
+     13,
+     13
+    ],
+    "volume": 3887,
+    "kinds": {
+     "quartz_block": 409,
+     "observer": 407,
+     "sticky_piston": 273,
+     "redstone_wire": 234,
+     "piston": 174,
+     "smooth_stone_slab": 88,
+     "purple_concrete": 77,
+     "repeater": 77,
+     "target": 60,
+     "note_block": 43,
+     "yellow_concrete": 39,
+     "redstone_block": 34,
+     "cyan_concrete": 32,
+     "comparator": 30,
+     "slime_block": 29,
+     "piston_head": 27,
+     "oak_leaves": 25,
+     "activator_rail": 25,
+     "purple_stained_glass": 25,
+     "red_concrete": 24,
+     "cyan_stained_glass": 23,
+     "obsidian": 23,
+     "oak_wood": 22,
+     "water_cauldron": 22,
+     "lime_concrete": 21,
+     "honey_block": 18,
+     "orange_concrete": 17,
+     "yellow_stained_glass": 16,
+     "crafter": 11,
+     "hopper": 9,
+     "blue_concrete": 9,
+     "redstone_lamp": 8,
+     "orange_stained_glass": 7,
+     "waxed_lightning_rod": 4,
+     "tripwire_hook": 4,
+     "barrel": 4,
+     "purple_stained_glass_pane": 3,
+     "detector_rail": 3,
+     "stone_brick_stairs": 2,
+     "redstone_wall_torch": 2,
+     "cyan_stained_glass_pane": 1,
+     "sand": 1,
+     "stone_brick_wall": 1,
+     "lever": 1,
+     "lime_stained_glass_pane": 1,
+     "dropper": 1,
+     "orange_stained_glass_pane": 1,
+     "yellow_stained_glass_pane": 1
+    },
+    "roles": {
+     "structure": 868,
+     "piston": 447,
+     "observer": 407,
+     "wire": 234,
+     "repeater": 77,
+     "target": 60,
+     "sticky_block": 47,
+     "bud": 43,
+     "redstone_block": 34,
+     "comparator": 30,
+     "rail": 28,
+     "piston_head": 27,
+     "analog": 26,
+     "crafter": 11,
+     "hopper": 9,
+     "lamp": 8,
+     "lightning_rod": 4,
+     "tripwire": 4,
+     "torch": 2,
+     "lever": 1,
+     "dropper": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      0,
+      2,
+      6
+     ],
+     "block": "lever[face=wall,facing=south,powered=false]"
+    }
+   ],
+   "outputs": 49,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -3,
+    "width": 7,
+    "height": 7,
+    "cells": 49,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      0,
+      2,
+      6
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 71,
+     "kind": "use",
+     "pos": [
+      0,
+      2,
+      6
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 123,
+   "markers": {
+    "1": "Closing",
+    "70": "Closed",
+    "71": "Opening",
+    "123": "Opened"
+   },
+   "notes": [],
+   "build_pending": {
+    "scheduled_ticks": 1,
+    "block_events": 1
+   },
+   "replay": {
+    "piston_events": 3296,
+    "pistons_that_fire": 415,
+    "pistons_total": 447,
+    "outcomes": {
+     "extended": 610,
+     "failed": 69,
+     "pulled": 257,
+     "pushed": 530,
+     "retracted": 98,
+     "skipped": 956,
+     "spat": 776
+    },
+    "quasi_connected_extensions": 480,
+    "closed_runs": [
+     [
+      19,
+      71
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      1
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 70,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 19
+     },
+     {
+      "tick": 71,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 123,
+      "marker": "Opened",
+      "checked": true,
+      "ok": false,
+      "how": null,
+      "since": 90
+     }
+    ],
+    "markers_ok": false
+   },
+   "seconds": 7.75
+  },
+  {
+   "id": "8x8-piston-door-legden",
+   "file": "piston_doors/8x8 Piston Door by LegDen [broken sim].redsim.json",
+   "category": "piston_doors",
+   "title": "Piston Door",
+   "creator": "LegDen",
+   "nominal_size": "8x8",
+   "broken_sim_in_name": true,
+   "sha256": "3d36b8ef96e9321915493c2f047ebd0c9e87a64bf9ba11e9022a999eddad686c",
+   "bytes": 634953,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 1963,
+    "box": [
+     [
+      -11,
+      1,
+      -6
+     ],
+     [
+      11,
+      16,
+      2
+     ]
+    ],
+    "size": [
+     23,
+     16,
+     9
+    ],
+    "volume": 3312,
+    "kinds": {
+     "observer": 316,
+     "quartz_block": 298,
+     "sticky_piston": 240,
+     "redstone_wire": 179,
+     "piston": 139,
+     "smooth_stone_slab": 84,
+     "repeater": 65,
+     "purple_concrete": 61,
+     "cyan_concrete": 59,
+     "purple_stained_glass": 47,
+     "blue_concrete": 46,
+     "note_block": 40,
+     "target": 40,
+     "cyan_stained_glass": 37,
+     "redstone_block": 34,
+     "activator_rail": 29,
+     "piston_head": 24,
+     "blue_stained_glass": 23,
+     "honey_block": 21,
+     "slime_block": 21,
+     "oak_leaves": 20,
+     "red_concrete": 20,
+     "comparator": 19,
+     "oak_wood": 17,
+     "water_cauldron": 17,
+     "obsidian": 16,
+     "stone_brick_stairs": 12,
+     "redstone_lamp": 9,
+     "light_blue_concrete": 6,
+     "hopper": 5,
+     "tripwire_hook": 4,
+     "moss_block": 3,
+     "barrel": 2,
+     "powered_rail": 2,
+     "purple_stained_glass_pane": 2,
+     "stone_brick_wall": 1,
+     "detector_rail": 1,
+     "barrier": 1,
+     "lever": 1,
+     "dropper": 1,
+     "redstone_wall_torch": 1
+    },
+    "roles": {
+     "structure": 753,
+     "piston": 379,
+     "observer": 316,
+     "wire": 179,
+     "repeater": 65,
+     "sticky_block": 42,
+     "bud": 40,
+     "target": 40,
+     "redstone_block": 34,
+     "rail": 32,
+     "piston_head": 24,
+     "analog": 19,
+     "comparator": 19,
+     "lamp": 9,
+     "hopper": 5,
+     "tripwire": 4,
+     "lever": 1,
+     "dropper": 1,
+     "torch": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      1,
+      1,
+      2
+     ],
+     "block": "lever[face=wall,facing=south,powered=false]"
+    }
+   ],
+   "outputs": 64,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -3,
+    "width": 8,
+    "height": 8,
+    "cells": 64,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      1,
+      1,
+      2
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 34,
+     "kind": "use",
+     "pos": [
+      1,
+      1,
+      2
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 79,
+   "markers": {
+    "1": "Closing",
+    "31": "Closed",
+    "34": "Opening",
+    "73": "Opened"
+   },
+   "notes": [],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 2430,
+    "pistons_that_fire": 351,
+    "pistons_total": 379,
+    "outcomes": {
+     "extended": 419,
+     "failed": 40,
+     "pulled": 199,
+     "pushed": 420,
+     "retracted": 66,
+     "skipped": 709,
+     "spat": 577
+    },
+    "quasi_connected_extensions": 375,
+    "closed_runs": [
+     [
+      22,
+      34
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      1
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 31,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 22
+     },
+     {
+      "tick": 34,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 73,
+      "marker": "Opened",
+      "checked": true,
+      "ok": false,
+      "how": null,
+      "since": 59
+     }
+    ],
+    "markers_ok": false
+   },
+   "seconds": 6.54
+  },
+  {
+   "id": "4x4-sliding-piston-door-purplers",
+   "file": "piston_doors_with_slime/4x4 Sliding Piston Door by Purplers.redsim.json",
+   "category": "piston_doors_with_slime",
+   "title": "Sliding Piston Door",
+   "creator": "Purplers",
+   "nominal_size": "4x4",
+   "broken_sim_in_name": false,
+   "sha256": "96169b1476f1efc33ce91d44a0686c5f1bda24fa2143ccfaee188443662caafb",
+   "bytes": 223497,
+   "game_version": "26.3",
+   "census": {
+    "blocks": 401,
+    "box": [
+     [
+      -10,
+      1,
+      -3
+     ],
+     [
+      9,
+      11,
+      0
+     ]
+    ],
+    "size": [
+     20,
+     11,
+     4
+    ],
+    "volume": 880,
+    "kinds": {
+     "redstone_wire": 80,
+     "cyan_wool": 66,
+     "chiseled_quartz_block": 64,
+     "sticky_piston": 58,
+     "smooth_stone_slab": 32,
+     "piston_head": 26,
+     "redstone_block": 20,
+     "slime_block": 10,
+     "obsidian": 8,
+     "piston": 8,
+     "honey_block": 8,
+     "note_block": 6,
+     "comparator": 4,
+     "furnace": 4,
+     "hopper": 2,
+     "repeater": 2,
+     "stone_button": 2,
+     "lever": 1
+    },
+    "roles": {
+     "structure": 170,
+     "wire": 80,
+     "piston": 66,
+     "piston_head": 26,
+     "redstone_block": 20,
+     "sticky_block": 18,
+     "bud": 6,
+     "comparator": 4,
+     "analog": 4,
+     "hopper": 2,
+     "repeater": 2,
+     "button": 2,
+     "lever": 1
+    },
+    "foreign": {},
+    "floor_top": 0
+   },
+   "inputs": [
+    {
+     "pos": [
+      0,
+      3,
+      0
+     ],
+     "block": "lever[face=wall,facing=south,powered=false]"
+    }
+   ],
+   "outputs": 16,
+   "other_sections": {},
+   "doorway": {
+    "normal": "z",
+    "plane": -2,
+    "width": 4,
+    "height": 4,
+    "cells": 16,
+    "extra_cells": [],
+    "materials_at_build": [
+     "air"
+    ],
+    "build_state": "open"
+   },
+   "timeline": [
+    {
+     "tick": 1,
+     "kind": "use",
+     "pos": [
+      0,
+      3,
+      0
+     ],
+     "label": "use lever"
+    },
+    {
+     "tick": 13,
+     "kind": "use",
+     "pos": [
+      0,
+      3,
+      0
+     ],
+     "label": "use lever"
+    }
+   ],
+   "end_tick": 53,
+   "markers": {
+    "1": "Closing",
+    "12": "Closed",
+    "13": "Opening",
+    "22": "Opened"
+   },
+   "notes": [
+    "2026-10-18: furnace contents restored from the original save (all four furnaces: 1 redstone dust, signal 1). They were lost when furnaces were foreign blocks; with them the door closes (gap filled with slime and honey by tick 30) and opens again when the lever goes off, as on the 26.3 server."
+   ],
+   "build_pending": {},
+   "replay": {
+    "piston_events": 162,
+    "pistons_that_fire": 66,
+    "pistons_total": 66,
+    "outcomes": {
+     "extended": 16,
+     "pulled": 62,
+     "pushed": 62,
+     "retracted": 10,
+     "skipped": 6,
+     "spat": 6
+    },
+    "quasi_connected_extensions": 28,
+    "closed_runs": [
+     [
+      10,
+      13
+     ]
+    ],
+    "open_runs": [
+     [
+      0,
+      4
+     ],
+     [
+      17,
+      53
+     ]
+    ],
+    "marker_checks": [
+     {
+      "tick": 1,
+      "marker": "Closing",
+      "checked": false
+     },
+     {
+      "tick": 12,
+      "marker": "Closed",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 10
+     },
+     {
+      "tick": 13,
+      "marker": "Opening",
+      "checked": false
+     },
+     {
+      "tick": 22,
+      "marker": "Opened",
+      "checked": true,
+      "ok": true,
+      "how": "door",
+      "since": 17
+     }
+    ],
+    "markers_ok": true
+   },
+   "seconds": 0.86
+  }
+ ]
+}
