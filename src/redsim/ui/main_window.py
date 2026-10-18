@@ -207,8 +207,11 @@ class MainWindow(
             lambda indices: self._history_edit(self.document.delete_edits, indices)
         )
         canvas.set_tick_zero.connect(self._set_tick_zero)
+        canvas.add_marker.connect(self._add_marker_at)
         canvas.rename_marker.connect(self._rename_marker)
         canvas.delete_marker.connect(lambda tick: self._name_marker(tick, ""))
+        canvas.move_marker.connect(self._move_marker)
+        self.simulation.add_marker.connect(self._add_marker)
         self.simulation.set_tick_zero.connect(self._set_tick_zero)
         for inspector in (self.inspector, self.block_popup.inspector):
             inspector.monitor_requested.connect(self._toggle_monitor)
@@ -398,7 +401,7 @@ class MainWindow(
             if icon:
                 action.setIcon(pixel_icons.pixel_icon(icon))
         self._action(sim_menu, "Add marker…", self._add_marker, "sim.marker").setIcon(
-            pixel_icons.pixel_icon("tick_zero")
+            pixel_icons.pixel_icon("marker")
         )
         sim_menu.addSeparator()
         for text, where, keymap_id in (
@@ -406,6 +409,8 @@ class MainWindow(
             ("Jump to end", "end", "sim.end"),
             ("Previous edit", "previous", "sim.prev_edit"),
             ("Next edit", "next", "sim.next_edit"),
+            ("Previous marker", "previous_marker", "sim.prev_marker"),
+            ("Next marker", "next_marker", "sim.next_marker"),
         ):
             action = self._action(sim_menu, text, lambda _=False, w=where: self._jump(w), keymap_id)
             action.setIcon(pixel_icons.pixel_icon(where))

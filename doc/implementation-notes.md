@@ -37,7 +37,7 @@ python -m redsim.cli help --markdown > doc/cli-reference.md   # after changing a
 ```
 
 Large modules are split into mixins (`viewport_*`, `window_*`, `timeline_lines`,
-`document_history`, `document_sequences`): their methods start with
+`timeline_markers`, `document_history`, `document_sequences`): their methods start with
 `view = cast("<Class>", self)` and use `view`, which keeps them fully type-checked
 without mypy exceptions. Prefer adding new behavior to the matching mixin module.
 

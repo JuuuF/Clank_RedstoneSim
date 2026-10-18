@@ -330,6 +330,25 @@ ICONS["tick_zero"] = (  # a flag: "the run starts here"
     "#......",
     "#......",
 )
+ICONS["marker"] = (  # a timeline marker: a pin pointing down at its tick
+    "#######",
+    "#######",
+    "#######",
+    "#######",
+    ".#####.",
+    "..###..",
+    "...#...",
+)
+ICONS["previous_marker"] = (
+    "...#.......",
+    "..##..#####",
+    ".###..#####",
+    "####..#####",
+    ".###...###.",
+    "..##....#..",
+    "...#.......",
+)
+ICONS["next_marker"] = _mirrored(ICONS["previous_marker"])
 ICONS["warning"] = (
     "....#....",
     "...###...",

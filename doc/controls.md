@@ -21,7 +21,8 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
   values they saw). A labeled block shows its label in the inspector's title and on
   its timeline line.
 - **Timeline** (like Blender's): transport buttons (start, previous edit, tick back, play
-  backwards, run, tick forward, next edit, end), speed and warp, and a ruler counting ticks
+  backwards, run, tick forward, next edit, end), **Set tick 0 here**, the marker buttons
+  (previous marker, **Marker**, next marker), speed and warp, and a ruler counting ticks
   from **tick 0, the build** ([[decisions]] ADR-022), with the recorded range and the blue
   playhead. Click or drag on the ruler to scrub, wheel to zoom, middle-drag to pan.
   - **Keyframes:** edits made after tick 0 are diamonds in four color-coded rows: *Placed*
@@ -41,6 +42,17 @@ highlighted. Sections are defined in `keymap.HOTKEY_GROUPS`.
     on these selections too. A group's summary line selects its blocks' edits at that tick.
     Edits made anywhere in the recorded history keep the later keyframes where they are
     (the history re-runs from the edit).
+  - **Markers** (Blender's): named ticks, a pin with its name in a strip under the
+    ruler's numbers. **Ctrl+M** or the **Marker** button adds one at the current tick (on
+    a tick that has one: renames it); right-click anywhere on the timeline → *Add marker
+    at tick N…* adds one there. Click a marker to select it (white) and jump there,
+    **drag** it to another tick, **double-click** or **F2** renames it, **Del** deletes
+    it; its right-click menu also moves it to the current tick. The **Marker** button's
+    arrow lists every marker (click one to jump there) and renames or deletes the
+    selected one (else the one at the current tick). **Ctrl+Shift+←/→** and the buttons
+    beside it jump to the previous / next marker. Every marker change is an undo step
+    (Ctrl+Z, without re-running the history); markers are saved with the world and move
+    along with **Set tick 0 here**.
   - **Monitor tracks** (logic-analyzer style): Inspector → Monitor adds the selected
     block; its value per tick (wire power, lit/powered, comparator output, …) is drawn in a
     row; hovering a row shows the value at that tick. Right-click a row's label to
@@ -301,6 +313,9 @@ reason the old Shift+T rewind was disliked).
 | Ctrl+→ / Ctrl+← | step one event (engine step) forward / back (E did this until 2026-10-12; it now opens the block popup) |
 | Shift+← / Shift+→ | jump to tick 0 / the end of the recorded history (Blender) |
 | ↑ / ↓ | jump to the next / previous edit (like Blender's keyframe jumps) |
+| Ctrl+M | add a named marker at the current tick (or rename the one there) |
+| Ctrl+Shift+← / Ctrl+Shift+→ | jump to the previous / next marker |
+| Del / F2 (timeline focused) | delete / rename the selected marker |
 | Ctrl+Z / Ctrl+Y | undo / redo: the last edit (or line, or keyframe operation) is removed from the history and the simulation re-run; the view returns to where it was made |
 | Edit → Undo History | the latest 25 steps, newest first; choosing one undoes it and everything after it in one re-run (redo brings them back one by one) |
 | Ctrl+Space, /, Shift Shift | quick block search |

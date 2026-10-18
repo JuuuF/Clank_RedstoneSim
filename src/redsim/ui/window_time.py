@@ -117,7 +117,10 @@ class TimeActions:
         view = cast("MainWindow", self)
         view.simulation.stop()
         if not view.document.jump(where):
-            view._message("Already there.")
+            none = {"previous_marker": "No marker before", "next_marker": "No marker after"}
+            view._message(
+                f"{none[where]} tick {view.document.tick}." if where in none else "Already there."
+            )
         view.last_steps = []
         view._changed()
 
@@ -186,25 +189,43 @@ class TimeActions:
             menu.addAction(f"… {len(labels) - HISTORY_MENU_SIZE} older steps").setEnabled(False)
 
     def _add_marker(self) -> None:
+        """A marker at the current tick (Ctrl+M, the timeline's Marker button)."""
         view = cast("MainWindow", self)
-        tick = view.document.tick
+        view._add_marker_at(view.document.tick)
+
+    def _add_marker_at(self, tick: int) -> None:
+        """Name ``tick``: a new marker, or renaming the one already there."""
+        view = cast("MainWindow", self)
+        if tick in view.document.markers:
+            view._rename_marker(tick)
+            return
         name, ok = QInputDialog.getText(
             view, "Add marker", f"Name of the marker at tick {tick}:", text=f"tick {tick}"
         )
         if ok:
             view._name_marker(tick, name.strip() or f"tick {tick}")
+            view.simulation.canvas.selected_marker = tick
 
     def _rename_marker(self, tick: int) -> None:
         view = cast("MainWindow", self)
         current = view.document.markers.get(tick, "")
         name, ok = QInputDialog.getText(view, "Rename marker", f"Tick {tick}:", text=current)
-        if ok:
+        if ok and name.strip():  # an empty name keeps the old one (Del deletes)
             view._name_marker(tick, name.strip())
 
     def _name_marker(self, tick: int, name: str) -> None:
         """Set, rename (or with an empty name delete) the marker at ``tick``."""
         view = cast("MainWindow", self)
+        old = view.document.markers.get(tick)
         view.document.set_marker(tick, name)
+        if not name and old is not None:
+            view._message(f"Deleted the marker “{old}” (Ctrl+Z brings it back).")
+        view._changed()
+
+    def _move_marker(self, tick: int, to: int) -> None:
+        view = cast("MainWindow", self)
+        if not view.document.move_marker(tick, to):
+            view._message(f"Tick {to} already has a marker.")
         view._changed()
 
     def _undo_to(self, count: int) -> None:

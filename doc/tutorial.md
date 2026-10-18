@@ -94,7 +94,7 @@ This list is generated from `src/redsim/tutorial/lessons.py` (default keys shown
 2. **Groups**: Draw a box around this station (SELECT mode), open **Circuit → Groups** and press **Group selection…**. Ports show live values; a double click on a group takes the camera there.
 3. **Prefabs**: With the box still there, open **Circuit → Prefabs** and press **Save selection…**: a reusable piece, kept with the world.
 4. **Signs**: Place a sign (inventory folder **Special**) and type its text in the inspector.
-5. **Markers**: Press **Ctrl+M** to name the current tick: a marker on the timeline.
+5. **Markers**: Press **Ctrl+M** (or the timeline's **Marker** button) to name the current tick: a marker on the timeline. Click it to jump there, drag it to another tick, double-click to rename, Del to delete.
 
 ### 9. Files and worlds
 

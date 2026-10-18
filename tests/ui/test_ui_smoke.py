@@ -318,6 +318,76 @@ def test_timeline_keyframes_drag_merge_and_delete(app: object) -> None:
     window.close()
 
 
+def test_timeline_markers_drag_click_rename_delete_and_buttons(
+    app: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from PySide6.QtCore import QEvent, QPointF
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtTest import QTest
+
+    from redsim.ui import window_time
+    from redsim.ui.main_window import MainWindow
+
+    names = iter(["renamed", "new one"])
+    monkeypatch.setattr(
+        window_time.QInputDialog, "getText", staticmethod(lambda *args, **kw: (next(names), True))
+    )
+    window = MainWindow()
+    window.resize(1200, 800)
+    window.show()
+    document = window.document
+    document.run_ticks(10)
+    document.set_marker(2, "a")
+    document.set_marker(6, "b")
+    window._changed()
+    canvas = window.simulation.canvas
+    canvas.view_start, canvas.view_span = 0.0, 20.0
+    strip_y = canvas.RULER_HEIGHT - 4  # the marker strip under the tick numbers
+    left, none = Qt.MouseButton.LeftButton, Qt.MouseButton.NoButton
+
+    def send(kind: QEvent.Type, tick: int, button: Qt.MouseButton = left) -> None:
+        point = QPointF(canvas._x(tick), strip_y)
+        buttons = none if kind == QEvent.Type.MouseButtonRelease else button
+        pressed = none if kind == QEvent.Type.MouseMove else button
+        event = QMouseEvent(
+            kind, point, canvas.mapToGlobal(point), pressed, buttons, Qt.KeyboardModifier.NoModifier
+        )
+        QtWidgets.QApplication.sendEvent(canvas, event)
+
+    send(QEvent.Type.MouseButtonPress, 2)  # drag "a" from tick 2 to tick 4
+    send(QEvent.Type.MouseMove, 3)
+    send(QEvent.Type.MouseMove, 4)
+    send(QEvent.Type.MouseButtonRelease, 4)
+    assert document.visible_markers() == {4: "a", 6: "b"}
+    assert canvas.selected_marker == 4
+    send(QEvent.Type.MouseButtonPress, 6)  # a click selects "b" and jumps there
+    send(QEvent.Type.MouseButtonRelease, 6)
+    assert (document.tick, canvas.selected_marker) == (6, 6)
+    send(QEvent.Type.MouseButtonDblClick, 6)  # renames it
+    send(QEvent.Type.MouseButtonRelease, 6)
+    assert document.markers[6] == "renamed"
+    QTest.keyClick(canvas, Qt.Key.Key_Delete)
+    assert document.visible_markers() == {4: "a"}
+    window._undo()
+    assert document.visible_markers() == {4: "a", 6: "renamed"}
+    window._jump("previous_marker")
+    assert document.tick == 4
+    document.seek_tick(8)
+    window._changed()
+    window.simulation.marker_button.click()  # adds one at the current tick
+    assert document.visible_markers() == {4: "a", 6: "renamed", 8: "new one"}
+    window.simulation._fill_marker_menu()
+    texts = [action.text() for action in window.simulation.marker_menu.actions()]
+    assert texts[:3] == [
+        "Add marker at tick 8… (Ctrl+M)",  # disabled: there is one
+        "Rename marker “new one”…",
+        "Delete marker “new one”",
+    ]
+    assert texts[-3:] == ["4  ·  a", "6  ·  renamed", "8  ·  new one"]
+    window.document.dirty = False
+    window.close()
+
+
 def test_hotkeys_panel_filters_and_follows_the_mode(app: object) -> None:
     from redsim.ui.main_window import MainWindow
 

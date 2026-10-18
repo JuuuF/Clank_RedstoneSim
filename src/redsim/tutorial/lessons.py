@@ -630,7 +630,8 @@ LESSONS: tuple[Lesson, ...] = (
             ),
             Step(
                 "Markers",
-                "Press {key:sim.marker} to name the current tick: a marker on the timeline.",
+                "Press {key:sim.marker} (or the timeline's Marker button) to name the current "
+                "tick: a marker on the timeline. Drag it to move it, double-click to rename it.",
                 _more(lambda snap: len(snap.doc.visible_markers())),
             ),
         ),

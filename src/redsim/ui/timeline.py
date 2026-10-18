@@ -64,6 +64,7 @@ from redsim.ui.timeline_common import (
     TEXT_DIM,
 )
 from redsim.ui.timeline_lines import EditEvent, LineArea, _Line
+from redsim.ui.timeline_markers import MarkerArea, fill_marker_menu
 
 
 @dataclass
@@ -74,11 +75,13 @@ class Track:
     block: str = ""  # block id, for the row's icon
 
 
-class TimelineCanvas(LineArea, QWidget):
+class TimelineCanvas(MarkerArea, LineArea, QWidget):
     scrub = Signal(int)  # tick (since tick 0)
     remove_monitor = Signal(object)  # Pos
+    add_marker = Signal(int)  # tick
     rename_marker = Signal(int)  # tick
     delete_marker = Signal(int)  # tick
+    move_marker = Signal(int, int)  # tick, new tick
     move_edits = Signal(object, int)  # step indices, delta ticks
     merge_edits = Signal(object, object)  # step indices, target tick (None: earliest)
     delete_edits = Signal(object)  # step indices
@@ -143,6 +146,10 @@ class TimelineCanvas(LineArea, QWidget):
         self.setMouseTracking(True)
         self._hover_tick: int | None = None  # a track's tick under the cursor
         self.markers: dict[int, str] = {}  # tick → name (Blender-style markers)
+        self.selected_marker: int | None = None
+        #: A pressed marker: (its tick, the press x); and where dragging it would put it.
+        self._marker_drag: tuple[int, float] | None = None
+        self._marker_to: int | None = None
         # While playing, the playhead glides between the ticks the panels show (they are
         # refreshed a few times a second) instead of jumping: ticks per second (negative
         # when playing backwards) and where the glide started (tick, time).
@@ -372,26 +379,6 @@ class TimelineCanvas(LineArea, QWidget):
             painter.drawText(badge, Qt.AlignmentFlag.AlignCenter, label)
         painter.end()
 
-    def _paint_markers(self, painter: QPainter) -> None:
-        """Markers: a gold flag at the bottom of the ruler with the name beside it, and a
-        faint dotted line down through the rows."""
-        gold = QColor(theme.GOLD)
-        line = QColor(theme.GOLD)
-        line.setAlpha(70)
-        for tick, name in self.markers.items():
-            x = self._x(tick)
-            if x < self.LABEL_WIDTH or x > self.width():
-                continue
-            painter.setPen(QPen(line, 1, Qt.PenStyle.DotLine))
-            painter.drawLine(QPointF(x, self.RULER_HEIGHT), QPointF(x, self.height()))
-            base = self.RULER_HEIGHT - 3  # the marker strip, below the tick numbers
-            flag = QPolygonF([QPointF(x - 4, base - 6), QPointF(x + 4, base - 6), QPointF(x, base)])
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(gold)
-            painter.drawPolygon(flag)
-            painter.setPen(gold)
-            painter.drawText(QPointF(x + 6, base), name)
-
     def set_running(self, rate: float | None) -> None:
         """Playing at ``rate`` ticks per second (negative: backwards), or None: paused, the
         playhead snaps to the exact tick."""
@@ -418,11 +405,6 @@ class TimelineCanvas(LineArea, QWidget):
         moved = base + ((now if now is not None else time.monotonic()) - since) * rate
         gap = self._glide_gap()
         return min(max(moved, self.current - gap), self.current + gap)
-
-    def set_markers(self, markers: dict[int, str]) -> None:
-        """Markers get their own strip under the tick numbers while there are any."""
-        self.markers = markers
-        self.RULER_HEIGHT = type(self).RULER_HEIGHT + (self.MARKER_STRIP if markers else 0)
 
     def _paint_edit_rows(self, painter: QPainter) -> None:
         painter.setPen(GRID)
@@ -512,14 +494,12 @@ class TimelineCanvas(LineArea, QWidget):
         if button == Qt.MouseButton.MiddleButton:
             self._pan_from = (int(x), self.view_start)
             return
+        if self._marker_press(event):
+            return
         index = self._line_at(y)
         if index is not None and self._line_press(event, self.lines[index], self._tops[index]):
             return
         if button == Qt.MouseButton.RightButton:
-            marker = self.marker_at(x, y)
-            if marker is not None:
-                self._marker_menu(event.globalPosition().toPoint(), marker)
-                return
             if x < self.LABEL_WIDTH and y >= self._tracks_top():
                 row = int((y - self._tracks_top()) // self.ROW_HEIGHT)
                 if 0 <= row < len(self.tracks):
@@ -529,7 +509,9 @@ class TimelineCanvas(LineArea, QWidget):
             if batch is not None and (batch.tick, batch.row) not in self.selected:
                 self.selected, self.selected_events = {(batch.tick, batch.row)}, set()
                 self.update()
-            self._context_menu(event.globalPosition().toPoint(), self._edit_row_at(y))
+            self._context_menu(
+                event.globalPosition().toPoint(), self._edit_row_at(y), self.tick_at(x)
+            )
             return
         if button != Qt.MouseButton.LeftButton or x < self.LABEL_WIDTH:
             return
@@ -563,6 +545,8 @@ class TimelineCanvas(LineArea, QWidget):
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.position().x(), event.position().y()
         self._hover_position(y)
+        if self._marker_move(event):
+            return
         if self._pulse_drag is not None:
             pulse, mode, start_x, start_line = self._pulse_drag
             dt = self.tick_at(x) - self.tick_at(start_x)
@@ -642,6 +626,8 @@ class TimelineCanvas(LineArea, QWidget):
                 self._drag_delta = max(delta, -earliest)
                 QToolTip.showText(event.globalPosition().toPoint(), f"{self._drag_delta:+d} ticks")
                 self.update()
+        elif self._marker_hover(event):
+            return
         else:
             batch = self._batch_at(x, y)
             reading = self.track_reading(x, y)
@@ -694,6 +680,8 @@ class TimelineCanvas(LineArea, QWidget):
             self.update()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if self._marker_release():
+            return
         if self._pulse_drag is not None:
             pressed = self._pulse_drag[0]
             changes = []
@@ -754,14 +742,28 @@ class TimelineCanvas(LineArea, QWidget):
         # Delete and M act on selected keyframes when the timeline has focus (before the
         # window's shortcuts see them).
         chosen = self.selected or self.selected_events or self.selected_pulses
-        if event.type() == QEvent.Type.ShortcutOverride and chosen:
+        if event.type() == QEvent.Type.ShortcutOverride:
             key = event.key()  # type: ignore[attr-defined]
-            if key in (Qt.Key.Key_Delete, Qt.Key.Key_M, Qt.Key.Key_Backspace, Qt.Key.Key_0):
+            marker_keys = (Qt.Key.Key_Delete, Qt.Key.Key_Backspace, Qt.Key.Key_F2)
+            if (chosen and key in (*marker_keys[:2], Qt.Key.Key_M, Qt.Key.Key_0)) or (
+                self.selected_marker is not None and key in marker_keys
+            ):
                 event.accept()
                 return True
         return super().event(event)
 
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        """A double click on a marker renames it."""
+        tick = self.marker_at(event.position().x(), event.position().y())
+        if tick is not None and event.button() == Qt.MouseButton.LeftButton:
+            self._marker_drag, self._marker_to = None, None
+            self.rename_marker.emit(tick)
+            return
+        LineArea.mouseDoubleClickEvent(self, event)
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if self._marker_key(event.key()):
+            return
         if self.selected_pulses and event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
             self.pulses_deleted.emit(sorted(self.selected_pulses))
             self.selected_pulses = set()
@@ -780,26 +782,16 @@ class TimelineCanvas(LineArea, QWidget):
         else:
             super().keyPressEvent(event)
 
-    def marker_at(self, x: float, y: float) -> int | None:
-        """The marker whose flag (in the ruler) is under the cursor."""
-        if y > self.RULER_HEIGHT or x < self.LABEL_WIDTH:
-            return None
-        near = [(abs(self._x(tick) - x), tick) for tick in self.markers]
-        best = min(near, default=None)
-        return best[1] if best is not None and best[0] <= 6 else None
-
-    def _marker_menu(self, where: QPoint, tick: int) -> None:
+    def _context_menu(self, where: QPoint, row: int | None, tick: int) -> None:
         menu = QMenu(self)
-        menu.addAction(f"Rename marker “{self.markers[tick]}”…").triggered.connect(
-            lambda: self.rename_marker.emit(tick)
+        tick = max(0, tick)
+        name = self.markers.get(tick)
+        marker = menu.addAction(
+            f"Add marker at tick {tick}…" if name is None else f"Rename marker “{name}”…"
         )
-        remove = menu.addAction("Delete marker")
-        remove.setIcon(pixel_icons.pixel_icon("delete"))
-        remove.triggered.connect(lambda: self.delete_marker.emit(tick))
-        menu.exec(where)
-
-    def _context_menu(self, where: QPoint, row: int | None) -> None:
-        menu = QMenu(self)
+        marker.setIcon(pixel_icons.pixel_icon("marker"))
+        marker.triggered.connect(lambda: self.add_marker.emit(tick))
+        menu.addSeparator()
         chosen = self.selected_indices()
         ticks = self._selected_ticks()
         merge = menu.addAction("Merge selected into the earliest tick (M)")
@@ -851,8 +843,10 @@ class TimelineBar(QWidget):
     step_event = Signal()
     tick_back = Signal()
     step_back = Signal()
-    jump = Signal(str)  # "start" | "end" | "previous" | "next"
+    #: "start" | "end" | "previous" | "next" | "previous_marker" | "next_marker"
+    jump = Signal(str)
     set_tick_zero = Signal()
+    add_marker = Signal()  # at the current tick
     speed_changed = Signal(int)
 
     def __init__(self) -> None:
@@ -911,6 +905,31 @@ class TimelineBar(QWidget):
         zero.setIcon(pixel_icons.pixel_icon("tick_zero"))
         zero.setIconSize(pixel_icons.ICON_SIZE)
         zero.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        row.addSpacing(8)
+        button(
+            "previous_marker",
+            "Previous marker (Ctrl+Shift+Left)",
+            lambda: self.jump.emit("previous_marker"),
+        )
+        # Click: add a marker here; the arrow: every marker, rename and delete.
+        self.marker_button = QToolButton()
+        self.marker_button.setIcon(pixel_icons.pixel_icon("marker"))
+        self.marker_button.setIconSize(pixel_icons.ICON_SIZE)
+        self.marker_button.setText("Marker")
+        self.marker_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.marker_button.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.marker_button.setToolTip(
+            "Add a marker at the current tick (Ctrl+M).\n"
+            "The arrow lists the markers: jump to one, rename or delete it."
+        )
+        self.marker_button.clicked.connect(self.add_marker.emit)
+        self.marker_menu = QMenu(self.marker_button)
+        self.marker_menu.aboutToShow.connect(self._fill_marker_menu)
+        self.marker_button.setMenu(self.marker_menu)
+        row.addWidget(self.marker_button)
+        button(
+            "next_marker", "Next marker (Ctrl+Shift+Right)", lambda: self.jump.emit("next_marker")
+        )
         row.addSpacing(12)
         row.addWidget(QLabel("ticks/s"))
         self.speed = QSpinBox()
@@ -934,6 +953,9 @@ class TimelineBar(QWidget):
         self.scroller.setFrameShape(QFrame.Shape.NoFrame)
         self.scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         layout.addWidget(self.scroller, 1)
+
+    def _fill_marker_menu(self) -> None:
+        fill_marker_menu(self.marker_menu, self.canvas, self.add_marker.emit)
 
     def preferred_height(self) -> int:
         """The transport row and all of the canvas (every line) without scrolling."""

@@ -211,6 +211,41 @@ def test_markers_follow_tick_zero_and_its_undo(tmp_path: Path) -> None:
     assert doc.visible_markers() == {}
 
 
+def test_marker_edits_are_undo_steps_without_a_rerun() -> None:
+    doc = Document.new_flat()
+    request = PlaceRequest(Direction.UP, yaw=0, pitch=60)
+    doc.place((0, 1, 0), blocks.REDSTONE_LAMP, request)
+    for _ in range(10):
+        doc.run_tick()
+    doc.set_marker(2, "a")
+    doc.set_marker(6, "b")
+    doc.set_marker(6, "b")  # unchanged: no undo step
+    assert doc.undo_labels[:2] == ["add marker “b”", "add marker “a”"]
+    assert not doc.move_marker(2, 6)  # taken
+    assert not doc.move_marker(2, -1)
+    assert doc.move_marker(2, 4)
+    doc.set_marker(6, "c")
+    doc.set_marker(4, "")
+    assert doc.visible_markers() == {6: "c"}
+    rebuild = doc._rebuild
+    doc._rebuild = lambda *args: pytest.fail("the history was re-run")  # type: ignore[method-assign]
+    assert doc.undo_to(3)  # delete, rename, move
+    assert doc.visible_markers() == {2: "a", 6: "b"}
+    assert doc.redo()
+    assert doc.visible_markers() == {4: "a", 6: "b"}
+    doc._rebuild = rebuild  # type: ignore[method-assign]
+    doc.seek_tick(0)
+    assert doc.jump("next_marker") and doc.tick == 4
+    assert doc.jump("next_marker") and doc.tick == 6
+    assert not doc.jump("next_marker")
+    assert doc.jump("previous_marker") and doc.tick == 4
+    doc.set_marker(30, "beyond")  # after the recorded end: not a jump target
+    doc.seek_tick(6)
+    assert not doc.jump("next_marker")
+    assert doc.undo_to(len(doc.undo_labels))  # back to before the lamp, markers too
+    assert doc.visible_markers() == {}
+
+
 def test_a_tick_run_in_parts_ends_like_a_whole_one() -> None:
     from redsim.editor.document import Document
     from redsim.world import blocks

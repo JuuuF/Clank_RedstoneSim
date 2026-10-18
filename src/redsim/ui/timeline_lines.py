@@ -300,7 +300,8 @@ class LineArea:
             if not indices <= view.selected_events:
                 view.selected_events, view.selected = indices, set()
                 view.update()
-            view._context_menu(event.globalPosition().toPoint(), None)
+            where = event.globalPosition().toPoint()
+            view._context_menu(where, None, view.tick_at(event.position().x()))
             return True
         if event.button() != Qt.MouseButton.LeftButton:
             return False

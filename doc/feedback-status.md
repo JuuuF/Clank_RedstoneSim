@@ -20,6 +20,14 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **Working timeline markers** (2026-10-18, owner: markers could only be added with
+  Ctrl+M, "no moving, no deleting, no updating", and no buttons): markers are selected,
+  dragged to another tick, renamed (double-click, F2) and deleted (Del) on the ruler,
+  with a right-click menu on each and *Add marker at tick N…* in the timeline's menu;
+  the transport bar has previous / next marker buttons (Ctrl+Shift+←/→) and a
+  **Marker** button that adds one, with a list to jump to, rename or delete them. Marker
+  changes are undo steps that do not re-run the history (`HistoryState.markers`,
+  `ui/timeline_markers.py`, [[controls]]).
 - **Slow file dialogs** (2026-10-18, owner: up to 15 s for a folder change or a typed
   name when saving or browsing): every file and color dialog is Qt's own now
   (`AA_DontUseNativeDialogs` in `theme.apply`); GNOME's GTK dialogs ran inside the

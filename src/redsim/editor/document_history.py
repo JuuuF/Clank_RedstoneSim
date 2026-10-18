@@ -47,6 +47,7 @@ class HistoryOps:
         if not view._undo or not view.can_edit or count < 1:
             return False
         current = state = view._history_state()
+        rerun = False
         for _ in range(min(count, len(view._undo))):
             previous = view._undo.pop()
             view._redo.append(
@@ -55,12 +56,20 @@ class HistoryOps:
                     label=previous.label,
                     shift=previous.shift,
                     selection=previous.selection,
+                    markers=None if previous.markers is None else dict(view.markers),
                 )
             )
             view._shift_markers(previous.shift)
+            if previous.markers is not None:
+                view.markers = dict(previous.markers)
+            else:
+                rerun = True
             if previous.selection is not None:
                 view.restored_selection = previous.selection[0]
             state = previous
+        if not rerun:  # only markers changed: the history stays as it is
+            view._changed(dirty=True)
+            return True
         # Keep the simulated length: the history is re-run without the edits.
         view._rebuild(replace(state, end_tick=max(state.end_tick, current.end_tick)))
         return True
@@ -76,21 +85,57 @@ class HistoryOps:
                 label=state.label,
                 shift=state.shift,
                 selection=state.selection,
+                markers=None if state.markers is None else dict(view.markers),
             )
         )
         view._shift_markers(-state.shift)
         if state.selection is not None:
             view.restored_selection = state.selection[1]
+        if state.markers is not None:  # only markers changed: no re-run
+            view.markers = dict(state.markers)
+            view._changed(dirty=True)
+            return True
         view._rebuild(state)
         return True
 
     def set_marker(self, tick: int, name: str) -> None:
-        """Name a tick on the timeline (Blender's markers); an empty name removes it."""
+        """Name a tick on the timeline (Blender's markers); an empty name removes it. One
+        undo step (which does not re-run the history)."""
         view = cast("Document", self)
-        if name:
-            view.markers[tick] = name
+        old = view.markers.get(tick)
+        if name == (old or ""):
+            return
+        if not name:
+            label = f"delete marker “{old}”"
+        elif old is None:
+            label = f"add marker “{name}”"
         else:
-            view.markers.pop(tick, None)
+            label = f"rename marker “{old}” to “{name}”"
+        markers = dict(view.markers)
+        if name:
+            markers[tick] = name
+        else:
+            del markers[tick]
+        view._marker_edit(markers, label)
+
+    def move_marker(self, tick: int, to: int) -> bool:
+        """Move the marker at ``tick`` to tick ``to`` (one undo step). False if there is no
+        marker, ``to`` is before tick 0 or another marker is there."""
+        view = cast("Document", self)
+        name = view.markers.get(tick)
+        if name is None or to < 0 or to == tick or to in view.markers:
+            return False
+        markers = {t: n for t, n in view.markers.items() if t != tick}
+        markers[to] = name
+        view._marker_edit(markers, f"move marker “{name}” to tick {to}")
+        return True
+
+    def _marker_edit(self, markers: dict[int, str], label: str) -> None:
+        """Replace the markers; undo puts the old ones back."""
+        view = cast("Document", self)
+        view._undo.append(replace(view._history_state(), label=label, markers=view.markers))
+        view._redo.clear()
+        view.markers = dict(sorted(markers.items()))
         view._changed(dirty=True)
 
     def visible_markers(self) -> dict[int, str]:
@@ -323,12 +368,20 @@ class HistoryOps:
         return True
 
     def jump(self, where: str) -> bool:
-        """Blender-like jumps: ``"start"`` (tick 0) / ``"end"`` of the recorded history, or
-        the tick of the ``"previous"``/``"next"`` edit batch (after its edits). False if
-        already there."""
+        """Blender-like jumps: ``"start"`` (tick 0) / ``"end"`` of the recorded history,
+        the tick of the ``"previous"``/``"next"`` edit batch (after its edits) or of the
+        ``"previous_marker"``/``"next_marker"`` (in the recorded history). False if already
+        there or there is none."""
         view = cast("Document", self)
         history = view.history
         position = history.position
+        if where.endswith("_marker"):
+            ticks = [t for t in view.visible_markers() if t <= view.end_tick]
+            if where == "previous_marker":
+                earlier = [t for t in ticks if t < view.tick]
+                return bool(earlier) and view.seek_tick(max(earlier))
+            later = [t for t in ticks if t > view.tick]
+            return bool(later) and view.seek_tick(min(later))
         if where == "start":
             target = history.start
         elif where == "end":
@@ -436,6 +489,9 @@ class HistoryState:
     #: The editor's selection boxes before and after that edit (a move, turn or stack of
     #: the selection), so undo and redo take the selection along with the blocks.
     selection: tuple[tuple[Any, ...], tuple[Any, ...]] | None = None
+    #: A marker edit (nothing else changed, so undo and redo do not re-run the history):
+    #: the markers to put back.
+    markers: dict[int, str] | None = None
 
 
 @dataclass(frozen=True)
