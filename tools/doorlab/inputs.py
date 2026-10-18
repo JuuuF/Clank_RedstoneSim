@@ -11,7 +11,7 @@ instrument, a wire's connections) that the first neighbor update corrects.
 The result per door: the smallest gap from which every longer gap is clean (the minimum
 time between the two flips a user must leave), and the shorter gaps that fail or work.
 
-``recover`` runs the designed cycle once more after each gap that did not end clean:
+``recover`` uses the input once or twice more after each gap that did not end clean:
 does using the door normally undo the jam?
 
 ``repeat`` runs the designed cycle again from the rest state the first one left and
@@ -100,51 +100,50 @@ def run(path: Any, max_gap: int = 40) -> dict[str, Any]:
 
 
 def recover(path: Any, result: dict[str, Any]) -> dict[str, Any]:
-    """After each gap that did not end clean, run the designed cycle once more.
+    """After each gap that did not end clean, use the input once or twice more.
 
-    A gap **recovers** when that cycle ends in a normal rest state: the one after one
-    designed cycle or after two (a door can alternate between two, Nile's seamless
-    door). It **works again** when that cycle's doorway is right after its first flip
-    and at its end although some other block stays off. Adds ``recovers`` and
-    ``works_again`` to the gap's entry and ``recover_line`` to ``result``: ``#`` clean,
-    ``r`` recovers, ``w`` works again, ``x`` the doorway is still wrong.
+    A gap **recovers** when the whole build (the input included) then ends in one of
+    the door's normal rest states: those after 1 to 4 inputs that each wait until the
+    door is quiet (a door can alternate between two, Nile's seamless door). One input
+    can be enough: a button door's controller keeps its own state, which a bad gap can
+    leave out of step with the door. It **works again** when the doorway is in a normal
+    rest frame although some other block stays off. Adds ``recovers`` (1 or 2, the
+    inputs needed, or None) and ``works_again`` to the gap's entry and
+    ``recover_line`` to ``result``: ``#`` clean, ``1`` / ``2`` recovers after that many
+    inputs, ``w`` works again, ``x`` the doorway is still wrong.
     """
     canon = canonical.from_file(path)
     actions = canon["timeline"]["actions"]
     start = actions[0]["tick"]
-    designed = actions[1]["tick"] - start
     outputs = [tuple(p) for p in canon["annotations"]["sections"]["output"]["positions"]]
     cells = interactions.doorway(outputs).cells
 
-    def cycles(gap: int, extra: int) -> replay.Recording:
+    def run(ticks: list[int]) -> replay.Recording:
         variant = copy.deepcopy(canon)
-        flips = variant["timeline"]["actions"]
-        flips[1]["tick"] = start + gap
-        tick = start + gap + SETTLE
-        for _ in range(extra):
-            for a, t in ((actions[0], tick), (actions[1], tick + designed)):
-                flips.append({**copy.deepcopy(a), "tick": t})
-            tick += designed + SETTLE
-        variant["timeline"]["end_tick"] = tick
+        variant["timeline"]["actions"] = [
+            {**copy.deepcopy(actions[i % 2]), "tick": t} for i, t in enumerate(ticks)
+        ]
+        variant["timeline"]["end_tick"] = ticks[-1] + SETTLE
         return replay.record(canonical.rebuild(variant))
 
-    normal = [_final(cycles(designed, 0)), _final(cycles(designed, 1))]
-    designed_frames = replay.frames(cycles(designed, 0), cells)
-    closed_frame = designed_frames[start + designed - 1]
+    normal_runs = [run([start + SETTLE * i for i in range(n)]) for n in range(1, 5)]
+    normal = [_final(rec) for rec in normal_runs]
+    frames = {replay.frames(rec, cells)[-1] for rec in normal_runs}
     for r in result["results"]:
         if r["result"] == "clean":
             continue
-        rec = cycles(r["gap"], 1)
-        frames = replay.frames(rec, cells)
-        again = start + r["gap"] + SETTLE
-        r["recovers"] = _final(rec) in normal
-        r["works_again"] = (
-            frames[again + designed - 1] == closed_frame and frames[-1] == designed_frames[-1]
-        )
+        r["recovers"], r["works_again"] = None, False
+        bad = [start, start + r["gap"]]
+        for extra in (1, 2):
+            rec = run(bad + [bad[-1] + SETTLE * k for k in range(1, extra + 1)])
+            if _final(rec) in normal:
+                r["recovers"] = extra
+                break
+            r["works_again"] = r["works_again"] or replay.frames(rec, cells)[-1] in frames
     result["recover_line"] = "".join(
         "#"
         if r["result"] == "clean"
-        else "r"
+        else str(r["recovers"])
         if r["recovers"]
         else "w"
         if r["works_again"]
@@ -203,7 +202,7 @@ def main() -> None:
     parser.add_argument(
         "--recover",
         action="store_true",
-        help="with --out: add the recovery test to the saved sweeps (one more cycle)",
+        help="with --out: add the recovery test to the saved sweeps (1 or 2 more inputs)",
     )
     args = parser.parse_args()
     out = []

@@ -248,6 +248,18 @@ def test_metrics_dominated() -> None:
     }
 
 
+def test_server_stand_in_2x2(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # run_world picks the first stand-in for the lever that the simulator confirms: the
+    # lever set by /setblock with the block it is on swapped and back acts exactly like
+    # the player's pull (between ticks), no tick later.
+    from tools.gameserver.run_world import build_scenario
+
+    scenario = build_scenario(_door_world(tmp_path), "door")
+    out = capsys.readouterr().out
+    assert "the block it is on swapped and back, behaves as the input, 0 ticks later" in out
+    assert sorted(scenario.inputs) == [2, 20]
+
+
 def test_symmetry_2x2(tmp_path: Path) -> None:
     session = _door_session(tmp_path)
     canon = canonical.from_document(session.doc)

@@ -37,10 +37,10 @@ Classes of a variant (against the original replay):
 | `3x3-spiral-piston-door-purplers` | 123 | 87 | 1 | 9 | 26 | 24 of 33 | 1 of 9 | 81 → 70 | 168 → 168 |
 | `3x3-spiral-vault-door-lutal` | 357 | 169 | 13 | 18 | 157 | 114 of 125 | 13 of 27 | 205 → 145 | 880 → 640 |
 | `3x4-piston-door-pal1` | 140 | 118 | 1 | 11 | 10 | 17 of 33 | 1 of 15 | 92 → 89 | 280 → 280 |
-| `4x4-piston-door-kwipla` | 242 | 164 | 1 | 25 | 52 | 52 of 69 | 1 of 15 | 158 → 140 | 1080 → 1080 |
+| `4x4-piston-door-kwipla` | 242 | 164 | 1 | 25 | 52 | 52 of 69 | 1 of 15 | 158 → 142 | 1080 → 1080 |
 | `4x4-piston-door-sydney600mc` | 199 | 155 | 4 | 14 | 26 | 28 of 50 | 4 of 24 | 125 → 113 | 270 → 270 |
 | `4x4-sliding-piston-door-purplers` | 519 | 294 | 0 | 163 | 62 | 105 of 138 | 6 of 6 | 401 → 381 | 880 → 880 |
-| `5x5-vault-door-nile` | 589 | 232 | 31 | 229 | 97 | 120 of 144 | 25 of 27 | 425 → 386 | 1050 → 1050 |
+| `5x5-vault-door-nile` | 589 | 232 | 31 | 229 | 97 | 120 of 144 | 25 of 27 | 425 → 387 | 1050 → 1050 |
 | `5x5-vault-lamp-door-purplers` | 622 | 272 | 11 | 183 | 156 | 150 of 195 | 48 of 57 | 373 → 322 | 660 → 660 |
 | `3x3-flush-door-redsim` (ours, `door_3x3`) | 420 | 229 | 17 | 79 | 95 | 96 of 108 | 36 of 96 | 225 → 209 | 1768 → 1632 |
 
@@ -87,9 +87,16 @@ What the ablation shows:
   extended for the whole run changes nothing: the base stays extended without it. But
   a headless piston is not a smaller door. The first trims counted such heads
   (1 to 20 per door, in six doors); the ablation leaves heads out since 2026-10-18.
-- **The trim is game-verified** for Mumbo Jumbo's door and the staircase: the trimmed
-  builds run tick for tick as in the simulator (EXP-071), so the removed blocks are
-  slack in the game too.
+- **Nor are blocks that something stands on.** Removing the block under a button
+  changes nothing in a run, because no update reaches the button. But a door built
+  that way cannot be built, and the button breaks at the first update. The trim keeps
+  such supports since 2026-10-19 (Kwipla's 4x4: 2 blocks, Nile's 5x5 vault: 1). After
+  the trim, every block of the 17 trimmed builds can stay where it is
+  (`can_survive`).
+- **The trim is game-verified** for Mumbo Jumbo's door, the staircase and Lutal's
+  vault (the largest trim: 205 → 145 blocks, box 880 → 640). The trimmed builds run
+  tick for tick as in the simulator, with an input stand-in that acts exactly like the
+  player's input (EXP-071, EXP-074), so the removed blocks are slack in the game too.
 
 ## Input timing
 
@@ -157,6 +164,8 @@ What the sweep shows (2026-10-19):
   a 1-tick input. The vault lamp door does not move at all; Mumbo Jumbo's doorway
   moves and comes back. The staircase is clean at 1–7 and stuck only at 8–9 (its
   stairs move and come back).
+- *(Being re-measured on 2026-10-19 with one or two more inputs instead of one designed
+  cycle: a button door can need a single press. The numbers below are the old ones.)*
 - **Recovery: one more designed cycle repairs 101 of the 272 bad gaps.** It leaves the
   doorway working with a block off in 21, and the doorway still wrong in 150. By door:
   - every bad gap recovers: the sliding door, the vault lamp door, the staircase;

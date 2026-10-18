@@ -56,11 +56,14 @@ not by position.
 **The input device is part of the race.** The floor lever is the line's source: a pull
 updates the lever's neighbors and then its block's neighbors, in direction order. With
 the lever replaced by a repeater into the same block (switched by a redstone block, the
-stand-in `run_world` uses for the server), the door works **in all eight orientations**;
-with the lever set by `/setblock` (no update of the block's neighbors) it never moves.
-So the jam needs a player's pull, and the sandboxed server has no player: this finding
-is verified in the simulator only (the lever's `pull` is ported from `LeverBlock.pull` /
-`updateNeighbours`). The rule behind it is game-verified on its own: in a double
+stand-in `run_world` used at first), the door works **in all eight orientations**; with
+the lever set by `/setblock` alone (no update of the block's neighbors) it never moves.
+So the jam needs a player's pull. Since 2026-10-19 `run_world` reproduces one: the
+lever set by `/setblock` (between two ticks, like a player) and the block it is on set
+to stone and back in the same moment (its neighbors' update). In the simulator that
+stand-in acts exactly like the pull (every block, every tick). On the server, the
+original orientation and the 90° copy both match the simulator, and the 90° copy jams
+in the game too (EXP-074). The rule behind it is game-verified on its own: in a double
 extender powered in one tick, rear first works and front first jams
 ([[../records/R-027-double-extender-order]], EXP-072). The locational case below is
 server-verified (EXP-070).

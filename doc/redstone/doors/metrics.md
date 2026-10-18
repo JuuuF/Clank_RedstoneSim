@@ -43,9 +43,9 @@ removed from the dataset; their rows are only for completeness.
 | `1-wide-hidden-staircase-purplers` | 4x4 | showpiece | 6×4×7 | 168 | 107 | 71 | 13 | 24 | 25 | – | 10 | 8 | – |
 | `4x4-piston-door-sydney600mc` | 4x4 | functional | 3×9×10 | 270 | 125 | 113 | 24 | 38 | 16 | 26 | 19 | 8 | – |
 | `4x4-sliding-piston-door-purplers` | 4x4 | functional | 20×11×4 | 880 | 401 | 381 | 66 | 112 | 9 | 4 | 9 | 8 | – |
-| `4x4-piston-door-kwipla` | 4x4 | functional | 10×9×12 | 1080 | 158 | 140 | 28 | 57 | 27 | 39 | 25 | 8 | `4x4-piston-door-sydney600mc` |
+| `4x4-piston-door-kwipla` | 4x4 | functional | 10×9×12 | 1080 | 158 | 142 | 28 | 57 | 27 | 39 | 25 | 8 | `4x4-piston-door-sydney600mc` |
 | `5x5-vault-lamp-door-purplers` | 5x5 | showpiece | 5×12×11 | 660 | 373 | 322 | 46 | 114 | 7 | 2 | 10 | 6 | – |
-| `5x5-vault-door-nile` | 5x5 | showpiece | 15×14×5 | 1050 | 425 | 386 | 69 | 154 | 9 | 9 | 13 | 8 | – |
+| `5x5-vault-door-nile` | 5x5 | showpiece | 15×14×5 | 1050 | 425 | 387 | 69 | 154 | 9 | 9 | 13 | 8 | – |
 | `5x5-glass-piston-door-ashevoy` | 5x5 | showpiece | 15×23×25 | 8625 | 1954 | – | 171 | 760 | 36 | 37 | 38 | 8 | `5x5-vault-door-nile` |
 | `7x7-piston-door-legden` | 7x7 | functional | 23×13×13 | 3887 | 2368 | – | 447 | 938 | 18 | – | – | 1 | – |
 | `8x8-piston-door-legden` | 8x8 | functional | 23×16×9 | 3312 | 1963 | – | 379 | 735 | 21 | – | – | 1 | – |

@@ -46,7 +46,8 @@ class Scenario:
     setup: list[tuple[Any, ...]]
     watch: list[Pos]
     ticks: int
-    inputs: dict[int, list[tuple[Pos, str]]] = field(default_factory=dict)
+    #: ``/setblock`` edits by tick: ``(rel, state)`` or ``(rel, state, nbt)`` as in ``setup``.
+    inputs: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
     #: Region commands after ``t`` ticks (applied after ``inputs``):
     #: ``("fill", rel_a, rel_b, state)``, ``("clone", rel_a, rel_b, rel_destination)``, or
     #: ``("clone_move" | "clone_force", rel_a, rel_b, rel_destination)`` (``replace move/force``),
@@ -126,7 +127,11 @@ def build_terrain(engine: Engine, origin: Pos, size: tuple[int, int], margin: in
                 level.blocks[(x, FLOOR_Y, z)] = blocks.GRASS_BLOCK.default_state
 
 
-def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, str]]:
+def run_sim(
+    scenario: Scenario, origin: Pos, start_time: int, uses: dict[int, list[Pos]] | None = None
+) -> list[dict[str, str]]:
+    """The scenario in the simulator, one frame per tick. ``uses``: player ``use`` actions
+    by tick (simulator only, the game has no player: to check an input's stand-in)."""
     engine = Engine()
     engine.level.game_time = start_time
     build_terrain(engine, origin, scenario.size)
@@ -137,8 +142,11 @@ def run_sim(scenario: Scenario, origin: Pos, start_time: int) -> list[dict[str, 
         engine.apply(Action("setblock", absolute(origin, rel), state, payload=payload or None))
     frames = [observe_sim(engine, scenario, origin)]
     for tick in range(scenario.ticks):
-        for rel, state in scenario.inputs.get(tick, []):
-            engine.apply(Action("setblock", absolute(origin, rel), state))
+        for rel, state, *nbt in scenario.inputs.get(tick, []):
+            payload = {"nbt": nbt[0]} if nbt else None
+            engine.apply(Action("setblock", absolute(origin, rel), state, payload=payload))
+        for rel in (uses or {}).get(tick, []):
+            engine.apply(Action("use", absolute(origin, rel)))
         for command in scenario.commands.get(tick, []):
             engine.apply(sim_command(engine, origin, command))
         engine.run_tick()
@@ -437,7 +445,8 @@ def run_game(
     for tick in range(scenario.ticks):
         commands = [
             f"setblock {' '.join(map(str, absolute(origin, rel)))} {s}"
-            for rel, s in scenario.inputs.get(tick, [])
+            + (snbt(game_nbt(nbt[0])) if nbt else "")
+            for rel, s, *nbt in scenario.inputs.get(tick, [])
         ]
         commands += [game_command(origin, c) for c in scenario.commands.get(tick, [])]
         if commands:

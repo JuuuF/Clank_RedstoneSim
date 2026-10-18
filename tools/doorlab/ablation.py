@@ -34,6 +34,8 @@ import time
 from collections import Counter
 from typing import Any
 
+from redsim.core.direction import Direction
+from redsim.core.pos import offset
 from redsim.world import blocks
 from tools.doorlab import canonical, corpus, interactions, replay, transform
 
@@ -152,7 +154,8 @@ def run(path: Any, limit: int | None = None) -> dict[str, Any]:
 
 
 def trim(path: Any, results: list[dict[str, Any]]) -> dict[str, Any]:
-    """Remove every individually inert block, greedily, checking the combination."""
+    """Remove every individually inert block, greedily, checking the combination; a block
+    that another one stands on stays (the trimmed door must be buildable)."""
     canon = canonical.from_file(path)
     base = replay.record(canonical.rebuild(canon))
     outputs = [tuple(p) for p in canon["annotations"]["sections"]["output"]["positions"]]
@@ -174,14 +177,37 @@ def trim(path: Any, results: list[dict[str, Any]]) -> dict[str, Any]:
             size *= max(values) - min(values) + 1
         return size
 
+    # A removal must leave a buildable door: nothing may lose the block it stands on
+    # (a button, wire or torch stays in place only because no update reaches it).
+    session = corpus.open_world(path)
+    session.doc.seek_tick(0)
+    level = session.doc.level
+
+    def needed_below(pos: Pos) -> bool:
+        saved = level.blocks.pop(pos, None)
+        try:
+            return any(
+                not s.is_air and not s.can_survive(level, n)
+                for n in (offset(pos, d) for d in Direction)
+                for s in (level.get_block_state(n),)
+            )
+        finally:
+            if saved is not None:
+                level.blocks[pos] = saved
+
     current = canon
     removed: list[Pos] = []
     kept: list[Pos] = []
+    support: list[Pos] = []
     for pos in candidates:
+        if needed_below(pos):
+            support.append(pos)
+            continue
         trial = _variant(current, pos, None)
         rec = replay.record(canonical.rebuild(trial))
         if _classify(rec, base, cells, markers) == "inert":
             current, removed = trial, [*removed, pos]
+            level.blocks.pop(pos, None)
         else:
             kept.append(pos)
     return {
@@ -191,6 +217,7 @@ def trim(path: Any, results: list[dict[str, Any]]) -> dict[str, Any]:
         "volume_after": volume(current),
         "removed": [list(p) for p in removed],
         "kept_after_all": [list(p) for p in kept],
+        "kept_as_support": [list(p) for p in support],
         "trimmed": current,
     }
 
@@ -212,7 +239,8 @@ def main() -> None:
             print(
                 f"  trim: blocks {t['blocks_before']} -> {t['blocks_after']}, box volume "
                 f"{t['volume_before']} -> {t['volume_after']}, "
-                f"{len(t['kept_after_all'])} inert alone but needed together"
+                f"{len(t['kept_after_all'])} inert alone but needed together, "
+                f"{len(t['kept_as_support'])} kept as a support"
             )
             trimmed = t.pop("trimmed")
             r["trim"] = t

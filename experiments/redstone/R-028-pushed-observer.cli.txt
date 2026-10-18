@@ -1,0 +1,30 @@
+new size 16 force
+note "R-028: a piston pushes an observer (guide claim G4, doc/redstone/doors/guide-5x5.md). Three copies, the observer watching sideways (north), along the push (east) and up; each sticky piston is powered by a redstone block set beside it at tick 2. Expected from the source: the observer lands 2 ticks after the push starts and, being placed, fires 2 ticks later for 2 ticks, whatever it watches"
+place 2 1 0 sticky_piston facing=east
+place 3 1 0 observer facing=north
+label Pn 2 1 0
+label On 3 1 0
+place 2 1 4 sticky_piston facing=east
+place 3 1 4 observer facing=east
+label Pe 2 1 4
+label Oe 3 1 4
+place 2 1 8 sticky_piston facing=east
+place 3 1 8 observer facing=up
+label Pu 2 1 8
+label Ou 3 1 8
+settle
+target new pushed "each piston's push starts at 3 (the block event after the redstone block at 2); the observer moves 3..4, lands at 5 unpowered, is powered 7..8 and off again from 9"
+target pushed do at 2 set 2 1 -1 redstone_block
+target pushed do at 2 set 2 1 3 redstone_block
+target pushed do at 2 set 2 1 7 redstone_block
+target pushed expect @On+1,0,0 block=moving_piston during 3..4
+target pushed expect @On+1,0,0 powered=false during 5..6
+target pushed expect @On+1,0,0 powered=true during 7..8
+target pushed expect @On+1,0,0 powered=false during 9..14
+target pushed expect @Oe+1,0,0 powered=false during 5..6
+target pushed expect @Oe+1,0,0 powered=true during 7..8
+target pushed expect @Oe+1,0,0 powered=false during 9..14
+target pushed expect @Ou+1,0,0 powered=false during 5..6
+target pushed expect @Ou+1,0,0 powered=true during 7..8
+target pushed expect @Ou+1,0,0 powered=false during 9..14
+check

@@ -63,7 +63,7 @@ The mission's deliverables (2026-10-19):
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 3 verified (G1–G3), 2 implied by the corpus, 3 untested (G4, G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19 |
 | 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, design principles |
-| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-073 |
+| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-074 |
 | 7 | A demonstrated analysis / construction | [[demonstration]], [[metrics]] | the pipeline on `door_3x3`; trimmed builds (EXP-071); the optimization goals measured for all 20 builds, with the dominance per doorway size |
 | 8 | Roadmap | this section | — |
 
@@ -73,8 +73,8 @@ Open items (D-numbers are cited from the pages):
   wire step and so gates when one repeater's output reaches P1
   ([[analyses/3x3-piston-door-mumbo-jumbo]]). Closed.
 - ~~D2~~ The same-tick double-extender race: [[../records/R-027-double-extender-order]],
-  game EXP-072 (match). Closed; the vault lamp door's own jam needs a player's lever pull,
-  which the server tool cannot give (simulator only).
+  game EXP-072 (match). Closed; the vault lamp door's own jam in its 90° copy is
+  game-verified too, with `run_world`'s exact lever stand-in (EXP-074).
 - ~~D3~~ LegDen's 7x7 and 8x8 stop part-way (the game does the same, EXP-068). The owner
   takes them out of the pool to check the worlds themselves (2026-10-18): do not
   investigate further. What was found, for that check: the stop is deterministic (the
@@ -91,16 +91,19 @@ Open items (D-numbers are cited from the pages):
   between the flips (Mumbo Jumbo: gaps 2–9, of which 3–6 one more cycle does not
   repair). Put a lockout like `door_3x3`'s in front of one of them, using its contract
   as the specification and the no-overlap gap as its hold time.
-- **D7** Server checks of the remaining trimmed builds: `run_world` needs stand-ins for
-  floor levers and buttons (Lutal, Kwipla).
+- ~~D7~~ Server checks of the remaining trimmed builds: `run_world` now gives every
+  lever and button a stand-in that the simulator first confirms to act exactly like
+  the player's input (EXP-074). Trimmed Lutal and Kwipla match the game, and so do
+  Mumbo Jumbo's and the staircase's again with the exact stand-in. Closed.
 - ~~D8~~ Nile's seamless glass door alternates between two rest states (a glass block
   behind the doorway moves one cell and back, cycle by cycle): game EXP-073 (match).
   Closed.
 - **D9** Purplers' enchanting-table door recycles one redstone dust through droppers, the
   ground and a hopper; the simulator has no item entities ([[../../differences]]), so
   the dust is lost after the first cycle and later cycles in the simulator are not
-  evidence ([[robustness]]). Needs item entities, or a game run of the first cycle
-  (its input is a button: needs D7's stand-in first).
+  evidence ([[robustness]]). Needs item entities, or a game run of the first cycle.
+  `run_world` has no exact stand-in for its button yet: the button sits on a dropper,
+  and observers watching the dropper see the stand-in's swap (EXP-074).
 - **D10** Lasting jams ([[robustness]]): in 150 of 272 too-short gaps one more designed
   cycle leaves the doorway wrong (Kwipla and Nile's 5x5 vault: every one). Find what
   stays wrong (a block no piston reaches any more? a latch in the wrong state?) with
