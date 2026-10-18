@@ -9,7 +9,9 @@ Sources (relative to ``data/minecraft_src/client-src/net/minecraft/``):
 * ``world/inventory/AbstractContainerMenu.java`` ``getRedstoneSignalFromContainer`` L766:
   the sum of ``count / maxStackSize`` over all slots, divided by the slot count, in
   32-bit float, then ``Mth.lerpDiscrete(f, 0, 15)`` (``util/Mth.java`` L545).
-* ``world/Container.java`` L34-40: a slot holds at most ``min(99, item max stack size)``.
+* ``world/Container.java`` L34-40: a slot holds at most ``min(99, item max stack size)``;
+  every item's max stack size is in ``world/items_data.py`` (generated from the game's
+  data generator by ``tools/extract_item_table.py``).
 * ``world/level/block/entity/BaseContainerBlockEntity.java`` ``setItem`` L126: store,
   ``limitSize``, ``setChanged`` (``BlockEntity.setChanged`` L198:
   ``updateNeighbourForOutputSignal``); ``removeItem`` L111: split, ``setChanged`` if
@@ -32,6 +34,7 @@ from redsim.core.pos import Pos
 from redsim.world import ids
 from redsim.world.block import Block, BlockState, PlacementContext
 from redsim.world.block_entity import BlockEntity, register_block_entity
+from redsim.world.items_data import ITEM_MAX_STACK
 from redsim.world.properties import FACING, OPEN
 
 if TYPE_CHECKING:
@@ -39,18 +42,6 @@ if TYPE_CHECKING:
 
 #: ``Container.getMaxStackSize()`` default.
 CONTAINER_MAX_STACK = 99
-#: Item max stack sizes that differ from the default 64 (``Item.Properties.stacksTo``);
-#: only items the editor offers are listed.
-ITEM_MAX_STACK = {
-    "minecraft:ender_pearl": 16,
-    "minecraft:snowball": 16,
-    "minecraft:egg": 16,
-    "minecraft:oak_sign": 16,
-    "minecraft:bucket": 16,
-    "minecraft:wooden_sword": 1,
-    "minecraft:iron_sword": 1,
-    "minecraft:writable_book": 1,
-}
 Stack = tuple[str, int]  # item id, count
 
 
@@ -68,6 +59,7 @@ class Slots(Protocol):
 
 
 def item_max_stack(item_id: str) -> int:
+    """The item's ``minecraft:max_stack_size`` (``items_data``, generated from the game)."""
     return ITEM_MAX_STACK.get(item_id, 64)
 
 
