@@ -49,8 +49,9 @@ def _done(session: Session, verb: str, pos: Pos, data: dict[str, Any] | None = N
     Directions: repeaters, comparators and observers have `facing` pointing to their
     input (the opposite of their output); write `out=DIRECTION` to give the output side
     instead. Pistons, dispensers, droppers and hoppers face where they push or output.
-    Wall torches face away from their wall; levers and buttons use `face=floor|wall|ceiling`
-    and, on a wall, `facing` away from the wall.
+    Wall torches and tripwire hooks face away from their wall; levers and buttons use
+    `face=floor|wall|ceiling` and, on a wall, `facing` away from the wall. A scaffolding
+    needs a sturdy block below or scaffolding within 6 blocks sideways (`distance` < 7).
 
     Properties a player sets by right-clicking a placed block are set that way: a
     repeater's `delay`, a comparator's `mode`, a lever's `powered`, a door's, trapdoor's
@@ -158,6 +159,13 @@ def _support_hint(doc: Any, state: Any, pos: Pos) -> str:
 
     facing = prop(state, "facing")
     face = prop(state, "face")
+    if state.block.id == "minecraft:scaffolding":
+        return (
+            "it needs a sturdy block below it or scaffolding within 6 blocks sideways "
+            f"(`distance` would be 7 at {format_pos(pos)})"
+        )
+    if state.block.id == "minecraft:tripwire_hook":
+        face = "wall"
     if face == "ceiling":
         side = Direction.UP
     elif face == "wall" or state.block.id.endswith("wall_torch"):
@@ -216,25 +224,30 @@ def set_(session: Session, args: Args) -> Output:
 @command(
     "break",
     group="build",
-    usage="break POS",
+    usage="break POS [shears]",
     summary="Break a block like a creative player (neighbors update, no drops).",
     help="""
     Removes the block at POS as a player in creative mode breaks it
     (`ServerPlayerGameMode.destroyBlock`): its neighbors are updated, a door takes its
     other half along. Items are not simulated, so nothing drops.
+
+    `shears`: the player holds shears. Only tripwire cares: it is disarmed first, so
+    cutting it does not trigger its hooks (they just detach). Without shears a broken
+    tripwire powers its hooks once, like an entity stepping in.
     """,
-    examples=("break 2 1 0",),
+    examples=("break 2 1 0", "at 20 break @WIRE shears"),
     kind="edit",
-    data='{"pos", "state" (air), "tick"}',
+    data='{"pos", "state" (air), "tick", "shears"}',
 )
 def break_(session: Session, args: Args) -> Output:
     pos = args.pos()
+    shears = args.option("shears")
     args.done()
     with session.editing() as doc:
         if doc.state_at(pos).is_air:
             raise CliError(f"break: {format_pos(pos)} is air already")
-        doc.break_block(pos)
-    return _done(session, "broke", pos)
+        doc.break_block(pos, shears=shears)
+    return _done(session, "cut with shears" if shears else "broke", pos, {"shears": shears})
 
 
 _YAW = {"south": 0.0, "west": 90.0, "north": 180.0, "east": 270.0}
@@ -512,16 +525,21 @@ def sign(session: Session, args: Args) -> Output:
     "plate",
     group="build",
     usage="plate POS [mobs N] [others N] for TICKS",
-    summary="Entities stand on a pressure plate for some ticks (an editor stand-in).",
+    summary="Entities stand on a pressure plate or in a tripwire for some ticks (a stand-in).",
     help="""
-    Mobs and items are not simulated, so this puts *visitors* on the pressure plate at
-    POS: N mobs (players count as mobs) and N other entities (items) from the next tick on,
-    for TICKS ticks. The plate is pressed in the entity phase and released at its next
-    recheck after they leave, exactly as with real entities (EXP-046). Stone plates only
-    count mobs; weighted plates count everything. Usually recorded on the timeline:
-    `at 5 plate @PLATE mobs 1 for 10`.
+    Mobs and items are not simulated, so this puts *visitors* on the pressure plate or
+    into the tripwire at POS: N mobs (players count as mobs) and N other entities (items)
+    from the next tick on, for TICKS ticks. The plate or wire is pressed in the entity
+    phase and released at its next recheck after they leave, exactly as with real entities
+    (EXP-046, EXP-064). Stone plates only count mobs; weighted plates count everything; a
+    tripwire is pressed by any of them (rechecked every 10 ticks). Usually recorded on the
+    timeline: `at 5 plate @PLATE mobs 1 for 10`.
     """,
-    examples=("at 5 plate 0 1 0 mobs 1 for 10", "at 2 plate @P others 3 for 40"),
+    examples=(
+        "at 5 plate 0 1 0 mobs 1 for 10",
+        "at 2 plate @P others 3 for 40",
+        "at 5 plate @WIRE mobs 1 for 3   # someone walks through a tripwire",
+    ),
     kind="edit",
     data='{"pos", "state", "mobs", "others", "ticks", "tick"}',
 )

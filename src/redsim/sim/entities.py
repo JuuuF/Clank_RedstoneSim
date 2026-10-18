@@ -39,7 +39,8 @@ every difference of the simulator is listed in doc/differences.md):
    collision. The piston head's arm where it reaches into the base is left out (no entity
    fits there). Blocks the simulator does not model (foreign blocks) collide as a full
    cube if they are one and **not at all otherwise**: falling blocks pass through unmodeled
-   beds, cauldrons, snow layers, scaffolding, … where the game lands them on top.
+   beds, snow layers, … where the game lands them on top. (Scaffolding asks who collides:
+   its own ``entity_collision_boxes``.)
    ``VoxelShape.collide`` runs on a grid made from those boxes; the game's shapes can have
    a finer grid, which changes results only for an entity that already overlaps a block.
 4. **Other entities.** No entity collisions (boats, shulkers), no world border.
@@ -288,7 +289,7 @@ def has_large_collision_shape(state: BlockState) -> bool:
     """``BlockStateBase.hasLargeCollisionShape`` (moving pistons: no cache, so true)."""
     from redsim.world import blocks
 
-    if state.is_(blocks.MOVING_PISTON):
+    if state.is_(blocks.MOVING_PISTON) or state.block.dynamic_shape:  # no shape cache
         return True
     return any(b[0] < 0 or b[1] < 0 or b[2] < 0 or b[3] > 1 or b[4] > 1 or b[5] > 1
                for b in local_boxes(state))  # fmt: skip
@@ -299,13 +300,20 @@ def has_large_collision_shape(state: BlockState) -> bool:
 _noclip: list[Direction | None] = [None]
 
 
-def block_shape(level: Level, pos: Pos, state: BlockState) -> CollisionShape | None:
-    """``state.getCollisionShape(level, pos, context).move(pos)`` (None: empty)."""
+def block_shape(
+    level: Level, pos: Pos, state: BlockState, entity_bottom: float | None = None
+) -> CollisionShape | None:
+    """``state.getCollisionShape(level, pos, context).move(pos)`` (None: empty). The
+    context is an entity whose feet are at ``entity_bottom``, or a player placing a block
+    (None); only scaffolding asks (``entity_collision_boxes``)."""
     from redsim.world import blocks
 
     x, y, z = pos
+    own = getattr(state.block, "entity_collision_boxes", None)
     if state.is_(blocks.MOVING_PISTON):
         boxes = moving_piston_boxes(level, pos)
+    elif own is not None:
+        boxes = list(own(state, pos, entity_bottom))
     else:
         boxes = list(local_boxes(state))
     if not boxes:
@@ -350,9 +358,12 @@ def moving_piston_boxes(level: Level, pos: Pos) -> list[Box]:
     return head + [moved(b, dx, dy, dz) for b in local_boxes(state)]
 
 
-def block_collisions(level: Level, box: Box) -> Iterator[tuple[Pos, CollisionShape]]:
+def block_collisions(
+    level: Level, box: Box, entity_bottom: float
+) -> Iterator[tuple[Pos, CollisionShape]]:
     """``BlockCollisions`` (no suffocation filter): the shapes intersecting ``box``, in
-    the cursor's order (x fastest, then y, then z)."""
+    the cursor's order (x fastest, then y, then z), for an entity whose feet are at
+    ``entity_bottom`` (``CollisionContext.of(entity)``)."""
     x0, x1 = floor(box[0] - EPSILON) - 1, floor(box[3] + EPSILON) + 1
     y0, y1 = floor(box[1] - EPSILON) - 1, floor(box[4] + EPSILON) + 1
     z0, z1 = floor(box[2] - EPSILON) - 1, floor(box[5] + EPSILON) + 1
@@ -372,7 +383,7 @@ def block_collisions(level: Level, box: Box) -> Iterator[tuple[Pos, CollisionSha
                     continue
                 if face == 2 and not state.is_(blocks.MOVING_PISTON):
                     continue
-                shape = block_shape(level, pos, state)
+                shape = block_shape(level, pos, state, entity_bottom)
                 if shape is not None and shape.intersects(box):
                     yield pos, shape
 
@@ -401,7 +412,7 @@ def find_supporting_block(level: Level, position: Vec, box: Box) -> Pos | None:
     (ties: the larger position in ``Vec3i.compareTo``)."""
     best: Pos | None = None
     best_distance = math.inf
-    for pos, _ in block_collisions(level, box):
+    for pos, _ in block_collisions(level, box, position[1]):
         dx = pos[0] + 0.5 - position[0]
         dy = pos[1] + 0.5 - position[1]
         dz = pos[2] + 0.5 - position[2]
@@ -503,6 +514,29 @@ def clip_box(box: Box, start: Vec, end: Vec) -> Vec | None:
         return None
     s = scale[0]
     return (fx + s * dx, fy + s * dy, fz + s * dz)
+
+
+def contains(box: Box, point: Vec) -> bool:
+    """``AABB.contains(Vec3)``."""
+    return (box[0] <= point[0] < box[3] and box[1] <= point[1] < box[4]
+            and box[2] <= point[2] < box[5])  # fmt: skip
+
+
+def collided_along_vector(box: Box, vector: Vec, parts: list[Box]) -> bool:
+    """``AABB.collidedAlongVector``: whether ``box``, moved by ``vector``, touches one of
+    ``parts`` (each grown by half the box, so its center's path is tested)."""
+    start = ((box[0] + box[3]) * 0.5, (box[1] + box[4]) * 0.5, (box[2] + box[5]) * 0.5)
+    end = add(start, vector)
+    hx = (box[3] - box[0]) * 0.5 - EPSILON
+    hy = (box[4] - box[1]) * 0.5 - EPSILON
+    hz = (box[5] - box[2]) * 0.5 - EPSILON
+    for part in parts:
+        grown = inflate(part, hx, hy, hz)
+        if contains(grown, end) or contains(grown, start):
+            return True
+        if clip_box(grown, start, end) is not None:
+            return True
+    return False
 
 
 def for_each_block_between(
@@ -687,8 +721,8 @@ class FallingBlockEntity:
                         would_continue = is_free(below) and (not is_concrete or not stuck_in_water)
                         would_survive = self.state.can_survive(level, pos) and not would_continue
                         if may_replace and would_survive:
-                            # (No gravity block is waterloggable or has block-entity
-                            # data, so those two steps of the game have nothing to do.)
+                            # (No falling block has block-entity data. Water is not
+                            # simulated, so a falling scaffolding never takes up water.)
                             if level.set_block_and_update(pos, self.state):
                                 self.discard(level)
                                 on_land(level, pos, self.state, current)
@@ -765,7 +799,8 @@ class FallingBlockEntity:
         if length_sqr(movement) == 0.0:
             return movement
         box = self.box
-        shapes = [shape for _, shape in block_collisions(level, expand_towards(box, movement))]
+        swept = expand_towards(box, movement)
+        shapes = [shape for _, shape in block_collisions(level, swept, self.position[1])]
         return collide_with_shapes(movement, box, shapes)
 
     def _check_supporting_block(self, level: Level, on_ground: bool, movement: Vec | None) -> None:
@@ -891,9 +926,11 @@ class FallingBlockEntity:
         self, level: Level, start: Vec, end: Vec, visited: set[Pos], budget: int
     ) -> int:
         """``checkInsideBlocks(from, to, ...)`` L1365: ``entityInside`` of every block the
-        box passes. Every block counts as inside, as in the game: only foreign blocks
-        (end portals, cauldrons, powder snow, tripwire) have a smaller
-        ``getEntityInsideCollisionShape``, and foreign blocks do nothing to entities."""
+        box passes. A block counts as inside when its ``getEntityInsideCollisionShape`` is
+        a full block (the default) or the box moving from ``start`` to ``end`` touches it
+        (``collidedWithShapeMovingFrom``): of the simulated blocks only tripwire has a
+        smaller one (``entity_inside_boxes``); cauldrons have one too but do nothing to a
+        falling block, and foreign blocks do nothing to entities."""
         target = inflate(box_at(end), -DEFLATE, -DEFLATE, -DEFLATE)
         count = [0]
 
@@ -902,7 +939,15 @@ class FallingBlockEntity:
                 return False
             count[0] = iteration
             state = level.get_block_state(pos)
-            if state.is_air or pos in visited:
+            if state.is_air:
+                return True
+            inside_boxes = getattr(state.block, "entity_inside_boxes", None)
+            if inside_boxes is not None:
+                x, y, z = pos
+                parts = [moved(b, x, y, z) for b in inside_boxes(state)]
+                if not collided_along_vector(box_at(start), sub(end, start), parts):
+                    return True
+            if pos in visited:
                 return True
             visited.add(pos)
             inside = getattr(state.block, "entity_inside_entity", None)
@@ -1152,7 +1197,7 @@ def _fix_entity_within_piston_base(
 
 def is_unobstructed(level: Level, state: BlockState, pos: Pos) -> bool:
     """``CollisionGetter.isUnobstructed``: no falling block (``blocksBuilding``) inside the
-    block's collision shape (players placing blocks)."""
+    block's collision shape (players placing blocks: ``CollisionContext.placementContext``)."""
     if not level.entities:
         return True
     shape = block_shape(level, pos, state)

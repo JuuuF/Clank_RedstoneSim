@@ -69,6 +69,7 @@ REDSTONE = (
     ("Switches", (
         "lever", "stone_button", "oak_button", "stone_pressure_plate", "oak_pressure_plate",
         "light_weighted_pressure_plate", "heavy_weighted_pressure_plate", "trapped_chest",
+        "tripwire_hook", "tripwire",
     )),
     ("Outputs", (
         "redstone_lamp", "copper_bulb", "note_block", "piston", "sticky_piston", "dispenser",
@@ -91,7 +92,7 @@ REDSTONE = (
     ("Rails", ("rail", "powered_rail", "activator_rail")),
     ("Gravity", (
         "sand", "red_sand", "gravel", "white_concrete_powder", "anvil", "chipped_anvil",
-        "damaged_anvil", "dragon_egg",
+        "damaged_anvil", "dragon_egg", "scaffolding",
     )),
 )  # fmt: skip
 #: Building materials: category → family names (``material``) matched in order.

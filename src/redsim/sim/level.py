@@ -507,12 +507,18 @@ class Level:
             if until <= self.game_time:
                 self.force_power(pos, 0, until)
 
+    def visitors_at(self, pos: Pos) -> tuple[int, int]:
+        """(mobs, other entities) the editor puts on the pressure plate or tripwire at
+        ``pos`` now (``plate_visitors``; no simulated entities)."""
+        mobs, others, until = self.plate_visitors.get(pos, (0, 0, -1))
+        if self.game_time > until:
+            return 0, 0
+        return mobs, others
+
     def plate_visitors_at(self, pos: Pos) -> tuple[int, int]:
         """(mobs, other entities) on the plate at ``pos`` now: its visitors, and the falling
         blocks in its ``TOUCH_AABB`` (``Block.column(14, 0, 4)``)."""
-        mobs, others, until = self.plate_visitors.get(pos, (0, 0, -1))
-        if self.game_time > until:
-            mobs, others = 0, 0
+        mobs, others = self.visitors_at(pos)
         if self.entities:
             from redsim.sim.entities import entities_in
 

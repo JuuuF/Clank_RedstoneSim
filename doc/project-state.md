@@ -25,10 +25,11 @@ page is the summary to start from.*
   non-conducting blocks. Added after the third round, in the owner's order: observers,
   rails (plain, powered, activator), target blocks and hoppers; on 2026-10-12: note
   blocks, copper bulbs (all 8), dispensers, droppers, chests (double, trapped) and
-  pressure plates (stone, 12 woods, weighted).
+  pressure plates (stone, 12 woods, weighted); on 2026-10-18: cauldrons, furnaces,
+  tripwire hooks and tripwire, scaffolding ([[mechanics/tripwire-and-scaffolding]]).
 - **In-game verification:** a sandboxed 26.3 dedicated server compares the simulator tick by
   tick, including block-entity data (comparator outputs, hopper contents and cooldowns).
-  All 57 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
+  All 63 named scenarios and 60 random circuits (every supported block, 0-tick inputs,
   live edits) match ([[experiments/index]]).
 - **Editor (M2):** done. PySide6 window with a 3D viewport, orbit camera, vim-like modes
   and a rebindable keymap ([[controls]], with a keymap editor and Mac defaults); BUILD
@@ -143,12 +144,13 @@ page is the summary to start from.*
 | gravity blocks: sand, red sand, gravel, 16 concrete powders, 3 anvils, dragon egg; falling block entities | `falling.py`, `sim/entities.py` | fall delay 2 (egg 5), exact first positions, torch holds, carpet breaks, powder hardens by water, snapshots/saves/history mid-fall, placing blocked by a falling block | EXP-054, EXP-055 (positions and motion compared) |
 | campfire, soul campfire (+ block entity: 4 food slots) | `campfire.py` | signal fire from hay, immovable, cooking and cooling, saves | EXP-056 |
 | cauldron, water/lava/powder snow cauldron; furnace, blast furnace, smoker (+ block entity: 3 slots) | `cauldron.py`, `furnace.py` | comparator signals (level; contents with the game's item stack sizes), pushing, conducting, saves | EXP-062 |
+| tripwire hook, tripwire; scaffolding | `tripwire.py`, `scaffolding.py` | lines and attachment, entity visitors and falling blocks pressing the wire, breaking pulses, shears, disarmed wire; distance, breaking and falling, support, collision by entity | EXP-064, EXP-065 |
 | foreign blocks (anything else from an opened save) | `foreign.py` | kept as state text, inert, saved | — |
 
 ## Verification status
 
-- `python -m pytest`: **698 tests pass** (2026-10-16, after the command line; also on the
-  compiled build), including
+- `python -m pytest`: **831 tests pass** (2026-10-18, after tripwire and scaffolding;
+  698 on 2026-10-16 also on the compiled build), including
   the JDK oracle, the 107 game-recording replays (47 named recordings, 60 random),
   randomized history checks (replay, save/open, undo/redo), every window action in every
   mode, save round trips, history rewriting,

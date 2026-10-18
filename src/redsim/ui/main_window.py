@@ -217,6 +217,9 @@ class MainWindow(
             inspector.monitor_requested.connect(self._toggle_monitor)
             inspector.hit_requested.connect(self._projectile_hit)
             inspector.plate_requested.connect(self._plate_visitors)
+            inspector.shears_requested.connect(
+                lambda pos: self._edit(self.document.break_block, pos, True)
+            )
             inspector.contents_requested.connect(self._set_container_slot)
             inspector.sign_requested.connect(
                 lambda pos, side, lines: self._edit(self.document.set_sign_text, pos, side, lines)
@@ -877,7 +880,7 @@ class MainWindow(
 
     def _plate_visitors(self, pos: Pos, mobs: int, others: int, ticks: int) -> None:
         self._edit(self.document.plate_visitors, pos, mobs, others, ticks)
-        self._message(f"They step on the plate in the next tick and stay {ticks} ticks.")
+        self._message(f"They step on it in the next tick and stay {ticks} ticks.")
 
     def _toggle_monitor(self, pos: Pos) -> None:
         on = self.document.toggle_monitor(pos)

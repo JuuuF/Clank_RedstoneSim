@@ -282,8 +282,12 @@ class Document(HistoryOps, SequenceOps):
             raise EditError(f"{state.block.name} cannot be placed there (needs support).")
         self._apply(Action("place", pos, repr(state)), f"place {state.block.name}")
 
-    def break_block(self, pos: Pos) -> None:
-        self._apply(Action("break", pos), f"break {self.state_at(pos).block.name}")
+    def break_block(self, pos: Pos, shears: bool = False) -> None:
+        """Break the block at ``pos`` like a creative player; ``shears``: holding shears
+        (cuts tripwire without triggering it)."""
+        payload = {"shears": True} if shears else None
+        what = self.state_at(pos).block.name + (" with shears" if shears else "")
+        self._apply(Action("break", pos, payload=payload), f"break {what}")
 
     def use(self, pos: Pos, yaw: float | None = None) -> None:
         """Right-click the block at ``pos``; ``yaw``: where the player looks (fence gates
@@ -328,14 +332,15 @@ class Document(HistoryOps, SequenceOps):
         self._apply(Action("projectile_hit", pos, payload=payload), "projectile hit")
 
     def plate_visitors(self, pos: Pos, mobs: int, others: int, ticks: int) -> None:
-        """Entities standing on a pressure plate (entities are not simulated): ``mobs``
-        (players count) and ``others`` (items, …) from the next tick on, for ``ticks``
-        ticks; the plate presses in the entity phase and releases at its next recheck
-        after they leave. Replaces earlier visitors of the plate."""
+        """Entities standing on a pressure plate or in a tripwire (mobs and items are not
+        simulated): ``mobs`` (players count) and ``others`` (items, …) from the next tick
+        on, for ``ticks`` ticks; the plate or wire is pressed in the entity phase and
+        released at its next recheck after they leave. Replaces earlier visitors there."""
         from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
+        from redsim.world.blocks.tripwire import TripWireBlock
 
-        if not isinstance(self.state_at(pos).block, BasePressurePlateBlock):
-            raise EditError(f"No pressure plate at {pos}.")
+        if not isinstance(self.state_at(pos).block, BasePressurePlateBlock | TripWireBlock):
+            raise EditError(f"No pressure plate or tripwire at {pos}.")
         payload = {"mobs": mobs, "others": others, "ticks": ticks}
         self._apply(Action("plate_visitors", pos, payload=payload), "step on a plate")
 

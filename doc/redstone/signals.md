@@ -24,6 +24,7 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 |---|---|---|
 | Lever or button **attached to** it (on any face) | strongly | V [[R-002-what-powers-a-block]] |
 | Lever or button beside it but attached to another block | no | V R-002 |
+| Tripwire hook **hanging on** it, while its line is tripped | strongly | G EXP-064 |
 | Torch **under** it (standing on the block below) | strongly | V R-002, G EXP-005 |
 | Torch standing beside it, or hanging **on** it | no | V R-002 |
 | Repeater, comparator **pointing into** it | strongly | V R-002 |
@@ -32,12 +33,14 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 | Wire running past it (not pointing in) | no | V R-002 |
 | Redstone block beside it | no (the redstone block powers components and wire directly) | V R-002, S Q-PROP-REDBLOCK |
 | Another powered block | no: power never chains block to block | V R-002 |
+| Scaffolding (never a conductor; torches, wire and rails stand on its top) | no | G EXP-065 |
 
 ## What a source powers directly (without a block in between)
 
 | Source | Powers these neighbors directly | Evidence |
 |---|---|---|
 | Lever, button | every adjacent component and wire (any side), plus the block it is attached to (strongly) | V R-001, R-002 |
+| Tripwire hook | like a lever on a wall, while an entity (or a falling block) is in its line, a wire of it breaks or a piston pops one; off at the first 10-tick recheck that finds the wire empty | G EXP-064 ([[mechanics/tripwire-and-scaffolding]]) |
 | Torch | every adjacent component and wire except the block it is attached to; the block above it strongly | V R-002 |
 | Redstone block | every adjacent component and wire | V R-002 |
 | Repeater, comparator | only the component or block in front (the output side) | V R-001 |

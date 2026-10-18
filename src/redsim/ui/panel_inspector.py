@@ -59,6 +59,7 @@ class InspectorPanel(QWidget):
     monitor_requested = Signal(object)  # Pos: add/remove on the timeline monitor
     hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
     plate_requested = Signal(object, int, int, int)  # Pos, mobs, others, ticks
+    shears_requested = Signal(object)  # Pos: cut a tripwire with shears
     contents_requested = Signal(object, object, object, int)  # Pos, slot|None, item|None, n
     sign_requested = Signal(object, str, list)  # Pos, "front" | "back", the 4 lines
     position_hovered = Signal(object)  # Pos | None: the title (coordinates) is hovered
@@ -169,7 +170,7 @@ class InspectorPanel(QWidget):
             self.hit_buttons[arrow] = button
         target_layout.addRow("Projectile", hit_row)
         layout.addWidget(self.target_box)
-        self.plate_box = QWidget()  # pressure plates: entities standing on them
+        self.plate_box = QWidget()  # pressure plates and tripwire: entities on/in them
         plate_layout = QFormLayout(self.plate_box)
         plate_layout.setContentsMargins(0, 6, 0, 0)
         self.plate_mobs = QSpinBox()
@@ -189,12 +190,19 @@ class InspectorPanel(QWidget):
         plate_layout.addRow("For", self.plate_ticks)
         self.plate_step = QPushButton("Step on it")
         self.plate_step.setToolTip(
-            "Entities are not simulated: they stand on the plate from the next tick on; it "
-            "presses in that tick's entity phase and releases at its next recheck (20 ticks, "
-            "10 for weighted plates) after they leave."
+            "Entities are not simulated: they stand on the plate or in the tripwire from the "
+            "next tick on; it presses in that tick's entity phase and releases at its next "
+            "recheck (20 ticks; 10 for weighted plates and tripwire) after they leave."
         )
         self.plate_step.clicked.connect(self._step_on_plate)
         plate_layout.addRow("", self.plate_step)
+        self.plate_shears = QPushButton("Cut with shears")
+        self.plate_shears.setToolTip(
+            "Break the tripwire holding shears: it is disarmed first, so its hooks detach "
+            "without a pulse (breaking it otherwise powers them once)."
+        )
+        self.plate_shears.clicked.connect(self._cut_with_shears)
+        plate_layout.addRow("", self.plate_shears)
         layout.addWidget(self.plate_box)
         self.contents_box = QWidget()
         contents_layout = QFormLayout(self.contents_box)
@@ -314,8 +322,11 @@ class InspectorPanel(QWidget):
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
         self.target_box.setVisible(state.is_(blocks.TARGET))
         from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
+        from redsim.world.blocks.tripwire import TripWireBlock
 
-        self.plate_box.setVisible(isinstance(state.block, BasePressurePlateBlock))
+        is_wire = isinstance(state.block, TripWireBlock)
+        self.plate_box.setVisible(isinstance(state.block, BasePressurePlateBlock) or is_wire)
+        self.plate_shears.setVisible(is_wire)
         self.plate_box.setEnabled(editable)
         self.target_box.setEnabled(editable)
         if isinstance(be, ContainerBlockEntity):
@@ -457,6 +468,11 @@ class InspectorPanel(QWidget):
             mobs, items = self.plate_mobs.value(), self.plate_items.value()
             ticks = self.plate_ticks.value()
             _later(lambda: self.plate_requested.emit(pos, mobs, items, ticks))
+
+    def _cut_with_shears(self) -> None:
+        if self._pos is not None:
+            pos = self._pos
+            _later(lambda: self.shears_requested.emit(pos))
 
     def _turn_page(self, step: int) -> None:
         if self._pos is not None and self._page is not None:

@@ -58,10 +58,14 @@ def is_free(state: BlockState) -> bool:
 
 
 def fall(level: Level, pos: Pos, state: BlockState) -> FallingBlockEntity:
-    """``FallingBlockEntity.fall``: the entity at the block's bottom center, the block
-    becomes air (its fluid: water for a waterlogged block), then the entity joins."""
+    """``FallingBlockEntity.fall``: the entity (not waterlogged) at the block's bottom
+    center, the block becomes air (in the game its fluid: water for a waterlogged block;
+    water is not simulated), then the entity joins."""
     from redsim.sim.entities import FallingBlockEntity
+    from redsim.world.properties import WATERLOGGED
 
+    if state.has(WATERLOGGED):
+        state = state.with_(WATERLOGGED, False)
     entity = FallingBlockEntity(level.new_entity_id(), state, (pos[0] + 0.5, float(pos[1]),
                                                                pos[2] + 0.5))  # fmt: skip
     level.set_block_and_update(pos, level.air)

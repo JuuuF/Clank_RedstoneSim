@@ -15,6 +15,7 @@ second character is a direction arrow, a signal strength or a mark:
     I>  piston pushing east         J>  sticky piston   H>  piston head   M>  moving block
     X7  target block, power 7       N.  note block      D>  dispenser     E>  dropper
     U-  hopper pointing down (U: locked by power)
+    Y>  tripwire hook facing east (toward its wire)    S~  tripwire (~ in a line, x disarmed)
     ==  rail   G=  powered rail   A=  activator rail
     %%  falling block (an entity)
     Ab  any other block: its own two letters, listed in the legend
@@ -155,6 +156,8 @@ WORDS = {
     "U": "hopper, arrow = output (upper case = locked by power)",
     "G": "powered rail",
     "A": "activator rail",
+    "Y": "tripwire hook, arrow = toward its wire",
+    "S": "tripwire (~ part of a line between hooks, x disarmed)",
 }
 
 
@@ -188,6 +191,11 @@ def block_code(state: BlockState, level: Level, pos: Pos, plane: Plane) -> tuple
         return _case("p", powered or bool(prop(state, "power") or 0)) + "_", "P"
     if bid == "redstone_lamp":
         return _case("l", lit) + ".", "L"
+    if bid == "tripwire_hook":
+        return _case("y", powered) + arrow(facing), "Y"
+    if bid == "tripwire":
+        mark = "x" if prop(state, "disarmed") else "~" if prop(state, "attached") else "."
+        return _case("s", powered) + mark, "S"
     if "copper_bulb" in bid:
         return _case("q", lit) + ".", "Q"
     if bid == "observer":
@@ -227,7 +235,7 @@ def block_code(state: BlockState, level: Level, pos: Pos, plane: Plane) -> tuple
 
 
 #: Legend keys whose case means on (upper) and off (lower).
-ON_OFF_KEYS = frozenset("RCKTVBPLQOIJNDEUGA")
+ON_OFF_KEYS = frozenset("RCKTVBPLQOIJNDEUGAYS")
 
 
 class Legend:

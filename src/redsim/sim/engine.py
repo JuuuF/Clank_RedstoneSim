@@ -66,7 +66,8 @@ class Action:
     """An input applied between ticks. ``state`` uses ``id[prop=value]`` syntax.
 
     * ``place``/``break``/``use``: what a player does (``BlockItem.place``,
-      ``ServerPlayerGameMode.destroyBlock``, ``useWithoutItem``).
+      ``ServerPlayerGameMode.destroyBlock``, ``useWithoutItem``); ``break`` with
+      ``payload={"shears": True}``: holding shears (tripwire is cut, disarmed).
     * ``setblock``: the ``/setblock`` command in replace mode (``SetBlockCommand.setBlock``);
       ``payload={"nbt": {...}}`` adds block-entity data like ``/setblock … {…}``.
     * ``set_block``: a raw ``Level.setBlock`` with explicit flags (editor tool, not vanilla).
@@ -269,15 +270,16 @@ class Engine:
                 self._end_step()
         elif self.phase is Phase.ENTITIES and not level.projectile_hits:
             from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
+            from redsim.world.blocks.tripwire import TripWireBlock
 
             pos = level.entity_queue.pop(0)
             info = self._begin_step("entity_inside", pos, {})
             try:
                 state = level.get_block_state(pos)
-                if isinstance(state.block, BasePressurePlateBlock):
+                if isinstance(state.block, (BasePressurePlateBlock, TripWireBlock)):
                     state.block.entity_inside(state, level, pos)
                 else:
-                    info.detail["info"] = "skipped: no pressure plate"
+                    info.detail["info"] = "skipped: no pressure plate or tripwire"
             finally:
                 self._end_step()
         elif self.phase is Phase.ENTITIES:
@@ -397,7 +399,7 @@ class Engine:
                 assert action.state is not None
                 self._place(action.pos, parse_state(action.state))
             elif action.kind == "break":
-                self._break(action.pos)
+                self._break(action.pos, bool((action.payload or {}).get("shears", False)))
             elif action.kind == "use":
                 level.player_yaw = float((action.payload or {}).get("yaw", 0.0))
                 state = level.get_block_state(action.pos)
@@ -840,12 +842,17 @@ class Engine:
                 level.update_neighbours_on_block_set(pos, previous)
         return count
 
-    def _break(self, pos: Pos) -> None:
-        """``ServerPlayerGameMode.destroyBlock`` (L286)."""
+    def _break(self, pos: Pos, shears: bool = False) -> None:
+        """``ServerPlayerGameMode.destroyBlock`` (L286); ``shears``: the player holds
+        shears (only tripwire cares: ``TripWireBlock.playerWillDestroy`` disarms it)."""
         level = self.level
         state = level.get_block_state(pos)
         if state.is_air:
             raise ActionError(f"nothing to break at {pos}")
+        if shears:
+            shear = getattr(state.block, "shear", None)
+            if shear is not None:
+                shear(level, pos, state)
         adjusted = state.block.player_will_destroy(level, pos, state)
         if level.remove_block(pos, False):
             state.block.destroy(level, pos, adjusted)

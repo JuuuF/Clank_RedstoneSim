@@ -130,6 +130,7 @@ def render_boxes(boxes: list[Box], size: int) -> QPixmap:
 ITEM_IDS = {
     "minecraft:redstone_wire": "minecraft:redstone",
     "minecraft:redstone_wall_torch": "minecraft:redstone_torch",
+    "minecraft:tripwire": "minecraft:string",  # string places tripwire
 }
 
 

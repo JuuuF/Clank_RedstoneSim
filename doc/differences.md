@@ -20,14 +20,14 @@ an entity could do.
 |---|---|---|---|
 | Water and lava | Flow, waterlog, push entities, put out fire | Water blocks of an opened world are foreign (inert); `waterlogged` is kept as a property but schedules no fluid tick | Nothing flows. Concrete powder still hardens next to water blocks and waterlogged blocks (`falling.py`); campfires placed into water are unlit (`campfire.py`) |
 | Item entities | Popped blocks, failed falling blocks, cooked food, dispensed and dropped items become items on the ground | No items exist; such things just disappear | Hoppers never pick up items from the ground; an item on a wooden plate never presses it. The test server runs with `block_drops false` and `entity_drops false` so the game matches ([[experiments/index]]) |
-| Mobs, players, minecarts, boats, projectiles | Entities that press plates, trigger tripwires, ride rails, collide | Only falling blocks are entities (`sim/entities.py`); the rest are editor stand-ins (section 3) | No detector rails, no tripwires, no entity collisions |
+| Mobs, players, minecarts, boats, projectiles | Entities that press plates, trigger tripwires, ride rails, collide | Only falling blocks are entities (`sim/entities.py`); the rest are editor stand-ins (section 3) | No detector rails, no entity collisions; plates and tripwire are pressed by visitors |
 | Light | Light levels, daylight | Not computed | No daylight sensors; light does not matter for any simulated block |
 | Random ticks | Leaf decay, copper oxidation, grass spreading, crops, redstone ore cooling | None (the test server runs with `random_tick_speed 0`) | Leaves keep their `distance` updates but never decay (`catalog.py`) |
 | Weather, time of day | Rain, day/night | None | Daylight sensors not simulated |
-| Sounds, particles, game events | Sounds, vibrations (sculk sensors) | None | No sculk sensors |
+| Sounds, particles, game events | Sounds, vibrations (sculk sensors) | None (tripwire hooks click, attach and detach silently: `tripwire.py`) | No sculk sensors |
 | Menus and items in hand | Anvils, crafting, using items on blocks | The editor has no items in hand: `use` is an empty-hand click | Flint and steel, shovels, buckets, food on campfires, bone meal… are not available |
 | Explosions | TNT, wind charges | None | TNT is a foreign block |
-| Blocks not modeled yet | Their own mechanics | **Foreign blocks** (`foreign.py`): kept as text, drawn with the game's model, inert; pistons treat them by the game's table; their shape is a full cube or nothing (guessed from the name) | A non-full foreign block (bed, snow layer, scaffolding, …) supports nothing and has **no collision**: falling blocks fall through it |
+| Blocks not modeled yet | Their own mechanics | **Foreign blocks** (`foreign.py`): kept as text, drawn with the game's model, inert; pistons treat them by the game's table; their shape is a full cube or nothing (guessed from the name) | A non-full foreign block (bed, snow layer, …) supports nothing and has **no collision**: falling blocks fall through it |
 | Idle server | Entities and block entities stop after 300 ticks without players (`emptyTime`) | Always ticking | — |
 | Experimental redstone | `redstone_experiments` changes | Not in scope (ADR-006) | — |
 
@@ -51,7 +51,7 @@ own mechanics.
 
 | Stand-in | Replaces | How it works | Where |
 |---|---|---|---|
-| Plate visitors | Mobs and items standing on a pressure plate | A number of mobs and of other entities on a plate from the next tick on, for some ticks; the plate is pressed in the entity phase and released at its next recheck | `pressure_plate.py`, `Level.plate_visitors`, [[mechanics/pressure-plates]] (game-checked with real armor stands and items, EXP-046) |
+| Plate and tripwire visitors | Mobs and items standing on a pressure plate or walking through a tripwire | A number of mobs and of other entities on a plate or in a tripwire from the next tick on, for some ticks; it is pressed in the entity phase and released at its next recheck | `pressure_plate.py`, `tripwire.py`, `Level.plate_visitors`, [[mechanics/pressure-plates]], [[mechanics/tripwire-and-scaffolding]] (game-checked with real armor stands and items, EXP-046, EXP-064) |
 | Projectile hits | Arrows and snowballs hitting a target block | The hit lands in the next tick's entity phase with the chosen strength, power for 20 ticks (arrow) or 8 | `target.py`, `Level.projectile_hits` (EXP-037) |
 | Sequence pulses | Nothing in the game | Power locked to a position, like an invisible redstone block next to it from every side, for a number of ticks | `Level.forced_power`, ADR-026 |
 | 0-tick pulses | Nothing directly (contraptions make them) | On at the start of a tick, off right after its block events, inside one tick | `Level.zero_tick_pulses` |
@@ -73,6 +73,9 @@ falling block that act on the same block in the same tick may come in another or
 |---|---|---|---|
 | Pressure plates (pressed) | Pressed shape half a pixel high | One pixel (plates have no collision; nothing rests on them, so no outcome changes) | `pressure_plate.py` |
 | Lectern | Slanted top in its outline shape | Flat (support and collision use the exact collision shape) | `lectern.py` |
+| Tripwire (attached) | Shape 1 to 2.5 pixels high | 1 to 3 pixels in the shape grid, used only for drawing and picking (entity checks use the exact box; it has no collision) | `tripwire.py` |
+| Scaffolding: water | A waterlogged scaffolding schedules water ticks; a falling one takes up water where it lands | `waterlogged` stays inert | `scaffolding.py` |
+| Scaffolding: placing on scaffolding | Clicking scaffolding with scaffolding puts the new one on top of the column or at the end of the bridge (`ScaffoldingBlockItem.updatePlacementContext`) | The editor places it where you point (the same block results at that spot) | `scaffolding.py` |
 | Falling blocks: items | A block that cannot land drops as an item | It disappears (as with `entity_drops false`) | `sim/entities.py` item 1 |
 | Falling blocks: fall distance | Kept; `Block.fallOn` called on landing | Not kept (only matters for the anvil damage above and hurting mobs) | `sim/entities.py` item 2 |
 | Falling blocks: collision shapes | The blocks' `VoxelShape`s | Boxes from the voxel shapes (fences, walls, gates raised to 1.5); the piston head's arm inside the base is left out; foreign non-full blocks have none; the collision grid is made from the boxes (differs only for an entity already inside a block) | `sim/entities.py` item 3 |

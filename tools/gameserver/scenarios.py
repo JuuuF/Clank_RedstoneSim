@@ -2571,7 +2571,133 @@ DOOR_3X3 = Scenario(
     },
 )
 
+TW = "minecraft:tripwire"
+HOOK_E = "minecraft:tripwire_hook[facing=east]"
+HOOK_W = "minecraft:tripwire_hook[facing=west]"
+LAMP = "minecraft:redstone_lamp"
+STONE = "minecraft:stone"
+
+
+def _tripwire_line(z: int, wires: list[tuple[int, str]], length: int) -> list[tuple[Any, ...]]:
+    """Stone, a hook facing east, the wires (x, state) in that order, a hook facing west,
+    stone; a lamp on each stone shows its hook."""
+    end = length + 2
+    return [
+        ((0, 1, z), STONE), ((end + 1, 1, z), STONE), ((0, 2, z), LAMP), ((end + 1, 2, z), LAMP),
+        ((1, 1, z), HOOK_E), ((end, 1, z), HOOK_W),
+        *(((x, 1, z), state) for x, state in wires),
+    ]  # fmt: skip
+
+
+TRIPWIRES = Scenario(
+    name="tripwires",
+    description=(
+        "Tripwire lines between two hooks (z=1, 3, 5, 9): an armor stand in the wire powers "
+        "both hooks until the 10-tick recheck after it is gone; a removed wire pulses the "
+        "hooks and detaches them; a disarmed wire is ignored (stepping on it detaches the "
+        "line for 10 ticks; removing it gives no pulse); a piston popping a wire pulses "
+        "them; hooks put by /setblock after the wire stay unattached until the wire is hit, "
+        "and when one hook breaks the wire stays attached; sand falling through a wire "
+        "(z=11) triggers it."
+    ),
+    size=(8, 13),
+    setup=[
+        *_tripwire_line(1, [(x, TW) for x in range(2, 6)], 4),
+        *_tripwire_line(3, [(3, TW + "[disarmed=true]"), (2, TW), (4, TW), (5, TW)], 4),
+        *_tripwire_line(5, [(x, TW) for x in range(2, 5)], 3),
+        ((3, 1, 6), "minecraft:piston[facing=north]"),
+        ((0, 1, 9), STONE),
+        ((6, 1, 9), STONE),
+        ((0, 2, 9), LAMP),
+        ((6, 2, 9), LAMP),
+        *(((x, 1, 9), TW) for x in range(2, 5)),
+        ((1, 1, 9), HOOK_E),
+        ((5, 1, 9), HOOK_W),
+        *_tripwire_line(11, [(x, TW) for x in range(2, 5)], 3),
+    ],
+    watch=[
+        *((x, y, z) for z in (1, 3) for x, y in ((0, 2), (1, 1), (3, 1), (4, 1), (6, 1), (7, 2))),
+        *(
+            (x, y, z)
+            for z in (5, 9, 11)
+            for x, y in ((0, 2), (1, 1), (2, 1), (3, 1), (5, 1), (6, 2))
+        ),
+        (3, 1, 6),
+        (3, 4, 11),
+    ],
+    ticks=50,
+    watch_entities=True,
+    inputs={
+        2: [((3, 4, 11), "minecraft:sand")],
+        15: [((3, 1, 7), RB)],
+        30: [((4, 1, 1), AIR), ((3, 1, 3), AIR), ((0, 1, 9), AIR)],
+    },
+    commands={
+        2: [("summon", (3, 1, 1), "armor_stand"), ("summon", (3, 1, 3), "armor_stand")],
+        4: [("summon", (3, 1, 9), "armor_stand")],
+        9: [("kill", (3, 1, 1)), ("kill", (3, 1, 3))],
+        12: [("kill", (3, 1, 9))],
+    },
+)
+
+SCAFFOLDING_BRIDGE = [
+    ((0, 1, 1), "minecraft:scaffolding[distance=0,bottom=false]"),
+    ((0, 2, 1), "minecraft:scaffolding[distance=0,bottom=false]"),
+    *(((x, 2, 1), f"minecraft:scaffolding[distance={x},bottom=true]") for x in range(1, 7)),
+    ((3, 3, 1), "minecraft:redstone_wire"),
+]
+
+SCAFFOLDING = Scenario(
+    name="scaffolding",
+    description=(
+        "Scaffolding: a tower with a 6-long bridge collapses when its base goes (distances "
+        "count up, then each piece breaks); scaffolding put in the air falls (once onto the "
+        "floor, once onto another scaffolding); it holds a torch and wire on top but does "
+        "not conduct (the lamp beside it stays off); a piston pops it."
+    ),
+    size=(8, 9),
+    setup=[
+        *SCAFFOLDING_BRIDGE,
+        ((3, 5, 3), "minecraft:scaffolding"),
+        ((5, 1, 3), "minecraft:scaffolding[distance=0,bottom=false]"),
+        ((1, 1, 5), "minecraft:scaffolding[distance=0,bottom=false]"),
+        ((1, 3, 5), LAMP),
+        ((1, 2, 5), "minecraft:redstone_torch"),
+        ((0, 1, 5), LAMP),
+        ((2, 1, 5), "minecraft:repeater[facing=east]"),
+        ((0, 1, 7), "minecraft:piston[facing=east]"),
+        ((1, 1, 7), "minecraft:scaffolding[distance=0,bottom=false]"),
+        ((1, 2, 7), "minecraft:scaffolding[distance=0,bottom=false]"),
+    ],
+    watch=[
+        *(pos for pos, _ in SCAFFOLDING_BRIDGE),
+        (3, 1, 3),
+        (3, 5, 3),
+        (5, 1, 3),
+        (5, 2, 3),
+        (5, 6, 3),
+        (0, 1, 5),
+        (1, 1, 5),
+        (1, 2, 5),
+        (1, 3, 5),
+        (2, 1, 5),
+        (0, 1, 7),
+        (1, 1, 7),
+        (1, 2, 7),
+    ],
+    ticks=40,
+    watch_entities=True,
+    inputs={
+        3: [((0, 1, 1), AIR)],
+        5: [((3, 1, 5), RB)],
+        8: [((0, 1, 8), RB)],
+        10: [((5, 6, 3), "minecraft:scaffolding")],
+    },
+)
+
 ALL = [
+    TRIPWIRES,
+    SCAFFOLDING,
     PISTON_ZERO_TICK,
     CAMPFIRES,
     CAULDRONS_FURNACES,

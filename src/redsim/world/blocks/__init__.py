@@ -30,6 +30,7 @@ from redsim.world.blocks.pressure_plate import (
 )
 from redsim.world.blocks.rail import PoweredRailBlock, RailBlock
 from redsim.world.blocks.redstone_wire import RedstoneWireBlock
+from redsim.world.blocks.scaffolding import ScaffoldingBlock
 from redsim.world.blocks.sign import WOODS, StandingSignBlock, WallSignBlock
 from redsim.world.blocks.simple import (
     AirBlock,
@@ -45,6 +46,7 @@ from redsim.world.blocks.simple import (
 )
 from redsim.world.blocks.target import TargetBlock
 from redsim.world.blocks.torch import RedstoneTorchBlock, RedstoneWallTorchBlock
+from redsim.world.blocks.tripwire import TripWireBlock, TripWireHookBlock
 from redsim.world.properties import Property
 
 REGISTRY: dict[str, Block] = {}
@@ -168,6 +170,10 @@ BUTTONS = tuple(
 )
 WALL_SIGNS = tuple(register(WallSignBlock(wood)) for wood in WOODS)
 OAK_SIGN, OAK_WALL_SIGN = SIGNS[0], WALL_SIGNS[0]
+_HOOK = TripWireHookBlock()
+TRIPWIRE_HOOK = register(_HOOK)
+TRIPWIRE = register(TripWireBlock(_HOOK))
+SCAFFOLDING = register(ScaffoldingBlock())
 
 # --- the game's ordinary blocks, from the generated table (``catalog.py``) ---------------
 CATALOG = tuple(register(block) for block in catalog_blocks(set(REGISTRY)))
@@ -221,7 +227,10 @@ __all__ = [
     "SLIME_BLOCK",
     "SMOOTH_STONE",
     "SMOOTH_STONE_SLAB",
+    "SCAFFOLDING",
     "STONE",
+    "TRIPWIRE",
+    "TRIPWIRE_HOOK",
     "WHITE_CONCRETE",
     "WHITE_WOOL",
     "PushReaction",
