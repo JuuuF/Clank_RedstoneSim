@@ -38,6 +38,12 @@ Try: `redsim-cli 03-relocated-injections.redsim.json check`, or
   front at y=5..6; (3) feed the G torch's block through a repeater from the north (+2 ticks
   for all bits); (4) alternate the bits' input logic between the back and the front (each
   side then has every other slice free); (5) a router with these rules.
+- **Round-3 plan (combines 1-3):** G tap = a wire north of the G torch (x0+2,5,-2), K tap = a
+  wire east of the X torch (x0+3,5,4), glass above both torches; the nH net then climbs to
+  y=7 (now free) over the core and down the front into one y=4 path joining both H blocks.
+  nG enters the G torch's block through a repeater at (x0+3,5,-2) facing south (a wire does
+  not join a repeater's side, so the G tap beside it is safe); give the K repeater delay 2 to
+  match: all carries 2 ticks later, S at 12 ticks (the ripple adder: 24).
 
 ## What the router taught me
 

@@ -534,7 +534,8 @@ each stage adds 17 blocks and 3 ticks of re-arming). **Verified.**
 
 OUT follows IN in **0 ticks on both edges**, 23 blocks away (backlog Q17): two instant
 piston chains ([[R-023-instant-piston-wire]]) whose collapses act on one output step.
-`instant_edges.cli.txt`. **Verified.**
+`instant_edges.cli.txt`. **Verified**, also in the game (EXP-060: every watched block matched for
+180 ticks, both edges one tick after the input).
 
 | Port | Offset | Kind |
 |---|---|---|
