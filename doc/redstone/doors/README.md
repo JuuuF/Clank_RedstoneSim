@@ -88,8 +88,8 @@ Open items (D-numbers are cited from the pages):
   quasi-powers the piston below); then a same-tick order in the contract.
 - **D5** Guide claims G6, G7 ([[guide-5x5]]): build and measure them (G4 is R-015, verified).
 - **D6** Input safety ([[robustness]]): every dataset door jams on a too-short gap
-  between the flips (Mumbo Jumbo: gaps 2–9, of which 3–6 one more cycle does not
-  repair). Put a lockout like `door_3x3`'s in front of one of them, using its contract
+  between the flips (Mumbo Jumbo: gaps 2–9; after 3–6 one or two more flips leave
+  other blocks off). Put a lockout like `door_3x3`'s in front of one of them, using its contract
   as the specification and the no-overlap gap as its hold time.
 - ~~D7~~ Server checks of the remaining trimmed builds: `run_world` now gives every
   lever and button a stand-in that the simulator first confirms to act exactly like
@@ -104,10 +104,13 @@ Open items (D-numbers are cited from the pages):
   evidence ([[robustness]]). Needs item entities, or a game run of the first cycle.
   `run_world` has no exact stand-in for its button yet: the button sits on a dropper,
   and observers watching the dropper see the stand-in's swap (EXP-074).
-- **D10** Lasting jams ([[robustness]]): in 150 of 272 too-short gaps one more designed
-  cycle leaves the doorway wrong (Kwipla and Nile's 5x5 vault: every one). Find what
-  stays wrong (a block no piston reaches any more? a latch in the wrong state?) with
-  `replay` and `why`, and whether another input sequence repairs it.
+- **D10** Lasting jams ([[robustness]]): after 79 of 272 too-short gaps the doorway stays
+  wrong through one or two more inputs. Found so far: a few door blocks stay in wrong
+  cells (Sacred 4, pal1 2, Sydney 12), because the second input cut the first sequence
+  short, and no later cycle moves them back. Open: why exactly these blocks (which
+  pulls are missing), and whether any input sequence repairs them.
 - **D11** A door's real input contract: the safe gap is often far below the no-overlap gap
-  (Sacred 21 vs 40, the seamless door 16 vs 43). Find, per door, which first-sequence
-  moves the second sequence must wait for: the door's real input contract.
+  (Sacred 21 vs 40, the seamless door 16 vs 43). Found so far ([[robustness]]): at the
+  last bad gap, 7 doors lose extensions (power gone when the event runs), 3 push into a
+  still-extended piston, 7 fail nothing and only reorder. Open: per door, which
+  first-sequence moves the second must wait for.

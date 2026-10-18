@@ -102,35 +102,35 @@ What the ablation shows:
 
 | world | designed gap | safe gap | no-overlap gap | stuck | door ok | recovers | rest ≠ build | sweep with recovery |
 |---|---|---|---|---|---|---|---|---|
-| `1-wide-hidden-staircase-purplers` | 27 | 10 | 18 | 8–9 | – | 8–9 | 0 | `#######rr#############################################################` |
-| `3x3-flush-enchanting-table-door-purplers` | 62 | 55 | 57 | 1–33, 35, 44–45 | 54 | 1–29 | 1 | `rrrrrrrrrrrrrrrrrrrrrrrrrrrrrxxxx#x########xx########x################` |
-| `3x3-piston-door-monchicarp` | 17 | 11 | 16 | 1–10 | – | 2–10 | 0 | `xrrrrrrrrr############################################################` |
-| `3x3-piston-door-mumbo-jumbo` | 12 | 10 | 10 | 2–9 | – | 2, 7–9 | 0 | `#rxxxxrrr#############################################################` |
-| `3x3-piston-door-rubik` | 25 | 20 | 21 | 1–19 | – | 10–11, 14–15 | 0 | `xxxxxxxxxrrxxrrxxxx###################################################` |
-| `3x3-piston-door-sacredredstone` | 41 | 21 | 40 | 1–20 | – | 11, 13–16, 18–19 | 0 | `xxxxxxxxxxrxrrrrxrrx##################################################` |
-| `3x3-piston-door-zhus` | 17 | 11 | 16 | 1–10 | – | 2–10 | 0 | `xrrrrrrrrr############################################################` |
-| `3x3-seamless-glass-door-nile` | 45 | 16 | 43 | 1–2, 5–15 | 3–4 | 1–5, 7 | 3 | `rrrrrwrwwwwwwww#######################################################` |
-| `3x3-spiral-piston-door-purplers` | 22 | 12 | 21 | 1–8, 11 | – | 7 | 1 | `xxxxxxrx##x###########################################################` |
+| `1-wide-hidden-staircase-purplers` | 27 | 10 | 18 | 8–9 | – | 8–9 | 0 | `#######11#############################################################` |
+| `3x3-flush-enchanting-table-door-purplers` | 62 | 55 | 57 | 1–33, 35, 44–45 | 54 | 1–29 | 1 | `11111111111111111111111111111xxxx#x########xx########x################` |
+| `3x3-piston-door-monchicarp` | 17 | 11 | 16 | 1–10 | – | 2–10 | 0 | `x222221111############################################################` |
+| `3x3-piston-door-mumbo-jumbo` | 12 | 10 | 10 | 2–9 | – | 2, 7–9 | 0 | `#1wwww111#############################################################` |
+| `3x3-piston-door-rubik` | 25 | 20 | 21 | 1–19 | – | 10–11, 14–15 | 0 | `wwwxxxxxx11xx11xxxx###################################################` |
+| `3x3-piston-door-sacredredstone` | 41 | 21 | 40 | 1–20 | – | 11, 13–16, 18–19 | 0 | `xxxxxxxxxx1x1111x11x##################################################` |
+| `3x3-piston-door-zhus` | 17 | 11 | 16 | 1–10 | – | 2–10 | 0 | `x222221111############################################################` |
+| `3x3-seamless-glass-door-nile` | 45 | 16 | 43 | 1–2, 5–15 | 3–4 | 1–5, 7 | 3 | `11111w1wwwwwwww#######################################################` |
+| `3x3-spiral-piston-door-purplers` | 22 | 12 | 21 | 1–8, 11 | – | 7 | 1 | `wxxxxx1x##x###########################################################` |
 | `3x3-spiral-vault-door-lutal` | 21 | 17 | 21 | 1–4 | 5–16 | – | 0 | `xxxxwwwwwwwwwwww######################################################` |
-| `3x4-piston-door-pal1` | 37 | 20 | 35 | 1–19 | – | 10–11 | 1 | `xxxxxxxxxrrxxxxxxxx###################################################` |
-| `4x4-piston-door-kwipla` | 36 | 25 | 37 | 1–24 | – | – | 0 | `xxxxxxxxxxxxxxxxxxxxxxxx##############################################` |
-| `4x4-piston-door-sydney600mc` | 30 | 19 | 22 | 1–18 | – | 6, 8–11 | 0 | `xxxxxrxrrrrxxxxxxx####################################################` |
-| `4x4-sliding-piston-door-purplers` | 12 | 9 | 12 | 1–8 | – | 1–8 | 0 | `rrrrrrrr##############################################################` |
-| `5x5-glass-piston-door-ashevoy` | 42 | 38 | 41 | 1–37 | – | 1–6, 37 | 0 | `rrrrrrxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr#################################` |
-| `5x5-vault-door-nile` | 17 | 13 | 16 | 1–12 | – | – | 1 | `xxxxxxxxxxxx##########################################################` |
-| `5x5-vault-lamp-door-purplers` | 13 | 10 | 10 | 2–6 | 7–9 | 2–9 | 0 | `#rrrrrrrr#############################################################` |
+| `3x4-piston-door-pal1` | 37 | 20 | 35 | 1–19 | – | 10–11 | 1 | `wwwxxxxxx11xxxxxxxx###################################################` |
+| `4x4-piston-door-kwipla` | 36 | 25 | 37 | 1–24 | – | 1–19 | 0 | `1111111111111111111wwwxx##############################################` |
+| `4x4-piston-door-sydney600mc` | 30 | 19 | 22 | 1–18 | – | 6, 8–11 | 0 | `xxxxx1x1111xxxxxxx####################################################` |
+| `4x4-sliding-piston-door-purplers` | 12 | 9 | 12 | 1–8 | – | 1–8 | 0 | `11111111##############################################################` |
+| `5x5-glass-piston-door-ashevoy` | 42 | 38 | 41 | 1–37 | – | 1–6, 37 | 0 | `111111wwxxxxwwwwwwwwwwwwwwwwwwwwwwww1#################################` |
+| `5x5-vault-door-nile` | 17 | 13 | 16 | 1–12 | – | – | 1 | `wwwwwwwwwwww##########################################################` |
+| `5x5-vault-lamp-door-purplers` | 13 | 10 | 10 | 2–6 | 7–9 | 2–9 | 0 | `#11111111#############################################################` |
 | `3x3-flush-door-redsim` (ours, `door_3x3`) | 55 | 1 | 27 | – | – | – | 0 | `######################################################################` |
 
 Columns: the gap the world's own timeline uses; the **safe gap**, the shortest gap from
 which every longer gap ends **clean** (the whole build in the designed run's rest
 state); the **no-overlap gap** (below); the gaps that leave the door **stuck** (the
 doorway does not come back); the gaps where the doorway comes back but some other block
-differs (**door ok**); the bad gaps (stuck or door ok) that one more designed cycle
-**recovers** (the build back in a normal rest state); blocks whose rest state differs
-from the saved build (stale saved shapes that the first update corrects). The last
-column is the whole sweep, gap 1 first: `#` clean; after a bad gap and one more
-designed cycle, `r` recovered, `w` the doorway works again but some block stays off,
-`x` the doorway is still wrong.
+differs (**door ok**); the bad gaps (stuck or door ok) that one or two more inputs
+**recover** (the whole build, the input included, back in a normal rest state); blocks
+whose rest state differs from the saved build (stale saved shapes that the first update
+corrects). The last column is the whole sweep, gap 1 first: `#` clean; after a bad gap
+and one or two more inputs, `1` / `2` recovered after that many, `w` the doorway works
+again but some block stays off, `x` the doorway is still wrong.
 
 What the sweep shows (2026-10-19):
 
@@ -164,23 +164,42 @@ What the sweep shows (2026-10-19):
   a 1-tick input. The vault lamp door does not move at all; Mumbo Jumbo's doorway
   moves and comes back. The staircase is clean at 1–7 and stuck only at 8–9 (its
   stairs move and come back).
-- *(Being re-measured on 2026-10-19 with one or two more inputs instead of one designed
-  cycle: a button door can need a single press. The numbers below are the old ones.)*
-- **Recovery: one more designed cycle repairs 101 of the 272 bad gaps.** It leaves the
-  doorway working with a block off in 21, and the doorway still wrong in 150. By door:
-  - every bad gap recovers: the sliding door, the vault lamp door, the staircase;
-  - almost every one: Zhus and monchiCARP (2–10, not gap 1; the mirror twins behave
-    the same);
+- **Recovery: one or two more inputs restore the whole build after 120 of the 272 bad
+  gaps** (110 after one, 10 after two). In 73 more the doorway works again but some
+  other block stays off; in 79 the doorway stays wrong. By door:
+  - every bad gap recovers: the sliding door, the vault lamp door, the staircase (one
+    more input each);
+  - almost every one: Zhus and monchiCARP (gaps 2–6 after two more inputs, 7–10 after
+    one, gap 1 not; the mirror twins behave the same), Kwipla's 4x4 (1–19 after one
+    press; 20–22 work again, 23–24 stay wrong);
   - the doorway always works again, but some gaps leave a block off: the seamless door
-    (6 recover, 9 work); Lutal's vault (1–4 stay wrong, 5–16 work: a sea lantern of the
-    vault's frame ends two cells off, 4 5 −2 instead of 4 5 −4, and stays there);
-  - half or more stay wrong: Rubik 15 of 19, Sacred 13 of 20, pal1 17 of 19, Sydney 13
-    of 18, the spiral 8 of 9, Ashevoy 30 of 37 (1–6 recover), Mumbo Jumbo 4 of 8 (3–6);
-  - the enchanting-table door: 1–29 recover, the 8 later bad gaps do not
-    (simulator-only, below);
-  - none recovers: Kwipla's 4x4 (24 gaps) and Nile's 5x5 vault (12).
-  "Still wrong" here means after one designed cycle. Whether other inputs repair those
-  doors is open (backlog D10).
+    (6 recover, 9 work), Nile's 5x5 vault (all 12 work), Mumbo Jumbo's door (2 and 7–9
+    recover, 3–6 work), Lutal's vault (5–16 work: a sea lantern of the vault's frame
+    ends two cells off, 4 5 −2 instead of 4 5 −4, and stays there; 1–4 stay wrong);
+  - most bad gaps leave the doorway wrong: Sacred 13 of 20, pal1 14 of 19, Sydney 13 of
+    18, Rubik 12 of 19, the spiral 7 of 9. Ashevoy's door: 7 recover, 26 work, 4 stay
+    wrong. The enchanting-table door: 1–29 recover with one press, the 8 later bad gaps
+    do not (simulator-only, below).
+- **A button door can need just one press.** Kwipla's door after a too-early second
+  press is out of step with its controller. In the next designed cycle it is mostly
+  open after the "close" press and closed after the "open" press. One more press puts
+  the whole build back in its normal open rest state. A lever door's state follows the
+  lever, so there one more flip brings the build to the closed rest state (the
+  "after one" gaps of the lever doors).
+- **Lasting jams are door blocks left behind** (backlog D10). Where the doorway stays
+  wrong, a few door blocks stay in wrong cells, most of them in the doorway: Sacred 4
+  smooth stone (gap 5), pal1 2 gold blocks (gap 6, 3 before the extra inputs), Sydney
+  12 iron blocks (gap 3). Their number stays the same through four more inputs while
+  the rest of the door cycles around them. The second input cuts the first sequence
+  short (Sacred, gap 5: 13 pulls instead of 20, 11 plain extensions instead of 18), and
+  the blocks it would have moved are never moved back.
+- **What goes wrong at the boundary** (each door's last bad gap; backlog D11). In 7
+  doors, extensions are lost: queued while powered, but the power is gone when the
+  event runs (Rubik, Sacred, seamless, the spiral, Lutal, pal1, Sydney). In 3 doors, a
+  push hits a sticky piston that is still extended (the enchanting-table door, Kwipla,
+  Ashevoy). In the other 7, no extension fails at all: the second sequence only runs in
+  another order (the staircase, monchiCARP, Mumbo Jumbo, Zhus, the sliding door, Nile's
+  vault, the vault lamp door).
 - **The enchanting-table door** recycles one redstone dust through a dropper, the
   ground and a hopper; the simulator has no item entities ([[../../differences]]).
   Its sweep is simulator-only and assumes the dust is not needed twice within one run
@@ -211,8 +230,8 @@ four others:
 - A door's controller is a set of **exact delays**; a robust design states them (the
   contract, [[mechanism]]) and keeps the slack outside the timing paths.
 - **Input safety is a design feature.** Every dataset door assumes its user waits. A
-  shorter gap leaves the doorway wrong, and in 150 of the 272 bad gaps one more normal
-  cycle does not repair it. A lockout (the project's `door_3x3`, [[demonstration]])
+  shorter gap leaves the doorway wrong, and in 152 of the 272 bad gaps one or two more
+  inputs do not restore the build (in 79 the doorway itself stays wrong). A lockout (the project's `door_3x3`, [[demonstration]])
   costs a few ticks and blocks and makes every gap safe. Without one, the no-overlap
   gap is a safe waiting time.
 - **Doors leave state behind.** A door is only repeatable if every cycle ends where it
