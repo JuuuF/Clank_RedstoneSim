@@ -32,7 +32,8 @@ Workflow:
 3. Build with `place` (components; `out=DIRECTION` for repeaters, comparators, observers)
    and `fill`/`set` (structure), in one script: `redsim-cli W < build.cli.txt`. Read
    each output line: it is the state the block really got (a `note:` line means
-   placement changed what you wrote).
+   placement changed what you wrote). Flip levers with `use` (a lever changed by `set`
+   does not update the torch on its block); place observers after the wire they watch.
 4. `settle`, then `show` (text maps: upper case = on; legend under the map), `check`.
 5. Debug failing cases: `target NAME load CASE`, `run N`, `waves`, `inspect POS`
    (`faces`: which way it works), `effects @INPUT` (where the signal goes and where it

@@ -77,5 +77,7 @@ Try: `redsim-cli 03-relocated-injections.redsim.json check`, or
   leak diagonally or be powered by the wrong source; `scripts/router.py` searches wire
   paths that pass the checker.
 
-`scripts/` is a snapshot of the generator scripts (paths point at the agent's scratch
-directory); the finished generator will move to `tools/circuitgen/`.
+`scripts/` is a snapshot of the generator scripts. The round-1 scripts (`run.py`, `build.py`,
+`stage1*.py`, `exp.py`, `export_wip.py`) still point at the first agent's scratch directory; the
+round-2/3 scripts (`round2_s1.py`, `round2_s2.py`, `round3_a.py` with `design.py`, `pchk.py`)
+run as they are from this folder. The finished generator will move to `tools/circuitgen/`.
