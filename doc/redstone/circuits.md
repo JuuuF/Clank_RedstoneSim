@@ -87,6 +87,7 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | [[#Crossing]] | two wires cross without touching | 3×3×7 | 0 | `crossing` |
 | [[#Sequencer]] | taps follow the input 8, 16, 24, 32 ticks later | 9×1×1 | 8 per tap | `sequencer` |
 | [[#Instant wire]] | OUT rises with IN 39 blocks away; any length | 40×2×4 | 0 on, 12 off | `instant_wire` |
+| [[#Instant wire, both edges]] | OUT follows IN in 0 ticks on both edges, 23 blocks away | 25×2×12 | 0 | `instant_edges` |
 | **Pulse shapers** | | | | |
 | [[#Rising-edge detector]] | 4-tick pulse when A turns on | 2×1×3 | 2 | `rising_edge` |
 | [[#Falling-edge detector]] | 4-tick pulse when A turns off | 3×1×3 | 4 | `falling_edge` |
@@ -521,11 +522,53 @@ each stage adds 17 blocks and 3 ticks of re-arming). **Verified.**
   **off while IN is on** (`too_soon`). A 2-tick pulse on IN makes the head spit its
   redstone block forward: the chain stays down, OUT stays on, until IN has been on and
   off again (`short_pulse`). So: IN pulses of 3+ ticks, gaps of 12+.
-- **Both edges at once** cannot come from two such chains combined at the output (both are
-  down just after either edge, and OUT must differ): it would need a latch at the end that
-  switches in 0 ticks, e.g. made of 0-tick piston moves ([[backlog]]).
+- **Both edges at once:** two such chains whose collapses are combined at the output (one
+  removes a cut, the other a source) work if the falling-edge chain re-arms by itself:
+  [[#Instant wire, both edges]].
 - **Uses:** start a far contraption without delay (a door, a piston line, a flying
   machine's start), or line up events at several distances in one tick.
+
+### Instant wire, both edges
+
+OUT follows IN in **0 ticks on both edges**, 23 blocks away (backlog Q17): two instant
+piston chains ([[R-023-instant-piston-wire]]) whose collapses act on one output step.
+`instant_edges.cli.txt`. **Verified.**
+
+| Port | Offset | Kind |
+|---|---|---|
+| IN | 0 1 2..11 | the input wire bus (script 1 2 2..11): power any part of it |
+| OUT | 22 0 9..11 | output wire (script 23 1 9..11) |
+
+- **How it works:** the output step (wire 24 2 9 down to OUT) carries power only while the
+  source B (a redstone block, 25 2 9) feeds it and no cut A (a stone, 23 2 9) sits over it.
+  Only removals are instant (a piston pulling or pushing a block away), so each edge
+  removes one of the two:
+  - **Chain R** (an [[#Instant wire]] with one stage): IN's rising edge makes its head push
+    the first redstone block away. The chain collapses, and its tail pulls A off the step:
+    OUT turns **on**.
+  - **Chain F** (two stages): its head H_F is a sticky piston powered by IN or by D. IN's
+    falling edge makes it pull its block back; the chain collapses, and its tail pulls B
+    away: OUT turns **off**.
+  - **Re-arming in order:** R re-arms when IN falls and has A back over the step 9 ticks
+    later. D (the bus, 4 ticks of repeaters, a torch: NOT IN, then a repeater into H_F)
+    powers H_F again 8 ticks after the fall, so F re-arms by itself and B is back 18
+    ticks after the fall. A comes back before B, so OUT never glitches on.
+  - Why D: an F whose head only followed IN (like R) would re-arm only after IN rose, and
+    B would be missing at the rise. That is why the old note said two chains could not
+    be combined.
+- **Latency:** **0 ticks** after a component powering the bus on both edges (target
+  `same_tick`: a repeater turning on at 12 and off at 42 moves OUT at 12 and 42); 1 tick
+  after a lever, as for any piston input (`lever`).
+- **Limits:** IN on at least **7 ticks**, off at least **18**: then every edge is exact
+  (tested: pulses and gaps of 1–30 ticks, 40 random sequences within the limits).
+  Outside them:
+  - on for 3–6: the fall waits until D is off, 8 ticks after the rise (`late_fall`);
+  - off for 9–17: the rise waits until F has re-armed, 19 after the fall (`late_rise`);
+  - **failure cases:** off for 8 or less, R has not re-armed and OUT stays off while IN
+    is on (`lost_rise`); on for 1–2, R's head spits its block forward and OUT stays on
+    until IN goes on and off again (`spit`).
+- **Longer distances:** more stages in both chains. Each stage adds 3 ticks to the
+  re-arming, so D must grow with F's stage count: B must come back after A.
 
 ## Pulse shapers
 

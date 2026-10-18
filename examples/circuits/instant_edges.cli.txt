@@ -1,0 +1,132 @@
+# Contraption: instant wire, both edges (OUT follows IN in 0 ticks, 23 blocks away). Contract:
+# doc/redstone/circuits.md, "Instant wire, both edges". Backlog Q17.
+#
+# Module (box 1 1 0 .. 25 2 11): IN = the wire bus 1 2 2..11 (power any part of it), OUT = the
+# output wire 23 1 9..11. Two instant piston chains (R-023) side by side:
+#   chain R (row z 9, as instant_wire with one stage): IN makes its head 3 2 10 push the first
+#     redstone block away; the chain collapses in the same tick and its tail 21 2 9 pulls the
+#     stone A (23 2 9) off the step from the wire 24 2 9 down to OUT: OUT turns ON.
+#   chain F (row z 5, two stages): its head H_F 3 2 3 is a sticky piston powered by IN (the bus
+#     wire 2 2 3) or by D; IN falling makes it pull its redstone block back, the chain collapses,
+#     and its tail 25 2 7 pulls the redstone block B (25 2 9) away from the wire 24 2 9: OUT
+#     turns OFF.
+#   D: the bus, 4 ticks of repeaters, a torch on the block 3 2 0 (NOT IN), a repeater into H_F's
+#     back: H_F is powered again 8 ticks after IN falls, so F re-arms (B back 18 ticks after the
+#     fall), after R has re-armed (A back over the step 9 after): no glitch.
+#   redsim-cli instant_edges.redsim.json < examples/circuits/instant_edges.cli.txt
+new size 48 force
+note "Instant wire, both edges: @OUT follows @IN (the bus) in 0 ticks, 23 blocks away; IN on at least 7 ticks, off at least 18"
+fill 1 1 0 1 1 11 stone
+line 1 2 2 to 1 2 11 redstone_wire
+set 2 1 11 stone
+place 2 2 11 redstone_wire
+set 2 1 3 stone
+place 2 2 3 redstone_wire
+set 0 1 7 stone
+set 3 2 11 stone
+set 3 2 9 redstone_block
+place 3 2 10 sticky_piston facing=north
+set 5 2 9 redstone_block
+fill 7 1 9 20 1 9 stone
+line 7 2 9 to 20 2 9 redstone_wire
+place 4 2 9 sticky_piston facing=east
+set 22 2 9 stone
+set 24 1 9 stone
+place 24 2 9 redstone_wire
+line 23 1 9 to 23 1 11 redstone_wire
+place 21 2 9 sticky_piston facing=east
+set 3 2 4 redstone_block
+place 3 2 3 sticky_piston facing=south
+set 5 2 5 redstone_block
+fill 7 1 5 20 1 5 stone
+line 7 2 5 to 20 2 5 redstone_wire
+place 4 2 5 sticky_piston facing=east
+set 22 2 5 redstone_block
+fill 24 1 5 25 1 6 stone
+place 24 2 5 redstone_wire
+place 25 2 5 redstone_wire
+place 25 2 6 redstone_wire
+place 21 2 5 sticky_piston facing=east
+# F's tail 22 2 -2 facing south holds the source B (a redstone block) at 22 2 0, beside the wire 21 2 0
+set 25 2 8 redstone_block
+place 25 2 7 sticky_piston facing=south
+# repeater 0 2 -7 carries it into H_F's back
+set 1 1 1 stone
+place 1 2 1 repeater out=north delay=1
+set 1 2 0 stone
+set 2 1 0 stone
+place 2 2 0 repeater out=east delay=1
+set 3 2 0 stone
+place 3 2 1 redstone_wall_torch facing=south
+set 3 1 2 stone
+place 3 2 2 repeater out=south delay=1
+label IN 1 2 7 "input: the wire bus (power any part of it)"
+label OUT 23 1 11 "output wire"
+label A 23 2 9 "cut A: R's tail stone over the output step while armed"
+label B 25 2 9 "source B: F's tail redstone block while armed"
+label HF 3 2 3 "F's head (powered by IN or D)"
+settle
+group instant_edges 1 1 0 25 2 11 in @IN IN out @OUT OUT
+prefab save instant_edges 1 1 0 25 2 11
+# harness: a lever beside the bus, and a lever behind a repeater into the bus
+place 0 2 7 lever face=floor
+set 1 1 12 stone
+set 1 1 13 stone
+place 1 2 12 repeater out=north
+place 1 2 13 lever face=floor
+label L 0 2 7 "test lever beside the bus"
+label LREP 1 2 13 "test lever behind the repeater"
+label REP 1 2 12 "repeater into the bus"
+settle
+
+target new lever "lever on at 10, off at 40: OUT on at 11 and off at 41, one tick after each flip like any piston input"
+target lever do at 10 use @L
+target lever do at 40 use @L
+target lever expect @OUT power=0 during 0..10
+target lever expect @OUT power>=1 during 11..40
+target lever expect @OUT power=0 during 41..80
+
+target new same_tick "a repeater drives the bus: OUT changes in the same tick as the repeater, on both edges"
+target same_tick do at 10 use @LREP
+target same_tick do at 40 use @LREP
+target same_tick expect @REP powered=true at 12
+target same_tick expect @OUT power=0 during 0..11
+target same_tick expect @OUT power>=1 during 12..41
+target same_tick expect @REP powered=false at 42
+target same_tick expect @OUT power=0 during 42..80
+
+target new rearm "off for 18 ticks (the minimum): the next rise is exact again"
+target rearm do at 10 use @L
+target rearm do at 40 use @L
+target rearm do at 58 use @L
+target rearm do at 80 use @L
+target rearm expect @OUT power=0 during 41..58
+target rearm expect @OUT power>=1 during 59..80
+target rearm expect @OUT power=0 during 81..100
+
+target new late_rise "limit: off for 9..17 ticks: the rise waits until F has re-armed (59 here, 19 after the fall)"
+target late_rise do at 10 use @L
+target late_rise do at 40 use @L
+target late_rise do at 50 use @L
+target late_rise do at 90 use @L
+target late_rise expect @OUT power=0 during 41..58
+target late_rise expect @OUT power>=1 during 59..90
+
+target new lost_rise "failure case: off for 8 ticks or less: R has not re-armed, and OUT stays off while IN is on"
+target lost_rise do at 10 use @L
+target lost_rise do at 40 use @L
+target lost_rise do at 44 use @L
+target lost_rise expect @OUT power=0 during 41..100
+
+target new late_fall "limit: on for 3..6 ticks: the fall waits until D is off (8 ticks after the rise)"
+target late_fall do at 10 use @L
+target late_fall do at 14 use @L
+target late_fall expect @OUT power>=1 during 11..17
+target late_fall expect @OUT power=0 during 18..60
+
+target new spit "failure case: on for 1..2 ticks: R's head spits its redstone block forward and OUT stays on until IN goes on and off again"
+target spit do at 10 use @L
+target spit do at 12 use @L
+target spit expect @OUT power>=1 during 11..100
+
+check

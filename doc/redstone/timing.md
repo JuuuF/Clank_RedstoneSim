@@ -56,6 +56,9 @@ edge that removes power is instant; re-arming takes **3 ticks per stage**. Turn 
 around: an input piston that pushes the first block away (rising edge in), a last stage
 that pulls a stone off a wire step (rising edge out). V [[R-023-instant-piston-wire]],
 G EXP-058.
+Both edges in 0 ticks: two chains on one output step, one removing a cut (on), one removing
+the source (off), the second re-arming by itself ([[circuits]] `instant_edges`: IN on ≥ 7,
+off ≥ 18 ticks).
 
 ## Parallel carries on analog lines (R-024)
 

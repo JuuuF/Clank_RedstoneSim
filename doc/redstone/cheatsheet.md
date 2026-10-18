@@ -49,7 +49,8 @@ All times in **game ticks** (20 per second). Details: [[timing]], [[signals]],
 - **Instant wire:** extended sticky pistons, each holding a redstone block against the
   next one's back, all retract in one tick: power removal crosses any distance in 0 ticks
   (3 blocks a stage, 17 with wire between); re-arming is 3 ticks a stage
-  ([[R-023-instant-piston-wire]]).
+  ([[R-023-instant-piston-wire]]). Both edges: `instant_edges` (a cut and a source on one
+  output step, removed by two chains).
 
 ## Components
 
