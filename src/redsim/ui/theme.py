@@ -160,6 +160,10 @@ QGroupBox::title {{ subcontrol-origin: margin; left: 8px; color: {TEXT_DIM}; }}
 
 def apply(app: QApplication) -> None:
     """Dark Fusion palette plus the stylesheet, for the whole application."""
+    # Qt's own file and color dialogs, in this look, not the desktop's: GNOME's (GTK)
+    # dialogs run in this event loop and draw and list folders at idle priority, which the
+    # view's frames and a running simulation starve for seconds (doc/implementation-notes.md).
+    QApplication.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs)
     style = QStyleFactory.create("Fusion")
     if style is not None:
         app.setStyle(_Style(style))

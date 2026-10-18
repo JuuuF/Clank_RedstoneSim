@@ -355,14 +355,10 @@ class WorldPicker(QDialog):
         self.accept()
 
     def _browse(self) -> None:
-        """Another world: a Minecraft save folder or a simulation file (Qt's own dialog,
-        which opens faster than the desktop's)."""
-        options = QFileDialog.Option.DontUseNativeDialog
+        """Another world: a Minecraft save folder or a simulation file."""
         if self.kind == MINECRAFT:
             start = next((str(f) for f in minecraft_save_folders()), str(Path.home()))
-            folder = QFileDialog.getExistingDirectory(
-                self, "Minecraft save folder", start, options | QFileDialog.Option.ShowDirsOnly
-            )
+            folder = QFileDialog.getExistingDirectory(self, "Minecraft save folder", start)
             if folder:
                 self.chosen = (MINECRAFT, Path(folder))
                 self.accept()
@@ -372,7 +368,6 @@ class WorldPicker(QDialog):
             "Simulation world",
             "",
             "Redstone simulator worlds (*.redsim.json *.json)",
-            options=options,
         )
         if path:
             self.chosen = (SIMULATION, Path(path))

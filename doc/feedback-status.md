@@ -20,6 +20,10 @@ rounds, compiled 2026-10-13. Details, causes and code locations per item are in
 
 ## Done after the list was compiled
 
+- **Slow file dialogs** (2026-10-18, owner: up to 15 s for a folder change or a typed
+  name when saving or browsing): every file and color dialog is Qt's own now
+  (`AA_DontUseNativeDialogs` in `theme.apply`); GNOME's GTK dialogs ran inside the
+  editor's event loop and were starved by its frames ([[implementation-notes]], Gotchas).
 - **A command line for agents and people** (2026-10-15/16, owner: make the simulation
   "the bridge between minecraft and AI agents", easy to interact with, documented for
   agents and humans in the same format): `redsim-cli` ([[cli]], [[cli-reference]],

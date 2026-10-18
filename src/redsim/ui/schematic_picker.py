@@ -243,10 +243,7 @@ class SchematicPicker(QDialog):
         self.accept()
 
     def _browse(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Import schematic", "", FILE_FILTER,
-            options=QFileDialog.Option.DontUseNativeDialog,
-        )  # fmt: skip
+        path, _ = QFileDialog.getOpenFileName(self, "Import schematic", "", FILE_FILTER)
         if not path:
             return
         try:

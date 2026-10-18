@@ -167,6 +167,15 @@ Rules for code in compiled modules (`tools/build_compiled.MODULES`), checked by 
   bases too, or a seek or undo would make them vanish.
 - Only one game-server run at a time (they share the sandbox); its stdout is buffered to
   the end when redirected to a file.
+- **No desktop (GTK) dialogs**: on GNOME, Qt's gtk3 theme runs GTK's file and color
+  dialogs inside our GLib event loop, and GTK draws and lists folders at idle priority
+  (120 and lower), below every Qt source. The view's ~60 frames per second (drifting
+  clouds, a breathing selection, a running simulation) starve that work: measured
+  2026-10-18 with a GLib idle probe at priority 120, up to 2.7 s waits in the idle editor
+  and none at all in 4 s with the simulation playing behind the Save dialog (the owner
+  waited up to 15 s for a folder change or a typed name). `theme.apply` therefore sets
+  `AA_DontUseNativeDialogs`: Qt's own dialogs use Qt's event priorities and stay
+  responsive (folders listed in 0.02–0.14 s while playing).
 
 ## Checking the UI visually
 
