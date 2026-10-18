@@ -382,6 +382,26 @@ at 3 hit @T strength 9 snowball
 
 JSON `data`: {"pos", "state", "strength", "arrow", "tick"}
 
+### `strike`
+
+`strike POS`
+
+Lightning strikes a lightning rod (an editor stand-in).
+
+Weather is not simulated: this is a lightning bolt summoned on top of the lightning rod
+at POS. In the next tick's entity phase it powers the rod: 15 to every side and strong
+power into the block it stands on (or hangs from), for 8 ticks; a struck weathered rod
+becomes a plain `lightning_rod` (EXP-066). Usually recorded: `at 5 strike @ROD`.
+
+Examples:
+
+```
+at 5 strike 0 2 0
+at 10 strike @ROD
+```
+
+JSON `data`: {"pos", "state", "tick"}
+
 ### `page`
 
 `page POS N`

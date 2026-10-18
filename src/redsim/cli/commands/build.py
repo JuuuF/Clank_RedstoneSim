@@ -590,6 +590,29 @@ def hit(session: Session, args: Args) -> Output:
 
 
 @command(
+    "strike",
+    group="build",
+    usage="strike POS",
+    summary="Lightning strikes a lightning rod (an editor stand-in).",
+    help="""
+    Weather is not simulated: this is a lightning bolt summoned on top of the lightning rod
+    at POS. In the next tick's entity phase it powers the rod: 15 to every side and strong
+    power into the block it stands on (or hangs from), for 8 ticks; a struck weathered rod
+    becomes a plain `lightning_rod` (EXP-066). Usually recorded: `at 5 strike @ROD`.
+    """,
+    examples=("at 5 strike 0 2 0", "at 10 strike @ROD"),
+    kind="edit",
+    data='{"pos", "state", "tick"}',
+)
+def strike(session: Session, args: Args) -> Output:
+    pos = args.pos()
+    args.done()
+    with session.editing() as doc:
+        doc.lightning_strike(pos)
+    return _done(session, "lightning strikes", pos)
+
+
+@command(
     "page",
     group="build",
     usage="page POS N",

@@ -111,6 +111,8 @@ class Level:
         #: Not as in the game (an editor stand-in for arrows and snowballs): projectiles that
         #: hit target blocks in the next entity phase: (pos, strength, ticks).
         self.projectile_hits: list[tuple[Pos, int, int]] = []
+        #: Lightning rods struck in this tick's entity phase (editor stand-in for bolts).
+        self.lightning_strikes: list[Pos] = []
         #: Not as in the game: an editor stand-in for mobs and items standing on pressure
         #: plates (not simulated as entities): pos → (mobs, other entities, last game time
         #: they are there).
@@ -687,6 +689,7 @@ class Level:
         other.block_ticks = self.block_ticks.clone()
         other.block_events = dict(self.block_events)
         other.projectile_hits = list(self.projectile_hits)
+        other.lightning_strikes = list(self.lightning_strikes)
         other.plate_visitors = dict(self.plate_visitors)
         other.forced_power = dict(self.forced_power)
         other.zero_tick_pulses = list(self.zero_tick_pulses)

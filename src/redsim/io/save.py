@@ -124,6 +124,7 @@ def engine_to_json(engine: Engine) -> dict[str, Any]:
             "overdue_collected": level.block_ticks.overdue_collected,
             "block_events": [[list(p), b, b0, b1] for p, b, b0, b1 in level.block_events],
             "projectile_hits": [[list(p), s, t] for p, s, t in level.projectile_hits],
+            "lightning_strikes": [list(p) for p in level.lightning_strikes],
             "plate_visitors": [[list(p), *v] for p, v in level.plate_visitors.items()],
             "forced_power": [[list(p), *v] for p, v in level.forced_power.items()],
             "zero_tick_pulses": [[list(p), s] for p, s in level.zero_tick_pulses],
@@ -194,6 +195,8 @@ def engine_from_json(data: dict[str, Any], progress: Report | None = None) -> En
         level.block_events[(_pos(p), block_id, int(b0), int(b1))] = None
     for p, strength, ticks in raw.get("projectile_hits", []):
         level.projectile_hits.append((_pos(p), int(strength), int(ticks)))
+    for p in raw.get("lightning_strikes", []):
+        level.lightning_strikes.append(_pos(p))
     for p, mobs, others, until in raw.get("plate_visitors", []):
         level.plate_visitors[_pos(p)] = (int(mobs), int(others), int(until))
     for p, strength, until in raw.get("forced_power", []):

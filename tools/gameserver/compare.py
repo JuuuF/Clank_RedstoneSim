@@ -51,7 +51,8 @@ class Scenario:
     #: ``("fill", rel_a, rel_b, state)``, ``("clone", rel_a, rel_b, rel_destination)``, or
     #: ``("clone_move" | "clone_force", rel_a, rel_b, rel_destination)`` (``replace move/force``),
     #: ``("clone_strict", …)`` (prefab paste, ``/clone … strict``), ``("clone_move_strict", …)``,
-    #: or ``("item", rel, slot, (item_id | None, count))`` (``/item replace block``).
+    #: or ``("item", rel, slot, (item_id | None, count))`` (``/item replace block``), or
+    #: ``("lightning", rel)`` (a bolt on top of the lightning rod at ``rel``).
     #: The cloned area must have no pending scheduled ticks (the simulator's paste does
     #: not copy ticks, ``/clone`` does).
     commands: dict[int, list[tuple[Any, ...]]] = field(default_factory=dict)
@@ -156,6 +157,8 @@ def sim_command(engine: Engine, origin: Pos, command: tuple[Any, ...]) -> Action
         _, rel, slot, (item, count) = command
         payload = {"slot": slot, "item": item, "count": count}
         return Action("container_item", absolute(origin, rel), payload=payload)
+    if command[0] == "lightning":  # a bolt on top of a lightning rod
+        return Action("lightning_strike", absolute(origin, command[1]))
     if command[0] == "hit":  # a projectile straight down onto the top center: strength 15
         _, rel, projectile = command
         payload = {"strength": 15, "ticks": 20 if projectile == "arrow" else 8}
@@ -186,6 +189,9 @@ def game_command(origin: Pos, command: tuple[Any, ...]) -> str:
         _, rel = command
         x, y, z = absolute(origin, rel)
         return f"kill @e[type=!player,x={x},y={y},z={z},dx=0,dy=0,dz=0]"
+    if command[0] == "lightning":  # strikes the block it is in: the rod's top surface
+        x, y, z = absolute(origin, command[1])
+        return f"summon lightning_bolt {x + 0.5} {y + 1} {z + 0.5}"
     if command[0] == "hit":
         _, rel, projectile = command
         x, y, z = absolute(origin, rel)

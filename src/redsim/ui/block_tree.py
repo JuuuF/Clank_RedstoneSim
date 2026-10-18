@@ -69,7 +69,7 @@ REDSTONE = (
     ("Switches", (
         "lever", "stone_button", "oak_button", "stone_pressure_plate", "oak_pressure_plate",
         "light_weighted_pressure_plate", "heavy_weighted_pressure_plate", "trapped_chest",
-        "tripwire_hook", "tripwire",
+        "tripwire_hook", "tripwire", "lightning_rod",
     )),
     ("Outputs", (
         "redstone_lamp", "copper_bulb", "note_block", "piston", "sticky_piston", "dispenser",

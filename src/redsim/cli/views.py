@@ -16,6 +16,7 @@ second character is a direction arrow, a signal strength or a mark:
     X7  target block, power 7       N.  note block      D>  dispenser     E>  dropper
     U-  hopper pointing down (U: locked by power)
     Y>  tripwire hook facing east (toward its wire)    S~  tripwire (~ in a line, x disarmed)
+    Z+  lightning rod pointing up (Z: struck, powered)
     ==  rail   G=  powered rail   A=  activator rail
     %%  falling block (an entity)
     Ab  any other block: its own two letters, listed in the legend
@@ -158,6 +159,7 @@ WORDS = {
     "A": "activator rail",
     "Y": "tripwire hook, arrow = toward its wire",
     "S": "tripwire (~ part of a line between hooks, x disarmed)",
+    "Z": "lightning rod, arrow = where it points",
 }
 
 
@@ -191,6 +193,8 @@ def block_code(state: BlockState, level: Level, pos: Pos, plane: Plane) -> tuple
         return _case("p", powered or bool(prop(state, "power") or 0)) + "_", "P"
     if bid == "redstone_lamp":
         return _case("l", lit) + ".", "L"
+    if bid.endswith("lightning_rod"):
+        return _case("z", powered) + arrow(facing), "Z"
     if bid == "tripwire_hook":
         return _case("y", powered) + arrow(facing), "Y"
     if bid == "tripwire":
@@ -235,7 +239,7 @@ def block_code(state: BlockState, level: Level, pos: Pos, plane: Plane) -> tuple
 
 
 #: Legend keys whose case means on (upper) and off (lower).
-ON_OFF_KEYS = frozenset("RCKTVBPLQOIJNDEUGAYS")
+ON_OFF_KEYS = frozenset("RCKTVBPLQOIJNDEUGAYSZ")
 
 
 class Legend:

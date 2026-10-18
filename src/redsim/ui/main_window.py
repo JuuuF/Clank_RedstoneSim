@@ -220,6 +220,9 @@ class MainWindow(
             inspector.shears_requested.connect(
                 lambda pos: self._edit(self.document.break_block, pos, True)
             )
+            inspector.strike_requested.connect(
+                lambda pos: self._edit(self.document.lightning_strike, pos)
+            )
             inspector.contents_requested.connect(self._set_container_slot)
             inspector.sign_requested.connect(
                 lambda pos, side, lines: self._edit(self.document.set_sign_text, pos, side, lines)

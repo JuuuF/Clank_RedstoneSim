@@ -323,6 +323,15 @@ class Document(HistoryOps, SequenceOps):
         if actual != strength:
             self.notice = f"{sources.KINDS[kind].title} cannot give {strength}; using {actual}."
 
+    def lightning_strike(self, pos: Pos) -> None:
+        """Lightning striking the lightning rod at ``pos`` (weather is not simulated): it
+        strikes in the next tick's entity phase and powers the rod for 8 ticks."""
+        from redsim.world.blocks.lightning_rod import LightningRodBlock
+
+        if not isinstance(self.state_at(pos).block, LightningRodBlock):
+            raise EditError(f"No lightning rod at {pos}.")
+        self._apply(Action("lightning_strike", pos), "lightning strike")
+
     def projectile_hit(self, pos: Pos, strength: int, arrow: bool) -> None:
         """A projectile hitting a target block: it hits in the next tick's entity phase and
         powers the target for 20 ticks (arrow) or 8 (other projectiles)."""

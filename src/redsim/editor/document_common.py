@@ -21,7 +21,14 @@ def edit_row(action: Action) -> str:
     kind = action.kind
     if kind == "power_pulse":
         return "power"
-    if kind in ("use", "lectern_page", "projectile_hit", "container_item", "sign_text"):
+    if kind in (
+        "use",
+        "lectern_page",
+        "projectile_hit",
+        "lightning_strike",
+        "container_item",
+        "sign_text",
+    ):
         return "interact"
     if kind == "break":
         return "remove"

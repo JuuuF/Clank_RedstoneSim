@@ -25,6 +25,7 @@ neighbors, and how solid blocks pass it on. Evidence labels:
 | Lever or button **attached to** it (on any face) | strongly | V [[R-002-what-powers-a-block]] |
 | Lever or button beside it but attached to another block | no | V R-002 |
 | Tripwire hook **hanging on** it, while its line is tripped | strongly | G EXP-064 |
+| Lightning rod placed **against** it, for 8 ticks after a strike | strongly | G EXP-066 |
 | Torch **under** it (standing on the block below) | strongly | V R-002, G EXP-005 |
 | Torch standing beside it, or hanging **on** it | no | V R-002 |
 | Repeater, comparator **pointing into** it | strongly | V R-002 |

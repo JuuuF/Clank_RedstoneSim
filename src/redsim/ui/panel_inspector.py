@@ -60,6 +60,7 @@ class InspectorPanel(QWidget):
     hit_requested = Signal(object, int, bool)  # Pos, strength, arrow
     plate_requested = Signal(object, int, int, int)  # Pos, mobs, others, ticks
     shears_requested = Signal(object)  # Pos: cut a tripwire with shears
+    strike_requested = Signal(object)  # Pos: lightning strikes a lightning rod
     contents_requested = Signal(object, object, object, int)  # Pos, slot|None, item|None, n
     sign_requested = Signal(object, str, list)  # Pos, "front" | "back", the 4 lines
     position_hovered = Signal(object)  # Pos | None: the title (coordinates) is hovered
@@ -170,6 +171,13 @@ class InspectorPanel(QWidget):
             self.hit_buttons[arrow] = button
         target_layout.addRow("Projectile", hit_row)
         layout.addWidget(self.target_box)
+        self.strike_button = QPushButton("Strike with lightning")
+        self.strike_button.setToolTip(
+            "Weather is not simulated: a lightning bolt strikes the rod in the next tick's "
+            "entity phase and powers it for 8 ticks."
+        )
+        self.strike_button.clicked.connect(self._strike)
+        layout.addWidget(self.strike_button)
         self.plate_box = QWidget()  # pressure plates and tripwire: entities on/in them
         plate_layout = QFormLayout(self.plate_box)
         plate_layout.setContentsMargins(0, 6, 0, 0)
@@ -277,6 +285,7 @@ class InspectorPanel(QWidget):
         self._document = document
         self.source_box.setVisible(False)
         self.target_box.setVisible(False)
+        self.strike_button.setVisible(False)
         self.plate_box.setVisible(False)
         self.contents_box.setVisible(False)
         self.sign_box.setVisible(False)
@@ -321,6 +330,10 @@ class InspectorPanel(QWidget):
         be = document.level.get_block_entity(pos, create=False)
         self.entity.setText(f"Block entity: {be.describe()}" if be is not None else "")
         self.target_box.setVisible(state.is_(blocks.TARGET))
+        from redsim.world.blocks.lightning_rod import LightningRodBlock
+
+        self.strike_button.setVisible(isinstance(state.block, LightningRodBlock))
+        self.strike_button.setEnabled(editable)
         from redsim.world.blocks.pressure_plate import BasePressurePlateBlock
         from redsim.world.blocks.tripwire import TripWireBlock
 
@@ -468,6 +481,11 @@ class InspectorPanel(QWidget):
             mobs, items = self.plate_mobs.value(), self.plate_items.value()
             ticks = self.plate_ticks.value()
             _later(lambda: self.plate_requested.emit(pos, mobs, items, ticks))
+
+    def _strike(self) -> None:
+        if self._pos is not None:
+            pos = self._pos
+            _later(lambda: self.strike_requested.emit(pos))
 
     def _cut_with_shears(self) -> None:
         if self._pos is not None:

@@ -49,6 +49,7 @@ ActionKind = Literal[
     "transform_regions",
     "stack_region",
     "projectile_hit",
+    "lightning_strike",
     "plate_visitors",
     "power_pulse",
 ]
@@ -100,6 +101,9 @@ class Action:
       1-15, ``ticks`` 20 for arrows or 8 for others). Like a projectile summoned now, it hits
       in the next tick's entity phase (``TargetBlock.onProjectileHit``), after block events
       and before block entities.
+    * ``lightning_strike``: a lightning bolt summoned on top of the lightning rod at ``pos``
+      (weather is not simulated): in the next tick's entity phase, after projectile hits,
+      it powers the rod for 8 ticks (``LightningBolt.powerLightningRod``).
     * ``lectern_page``: a player turning a lectern's book to ``payload["page"]``
       (``LecternBlockEntity.setPage``: comparator update and a 2-tick pulse). Not a command;
       there is no player on the test server, so this path is verified by source reading.
@@ -187,8 +191,10 @@ class Engine:
         if self.phase is Phase.ENTITIES and level.projectile_hits:
             pos, strength, ticks = level.projectile_hits[0]
             return f"projectile hits the target at {pos} (strength {strength}, {ticks} ticks)"
+        if self.phase is Phase.ENTITIES and level.lightning_strikes:
+            return f"lightning strikes the rod at {level.lightning_strikes[0]}"
         if self.phase is Phase.ENTITIES and level.entity_queue:
-            return f"entities on the pressure plate at {level.entity_queue[0]}"
+            return f"entities on the pressure plate or tripwire at {level.entity_queue[0]}"
         if self.phase is Phase.ENTITIES and level.entity_tick_queue:
             mob = level.entities.get(level.entity_tick_queue[0])
             return f"entity tick: {mob.describe()}" if mob is not None else "entity tick"
@@ -257,7 +263,12 @@ class Engine:
                 level.force_power(pos, 0, level.game_time)  # the 0-tick pulse ends
             finally:
                 self._end_step()
-        elif self.phase is Phase.ENTITIES and not level.projectile_hits and not level.entity_queue:
+        elif (
+            self.phase is Phase.ENTITIES
+            and not level.projectile_hits
+            and not level.lightning_strikes
+            and not level.entity_queue
+        ):
             # Falling blocks, in the order they joined (ServerLevel.tick → tickNonPassenger).
             # Not as in the game: the editor's stand-ins for other entities (0-tick ends,
             # projectile hits, plate visitors) all go first; in the game every entity has
@@ -266,6 +277,16 @@ class Engine:
             info = self._begin_step("entity_tick", mob.block_position, {"entity": mob.id})
             try:
                 mob.tick(level)
+            finally:
+                self._end_step()
+        elif self.phase is Phase.ENTITIES and not level.projectile_hits and level.lightning_strikes:
+            from redsim.world.blocks.lightning_rod import strike
+
+            pos = level.lightning_strikes.pop(0)
+            info = self._begin_step("lightning_strike", pos, {})
+            try:
+                if not strike(level, pos):
+                    info.detail["info"] = "skipped: no lightning rod"
             finally:
                 self._end_step()
         elif self.phase is Phase.ENTITIES and not level.projectile_hits:
@@ -327,7 +348,12 @@ class Engine:
                 level.entity_queue = list(level.plate_visitors)
                 level.entity_tick_queue = list(level.entities)
             elif self.phase is Phase.ENTITIES:
-                if level.zero_tick_ends or level.projectile_hits or level.entity_queue:
+                if (
+                    level.zero_tick_ends
+                    or level.projectile_hits
+                    or level.lightning_strikes
+                    or level.entity_queue
+                ):
                     return
                 queue = level.entity_tick_queue
                 while queue and queue[0] not in level.entities:  # removed before its turn
@@ -441,6 +467,9 @@ class Engine:
                     int(payload.get("others", 0)),
                     until,
                 )
+            elif action.kind == "lightning_strike":
+                # A bolt summoned now strikes in the next tick's entity phase (its first tick).
+                level.lightning_strikes.append(action.pos)
             elif action.kind == "projectile_hit":
                 # A projectile launched now hits during the next tick's entity phase.
                 strength, ticks = int(action.payload["strength"]), int(action.payload["ticks"])

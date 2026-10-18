@@ -304,7 +304,7 @@ tests, or flip the real input (`at T use @LEVER`) when the input is a lever or b
 | `copy`, `move`, `rotate`, `mirror`, `stack` | Box operations like the editor's (no block updates inside: strict). |
 | `source POS KIND STRENGTH` | A comparator source of a strength (barrel, chest, hopper, lectern, cake, composter). |
 | `container`, `sign`, `page` | Container slots, sign text, a lectern's page. |
-| `plate`, `hit` | Mobs or items on a pressure plate or in a tripwire, a projectile hitting a target block (editor stand-ins for entities, [[differences]] section 3). |
+| `plate`, `hit`, `strike` | Mobs or items on a pressure plate or in a tripwire, a projectile hitting a target block, lightning striking a lightning rod (editor stand-ins for entities, [[differences]] section 3). |
 | `import FILE at POS` | Paste a schematic or structure file. |
 | `prefab save NAME POS POS`, `paste NAME at POS` | Keep a box of the build as a reusable module (saved with the world, listed in the editor), and place copies of it (turned or mirrored). Save a module once its targets pass, then reuse it. |
 
@@ -351,6 +351,7 @@ under the maps explains every code that appears.
 | `N.` | note block | `D>` / `E>` | dispenser / dropper |
 | `U-` | hopper (output down) | `==`, `G=`, `A=` | rail, powered rail, activator rail |
 | `Y>` | tripwire hook, facing east (toward its wire) | `S~` | tripwire (`~` in a line between hooks, `.` loose, `x` disarmed) |
+| `Z+` | lightning rod pointing up (`Z`: struck) | | |
 | `%%` | falling block (entity) | `Ab` | any other block: two letters, named in the legend |
 
 Arrows: `>` and `<` along the map's horizontal axis, `^` and `v` along its vertical axis

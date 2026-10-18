@@ -2695,7 +2695,67 @@ SCAFFOLDING = Scenario(
     },
 )
 
+LIGHTNING_RODS = Scenario(
+    name="lightning_rods",
+    description=(
+        "Lightning bolts summoned on lightning rods: a struck rod gives 15 for 8 ticks and "
+        "strongly powers the block it stands on (lamps beside those blocks); redstone wire "
+        "next to a rod connects to it; an oxidized rod becomes a plain one, a waxed one "
+        "stays; a rod on a wall; a struck rod pushed by a piston keeps its power where it "
+        "lands for a new 8 ticks (the lamp beside it there)."
+    ),
+    size=(8, 12),
+    setup=[
+        ((1, 1, 1), STONE),
+        ((1, 2, 1), "minecraft:lightning_rod[facing=up]"),
+        ((2, 1, 1), LAMP),
+        ((1, 1, 0), STONE),
+        ((1, 2, 0), "minecraft:redstone_wire"),
+        ((1, 1, 4), STONE),
+        ((1, 2, 4), "minecraft:oxidized_lightning_rod[facing=up]"),
+        ((2, 1, 4), LAMP),
+        ((1, 1, 6), STONE),
+        ((1, 2, 6), "minecraft:waxed_weathered_lightning_rod[facing=up]"),
+        ((2, 1, 6), LAMP),
+        ((1, 2, 8), STONE),
+        ((2, 2, 8), "minecraft:exposed_lightning_rod[facing=east]"),
+        ((1, 3, 8), LAMP),
+        ((4, 1, 10), STONE),
+        ((4, 2, 10), "minecraft:lightning_rod[facing=up]"),
+        ((3, 2, 10), "minecraft:piston[facing=east]"),
+        ((6, 2, 10), LAMP),
+    ],  # fmt: skip
+    watch=[
+        (1, 2, 1),
+        (2, 1, 1),
+        (1, 2, 0),
+        (1, 2, 4),
+        (2, 1, 4),
+        (1, 2, 6),
+        (2, 1, 6),
+        (2, 2, 8),
+        (1, 3, 8),
+        (3, 2, 10),
+        (4, 2, 10),
+        (5, 2, 10),
+        (6, 2, 10),
+    ],  # fmt: skip
+    ticks=40,
+    inputs={6: [((2, 2, 10), RB)]},
+    commands={
+        3: [
+            ("lightning", (1, 2, 1)),
+            ("lightning", (1, 2, 4)),
+            ("lightning", (1, 2, 6)),
+            ("lightning", (2, 2, 8)),
+            ("lightning", (4, 2, 10)),
+        ],
+        25: [("lightning", (1, 2, 1))],
+    },  # fmt: skip
+)
+
 ALL = [
+    LIGHTNING_RODS,
     TRIPWIRES,
     SCAFFOLDING,
     PISTON_ZERO_TICK,

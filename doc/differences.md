@@ -23,7 +23,7 @@ an entity could do.
 | Mobs, players, minecarts, boats, projectiles | Entities that press plates, trigger tripwires, ride rails, collide | Only falling blocks are entities (`sim/entities.py`); the rest are editor stand-ins (section 3) | No detector rails, no entity collisions; plates and tripwire are pressed by visitors |
 | Light | Light levels, daylight | Not computed | No daylight sensors; light does not matter for any simulated block |
 | Random ticks | Leaf decay, copper oxidation, grass spreading, crops, redstone ore cooling | None (the test server runs with `random_tick_speed 0`) | Leaves keep their `distance` updates but never decay (`catalog.py`) |
-| Weather, time of day | Rain, day/night | None | Daylight sensors not simulated |
+| Weather, time of day | Rain, thunderstorms, day/night | None; lightning strikes on lightning rods are an editor stand-in (section 3) | Daylight sensors not simulated |
 | Sounds, particles, game events | Sounds, vibrations (sculk sensors) | None (tripwire hooks click, attach and detach silently: `tripwire.py`) | No sculk sensors |
 | Menus and items in hand | Anvils, crafting, using items on blocks | The editor has no items in hand: `use` is an empty-hand click | Flint and steel, shovels, buckets, food on campfires, bone meal… are not available |
 | Explosions | TNT, wind charges | None | TNT is a foreign block |
@@ -53,6 +53,7 @@ own mechanics.
 |---|---|---|---|
 | Plate and tripwire visitors | Mobs and items standing on a pressure plate or walking through a tripwire | A number of mobs and of other entities on a plate or in a tripwire from the next tick on, for some ticks; it is pressed in the entity phase and released at its next recheck | `pressure_plate.py`, `tripwire.py`, `Level.plate_visitors`, [[mechanics/pressure-plates]], [[mechanics/tripwire-and-scaffolding]] (game-checked with real armor stands and items, EXP-046, EXP-064) |
 | Projectile hits | Arrows and snowballs hitting a target block | The hit lands in the next tick's entity phase with the chosen strength, power for 20 ticks (arrow) or 8 | `target.py`, `Level.projectile_hits` (EXP-037) |
+| Lightning strikes | A lightning bolt (thunderstorm, trident, `/summon`) striking a lightning rod | A bolt summoned on top of the rod: it strikes in the next tick's entity phase (after projectile hits); the bolt's fire, damage and random copper cleaning around the rod are left out | `lightning_rod.py`, `Level.lightning_strikes` (EXP-066) |
 | Sequence pulses | Nothing in the game | Power locked to a position, like an invisible redstone block next to it from every side, for a number of ticks | `Level.forced_power`, ADR-026 |
 | 0-tick pulses | Nothing directly (contraptions make them) | On at the start of a tick, off right after its block events, inside one tick | `Level.zero_tick_pulses` |
 | Container slots, sign text, sources | `/item replace`, `/setblock … {…}`, a player writing a sign | Applied with the commands' semantics (`setChanged`, comparators update) | `engine.py` actions |
@@ -62,7 +63,7 @@ own mechanics.
 | Truth-table inputs (`redsim-cli target … truth`) | A player or a circuit switching the input | A lever input is flipped with `use` (a player); any other input gets a sequence power pulse (editor power) | `cli/targets.py` |
 
 Order inside the entity phase: the editor's stand-ins (0-tick ends, projectile hits,
-plate visitors) come before falling blocks, which tick in the order they were created. In
+lightning strikes, plate and tripwire visitors) come before falling blocks, which tick in the order they were created. In
 the game every entity has its place in one list by creation order, so a stand-in and a
 falling block that act on the same block in the same tick may come in another order there
 (`engine.py`).
@@ -74,6 +75,7 @@ falling block that act on the same block in the same tick may come in another or
 | Pressure plates (pressed) | Pressed shape half a pixel high | One pixel (plates have no collision; nothing rests on them, so no outcome changes) | `pressure_plate.py` |
 | Lectern | Slanted top in its outline shape | Flat (support and collision use the exact collision shape) | `lectern.py` |
 | Tripwire (attached) | Shape 1 to 2.5 pixels high | 1 to 3 pixels in the shape grid, used only for drawing and picking (entity checks use the exact box; it has no collision) | `tripwire.py` |
+| Lightning rod: water and weathering | A waterlogged rod schedules water ticks; rods oxidize by random ticks | `waterlogged` stays inert; no oxidation (every stage works the same, as in the game's logic) | `lightning_rod.py` |
 | Scaffolding: water | A waterlogged scaffolding schedules water ticks; a falling one takes up water where it lands | `waterlogged` stays inert | `scaffolding.py` |
 | Scaffolding: placing on scaffolding | Clicking scaffolding with scaffolding puts the new one on top of the column or at the end of the bridge (`ScaffoldingBlockItem.updatePlacementContext`) | The editor places it where you point (the same block results at that spot) | `scaffolding.py` |
 | Falling blocks: items | A block that cannot land drops as an item | It disappears (as with `entity_drops false`) | `sim/entities.py` item 1 |
