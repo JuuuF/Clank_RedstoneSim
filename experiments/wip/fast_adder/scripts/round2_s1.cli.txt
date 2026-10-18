@@ -1,0 +1,409 @@
+new size 48 force
+note "WIP 07 (works, 162/162): round 2, stage 1. The lever core of 03 with the H inputs derived on top of the core: a wire line in column x0+2 at y=7 runs over the G torch's and the X torch's above-blocks (each strongly powered while its torch is on, so the line carries G or K = not-propagate), through a delay repeater (z=-4) and two descents into the H torch blocks. Only nG (NAND) and nX (OR) remain as inputs per bit: levers @nG and @nX."
+set 1 2 0 stone
+set 1 2 1 stone
+set 2 2 0 stone
+set 2 2 -1 stone
+set 2 2 -2 stone
+set 1 2 -2 stone
+set 1 2 -3 stone
+set 0 2 -3 stone
+set 2 2 -4 stone
+set 1 2 -5 stone
+set 2 2 -5 stone
+set 4 2 0 stone
+set 4 2 1 stone
+set 5 2 0 stone
+set 5 2 -1 stone
+set 5 2 -2 stone
+set 4 2 -2 stone
+set 4 2 -3 stone
+set 3 2 -3 stone
+set 5 2 -4 stone
+set 4 2 -5 stone
+set 5 2 -5 stone
+set 7 2 0 stone
+set 7 2 1 stone
+set 8 2 0 stone
+set 8 2 -1 stone
+set 8 2 -2 stone
+set 7 2 -2 stone
+set 7 2 -3 stone
+set 6 2 -3 stone
+set 8 2 -4 stone
+set 7 2 -5 stone
+set 8 2 -5 stone
+set 10 2 0 stone
+set 10 2 1 stone
+set 11 2 0 stone
+set 11 2 -1 stone
+set 11 2 -2 stone
+set 10 2 -2 stone
+set 10 2 -3 stone
+set 9 2 -3 stone
+set 11 2 -4 stone
+set 10 2 -5 stone
+set 11 2 -5 stone
+set 13 2 0 stone
+set 13 2 1 stone
+set 14 2 0 stone
+set 0 3 0 stone
+set 1 3 2 stone
+set 1 3 -1 stone
+set 2 3 -3 stone
+set 0 3 -5 stone
+set 1 3 -4 stone
+set 1 3 -7 stone
+set 3 3 0 stone
+set 4 3 2 stone
+set 4 3 -1 stone
+set 5 3 -3 stone
+set 3 3 -5 stone
+set 4 3 -4 stone
+set 4 3 -7 stone
+set 6 3 0 stone
+set 7 3 2 stone
+set 7 3 -1 stone
+set 8 3 -3 stone
+set 6 3 -5 stone
+set 7 3 -4 stone
+set 7 3 -7 stone
+set 9 3 0 stone
+set 10 3 2 stone
+set 10 3 -1 stone
+set 11 3 -3 stone
+set 9 3 -5 stone
+set 10 3 -4 stone
+set 10 3 -7 stone
+set 12 3 0 stone
+set 13 3 2 stone
+set -1 4 0 stone
+set -1 4 2 glass
+set 0 4 2 stone
+set -1 4 3 stone
+set 1 4 0 glass
+set 2 4 0 stone
+set 2 4 2 glass
+set 3 4 2 stone
+set 2 4 3 stone
+set 4 4 0 glass
+set 5 4 0 stone
+set 5 4 2 glass
+set 6 4 2 stone
+set 5 4 3 stone
+set 7 4 0 glass
+set 8 4 0 stone
+set 8 4 2 glass
+set 9 4 2 stone
+set 8 4 3 stone
+set 10 4 0 glass
+set 11 4 0 stone
+set 11 4 2 glass
+set 12 4 2 stone
+set 11 4 3 stone
+set 0 5 -1 stone
+set -1 5 5 stone
+set 1 5 -1 stone
+set 3 5 -1 stone
+set 2 5 5 stone
+set 4 5 -1 stone
+set 6 5 -1 stone
+set 5 5 5 stone
+set 7 5 -1 stone
+set 9 5 -1 stone
+set 8 5 5 stone
+set 10 5 -1 stone
+set 12 5 -1 stone
+set 11 5 5 stone
+place 1 3 0 comparator out=east mode=subtract
+place 1 3 1 redstone_wire
+place 2 3 0 redstone_wire
+place 2 3 -1 redstone_wire
+place 2 3 -2 redstone_wire
+place 1 3 -2 repeater out=north
+place 1 3 -3 comparator out=north mode=subtract
+place 0 3 -3 redstone_wire
+place 0 3 -4 redstone_wall_torch facing=south
+place 2 3 -4 repeater out=north
+place 1 3 -5 comparator out=south mode=subtract
+place 2 3 -5 redstone_wire
+place 1 3 -6 redstone_wall_torch facing=south
+place 4 3 0 comparator out=east mode=subtract
+place 4 3 1 redstone_wire
+place 5 3 0 redstone_wire
+place 5 3 -1 redstone_wire
+place 5 3 -2 redstone_wire
+place 4 3 -2 repeater out=north
+place 4 3 -3 comparator out=north mode=subtract
+place 3 3 -3 redstone_wire
+place 3 3 -4 redstone_wall_torch facing=south
+place 5 3 -4 repeater out=north
+place 4 3 -5 comparator out=south mode=subtract
+place 5 3 -5 redstone_wire
+place 4 3 -6 redstone_wall_torch facing=south
+place 7 3 0 comparator out=east mode=subtract
+place 7 3 1 redstone_wire
+place 8 3 0 redstone_wire
+place 8 3 -1 redstone_wire
+place 8 3 -2 redstone_wire
+place 7 3 -2 repeater out=north
+place 7 3 -3 comparator out=north mode=subtract
+place 6 3 -3 redstone_wire
+place 6 3 -4 redstone_wall_torch facing=south
+place 8 3 -4 repeater out=north
+place 7 3 -5 comparator out=south mode=subtract
+place 8 3 -5 redstone_wire
+place 7 3 -6 redstone_wall_torch facing=south
+place 10 3 0 comparator out=east mode=subtract
+place 10 3 1 redstone_wire
+place 11 3 0 redstone_wire
+place 11 3 -1 redstone_wire
+place 11 3 -2 redstone_wire
+place 10 3 -2 repeater out=north
+place 10 3 -3 comparator out=north mode=subtract
+place 9 3 -3 redstone_wire
+place 9 3 -4 redstone_wall_torch facing=south
+place 11 3 -4 repeater out=north
+place 10 3 -5 comparator out=south mode=subtract
+place 11 3 -5 redstone_wire
+place 10 3 -6 redstone_wall_torch facing=south
+place 13 3 0 comparator out=east mode=subtract
+place 13 3 1 redstone_wire
+place 14 3 0 redstone_wire
+place 0 4 0 redstone_wire
+place 1 4 2 redstone_wire
+place 1 4 -1 redstone_wire
+place 1 4 -4 redstone_wire
+place 3 4 0 redstone_wire
+place 4 4 2 redstone_wire
+place 4 4 -1 redstone_wire
+place 4 4 -4 redstone_wire
+place 6 4 0 redstone_wire
+place 7 4 2 redstone_wire
+place 7 4 -1 redstone_wire
+place 7 4 -4 redstone_wire
+place 9 4 0 redstone_wire
+place 10 4 2 redstone_wire
+place 10 4 -1 redstone_wire
+place 10 4 -4 redstone_wire
+place 12 4 0 redstone_wire
+place 13 4 2 redstone_wire
+place -1 5 0 redstone_wire
+place -1 5 2 redstone_wire
+place 0 5 2 redstone_wire
+place -1 5 -1 redstone_wall_torch facing=west
+place -1 5 3 repeater out=north
+place -1 5 4 redstone_wall_torch facing=north
+place 1 5 0 redstone_wire
+place 2 5 0 redstone_wire
+place 2 5 2 redstone_wire
+place 3 5 2 redstone_wire
+place 2 5 -1 redstone_wall_torch facing=west
+place 2 5 3 repeater out=north
+place 2 5 4 redstone_wall_torch facing=north
+place 4 5 0 redstone_wire
+place 5 5 0 redstone_wire
+place 5 5 2 redstone_wire
+place 6 5 2 redstone_wire
+place 5 5 -1 redstone_wall_torch facing=west
+place 5 5 3 repeater out=north
+place 5 5 4 redstone_wall_torch facing=north
+place 7 5 0 redstone_wire
+place 8 5 0 redstone_wire
+place 8 5 2 redstone_wire
+place 9 5 2 redstone_wire
+place 8 5 -1 redstone_wall_torch facing=west
+place 8 5 3 repeater out=north
+place 8 5 4 redstone_wall_torch facing=north
+place 10 5 0 redstone_wire
+place 11 5 0 redstone_wire
+place 11 5 2 redstone_wire
+place 12 5 2 redstone_wire
+place 11 5 -1 redstone_wall_torch facing=west
+place 11 5 3 repeater out=north
+place 11 5 4 redstone_wall_torch facing=north
+place 0 6 -1 lever face=floor
+label nG-1 0 6 -1
+place -1 6 5 lever face=floor
+label nX-1 -1 6 5
+place 3 6 -1 lever face=floor
+label nG0 3 6 -1
+place 2 6 5 lever face=floor
+label nX0 2 6 5
+set 2 6 -8 stone
+place 2 7 -8 redstone_wire
+set 2 6 -7 stone
+place 2 7 -7 redstone_wire
+set 2 6 -6 stone
+place 2 7 -6 redstone_wire
+set 2 6 -5 stone
+place 2 7 -5 redstone_wire
+set 2 6 -4 stone
+place 2 7 -4 repeater out=north
+set 2 6 -3 stone
+place 2 7 -3 redstone_wire
+set 2 6 -2 stone
+place 2 7 -2 redstone_wire
+set 2 6 -1 stone
+place 2 7 -1 redstone_wire
+set 2 6 0 stone
+place 2 7 0 redstone_wire
+set 2 6 1 stone
+place 2 7 1 redstone_wire
+set 2 6 2 stone
+place 2 7 2 redstone_wire
+set 2 6 3 stone
+place 2 7 3 redstone_wire
+set 2 6 4 stone
+place 2 7 4 redstone_wire
+set 1 5 -6 stone
+place 1 6 -6 redstone_wire
+set 0 4 -6 stone
+place 0 5 -6 redstone_wire
+place 0 4 -5 redstone_wire
+set 2 5 -9 stone
+place 2 6 -9 redstone_wire
+set 1 5 -9 stone
+place 1 6 -9 redstone_wire
+set 1 4 -8 stone
+place 1 5 -8 redstone_wire
+place 1 4 -7 redstone_wire
+set 2 4 -5 stone
+label S0 1 4 -4
+place 6 6 -1 lever face=floor
+label nG1 6 6 -1
+place 5 6 5 lever face=floor
+label nX1 5 6 5
+set 5 6 -8 stone
+place 5 7 -8 redstone_wire
+set 5 6 -7 stone
+place 5 7 -7 redstone_wire
+set 5 6 -6 stone
+place 5 7 -6 redstone_wire
+set 5 6 -5 stone
+place 5 7 -5 redstone_wire
+set 5 6 -4 stone
+place 5 7 -4 repeater out=north
+set 5 6 -3 stone
+place 5 7 -3 redstone_wire
+set 5 6 -2 stone
+place 5 7 -2 redstone_wire
+set 5 6 -1 stone
+place 5 7 -1 redstone_wire
+set 5 6 0 stone
+place 5 7 0 redstone_wire
+set 5 6 1 stone
+place 5 7 1 redstone_wire
+set 5 6 2 stone
+place 5 7 2 redstone_wire
+set 5 6 3 stone
+place 5 7 3 redstone_wire
+set 5 6 4 stone
+place 5 7 4 redstone_wire
+set 4 5 -6 stone
+place 4 6 -6 redstone_wire
+set 3 4 -6 stone
+place 3 5 -6 redstone_wire
+place 3 4 -5 redstone_wire
+set 5 5 -9 stone
+place 5 6 -9 redstone_wire
+set 4 5 -9 stone
+place 4 6 -9 redstone_wire
+set 4 4 -8 stone
+place 4 5 -8 redstone_wire
+place 4 4 -7 redstone_wire
+set 5 4 -5 stone
+label S1 4 4 -4
+place 9 6 -1 lever face=floor
+label nG2 9 6 -1
+place 8 6 5 lever face=floor
+label nX2 8 6 5
+set 8 6 -8 stone
+place 8 7 -8 redstone_wire
+set 8 6 -7 stone
+place 8 7 -7 redstone_wire
+set 8 6 -6 stone
+place 8 7 -6 redstone_wire
+set 8 6 -5 stone
+place 8 7 -5 redstone_wire
+set 8 6 -4 stone
+place 8 7 -4 repeater out=north
+set 8 6 -3 stone
+place 8 7 -3 redstone_wire
+set 8 6 -2 stone
+place 8 7 -2 redstone_wire
+set 8 6 -1 stone
+place 8 7 -1 redstone_wire
+set 8 6 0 stone
+place 8 7 0 redstone_wire
+set 8 6 1 stone
+place 8 7 1 redstone_wire
+set 8 6 2 stone
+place 8 7 2 redstone_wire
+set 8 6 3 stone
+place 8 7 3 redstone_wire
+set 8 6 4 stone
+place 8 7 4 redstone_wire
+set 7 5 -6 stone
+place 7 6 -6 redstone_wire
+set 6 4 -6 stone
+place 6 5 -6 redstone_wire
+place 6 4 -5 redstone_wire
+set 8 5 -9 stone
+place 8 6 -9 redstone_wire
+set 7 5 -9 stone
+place 7 6 -9 redstone_wire
+set 7 4 -8 stone
+place 7 5 -8 redstone_wire
+place 7 4 -7 redstone_wire
+set 8 4 -5 stone
+label S2 7 4 -4
+place 12 6 -1 lever face=floor
+label nG3 12 6 -1
+place 11 6 5 lever face=floor
+label nX3 11 6 5
+set 11 6 -8 stone
+place 11 7 -8 redstone_wire
+set 11 6 -7 stone
+place 11 7 -7 redstone_wire
+set 11 6 -6 stone
+place 11 7 -6 redstone_wire
+set 11 6 -5 stone
+place 11 7 -5 redstone_wire
+set 11 6 -4 stone
+place 11 7 -4 repeater out=north
+set 11 6 -3 stone
+place 11 7 -3 redstone_wire
+set 11 6 -2 stone
+place 11 7 -2 redstone_wire
+set 11 6 -1 stone
+place 11 7 -1 redstone_wire
+set 11 6 0 stone
+place 11 7 0 redstone_wire
+set 11 6 1 stone
+place 11 7 1 redstone_wire
+set 11 6 2 stone
+place 11 7 2 redstone_wire
+set 11 6 3 stone
+place 11 7 3 redstone_wire
+set 11 6 4 stone
+place 11 7 4 redstone_wire
+set 10 5 -6 stone
+place 10 6 -6 redstone_wire
+set 9 4 -6 stone
+place 9 5 -6 redstone_wire
+place 9 4 -5 redstone_wire
+set 11 5 -9 stone
+place 11 6 -9 redstone_wire
+set 10 5 -9 stone
+place 10 6 -9 redstone_wire
+set 10 4 -8 stone
+place 10 5 -8 redstone_wire
+place 10 4 -7 redstone_wire
+set 11 4 -5 stone
+label S3 10 4 -4
+label R4 13 3 0
+settle
+target new sum "S_j = H_j xor C_j, C4 (nH derived)"
+target sum truth @nG-1 @nX-1 @nG0 @nX0 @nG1 @nX1 @nG2 @nX2 @nG3 @nX3 -> @S0 @S1 @S2 @S3 @R4 rows 1011111111:11110 1011111101:11101 1011111110:11100 1011110111:11001 1011110101:11011 1011110110:11010 1011111011:11010 1011111001:11001 1011111010:11000 1011011111:10001 1011011101:10011 1011011110:10010 1011010111:10101 1011010101:10111 1011010110:10110 1011011011:10110 1011011001:10101 1011011010:10100 1011101111:10110 1011101101:10101 1011101110:10100 1011100111:10001 1011100101:10011 1011100110:10010 1011101011:10010 1011101001:10001 1011101010:10000 1001111111:00001 1001111101:00011 1001111110:00010 1001110111:00101 1001110101:00111 1001110110:00110 1001111011:00110 1001111001:00101 1001111010:00100 1001011111:01001 1001011101:01011 1001011110:01010 1001010111:01101 1001010101:01111 1001010110:01110 1001011011:01110 1001011001:01101 1001011010:01100 1001101111:01110 1001101101:01101 1001101110:01100 1001100111:01001 1001100101:01011 1001100110:01010 1001101011:01010 1001101001:01001 1001101010:01000 1010111111:01110 1010111101:01101 1010111110:01100 1010110111:01001 1010110101:01011 1010110110:01010 1010111011:01010 1010111001:01001 1010111010:01000 1010011111:00001 1010011101:00011 1010011110:00010 1010010111:00101 1010010101:00111 1010010110:00110 1010011011:00110 1010011001:00101 1010011010:00100 1010101111:00110 1010101101:00101 1010101110:00100 1010100111:00001 1010100101:00011 1010100110:00010 1010101011:00010 1010101001:00001 1010101010:00000 0111111111:00001 0111111101:00011 0111111110:00010 0111110111:00101 0111110101:00111 0111110110:00110 0111111011:00110 0111111001:00101 0111111010:00100 0111011111:01001 0111011101:01011 0111011110:01010 0111010111:01101 0111010101:01111 0111010110:01110 0111011011:01110 0111011001:01101 0111011010:01100 0111101111:01110 0111101101:01101 0111101110:01100 0111100111:01001 0111100101:01011 0111100110:01010 0111101011:01010 0111101001:01001 0111101010:01000 0101111111:10001 0101111101:10011 0101111110:10010 0101110111:10101 0101110101:10111 0101110110:10110 0101111011:10110 0101111001:10101 0101111010:10100 0101011111:11001 0101011101:11011 0101011110:11010 0101010111:11101 0101010101:11111 0101010110:11110 0101011011:11110 0101011001:11101 0101011010:11100 0101101111:11110 0101101101:11101 0101101110:11100 0101100111:11001 0101100101:11011 0101100110:11010 0101101011:11010 0101101001:11001 0101101010:11000 0110111111:11110 0110111101:11101 0110111110:11100 0110110111:11001 0110110101:11011 0110110110:11010 0110111011:11010 0110111001:11001 0110111010:11000 0110011111:10001 0110011101:10011 0110011110:10010 0110010111:10101 0110010101:10111 0110010110:10110 0110011011:10110 0110011001:10101 0110011010:10100 0110101111:10110 0110101101:10101 0110101110:10100 0110100111:10001 0110100101:10011 0110100110:10010 0110101011:10010 0110101001:10001 0110101010:10000 settle 16
+check
