@@ -80,8 +80,11 @@ def variants_of(canon: dict[str, Any], floor_y: int) -> list[tuple[str, Pos, str
         if y <= floor_y or state.endswith(":air"):
             continue
         pos = (x, y, z)
-        out.append(("remove", pos, None))
         name = interactions.block_id(state)
+        # A head is part of its piston: removing it alone leaves a headless extended
+        # piston (inert when the piston never retracts), not a smaller door.
+        if name != "piston_head":
+            out.append(("remove", pos, None))
         if interactions.role(state) == "structure":
             st = blocks.parse_state(state)
             if st.block.id != GLASS and _conducts(st):

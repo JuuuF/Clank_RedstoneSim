@@ -84,6 +84,11 @@ class PistonEvent:
     #: queued the event): the block giving the signal (``via``), whether it was reached
     #: through the block above the piston (quasi-connectivity) and what powers ``via``.
     power: dict[str, Any] | None = None
+    #: For an extension that moved nothing: why, read just before the event ran.
+    #: "unpowered" (its power was gone: the event does nothing), "moving block at …",
+    #: "immovable … at …" (an extended piston, a block entity, obsidian), "more than 12
+    #: blocks", or "sticky branch" (a block stuck to the line cannot move).
+    failure: str | None = None
 
     @property
     def outcome(self) -> str:
@@ -113,7 +118,30 @@ class PistonEvent:
             "moved": [m.to_json() for m in self.moved if not m.source],
             "finished_early": [[list(p), s] for p, s in self.finished_early],
             **({"power": self.power} if self.power else {}),
+            **({"failure": self.failure} if self.failure and self.outcome == "failed" else {}),
         }
+
+
+def _why_not(level: Any, pos: Pos, state: Any, facing: Direction) -> str | None:
+    """Why an extension of the piston at ``pos`` would move nothing now, or None."""
+    from redsim.world.blocks import piston as pb
+
+    if not state.block.get_neighbor_signal(level, pos, facing):
+        return "unpowered"
+    if pb.PistonStructureResolver(level, pos, facing, True).resolve():
+        return None
+    for k in range(1, pb.MAX_PUSH_DEPTH + 2):
+        p = (pos[0] + facing.step[0] * k, pos[1] + facing.step[1] * k, pos[2] + facing.step[2] * k)
+        st = level.get_block_state(p)
+        if st.is_air:
+            break
+        if not pb.is_pushable(st, level, p, facing, False, facing):
+            if st.block.id == "minecraft:moving_piston":
+                return f"moving block at {' '.join(map(str, p))}"
+            return f"immovable {short(state_text(st))} at {' '.join(map(str, p))}"
+    else:
+        return "more than 12 blocks"
+    return "sticky branch"
 
 
 @dataclass
@@ -199,6 +227,15 @@ def record(document: Document, end_tick: int | None = None, causes: bool = False
                 pending = next(iter(level.block_events))
             before = _moving(level) if pending else None
             old_state = level.get_block_state(pending[0]) if pending else None
+            why = None
+            if (
+                pending is not None
+                and pending[2] == 0
+                and old_state is not None
+                and old_state.block.id == pending[1]
+                and "piston" in pending[1]
+            ):
+                why = _why_not(level, pending[0], old_state, Direction.from_data3d(pending[3]))
             history.seek(history.position + 1)
             fresh = _new_records(trace, last_id)
             if fresh:
@@ -233,6 +270,7 @@ def record(document: Document, end_tick: int | None = None, causes: bool = False
             )
             if event.kind == "extend" and pos in power:
                 event.power = power[pos]
+            event.failure = why
             order += 1
             for key, be in after.items():
                 if key in before:

@@ -24,6 +24,7 @@ read-only and experiments work on copies.
 | [[symmetry]] | Counterfactual: every door turned, mirrored and moved; directional and locational designs |
 | [[mechanism]] | Mechanism and controller: a door's contract (pulses per piston + same-tick order), tested by driving the stripped mechanism with editor pulses |
 | [[robustness]] | Counterfactuals per block (remove, glass, repeater delay), the combined trim, input timing (every gap between the two pulls) and the two-cycle test |
+| [[metrics]] | The optimization goals measured per door (size, components, speed, robustness), kept separate; which doors another door of the same size dominates |
 | [[demonstration]] | The whole pipeline on the project's own 3x3 flush door (`door_3x3`), compared with Mumbo Jumbo's |
 
 ## Tools
@@ -35,7 +36,7 @@ read-only and experiments work on copies.
 | `corpus` | — | finds the worlds, parses their names (size, title, creator), opens them read-only |
 | `canonical` | 1 | the exact world as sorted plain data (blocks, block entities, pending engine state, timeline, annotations); `to_save` / `rebuild` round-trip losslessly |
 | `interactions` | 2 (static) | roles, simulator facts per block (conductor, push reaction), pistons with what they would move and who can power them (quasi-connectivity included), the doorway |
-| `replay` | 2 (dynamic) | the timeline step by step: piston block events with what each moved, where each extension's power came from, causal links between block changes, doorway frames, marker checks |
+| `replay` | 2 (dynamic) | the timeline step by step: piston block events with what each moved (or why an extension failed: unpowered, an immovable or moving block, more than 12 blocks), where each extension's power came from, causal links between block changes, doorway frames, marker checks |
 | `analysis` | 3 | door-block trajectories (tokens), exit groups, piston roles, pulses, power access, phases |
 | `report` | — | `python -m tools.doorlab.report SLUG`: the facts part of an analysis page |
 | `compare` | 3 | two builds up to rotation/mirror at three levels, and their behavior |
@@ -44,7 +45,8 @@ read-only and experiments work on copies.
 | `inventory` | — | `python -m tools.doorlab.inventory`: writes `experiments/doors/inventory.json` and [[inventory]] |
 | `mechanism` | 3 | the mechanism / controller split, the contract, the stripped door ([[mechanism]]) |
 | `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` ([[robustness]]) |
-| `inputs` | 3 | every gap between the two input flips; `--repeat`: the designed cycle twice ([[robustness]]) |
+| `inputs` | 3 | every gap between the two input flips; `--recover`: one more designed cycle after each gap that did not end clean; `--repeat`: the designed cycle twice ([[robustness]]) |
+| `metrics` | 3 | `python -m tools.doorlab.metrics`: the objectives per door and the dominance per doorway size; writes `experiments/doors/metrics.json` and [[metrics]] |
 
 `experiments/doors/door_3x3/` (`annotate.py`, `lab.py`) runs every tool on the project's
 own door; its results and derived worlds are committed there. Results for the dataset's
@@ -73,8 +75,14 @@ Open items (D-numbers are cited from the pages):
 - ~~D2~~ The same-tick double-extender race: [[../records/R-027-double-extender-order]],
   game EXP-072 (match). Closed; the vault lamp door's own jam needs a player's lever pull,
   which the server tool cannot give (simulator only).
-- **D3** Why LegDen's 7x7 and 8x8 stop (the game does the same, EXP-068): find the
-  first piston event that differs from the creator's intended sequence.
+- ~~D3~~ LegDen's 7x7 and 8x8 stop part-way (the game does the same, EXP-068). The owner
+  takes them out of the pool to check the worlds themselves (2026-10-18): do not
+  investigate further. What was found, for that check: the stop is deterministic (the
+  same at 57 and 64 positions and in all 8 orientations); 69 and 40 extensions move
+  nothing (working doors: 0–12), 36 and 25 of them because a 0-tick pulse ends before the
+  piston's event runs, 24 and 6 because the push line holds a block that is still
+  moving. The 7x7's first is at tick 75: the column pusher −4 2 −1 fires after two
+  12-block pushes in the same tick moved blocks out of its column.
 - **D4** Mechanism split refinements ([[mechanism]]): slime-carried redstone blocks
   belong to the mechanism; stacked pistons need side power (an editor pulse also
   quasi-powers the piston below); then a same-tick order in the contract.

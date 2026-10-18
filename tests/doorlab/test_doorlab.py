@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from redsim.cli.session import Session
 from tools.doorlab import (
     ablation,
     canonical,
@@ -26,6 +27,7 @@ from tools.doorlab import (
     inputs,
     interactions,
     mechanism,
+    metrics,
     replay,
     symmetry,
     transform,
@@ -147,6 +149,30 @@ def test_transform_inverts() -> None:
     assert len(moved["blocks"]) == len(canon["blocks"])
 
 
+def test_failure_reason(tmp_path: Path) -> None:
+    """R-027 (b): the front piston of a double extender goes first; the rear one's push
+    fails on it, and the replay says why."""
+    session = Session(tmp_path / "extender.redsim.json", dry_run=True)
+    session.run(
+        [
+            ["new", "size", "16", "force"],
+            ["place", "2", "1", "0", "sticky_piston", "facing=east"],
+            ["place", "3", "1", "0", "sticky_piston", "facing=east"],
+            ["set", "4", "1", "0", "stone"],
+            ["settle"],
+            ["at", "2", "set", "3", "1", "-1", "redstone_block"],
+            ["at", "2", "set", "2", "1", "-1", "redstone_block"],
+            ["run", "10"],
+        ]
+    )
+    rec = replay.record(session.doc)
+    rear = [e for e in rec.events if e.piston == (2, 1, 0)]
+    assert [e.outcome for e in rear] == ["failed"]
+    assert rear[0].failure == "immovable sticky_piston[facing=east,extended=true] at 3 1 0"
+    front = [e for e in rec.events if e.piston == (3, 1, 0)]
+    assert [e.outcome for e in front] == ["pushed"] and front[0].failure is None
+
+
 def _door_world(tmp_path: Path) -> Path:
     """The 2x2 door as a door-lab world: sections, two lever pulls, markers."""
     session = _door_session(tmp_path)
@@ -187,14 +213,39 @@ def test_ablation_and_trim_2x2(tmp_path: Path) -> None:
     by_change = result["summary"]
     assert by_change["remove piston"] == {"breaks": 4}
     assert by_change["remove lever"] == {"breaks": 1}
-    assert by_change["remove piston_head"] == {"inert": 4}
+    # A head is part of its piston: never removed alone (that leaves a headless piston).
+    assert "remove piston_head" not in by_change
     trim = ablation.trim(path, result["results"])
     assert trim["kept_after_all"] == []
-    assert trim["blocks_after"] < trim["blocks_before"]
+    assert trim["blocks_after"] <= trim["blocks_before"]
     # The trimmed build replays inert: every remaining block as in the original.
     base = replay.record(canonical.rebuild(canonical.from_file(path)))
     rec = replay.record(canonical.rebuild(trim["trimmed"]))
     assert rec.changes == base.changes
+
+
+def test_metrics_dominated() -> None:
+    keys = (*metrics.OBJECTIVES, *metrics.HIGHER)
+
+    def door(world: str, size: str, *values: int | None) -> dict[str, object]:
+        return {"world": world, "door": size, **dict(zip(keys, values, strict=True))}
+
+    rows = [
+        door("a", "3x3", 100, 50, 10, 20, 10, 8),
+        door("b", "3x3", 120, 60, 10, 20, 12, 8),  # a is as good everywhere, better in some
+        door("c", "3x3", 90, 70, 10, 20, 10, 8),  # smaller box, more blocks: a trade-off
+        door("d", "4x4", 200, 90, 12, 20, 9, 8),  # another doorway size: not compared
+        door("e", "3x3", 100, 50, 10, 20, None, 8),  # a missing value: not compared
+        door("f", "3x3", 90, 40, 9, 19, 9, 6),  # better in all five, but fewer orientations
+    ]
+    assert metrics.dominated(rows) == {
+        "a": None,
+        "b": "a",
+        "c": None,
+        "d": None,
+        "e": None,
+        "f": None,
+    }
 
 
 def test_symmetry_2x2(tmp_path: Path) -> None:

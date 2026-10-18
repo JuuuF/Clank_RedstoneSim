@@ -23,7 +23,7 @@ links and maps (`redsim-cli … show`), and says what is verified.
 | [[5x5-vault-door-nile]] | facts | slime; opens and closes in 9 ticks |
 | [[5x5-vault-lamp-door-purplers]] | facts | opens in 2 ticks; **breaks in 2 of 8 orientations** ([[../symmetry]]) |
 | [[1-wide-hidden-staircase-purplers]] | facts | not a door: a staircase; "Opened" = stairs out |
-| [[7x7-piston-door-legden]], [[8x8-piston-door-legden]] | facts | do not open fully in the replay, which matches the 26.3 server (EXP-068): the build itself stops (backlog D3) |
+| [[7x7-piston-door-legden]], [[8x8-piston-door-legden]] | facts | do not open fully in the replay, which matches the 26.3 server (EXP-068): the build itself stops, the same at every position and orientation tried. 69 / 40 extensions move nothing: lost 0-tick pulses (36 / 25) and pushes into moving blocks (24 / 6) (backlog D3) |
 
 ## Zhus's and monchiCARP's 3x3: one design, two builds
 

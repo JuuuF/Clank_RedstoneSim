@@ -83,3 +83,10 @@ that their controller has many same-tick, hash-ordered races.
 
 Server check of locationality: see EXP-070 in doc/experiments/index.md (the seamless door
 run at two origins on the 26.3 server and in the simulator).
+
+**Translations across the corpus** (2026-10-18, every door but LegDen's moved by (1, 0),
+(0, 1), (7, −3) and (0, −16), `.sandbox/doors/shifts.json`): 16 of the 17 doors run
+identically in all four copies. Only the seamless door differs, in the (7, −3) copy,
+and that copy still closes and opens on time. Position dependence is rare in this corpus.
+The hash-ordered sets matter only where several same-tick events have an order that
+changes the result.

@@ -84,8 +84,15 @@ def main() -> None:
     out["repeat"] = inputs.repeat(WORLD)
     print("repeat", out["repeat"]["doorway_same"], out["repeat"]["rest_same"])
 
-    sym = symmetry.check(WORLD, [(1, 0), (0, 1), (-1, 0), (0, -1)])
-    out["symmetry"] = {k: v for k, v in sym.items() if k != "world"}
+    # ``check`` with shifts runs only the shifted copies: the orientations separately.
+    turned = symmetry.check(WORLD)
+    moved = symmetry.check(WORLD, [(1, 0), (0, 1), (-1, 0), (0, -1)])
+    sym = {
+        "orientations": turned["orientations"] + moved["orientations"],
+        "all_identical": turned["all_identical"] and moved["all_identical"],
+        "seconds": turned["seconds"] + moved["seconds"],
+    }
+    out["symmetry"] = sym
     print("symmetry all identical:", sym["all_identical"])
 
     abl = ablation.run(WORLD)

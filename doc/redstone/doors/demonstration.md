@@ -29,8 +29,8 @@ trimmed build (2026-10-18).
 | Input timing | `inputs` | clean for **every** gap 1–70 between the pulls (the lockout); no dataset door is clean below 9 ([[robustness]]) |
 | Two cycles | `inputs --repeat` | the second cycle identical, the same rest state |
 | Symmetry | `symmetry` | identical in all 8 orientations and 4 one-block shifts: no direction or location dependence |
-| Ablation | `ablation` | 429 variants: 230 break, 17 timing, 79 internal, 103 inert. All 10 pistons, the lever, the torch, both observers needed |
-| Trim | `ablation --trim` | 225 → 201 blocks above the floor, box 1768 → 1632; the trimmed build replays inert |
+| Ablation | `ablation` | 420 variants (piston heads are not removed alone): 229 break, 17 timing, 79 internal, 95 inert. All 10 pistons, the lever, the torch, both observers needed |
+| Trim | `ablation --trim` | 225 → 209 blocks above the floor, box 1768 → 1632; the trimmed build replays inert |
 | Comparison | `compare` | with Mumbo Jumbo's 3x3: piston layout 0.83 (abstract, pistons only), whole build 0.03; no trajectory equal (opposite lever sense, other timing) |
 
 ### The contract
@@ -65,7 +65,7 @@ the controller:
 
 | | Mumbo Jumbo | `door_3x3` |
 |---|---|---|
-| Blocks above the floor (trimmed) | 87 (77) | 225 (201), with test buttons and the lockout |
+| Blocks above the floor (trimmed) | 87 (78) | 225 (209), with test buttons and the lockout |
 | Box above the floor | 189 | 1768 |
 | Close | 10 ticks | 17 ticks |
 | Open | 24 ticks | 32 ticks (28 without the lockout) |

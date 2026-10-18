@@ -71,6 +71,10 @@ by engine step**, and around each block event the moving-block entities are comp
   retracted, spat = a retract that ended an extension early and left the block,
   skipped = the piston had changed before its event ran), the blocks it set moving (from,
   to, state) and the ones it ended early;
+- `failure` of an extension that moved nothing, read just before its event ran:
+  `unpowered` (its power ended before the event: a 0-tick pulse lost), `moving block at
+  …` (R-026), `immovable … at …` (an extended piston, R-027; a block entity),
+  `more than 12 blocks`, `sticky branch`;
 - `power` of each extension: the trace note the piston leaves when it queues it (the
   block giving the signal, `via`; whether through the block above the piston =
   quasi-connectivity; what powers a solid `via`);

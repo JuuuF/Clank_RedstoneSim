@@ -11,6 +11,9 @@ instrument, a wire's connections) that the first neighbor update corrects.
 The result per door: the smallest gap from which every longer gap is clean (the minimum
 time between the two flips a user must leave), and the shorter gaps that fail or work.
 
+``recover`` runs the designed cycle once more after each gap that did not end clean:
+does using the door normally undo the jam?
+
 ``repeat`` runs the designed cycle again from the rest state the first one left and
 compares the doorway frame by frame: a door that does not come back to its own start
 (a block left behind) shows it here.
@@ -96,6 +99,61 @@ def run(path: Any, max_gap: int = 40) -> dict[str, Any]:
     }
 
 
+def recover(path: Any, result: dict[str, Any]) -> dict[str, Any]:
+    """After each gap that did not end clean, run the designed cycle once more.
+
+    A gap **recovers** when that cycle ends in a normal rest state: the one after one
+    designed cycle or after two (a door can alternate between two, Nile's seamless
+    door). It **works again** when that cycle's doorway is right after its first flip
+    and at its end although some other block stays off. Adds ``recovers`` and
+    ``works_again`` to the gap's entry and ``recover_line`` to ``result``: ``#`` clean,
+    ``r`` recovers, ``w`` works again, ``x`` the doorway is still wrong.
+    """
+    canon = canonical.from_file(path)
+    actions = canon["timeline"]["actions"]
+    start = actions[0]["tick"]
+    designed = actions[1]["tick"] - start
+    outputs = [tuple(p) for p in canon["annotations"]["sections"]["output"]["positions"]]
+    cells = interactions.doorway(outputs).cells
+
+    def cycles(gap: int, extra: int) -> replay.Recording:
+        variant = copy.deepcopy(canon)
+        flips = variant["timeline"]["actions"]
+        flips[1]["tick"] = start + gap
+        tick = start + gap + SETTLE
+        for _ in range(extra):
+            for a, t in ((actions[0], tick), (actions[1], tick + designed)):
+                flips.append({**copy.deepcopy(a), "tick": t})
+            tick += designed + SETTLE
+        variant["timeline"]["end_tick"] = tick
+        return replay.record(canonical.rebuild(variant))
+
+    normal = [_final(cycles(designed, 0)), _final(cycles(designed, 1))]
+    designed_frames = replay.frames(cycles(designed, 0), cells)
+    closed_frame = designed_frames[start + designed - 1]
+    for r in result["results"]:
+        if r["result"] == "clean":
+            continue
+        rec = cycles(r["gap"], 1)
+        frames = replay.frames(rec, cells)
+        again = start + r["gap"] + SETTLE
+        r["recovers"] = _final(rec) in normal
+        r["works_again"] = (
+            frames[again + designed - 1] == closed_frame and frames[-1] == designed_frames[-1]
+        )
+    result["recover_line"] = "".join(
+        "#"
+        if r["result"] == "clean"
+        else "r"
+        if r["recovers"]
+        else "w"
+        if r["works_again"]
+        else "x"
+        for r in result["results"]
+    )
+    return result
+
+
 def repeat(path: Any) -> dict[str, Any]:
     """Run the designed cycle twice; compare the second cycle's doorway with the first."""
     canon = canonical.from_file(path)
@@ -140,10 +198,25 @@ def main() -> None:
     parser.add_argument("worlds", nargs="+")
     parser.add_argument("--max", type=int, default=40)
     parser.add_argument("--json")
+    parser.add_argument("--out", help="folder: one JSON file per world, written as it is done")
     parser.add_argument("--repeat", action="store_true", help="only the two-cycle test")
+    parser.add_argument(
+        "--recover",
+        action="store_true",
+        help="with --out: add the recovery test to the saved sweeps (one more cycle)",
+    )
     args = parser.parse_args()
     out = []
     for name in args.worlds:
+        if args.recover:
+            path = corpus.find(name)
+            saved = f"{args.out}/{corpus.parse_name(path).slug}.json"
+            with open(saved) as handle:
+                r = recover(path, json.load(handle))
+            with open(saved, "w") as handle:
+                json.dump(r, handle, indent=1)
+            print(f"{r['world']}: {r['recover_line']}")
+            continue
         if args.repeat:
             r = repeat(corpus.find(name))
             out.append(r)
@@ -156,6 +229,9 @@ def main() -> None:
             continue
         r = run(corpus.find(name), args.max)
         out.append(r)
+        if args.out:
+            with open(f"{args.out}/{r['world']}.json", "w") as handle:
+                json.dump(r, handle, indent=1)
         if "skipped" in r:
             print(f"{r['world']}: skipped ({r['skipped']})")
             continue

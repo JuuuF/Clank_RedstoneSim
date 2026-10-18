@@ -1,0 +1,602 @@
+[
+ {
+  "world": "7x7-piston-door-legden",
+  "creator": "LegDen",
+  "door": "7x7",
+  "intent": "functional",
+  "size": [
+   23,
+   13,
+   13
+  ],
+  "volume": 3887,
+  "blocks": 2368,
+  "blocks_needed": null,
+  "components": {
+   "piston": 447,
+   "wire": 234,
+   "repeater": 77,
+   "comparator": 30,
+   "observer": 407,
+   "torch": 2
+  },
+  "logic": 938,
+  "close_ticks": 18,
+  "open_ticks": null,
+  "first_closed": 18,
+  "first_open": null,
+  "safe_gap": null,
+  "designed_gap": null,
+  "orientations_ok": 1
+ },
+ {
+  "world": "8x8-piston-door-legden",
+  "creator": "LegDen",
+  "door": "8x8",
+  "intent": "functional",
+  "size": [
+   23,
+   16,
+   9
+  ],
+  "volume": 3312,
+  "blocks": 1963,
+  "blocks_needed": null,
+  "components": {
+   "piston": 379,
+   "wire": 179,
+   "repeater": 65,
+   "comparator": 19,
+   "observer": 316,
+   "torch": 1
+  },
+  "logic": 735,
+  "close_ticks": 21,
+  "open_ticks": null,
+  "first_closed": 21,
+  "first_open": null,
+  "safe_gap": null,
+  "designed_gap": null,
+  "orientations_ok": 1
+ },
+ {
+  "world": "1-wide-hidden-staircase-purplers",
+  "creator": "Purplers",
+  "door": "4x4",
+  "intent": "showpiece",
+  "size": [
+   6,
+   4,
+   7
+  ],
+  "volume": 168,
+  "blocks": 107,
+  "blocks_needed": 71,
+  "components": {
+   "piston": 13,
+   "wire": 12,
+   "repeater": 9,
+   "comparator": 0,
+   "observer": 0,
+   "torch": 3
+  },
+  "logic": 24,
+  "close_ticks": 25,
+  "open_ticks": null,
+  "first_closed": 25,
+  "first_open": null,
+  "safe_gap": 10,
+  "designed_gap": 27,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-flush-enchanting-table-door-purplers",
+  "creator": "Purplers",
+  "door": "3x3",
+  "intent": "showpiece",
+  "size": [
+   6,
+   10,
+   6
+  ],
+  "volume": 360,
+  "blocks": 220,
+  "blocks_needed": 172,
+  "components": {
+   "piston": 27,
+   "wire": 18,
+   "repeater": 11,
+   "comparator": 1,
+   "observer": 27,
+   "torch": 6
+  },
+  "logic": 72,
+  "close_ticks": 36,
+  "open_ticks": 56,
+  "first_closed": 36,
+  "first_open": 56,
+  "safe_gap": 55,
+  "designed_gap": 62,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-seamless-glass-door-nile",
+  "creator": "Nile",
+  "door": "3x3",
+  "intent": "showpiece",
+  "size": [
+   8,
+   16,
+   4
+  ],
+  "volume": 512,
+  "blocks": 252,
+  "blocks_needed": 225,
+  "components": {
+   "piston": 35,
+   "wire": 49,
+   "repeater": 6,
+   "comparator": 0,
+   "observer": 27,
+   "torch": 0
+  },
+  "logic": 96,
+  "close_ticks": 33,
+  "open_ticks": 39,
+  "first_closed": 27,
+  "first_open": 39,
+  "safe_gap": 16,
+  "designed_gap": 45,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-spiral-vault-door-lutal",
+  "creator": "Lutal",
+  "door": "3x3",
+  "intent": "showpiece",
+  "size": [
+   11,
+   8,
+   10
+  ],
+  "volume": 880,
+  "blocks": 205,
+  "blocks_needed": 145,
+  "components": {
+   "piston": 19,
+   "wire": 34,
+   "repeater": 9,
+   "comparator": 0,
+   "observer": 8,
+   "torch": 0
+  },
+  "logic": 56,
+  "close_ticks": 14,
+  "open_ticks": 14,
+  "first_closed": 14,
+  "first_open": 14,
+  "safe_gap": 17,
+  "designed_gap": 21,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-piston-door-mumbo-jumbo",
+  "creator": "Mumbo Jumbo",
+  "door": "3x3",
+  "intent": "functional",
+  "size": [
+   3,
+   9,
+   7
+  ],
+  "volume": 189,
+  "blocks": 87,
+  "blocks_needed": 78,
+  "components": {
+   "piston": 12,
+   "wire": 17,
+   "repeater": 3,
+   "comparator": 1,
+   "observer": 0,
+   "torch": 3
+  },
+  "logic": 25,
+  "close_ticks": 10,
+  "open_ticks": 24,
+  "first_closed": 10,
+  "first_open": 24,
+  "safe_gap": 10,
+  "designed_gap": 12,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-piston-door-rubik",
+  "creator": "Rubik",
+  "door": "3x3",
+  "intent": "functional",
+  "size": [
+   9,
+   10,
+   2
+  ],
+  "volume": 180,
+  "blocks": 61,
+  "blocks_needed": 56,
+  "components": {
+   "piston": 10,
+   "wire": 12,
+   "repeater": 2,
+   "comparator": 0,
+   "observer": 7,
+   "torch": 0
+  },
+  "logic": 23,
+  "close_ticks": 14,
+  "open_ticks": 26,
+  "first_closed": 14,
+  "first_open": 26,
+  "safe_gap": 20,
+  "designed_gap": 25,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-piston-door-sacredredstone",
+  "creator": "SacredRedstone",
+  "door": "3x3",
+  "intent": "functional",
+  "size": [
+   2,
+   8,
+   7
+  ],
+  "volume": 112,
+  "blocks": 48,
+  "blocks_needed": 48,
+  "components": {
+   "piston": 10,
+   "wire": 1,
+   "repeater": 4,
+   "comparator": 1,
+   "observer": 11,
+   "torch": 0
+  },
+  "logic": 19,
+  "close_ticks": 38,
+  "open_ticks": 42,
+  "first_closed": 19,
+  "first_open": 42,
+  "safe_gap": 21,
+  "designed_gap": 41,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-piston-door-zhus",
+  "creator": "Zhus",
+  "door": "3x3",
+  "intent": "functional",
+  "size": [
+   2,
+   9,
+   7
+  ],
+  "volume": 126,
+  "blocks": 51,
+  "blocks_needed": 50,
+  "components": {
+   "piston": 11,
+   "wire": 6,
+   "repeater": 2,
+   "comparator": 0,
+   "observer": 10,
+   "torch": 0
+  },
+  "logic": 18,
+  "close_ticks": 14,
+  "open_ticks": 14,
+  "first_closed": 14,
+  "first_open": 14,
+  "safe_gap": 11,
+  "designed_gap": 17,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-piston-door-monchicarp",
+  "creator": "monchiCARP",
+  "door": "3x3",
+  "intent": "functional",
+  "size": [
+   7,
+   9,
+   2
+  ],
+  "volume": 126,
+  "blocks": 53,
+  "blocks_needed": 50,
+  "components": {
+   "piston": 11,
+   "wire": 5,
+   "repeater": 2,
+   "comparator": 0,
+   "observer": 10,
+   "torch": 0
+  },
+  "logic": 17,
+  "close_ticks": 14,
+  "open_ticks": 14,
+  "first_closed": 14,
+  "first_open": 14,
+  "safe_gap": 11,
+  "designed_gap": 17,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-spiral-piston-door-purplers",
+  "creator": "Purplers",
+  "door": "3x3",
+  "intent": "showpiece",
+  "size": [
+   3,
+   8,
+   7
+  ],
+  "volume": 168,
+  "blocks": 81,
+  "blocks_needed": 70,
+  "components": {
+   "piston": 12,
+   "wire": 8,
+   "repeater": 3,
+   "comparator": 0,
+   "observer": 20,
+   "torch": 0
+  },
+  "logic": 34,
+  "close_ticks": 19,
+  "open_ticks": 21,
+  "first_closed": 19,
+  "first_open": 21,
+  "safe_gap": 12,
+  "designed_gap": 22,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x4-piston-door-pal1",
+  "creator": "pal1_",
+  "door": "3x4",
+  "intent": "functional",
+  "size": [
+   10,
+   14,
+   2
+  ],
+  "volume": 280,
+  "blocks": 92,
+  "blocks_needed": 89,
+  "components": {
+   "piston": 15,
+   "wire": 10,
+   "repeater": 5,
+   "comparator": 0,
+   "observer": 22,
+   "torch": 0
+  },
+  "logic": 39,
+  "close_ticks": 28,
+  "open_ticks": 44,
+  "first_closed": 28,
+  "first_open": 44,
+  "safe_gap": 20,
+  "designed_gap": 37,
+  "orientations_ok": 8
+ },
+ {
+  "world": "4x4-piston-door-kwipla",
+  "creator": "Kwipla",
+  "door": "4x4",
+  "intent": "functional",
+  "size": [
+   10,
+   9,
+   12
+  ],
+  "volume": 1080,
+  "blocks": 158,
+  "blocks_needed": 140,
+  "components": {
+   "piston": 28,
+   "wire": 26,
+   "repeater": 5,
+   "comparator": 0,
+   "observer": 25,
+   "torch": 0
+  },
+  "logic": 57,
+  "close_ticks": 27,
+  "open_ticks": 39,
+  "first_closed": 27,
+  "first_open": 39,
+  "safe_gap": 25,
+  "designed_gap": 36,
+  "orientations_ok": 8
+ },
+ {
+  "world": "4x4-piston-door-sydney600mc",
+  "creator": "Sydney600mc",
+  "door": "4x4",
+  "intent": "functional",
+  "size": [
+   3,
+   9,
+   10
+  ],
+  "volume": 270,
+  "blocks": 125,
+  "blocks_needed": 113,
+  "components": {
+   "piston": 24,
+   "wire": 8,
+   "repeater": 8,
+   "comparator": 2,
+   "observer": 20,
+   "torch": 0
+  },
+  "logic": 38,
+  "close_ticks": 16,
+  "open_ticks": 26,
+  "first_closed": 16,
+  "first_open": 26,
+  "safe_gap": 19,
+  "designed_gap": 30,
+  "orientations_ok": 8
+ },
+ {
+  "world": "5x5-glass-piston-door-ashevoy",
+  "creator": "ashevoy",
+  "door": "5x5",
+  "intent": "showpiece",
+  "size": [
+   15,
+   23,
+   25
+  ],
+  "volume": 8625,
+  "blocks": 1954,
+  "blocks_needed": null,
+  "components": {
+   "piston": 171,
+   "wire": 461,
+   "repeater": 145,
+   "comparator": 2,
+   "observer": 96,
+   "torch": 5
+  },
+  "logic": 760,
+  "close_ticks": 36,
+  "open_ticks": 37,
+  "first_closed": 36,
+  "first_open": 37,
+  "safe_gap": 38,
+  "designed_gap": 42,
+  "orientations_ok": 8
+ },
+ {
+  "world": "5x5-vault-door-nile",
+  "creator": "Nile",
+  "door": "5x5",
+  "intent": "showpiece",
+  "size": [
+   15,
+   14,
+   5
+  ],
+  "volume": 1050,
+  "blocks": 425,
+  "blocks_needed": 386,
+  "components": {
+   "piston": 69,
+   "wire": 59,
+   "repeater": 9,
+   "comparator": 4,
+   "observer": 40,
+   "torch": 0
+  },
+  "logic": 154,
+  "close_ticks": 9,
+  "open_ticks": 9,
+  "first_closed": 9,
+  "first_open": 9,
+  "safe_gap": 13,
+  "designed_gap": 17,
+  "orientations_ok": 8
+ },
+ {
+  "world": "5x5-vault-lamp-door-purplers",
+  "creator": "Purplers",
+  "door": "5x5",
+  "intent": "showpiece",
+  "size": [
+   5,
+   12,
+   11
+  ],
+  "volume": 660,
+  "blocks": 373,
+  "blocks_needed": 322,
+  "components": {
+   "piston": 46,
+   "wire": 74,
+   "repeater": 19,
+   "comparator": 3,
+   "observer": 0,
+   "torch": 13
+  },
+  "logic": 114,
+  "close_ticks": 7,
+  "open_ticks": 2,
+  "first_closed": 7,
+  "first_open": 2,
+  "safe_gap": 10,
+  "designed_gap": 13,
+  "orientations_ok": 6
+ },
+ {
+  "world": "4x4-sliding-piston-door-purplers",
+  "creator": "Purplers",
+  "door": "4x4",
+  "intent": "functional",
+  "size": [
+   20,
+   11,
+   4
+  ],
+  "volume": 880,
+  "blocks": 401,
+  "blocks_needed": 381,
+  "components": {
+   "piston": 66,
+   "wire": 80,
+   "repeater": 2,
+   "comparator": 4,
+   "observer": 0,
+   "torch": 0
+  },
+  "logic": 112,
+  "close_ticks": 9,
+  "open_ticks": 4,
+  "first_closed": 9,
+  "first_open": 4,
+  "safe_gap": 9,
+  "designed_gap": 12,
+  "orientations_ok": 8
+ },
+ {
+  "world": "3x3-flush-door-redsim",
+  "creator": "redsim",
+  "door": "3x3",
+  "intent": "functional",
+  "size": [
+   17,
+   8,
+   13
+  ],
+  "volume": 1768,
+  "blocks": 225,
+  "blocks_needed": 209,
+  "components": {
+   "piston": 10,
+   "wire": 55,
+   "repeater": 32,
+   "comparator": 3,
+   "observer": 2,
+   "torch": 1
+  },
+  "logic": 93,
+  "close_ticks": 17,
+  "open_ticks": 32,
+  "first_closed": 17,
+  "first_open": 32,
+  "safe_gap": 1,
+  "designed_gap": 55,
+  "orientations_ok": 8
+ }
+]
