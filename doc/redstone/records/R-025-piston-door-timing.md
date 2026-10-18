@@ -1,7 +1,7 @@
 # R-025: piston timing rules behind the 3x3 door
 
 - **Date:** 2026-10-18 · **Simulator:** c9a3f56 · **Game:** Java 26.3
-- **Script:** `experiments/redstone/R-025-piston-door-timing.cli.txt` · **Status:** verified (simulator)
+- **Script:** `experiments/redstone/R-025-piston-door-timing.cli.txt` · **Status:** verified (simulator and game: EXP-059)
 - **Question** (from building the 3x3 flush door, backlog Q18): three piston behaviors the
   door's middle column depends on, isolated:
   - (a) Two sticky pistons stacked, both facing up; a repeater powers the upper one from
@@ -54,4 +54,8 @@
     that powers a piston's destination is therefore a self-timing trigger: the piston fires
     exactly when it arrives (the library's double piston extender uses this; the 3x3 door
     uses it twice).
+- **In the game:** EXP-059 (`tools/gameserver` scenario `piston_door_timing`, the three setups
+  with redstone blocks placed behind the repeaters as inputs): every watched block matched
+  the simulator for 40 ticks: AL never moves, P retracts at 7 after its head landed at 6, Q
+  lands at 6 and extends at 7. Confidence: high (V; G EXP-059).
 - **Used by:** [[circuits]] 3x3 flush door, [[components]] pistons.

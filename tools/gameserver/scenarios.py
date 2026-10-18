@@ -2027,6 +2027,52 @@ INSTANT_PISTON_WIRE = Scenario(
     },
 )
 
+#: R-025 (doc/redstone/records/R-025-piston-door-timing.md): (a) a repeater into the upper of
+#: two stacked sticky pistons: the lower one is quasi-powered too but its push fails on the
+#: extended upper piston; (b) a sticky piston powered directly and through the block beside its
+#: head cell, both off while the head moves: it retracts only when the head lands; (c) a sticky
+#: piston set down by another one next to a powered block extends a tick after landing.
+PISTON_DOOR_TIMING = Scenario(
+    name="piston_door_timing",
+    description=(
+        "R-025: (a) a repeater into the upper of two stacked sticky pistons leaves the lower one "
+        "still; (b) a quasi-connected hold through a moving head misses its off update until the "
+        "head lands; (c) a piston set down next to a powered block extends one tick after landing."
+    ),
+    size=(10, 8),
+    setup=(
+        # (a) AL 1 1 0, AU 1 2 0 facing up, stone on top, repeater 1 2 1 into AU (input 1 2 2)
+        [((1, 1, 0), "minecraft:sticky_piston[facing=up]"),
+         ((1, 2, 0), "minecraft:sticky_piston[facing=up]"),
+         ((1, 3, 0), "minecraft:stone"), ((1, 1, 1), "minecraft:stone"),
+         ((1, 2, 1), "minecraft:repeater[facing=south]")]
+        # (b) P 6 1 0 facing up, stone 6 3 0; repeater 6 1 1 into P (input 6 1 2); stone 7 2 0
+        # beside the head cell, powered by the repeater 8 2 0 (input 9 2 0)
+        + [((6, 1, 0), "minecraft:sticky_piston[facing=up]"), ((6, 3, 0), "minecraft:stone"),
+           ((6, 1, 1), "minecraft:repeater[facing=south]"), ((7, 2, 0), "minecraft:stone"),
+           ((8, 1, 0), "minecraft:stone"), ((8, 2, 0), "minecraft:repeater[facing=east]")]
+        # (c) lifter 1 1 4 under Q 1 2 4 (facing up), stone 1 5 4; repeater 1 1 5 into the
+        # lifter (input 1 1 6); stone 2 3 4 beside Q's raised cell, powered by the repeater
+        # 3 3 4 (input 4 3 4)
+        + [((1, 1, 4), "minecraft:sticky_piston[facing=up]"),
+           ((1, 2, 4), "minecraft:sticky_piston[facing=up]"),
+           ((1, 5, 4), "minecraft:stone"), ((1, 1, 5), "minecraft:repeater[facing=south]"),
+           ((2, 3, 4), "minecraft:stone"), ((3, 2, 4), "minecraft:stone"),
+           ((3, 3, 4), "minecraft:repeater[facing=east]")]
+    ),
+    watch=[(1, 1, 0), (1, 2, 0), (1, 3, 0), (1, 4, 0),
+           (6, 1, 0), (6, 2, 0), (6, 3, 0),
+           (1, 1, 4), (1, 2, 4), (1, 3, 4), (1, 4, 4), (1, 5, 4)],
+    ticks=40,
+    inputs={
+        2: [((1, 2, 2), RB), ((6, 1, 2), RB), ((9, 2, 0), RB), ((4, 3, 4), RB), ((1, 1, 6), RB)],
+        3: [((6, 1, 2), AIR), ((9, 2, 0), AIR)],
+        8: [((1, 2, 2), AIR)],
+        22: [((4, 3, 4), AIR)],
+        32: [((1, 1, 6), AIR)],
+    },
+)  # fmt: skip
+
 ALL = [
     PISTON_ZERO_TICK,
     CAMPFIRES,
@@ -2085,6 +2131,7 @@ ALL = [
     PRESSURE_PLATES,
     PISTON_SCHEDULED_PULSES,
     INSTANT_PISTON_WIRE,
+    PISTON_DOOR_TIMING,
 ]
 
 BY_NAME = {scenario.name: scenario for scenario in ALL}

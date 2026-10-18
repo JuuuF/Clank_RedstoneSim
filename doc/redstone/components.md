@@ -124,14 +124,14 @@ Evidence labels: [[redstone/README#Scope and trust]].
   re-extending takes 3 ticks a stage. V [[R-023-instant-piston-wire]], G EXP-058
 - **Landing check:** a piston moved into place by another piston checks its power when it
   lands and, if powered (also by quasi-connectivity), extends one tick later. A powered
-  block beside the destination makes a self-timed trigger. V [[R-025-piston-door-timing]]
+  block beside the destination makes a self-timed trigger. V [[R-025-piston-door-timing]], G EXP-059
 - **Lost update:** held only by quasi-connectivity through a block beside its head cell, a
   piston gets no update when that block turns off while the head is still moving (the
   moving head does not pass updates on): it retracts when the head lands, one tick late.
-  V R-025
+  V R-025, G EXP-059
 - **Stacked pistons:** a repeater or observer pointing into the upper of two stacked
   pistons updates it first; the lower one is quasi-powered too, but its push then fails on
-  the extended upper piston. V R-025
+  the extended upper piston. V R-025, G EXP-059
 
 ## Dropper, dispenser
 
