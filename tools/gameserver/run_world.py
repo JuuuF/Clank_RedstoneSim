@@ -17,6 +17,7 @@ edits are not supported.
 Usage (from the repository root)::
 
     python -m tools.gameserver.run_world WORLD.redsim.json [--ticks N] [--name NAME]
+        [--origin X,Y,Z]
 
 Results go to ``.sandbox/worlds/NAME.json`` (third-party worlds stay out of the
 repository); the summary names the first mismatching ticks and positions.
@@ -138,14 +139,22 @@ def main(argv: list[str]) -> int:
     parser.add_argument("world", type=Path)
     parser.add_argument("--ticks", type=int)
     parser.add_argument("--name")
+    parser.add_argument(
+        "--origin",
+        default="0,0,0",
+        help="X,Y,Z where the build's corner goes on both sides (default 0,0,0): to compare "
+        "locational behavior, run the same world at two origins",
+    )
     args = parser.parse_args(argv)
+    origin = tuple(int(v) for v in args.origin.split(","))
     name = args.name or re.sub(r"[^a-z0-9]+", "_", args.world.stem.lower()).strip("_")
     scenario = build_scenario(args.world, name, args.ticks)
     print(f"{name}: {len(scenario.setup)} blocks, {len(scenario.watch)} watched, "
           f"{scenario.ticks} ticks")  # fmt: skip
     with GameServer(fresh_world=True) as server:
-        server.command("forceload add -16 -16 64 64")
-        result = compare(server, scenario, (0, 0, 0), results_dir=OUT_DIR)
+        ox, _, oz = origin
+        server.command(f"forceload add {ox - 16} {oz - 16} {ox + 64} {oz + 64}")
+        result = compare(server, scenario, origin, results_dir=OUT_DIR)
     verdict = "MATCH" if result["match"] else "MISMATCH"
     print(f"{name}: {verdict}; results in {OUT_DIR / (name + '.json')}")
     if not result["match"]:

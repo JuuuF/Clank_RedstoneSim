@@ -1,0 +1,489 @@
+[
+ {
+  "world": "1-wide-hidden-staircase-purplers",
+  "door": "4x4",
+  "volume": 168,
+  "fire": 13,
+  "times": [
+   "closed 25",
+   "\u2014"
+  ],
+  "extensions": 14,
+  "spits": 0,
+  "qc": 1,
+  "landings": 2,
+  "switches": 0,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "recess": 5,
+   "stays in the doorway": 3
+  }
+ },
+ {
+  "world": "3x3-flush-enchanting-table-door-purplers",
+  "door": "3x3",
+  "volume": 360,
+  "fire": 33,
+  "times": [
+   "closed 36",
+   "open 56"
+  ],
+  "extensions": 107,
+  "spits": 46,
+  "qc": 54,
+  "landings": 42,
+  "switches": 3,
+  "observers_moved": 8,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 6,
+  "groups": {
+   "below": 6,
+   "recess": 3
+  }
+ },
+ {
+  "world": "3x3-seamless-glass-door-nile",
+  "door": "3x3",
+  "volume": 512,
+  "fire": 53,
+  "times": [
+   "open 39",
+   "closed 27"
+  ],
+  "extensions": 118,
+  "spits": 56,
+  "qc": 41,
+  "landings": 65,
+  "switches": 0,
+  "observers_moved": 14,
+  "rb_moved": 24,
+  "slime_moved": 0,
+  "depth": 8,
+  "moves": 8,
+  "groups": {
+   "below": 12,
+   "above": 6
+  }
+ },
+ {
+  "world": "3x3-spiral-vault-door-lutal",
+  "door": "3x3",
+  "volume": 880,
+  "fire": 20,
+  "times": [
+   "closed 14",
+   "open 14"
+  ],
+  "extensions": 40,
+  "spits": 17,
+  "qc": 4,
+  "landings": 4,
+  "switches": 0,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "above": 6,
+   "below": 6,
+   "north": 3,
+   "south": 2
+  }
+ },
+ {
+  "world": "3x3-piston-door-mumbo-jumbo",
+  "door": "3x3",
+  "volume": 189,
+  "fire": 13,
+  "times": [
+   "closed 10",
+   "open 24"
+  ],
+  "extensions": 18,
+  "spits": 1,
+  "qc": 2,
+  "landings": 2,
+  "switches": 1,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 2,
+  "moves": 4,
+  "groups": {
+   "south": 3,
+   "north": 3,
+   "below": 2,
+   "above": 1
+  }
+ },
+ {
+  "world": "3x3-piston-door-rubik",
+  "door": "3x3",
+  "volume": 180,
+  "fire": 11,
+  "times": [
+   "closed 14",
+   "open 26"
+  ],
+  "extensions": 22,
+  "spits": 9,
+  "qc": 5,
+  "landings": 3,
+  "switches": 0,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "west": 3,
+   "below": 2,
+   "above": 2,
+   "east": 2
+  }
+ },
+ {
+  "world": "3x3-piston-door-sacredredstone",
+  "door": "3x3",
+  "volume": 112,
+  "fire": 11,
+  "times": [
+   "closed 19",
+   "open 42"
+  ],
+  "extensions": 41,
+  "spits": 17,
+  "qc": 10,
+  "landings": 5,
+  "switches": 0,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 8,
+  "groups": {
+   "south": 3,
+   "above": 2,
+   "north": 2,
+   "below": 2
+  }
+ },
+ {
+  "world": "3x3-piston-door-zhus",
+  "door": "3x3",
+  "volume": 126,
+  "fire": 12,
+  "times": [
+   "closed 14",
+   "open 14"
+  ],
+  "extensions": 23,
+  "spits": 10,
+  "qc": 6,
+  "landings": 3,
+  "switches": 0,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "below": 3,
+   "north": 3,
+   "south": 2,
+   "above": 1
+  }
+ },
+ {
+  "world": "3x3-piston-door-monchicarp",
+  "door": "3x3",
+  "volume": 126,
+  "fire": 12,
+  "times": [
+   "closed 14",
+   "open 14"
+  ],
+  "extensions": 22,
+  "spits": 10,
+  "qc": 6,
+  "landings": 2,
+  "switches": 0,
+  "observers_moved": 0,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "below": 3,
+   "west": 3,
+   "east": 2,
+   "above": 1
+  }
+ },
+ {
+  "world": "3x3-spiral-piston-door-purplers",
+  "door": "3x3",
+  "volume": 168,
+  "fire": 13,
+  "times": [
+   "closed 19",
+   "open 21"
+  ],
+  "extensions": 28,
+  "spits": 11,
+  "qc": 6,
+  "landings": 2,
+  "switches": 0,
+  "observers_moved": 2,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 2,
+  "moves": 4,
+  "groups": {
+   "above": 3,
+   "below": 2,
+   "south": 2,
+   "north": 2
+  }
+ },
+ {
+  "world": "3x4-piston-door-pal1",
+  "door": "3x4",
+  "volume": 280,
+  "fire": 17,
+  "times": [
+   "closed 28",
+   "open 44"
+  ],
+  "extensions": 36,
+  "spits": 13,
+  "qc": 10,
+  "landings": 7,
+  "switches": 0,
+  "observers_moved": 2,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "east": 4,
+   "west": 4,
+   "below": 2,
+   "above": 2
+  }
+ },
+ {
+  "world": "4x4-piston-door-kwipla",
+  "door": "4x4",
+  "volume": 1080,
+  "fire": 32,
+  "times": [
+   "closed 27",
+   "open 39"
+  ],
+  "extensions": 70,
+  "spits": 29,
+  "qc": 15,
+  "landings": 12,
+  "switches": 0,
+  "observers_moved": 4,
+  "rb_moved": 2,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "below": 4,
+   "south": 4,
+   "north": 4,
+   "above": 4
+  }
+ },
+ {
+  "world": "4x4-piston-door-sydney600mc",
+  "door": "4x4",
+  "volume": 270,
+  "fire": 28,
+  "times": [
+   "closed 16",
+   "open 26"
+  ],
+  "extensions": 52,
+  "spits": 16,
+  "qc": 12,
+  "landings": 12,
+  "switches": 0,
+  "observers_moved": 4,
+  "rb_moved": 0,
+  "slime_moved": 0,
+  "depth": 3,
+  "moves": 4,
+  "groups": {
+   "north": 4,
+   "south": 4,
+   "above": 4,
+   "below": 4
+  }
+ },
+ {
+  "world": "5x5-glass-piston-door-ashevoy",
+  "door": "5x5",
+  "volume": 8625,
+  "fire": 190,
+  "times": [
+   "closed 36",
+   "open 37"
+  ],
+  "extensions": 319,
+  "spits": 95,
+  "qc": 91,
+  "landings": 133,
+  "switches": 8,
+  "observers_moved": 56,
+  "rb_moved": 12,
+  "slime_moved": 0,
+  "depth": 17,
+  "moves": 18,
+  "groups": {
+   "below": 15,
+   "above": 6,
+   "north": 5,
+   "south": 5
+  }
+ },
+ {
+  "world": "5x5-vault-door-nile",
+  "door": "5x5",
+  "volume": 1050,
+  "fire": 71,
+  "times": [
+   "closed 9",
+   "open 9"
+  ],
+  "extensions": 129,
+  "spits": 58,
+  "qc": 50,
+  "landings": 8,
+  "switches": 3,
+  "observers_moved": 0,
+  "rb_moved": 28,
+  "slime_moved": 30,
+  "depth": 4,
+  "moves": 6,
+  "groups": {
+   "above": 7,
+   "west": 6,
+   "east": 6,
+   "below": 6
+  }
+ },
+ {
+  "world": "5x5-vault-lamp-door-purplers",
+  "door": "5x5",
+  "volume": 660,
+  "fire": 57,
+  "times": [
+   "closed 7",
+   "open 2"
+  ],
+  "extensions": 70,
+  "spits": 3,
+  "qc": 17,
+  "landings": 24,
+  "switches": 2,
+  "observers_moved": 0,
+  "rb_moved": 8,
+  "slime_moved": 0,
+  "depth": 4,
+  "moves": 6,
+  "groups": {
+   "south": 7,
+   "north": 7,
+   "above": 7,
+   "below": 4
+  }
+ },
+ {
+  "world": "7x7-piston-door-legden",
+  "door": "7x7",
+  "volume": 3887,
+  "fire": 415,
+  "times": [
+   "closed 18",
+   "\u2014"
+  ],
+  "extensions": 1223,
+  "spits": 776,
+  "qc": 480,
+  "landings": 171,
+  "switches": 14,
+  "observers_moved": 310,
+  "rb_moved": 246,
+  "slime_moved": 71,
+  "depth": 7,
+  "moves": 8,
+  "groups": {
+   "stays in the doorway": 30,
+   "above": 8,
+   "below": 7,
+   "east": 5
+  }
+ },
+ {
+  "world": "8x8-piston-door-legden",
+  "door": "8x8",
+  "volume": 3312,
+  "fire": 351,
+  "times": [
+   "closed 21",
+   "\u2014"
+  ],
+  "extensions": 885,
+  "spits": 577,
+  "qc": 375,
+  "landings": 97,
+  "switches": 8,
+  "observers_moved": 212,
+  "rb_moved": 150,
+  "slime_moved": 180,
+  "depth": 9,
+  "moves": 12,
+  "groups": {
+   "stays in the doorway": 31,
+   "east": 18,
+   "west": 11,
+   "below": 8,
+   "above": 8
+  }
+ },
+ {
+  "world": "4x4-sliding-piston-door-purplers",
+  "door": "4x4",
+  "volume": 880,
+  "fire": 66,
+  "times": [
+   "closed 9",
+   "open 4"
+  ],
+  "extensions": 78,
+  "spits": 6,
+  "qc": 28,
+  "landings": 4,
+  "switches": 8,
+  "observers_moved": 0,
+  "rb_moved": 40,
+  "slime_moved": 68,
+  "depth": 2,
+  "moves": 4,
+  "groups": {
+   "east": 8,
+   "west": 8
+  }
+ }
+]

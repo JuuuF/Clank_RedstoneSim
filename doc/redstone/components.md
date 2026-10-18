@@ -125,6 +125,10 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - **Landing check:** a piston moved into place by another piston checks its power when it
   lands and, if powered (also by quasi-connectivity), extends one tick later. A powered
   block beside the destination makes a self-timed trigger. V [[R-025-piston-door-timing]], G EXP-059
+- **Blocked by a moving block:** a powered piston whose push line holds a block that is
+  still moving queues nothing (its push check fails); the block's landing updates it and it
+  extends one tick after the landing, if still powered. A pulse that ends before the
+  landing is lost (an extender then pushes one block less). V [[R-026-moving-block-blocks-piston]]
 - **Lost update:** held only by quasi-connectivity through a block beside its head cell, a
   piston gets no update when that block turns off while the head is still moving (the
   moving head does not pass updates on): it retracts when the head lands, one tick late.

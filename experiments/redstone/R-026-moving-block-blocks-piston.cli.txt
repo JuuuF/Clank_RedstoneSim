@@ -1,0 +1,40 @@
+new size 24 force
+note "R-026: a piston cannot push a block that is still moving (guide claim G3, doc/redstone/doors/guide-5x5.md). (a) B pushes a resting stone; (b) A pushes X into B's front cell, B is powered while X still moves; (c) as (b) with a pulse that ends before X lands"
+# (a) control: B pushes the resting stone X
+place 2 1 0 sticky_piston facing=east
+set 3 1 0 stone
+label Ba 2 1 0
+label Xa 3 1 0
+# (b) A (facing south) pushes X into B's front cell; B powered from the tick A starts
+place 3 1 5 sticky_piston facing=south
+set 3 1 6 stone
+place 2 1 7 sticky_piston facing=east
+label Ab 3 1 5
+label Bb 2 1 7
+label Xb 3 1 7
+# (c) the same, B's power ends before X lands
+place 3 1 12 sticky_piston facing=south
+set 3 1 13 stone
+place 2 1 14 sticky_piston facing=east
+label Ac 3 1 12
+label Bc 2 1 14
+label Xc 3 1 14
+settle
+target new resting "(a) powered from 2 (editor pulse: the piston starts at 3), the stone moves at 3 and is solid one cell east at 5"
+target resting do pulse @Ba at 2 for 6
+target resting expect @Ba extended=true at 3
+target resting expect @Xa+1,0,0 block=stone at 5
+target new moving "(b) X moves 3..4 and lands at 5; B, powered from 3, queues nothing while X moves (its push check fails) and extends at 6, one tick after X lands (the landing updates it)"
+target moving do pulse @Ab at 2 for 10
+target moving do pulse @Bb at 3 for 6
+target moving expect @Xb block=moving_piston during 3..4
+target moving expect @Xb block=stone at 5
+target moving expect @Bb extended=false during 0..5
+target moving expect @Bb extended=true at 6
+target moving expect @Xb+1,0,0 block=stone at 8
+target new missed "(c) B's power (3..4) ends before X lands at 5: B never extends; X stays until A pulls it back (13)"
+target missed do pulse @Ac at 2 for 10
+target missed do pulse @Bc at 3 for 1
+target missed expect @Bc extended=false during 0..20
+target missed expect @Xc block=stone during 5..12
+check

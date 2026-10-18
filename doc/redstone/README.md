@@ -21,6 +21,7 @@ Start with the one-page [[cheatsheet]], then [[timing]] (how long everything tak
 | [[circuits]] | The circuit library: validated primitives with their contracts (inputs, outputs, latency, reset, failure cases) |
 | [[workflow]] | From a natural-language requirement to a verified contraption (worked example) |
 | [[backlog]] | Open questions, hypotheses, the research roadmap |
+| [[doors/README]] | Piston doors: the dataset of human designs (`data/redstone_learning`), their inventory, analyses, patterns and the 5x5 guide; the door lab tools (`tools/doorlab`) |
 | `records/R-NNN-*.md` | One record per experiment: question, hypothesis, setup, observations, conclusion ([[#Experiment records]]) |
 
 Scripts: every record has a script in `experiments/redstone/R-NNN-*.cli.txt`, every circuit
@@ -161,6 +162,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-023-instant-piston-wire]] | Sticky-piston chains that collapse in one tick: instant transmission of one edge | [[timing]], [[components]] Piston | verified |
 | [[R-024-analog-carry-lines]] | Two analog wire lines with glass diodes give every carry of 4 bits at once | [[timing]], [[circuits]] | verified |
 | [[R-025-piston-door-timing]] | A repeater into the upper of two stacked pistons masks the lower one's quasi-connectivity; a quasi-connected hold through a moving head misses its off update until the head lands; a piston set down next to power extends one tick after landing | [[components]], [[circuits]] | verified (game: EXP-059) |
+| [[R-026-moving-block-blocks-piston]] | A powered piston facing a moving block queues nothing and extends 1 tick after the block lands; a pulse that ends first is lost (the 5x5 guide's PF.1) | [[components]], [[doors/guide-5x5]] | verified |
 
 ## Status
 
