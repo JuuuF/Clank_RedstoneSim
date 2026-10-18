@@ -147,4 +147,24 @@ do not open fully, see [[inventory]]).
 4. **Short pulses are made mechanically**: observers (2 ticks), moved conductors (power
    switches), moved observers. Spits are the most common move after plain pushes. **V**
 5. **Same-tick triggers are fragile.** Designs that fire stages of one extender in the
-   same tick depend on the build's orientation ([[symmetry]]). **V**
+   same tick depend on the build's orientation ([[symmetry]]). **V**, the vault lamp
+   door's jam in the game too (EXP-074)
+6. **Timing is exact, slack is structural.** In the compact doors at most 4 of 6–24
+   other repeater delays still work, and every piston matters. The slack is in blocks
+   that carry no signal: 52–91% of the conductors could each be glass, and the trim
+   removes 0–11 blocks from the 3x3 piston doors and up to 60 from the showpieces,
+   never two that conflict ([[robustness]]). **V** (ablation; trims game-verified,
+   EXP-071, EXP-074)
+7. **No dataset door guards its input.** Every one needs a minimum gap between the two
+   flips (9–38 ticks) and jams below it. Waiting until the first sequence's last
+   block has landed before the second sequence's first push (the no-overlap gap) is
+   always enough; most doors tolerate less, and the tolerance has to be measured. A
+   lockout makes any gap safe (`door_3x3`). **V** (input sweep, 17 doors)
+8. **How a door jams.** At the shortest bad gap, the second input either loses
+   extensions (their power is gone when the event runs), pushes into a piston that is
+   still extended, or only changes the order of events. A jam that lasts is door
+   blocks left behind: the cut-short sequence never moves them back, and later cycles
+   run around them ([[robustness]]). **V**
+9. **A button door's controller has its own state.** A too-early second press can put
+   it out of step with the door; one more press brings both back (Kwipla's 4x4). A
+   lever door's state follows the lever. **V** (one door)
