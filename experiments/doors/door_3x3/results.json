@@ -1,0 +1,6137 @@
+{
+ "world": "3x3 flush door by redsim.redsim.json",
+ "round_trip": {
+  "canonical_equal": true,
+  "replay_equal": true
+ },
+ "analysis": {
+  "roles": {
+   "door": 10,
+   "stack": 1
+  },
+  "power_access": {
+   "block\u2190wire": 5,
+   "wire": 3,
+   "block\u2190wire (QC)": 2,
+   "comparator": 1,
+   "observer (QC)": 1,
+   "observer": 1,
+   "block\u2190repeater": 1
+  },
+  "closed": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   77,
+   78,
+   79,
+   80,
+   81,
+   82,
+   83,
+   84,
+   85,
+   86,
+   87,
+   88,
+   89,
+   90,
+   91,
+   92,
+   93,
+   94,
+   95,
+   96,
+   97,
+   98,
+   99,
+   100
+  ],
+  "open": [
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63,
+   64,
+   65,
+   66,
+   67
+  ],
+  "groups": [
+   {
+    "exit": "west",
+    "blocks": 3,
+    "pistons": [
+     [
+      5,
+      4,
+      2
+     ],
+     [
+      5,
+      5,
+      2
+     ],
+     [
+      5,
+      6,
+      2
+     ]
+    ],
+    "closed_to_open": {
+     "west 1": 3
+    }
+   },
+   {
+    "exit": "east",
+    "blocks": 3,
+    "pistons": [
+     [
+      11,
+      4,
+      2
+     ],
+     [
+      11,
+      5,
+      2
+     ],
+     [
+      11,
+      6,
+      2
+     ]
+    ],
+    "closed_to_open": {
+     "east 1": 3
+    }
+   },
+   {
+    "exit": "below",
+    "blocks": 2,
+    "pistons": [
+     [
+      8,
+      2,
+      2
+     ],
+     [
+      8,
+      3,
+      2
+     ],
+     [
+      10,
+      3,
+      2
+     ]
+    ],
+    "closed_to_open": {
+     "down 1, east 1": 1,
+     "down 2": 1
+    }
+   },
+   {
+    "exit": "above",
+    "blocks": 1,
+    "pistons": [
+     [
+      8,
+      8,
+      2
+     ]
+    ],
+    "closed_to_open": {
+     "up 1": 1
+    }
+   }
+  ],
+  "markers_ok": true
+ },
+ "mechanism": {
+  "world": "3x3-flush-door-redsim",
+  "order_constraints": [],
+  "pulses": 23,
+  "mechanism_pistons": 11,
+  "blocks_before": 1825,
+  "blocks_after": 1729,
+  "same_frames": true,
+  "first_difference": null,
+  "contract": [
+   {
+    "pos": [
+     5,
+     6,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     8,
+     2,
+     2
+    ],
+    "start": 0,
+    "length": 17
+   },
+   {
+    "pos": [
+     10,
+     3,
+     2
+    ],
+    "start": 0,
+    "length": 21
+   },
+   {
+    "pos": [
+     8,
+     8,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     5,
+     5,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     5,
+     4,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     11,
+     6,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     11,
+     5,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     11,
+     4,
+     2
+    ],
+    "start": 0,
+    "length": 13
+   },
+   {
+    "pos": [
+     8,
+     1,
+     2
+    ],
+    "start": 23,
+    "length": 8
+   },
+   {
+    "pos": [
+     8,
+     3,
+     2
+    ],
+    "start": 26,
+    "length": 1
+   },
+   {
+    "pos": [
+     8,
+     2,
+     2
+    ],
+    "start": 34,
+    "length": 3
+   },
+   {
+    "pos": [
+     11,
+     6,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     11,
+     4,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     11,
+     5,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     5,
+     6,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     8,
+     8,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     5,
+     5,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     5,
+     4,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     8,
+     2,
+     2
+    ],
+    "start": 68,
+    "length": 2
+   },
+   {
+    "pos": [
+     8,
+     1,
+     2
+    ],
+    "start": 68,
+    "length": null
+   },
+   {
+    "pos": [
+     10,
+     3,
+     2
+    ],
+    "start": 72,
+    "length": null
+   },
+   {
+    "pos": [
+     8,
+     2,
+     2
+    ],
+    "start": 75,
+    "length": null
+   }
+  ]
+ },
+ "inputs": {
+  "world": "3x3-flush-door-redsim",
+  "designed_gap": 55,
+  "rest_differs_from_build": [],
+  "clean_from": 1,
+  "results": [
+   {
+    "gap": 1,
+    "result": "clean"
+   },
+   {
+    "gap": 2,
+    "result": "clean"
+   },
+   {
+    "gap": 3,
+    "result": "clean"
+   },
+   {
+    "gap": 4,
+    "result": "clean"
+   },
+   {
+    "gap": 5,
+    "result": "clean"
+   },
+   {
+    "gap": 6,
+    "result": "clean"
+   },
+   {
+    "gap": 7,
+    "result": "clean"
+   },
+   {
+    "gap": 8,
+    "result": "clean"
+   },
+   {
+    "gap": 9,
+    "result": "clean"
+   },
+   {
+    "gap": 10,
+    "result": "clean"
+   },
+   {
+    "gap": 11,
+    "result": "clean"
+   },
+   {
+    "gap": 12,
+    "result": "clean"
+   },
+   {
+    "gap": 13,
+    "result": "clean"
+   },
+   {
+    "gap": 14,
+    "result": "clean"
+   },
+   {
+    "gap": 15,
+    "result": "clean"
+   },
+   {
+    "gap": 16,
+    "result": "clean"
+   },
+   {
+    "gap": 17,
+    "result": "clean"
+   },
+   {
+    "gap": 18,
+    "result": "clean"
+   },
+   {
+    "gap": 19,
+    "result": "clean"
+   },
+   {
+    "gap": 20,
+    "result": "clean"
+   },
+   {
+    "gap": 21,
+    "result": "clean"
+   },
+   {
+    "gap": 22,
+    "result": "clean"
+   },
+   {
+    "gap": 23,
+    "result": "clean"
+   },
+   {
+    "gap": 24,
+    "result": "clean"
+   },
+   {
+    "gap": 25,
+    "result": "clean"
+   },
+   {
+    "gap": 26,
+    "result": "clean"
+   },
+   {
+    "gap": 27,
+    "result": "clean"
+   },
+   {
+    "gap": 28,
+    "result": "clean"
+   },
+   {
+    "gap": 29,
+    "result": "clean"
+   },
+   {
+    "gap": 30,
+    "result": "clean"
+   },
+   {
+    "gap": 31,
+    "result": "clean"
+   },
+   {
+    "gap": 32,
+    "result": "clean"
+   },
+   {
+    "gap": 33,
+    "result": "clean"
+   },
+   {
+    "gap": 34,
+    "result": "clean"
+   },
+   {
+    "gap": 35,
+    "result": "clean"
+   },
+   {
+    "gap": 36,
+    "result": "clean"
+   },
+   {
+    "gap": 37,
+    "result": "clean"
+   },
+   {
+    "gap": 38,
+    "result": "clean"
+   },
+   {
+    "gap": 39,
+    "result": "clean"
+   },
+   {
+    "gap": 40,
+    "result": "clean"
+   },
+   {
+    "gap": 41,
+    "result": "clean"
+   },
+   {
+    "gap": 42,
+    "result": "clean"
+   },
+   {
+    "gap": 43,
+    "result": "clean"
+   },
+   {
+    "gap": 44,
+    "result": "clean"
+   },
+   {
+    "gap": 45,
+    "result": "clean"
+   },
+   {
+    "gap": 46,
+    "result": "clean"
+   },
+   {
+    "gap": 47,
+    "result": "clean"
+   },
+   {
+    "gap": 48,
+    "result": "clean"
+   },
+   {
+    "gap": 49,
+    "result": "clean"
+   },
+   {
+    "gap": 50,
+    "result": "clean"
+   },
+   {
+    "gap": 51,
+    "result": "clean"
+   },
+   {
+    "gap": 52,
+    "result": "clean"
+   },
+   {
+    "gap": 53,
+    "result": "clean"
+   },
+   {
+    "gap": 54,
+    "result": "clean"
+   },
+   {
+    "gap": 55,
+    "result": "clean"
+   },
+   {
+    "gap": 56,
+    "result": "clean"
+   },
+   {
+    "gap": 57,
+    "result": "clean"
+   },
+   {
+    "gap": 58,
+    "result": "clean"
+   },
+   {
+    "gap": 59,
+    "result": "clean"
+   },
+   {
+    "gap": 60,
+    "result": "clean"
+   },
+   {
+    "gap": 61,
+    "result": "clean"
+   },
+   {
+    "gap": 62,
+    "result": "clean"
+   },
+   {
+    "gap": 63,
+    "result": "clean"
+   },
+   {
+    "gap": 64,
+    "result": "clean"
+   },
+   {
+    "gap": 65,
+    "result": "clean"
+   },
+   {
+    "gap": 66,
+    "result": "clean"
+   },
+   {
+    "gap": 67,
+    "result": "clean"
+   },
+   {
+    "gap": 68,
+    "result": "clean"
+   },
+   {
+    "gap": 69,
+    "result": "clean"
+   },
+   {
+    "gap": 70,
+    "result": "clean"
+   }
+  ],
+  "line": "######################################################################"
+ },
+ "repeat": {
+  "world": "3x3-flush-door-redsim",
+  "period": 175,
+  "doorway_same": true,
+  "first_difference": null,
+  "rest_same": true,
+  "rest_moved": []
+ },
+ "symmetry": {
+  "orientations": [
+   {
+    "orientation": "0\u00b0, shifted 1 0",
+    "identical": true,
+    "first_difference": null,
+    "ticks_differing": 0,
+    "cells_differing": 0,
+    "markers_ok": true
+   },
+   {
+    "orientation": "0\u00b0, shifted 0 1",
+    "identical": true,
+    "first_difference": null,
+    "ticks_differing": 0,
+    "cells_differing": 0,
+    "markers_ok": true
+   },
+   {
+    "orientation": "0\u00b0, shifted -1 0",
+    "identical": true,
+    "first_difference": null,
+    "ticks_differing": 0,
+    "cells_differing": 0,
+    "markers_ok": true
+   },
+   {
+    "orientation": "0\u00b0, shifted 0 -1",
+    "identical": true,
+    "first_difference": null,
+    "ticks_differing": 0,
+    "cells_differing": 0,
+    "markers_ok": true
+   }
+  ],
+  "all_identical": true,
+  "seconds": 3.0
+ },
+ "ablation": {
+  "world": "3x3-flush-door-redsim",
+  "variants": 429,
+  "results": [
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     0
+    ],
+    "block": "redstone_wire[north=none,east=side,south=up,west=none,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     1,
+     0
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     0
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=12]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     0
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     0
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     1
+    ],
+    "block": "observer[facing=south,powered=false]",
+    "role": "observer",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     1,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     2,
+     1,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     3,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     3,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     3,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     4,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     4,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     4,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     5,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     5,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     5,
+     1,
+     2
+    ],
+    "block": "repeater[facing=west,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     1,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     1,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     2
+    ],
+    "block": "comparator[facing=west,mode=subtract,powered=false]",
+    "role": "comparator",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     2
+    ],
+    "block": "sticky_piston[facing=up,extended=false]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     0,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     2,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     2,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     2,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     7,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     7,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     7,
+     1,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     16,
+     1,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     0,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     2,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     2,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     2,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     7,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     7,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     7,
+     1,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     16,
+     1,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     0,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     2,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     2,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     2,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     7,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     7,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     7,
+     1,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     16,
+     1,
+     5
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     0,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     2,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     2,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     2,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     7,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     7,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     7,
+     1,
+     6
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     16,
+     1,
+     6
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     0,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     1,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     1,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     2,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     3,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     4,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     13,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     13,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     14,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     14,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     15,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     15,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     16,
+     1,
+     7
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     3,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     1,
+     8
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     3,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     1,
+     9
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     4,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     1,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     1,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     1,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     1
+    ],
+    "block": "redstone_wire[north=side,east=none,south=up,west=none,power=15]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     0,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     2
+    ],
+    "block": "sticky_piston[facing=up,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     16,
+     2,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     0,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     0,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     0,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     5,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     5,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     5,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     3
+    ],
+    "block": "observer[facing=south,powered=false]",
+    "role": "observer",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=true,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     10,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=true,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     10,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=true,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     10,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=true,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     2,
+     3
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     11,
+     2,
+     3
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     11,
+     2,
+     3
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     11,
+     2,
+     3
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     2,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     2,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     16,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     16,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     16,
+     2,
+     3
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     2,
+     4
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=3]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     2,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     4
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     2,
+     4
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     2,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     12,
+     2,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     12,
+     2,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     12,
+     2,
+     4
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     2,
+     4
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=3]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     2,
+     5
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=4]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     5,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     5,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     5,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     5
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=12]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     10,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     10,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     10,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     12,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     12,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     12,
+     2,
+     5
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     2,
+     5
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=4]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     2,
+     6
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=5]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     5,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     5,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     5,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     6
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     10,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     10,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     10,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     12,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     12,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     12,
+     2,
+     6
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     2,
+     6
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=5]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=side,east=side,south=none,west=none,power=6]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     1,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=7]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=side,west=side,power=9]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=10]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=side,east=side,south=none,west=side,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=12]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=side,west=side,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=side,east=side,south=side,west=side,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=side,east=side,south=side,west=side,power=12]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=side,west=side,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=side,east=side,south=none,west=side,power=10]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     13,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=9]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     14,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     15,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=7]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     2,
+     7
+    ],
+    "block": "redstone_wire[north=side,east=none,south=none,west=side,power=6]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     3,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     3,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     3,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     2,
+     8
+    ],
+    "block": "redstone_wire[north=side,east=side,south=side,west=none,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     8
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=side,power=15]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     8
+    ],
+    "block": "redstone_wire[north=side,east=none,south=side,west=none,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     11,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     11,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     11,
+     2,
+     8
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     3,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     3,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     3,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     9
+    ],
+    "block": "redstone_wire[north=none,east=side,south=side,west=none,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     2,
+     9
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     2,
+     9
+    ],
+    "block": "comparator[facing=west,mode=subtract,powered=false]",
+    "role": "comparator",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     9
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     8,
+     2,
+     9
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "timing"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     8,
+     2,
+     9
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     8,
+     2,
+     9
+    ],
+    "block": "repeater[facing=south,delay=2,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     2,
+     9
+    ],
+    "block": "comparator[facing=east,mode=subtract,powered=false]",
+    "role": "comparator",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     9
+    ],
+    "block": "redstone_wire[north=side,east=none,south=none,west=side,power=10]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     11,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     11,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     11,
+     2,
+     9
+    ],
+    "block": "repeater[facing=north,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     2,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     3,
+     2,
+     10
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     2,
+     10
+    ],
+    "block": "repeater[facing=west,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 1",
+    "pos": [
+     4,
+     2,
+     10
+    ],
+    "block": "repeater[facing=west,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     4,
+     2,
+     10
+    ],
+    "block": "repeater[facing=west,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     4,
+     2,
+     10
+    ],
+    "block": "repeater[facing=west,delay=4,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     2,
+     10
+    ],
+    "block": "redstone_wire[north=side,east=none,south=none,west=side,power=15]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     10
+    ],
+    "block": "redstone_wall_torch[facing=north,lit=true]",
+    "role": "torch",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     2,
+     10
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     9,
+     2,
+     10
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     9,
+     2,
+     10
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     9,
+     2,
+     10
+    ],
+    "block": "repeater[facing=south,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     2,
+     10
+    ],
+    "block": "repeater[facing=north,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     11,
+     2,
+     10
+    ],
+    "block": "repeater[facing=north,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     11,
+     2,
+     10
+    ],
+    "block": "repeater[facing=north,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     11,
+     2,
+     10
+    ],
+    "block": "repeater[facing=north,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     2,
+     11
+    ],
+    "block": "oak_button[face=wall,facing=west,powered=false]",
+    "role": "button",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     2,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     2,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     2,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     2,
+     11
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 2",
+    "pos": [
+     10,
+     2,
+     11
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 3",
+    "pos": [
+     10,
+     2,
+     11
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "delay 4",
+    "pos": [
+     10,
+     2,
+     11
+    ],
+    "block": "repeater[facing=east,delay=1,locked=false,powered=true]",
+    "role": "repeater",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     2,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     2,
+     11
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     2,
+     12
+    ],
+    "block": "stone_button[face=wall,facing=south,powered=false]",
+    "role": "button",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     3,
+     1
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     0,
+     3,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=up,south=none,west=side,power=15]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     1,
+     3,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     1,
+     3,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     3,
+     2
+    ],
+    "block": "redstone_wire[north=side,east=side,south=none,west=none,power=15]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     3,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     3,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     3,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     3,
+     2
+    ],
+    "block": "piston_head[facing=up,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     3,
+     2
+    ],
+    "block": "piston_head[facing=west,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     3,
+     2
+    ],
+    "block": "sticky_piston[facing=west,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     15,
+     3,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     15,
+     3,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     16,
+     3,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=up,power=15]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     3,
+     3
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     3,
+     11
+    ],
+    "block": "lever[face=floor,facing=north,powered=false]",
+    "role": "lever",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     1,
+     4,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=up,south=none,west=side,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     2,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     4,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     4,
+     2
+    ],
+    "block": "sticky_piston[facing=east,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     4,
+     2
+    ],
+    "block": "piston_head[facing=east,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     4,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     4,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     4,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     4,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     4,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     4,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     4,
+     2
+    ],
+    "block": "piston_head[facing=west,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     4,
+     2
+    ],
+    "block": "sticky_piston[facing=west,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     12,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     14,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     14,
+     4,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     15,
+     4,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=up,power=14]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     2,
+     5,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=up,south=none,west=side,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     5,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     3,
+     5,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     5,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=up,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     5,
+     2
+    ],
+    "block": "sticky_piston[facing=east,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     5,
+     2
+    ],
+    "block": "piston_head[facing=east,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     5,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     5,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     5,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     5,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     5,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     5,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     5,
+     2
+    ],
+    "block": "piston_head[facing=west,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     5,
+     2
+    ],
+    "block": "sticky_piston[facing=west,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     5,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=up,south=none,west=side,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     13,
+     5,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     13,
+     5,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     14,
+     5,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=up,power=13]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     3,
+     6,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=up,south=none,west=side,power=12]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     6,
+     2
+    ],
+    "block": "glass",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     6,
+     2
+    ],
+    "block": "sticky_piston[facing=east,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     6,
+     2
+    ],
+    "block": "piston_head[facing=east,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     6,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     6,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     6,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     8,
+     6,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     6,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "timing"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     6,
+     2
+    ],
+    "block": "smooth_stone",
+    "role": "structure",
+    "door_cell": true,
+    "result": "internal"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     6,
+     2
+    ],
+    "block": "piston_head[facing=west,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     6,
+     2
+    ],
+    "block": "sticky_piston[facing=west,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     6,
+     2
+    ],
+    "block": "glass",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     13,
+     6,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=up,power=12]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     4,
+     7,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=up,south=none,west=side,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     7,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     5,
+     7,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     6,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     7,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     7,
+     2
+    ],
+    "block": "piston_head[facing=down,type=sticky,short=false]",
+    "role": "piston_head",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     9,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     9,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     10,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     10,
+     7,
+     2
+    ],
+    "block": "stone_bricks",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     7,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "internal"
+   },
+   {
+    "change": "glass",
+    "pos": [
+     11,
+     7,
+     2
+    ],
+    "block": "stone",
+    "role": "structure",
+    "door_cell": false,
+    "result": "inert"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     12,
+     7,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=up,power=11]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     5,
+     8,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=10]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     6,
+     8,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=9]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     7,
+     8,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=8]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     8,
+     8,
+     2
+    ],
+    "block": "sticky_piston[facing=down,extended=true]",
+    "role": "piston",
+    "door_cell": false,
+    "result": "breaks"
+   },
+   {
+    "change": "remove",
+    "pos": [
+     11,
+     8,
+     2
+    ],
+    "block": "redstone_wire[north=none,east=side,south=none,west=side,power=10]",
+    "role": "wire",
+    "door_cell": false,
+    "result": "internal"
+   }
+  ],
+  "summary": {
+   "delay repeater": {
+    "breaks": 60,
+    "timing": 8,
+    "internal": 28
+   },
+   "glass structure": {
+    "breaks": 12,
+    "internal": 17,
+    "inert": 79
+   },
+   "remove button": {
+    "inert": 2
+   },
+   "remove comparator": {
+    "breaks": 1,
+    "internal": 2
+   },
+   "remove lever": {
+    "breaks": 1
+   },
+   "remove observer": {
+    "breaks": 2
+   },
+   "remove piston": {
+    "breaks": 10
+   },
+   "remove piston_head": {
+    "breaks": 1,
+    "inert": 8
+   },
+   "remove repeater": {
+    "breaks": 26,
+    "timing": 1,
+    "internal": 5
+   },
+   "remove structure": {
+    "breaks": 67,
+    "internal": 21,
+    "inert": 14,
+    "timing": 8
+   },
+   "remove torch": {
+    "breaks": 1
+   },
+   "remove wire": {
+    "breaks": 49,
+    "internal": 6
+   }
+  },
+  "totals": {
+   "breaks": 230,
+   "internal": 79,
+   "inert": 103,
+   "timing": 17
+  },
+  "seconds": 230.1
+ },
+ "trim": {
+  "blocks_before": 225,
+  "blocks_after": 201,
+  "volume_before": 1768,
+  "volume_after": 1632,
+  "removed": [
+   [
+    12,
+    1,
+    3
+   ],
+   [
+    5,
+    1,
+    4
+   ],
+   [
+    7,
+    2,
+    11
+   ],
+   [
+    8,
+    2,
+    12
+   ],
+   [
+    6,
+    3,
+    1
+   ],
+   [
+    7,
+    3,
+    1
+   ],
+   [
+    8,
+    3,
+    1
+   ],
+   [
+    9,
+    3,
+    1
+   ],
+   [
+    10,
+    3,
+    1
+   ],
+   [
+    9,
+    3,
+    2
+   ],
+   [
+    6,
+    3,
+    3
+   ],
+   [
+    7,
+    3,
+    3
+   ],
+   [
+    8,
+    3,
+    3
+   ],
+   [
+    9,
+    3,
+    3
+   ],
+   [
+    10,
+    3,
+    3
+   ],
+   [
+    6,
+    4,
+    2
+   ],
+   [
+    10,
+    4,
+    2
+   ],
+   [
+    6,
+    5,
+    2
+   ],
+   [
+    10,
+    5,
+    2
+   ],
+   [
+    6,
+    6,
+    2
+   ],
+   [
+    10,
+    6,
+    2
+   ],
+   [
+    8,
+    7,
+    2
+   ],
+   [
+    9,
+    7,
+    2
+   ],
+   [
+    10,
+    7,
+    2
+   ]
+  ],
+  "kept_after_all": []
+ },
+ "compare_mumbo": {
+  "exact": 0.0,
+  "structure": 0.0067,
+  "abstract": 0.0307,
+  "mechanism": 0.8333,
+  "behavior": {
+   "identical": 0,
+   "of": [
+    9,
+    9
+   ],
+   "transform": "as is",
+   "same_frames": false
+  },
+  "open_ticks": {
+   "ours": [
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67
+   ],
+   "mumbo": [
+    0,
+    1,
+    37,
+    38,
+    39,
+    40
+   ]
+  }
+ },
+ "seconds": 291.5
+}

@@ -91,7 +91,15 @@ When two pistons of one mechanism are triggered **in the same tick**, the order 
 block events follows the order of neighbor updates, which depends on direction. Purplers'
 5x5 vault lamp door works in 6 of its 8 orientations and breaks in 2: its horizontal
 double extender's front piston queues before the rear one and the rear's push fails
-([[symmetry]]). **V** (dataset replay)
+([[symmetry]]). **V** (dataset replay; the rule alone: [[../records/R-027-double-extender-order]],
+**G** EXP-072)
+
+### Wire cutters: a piston gating a wire
+
+A piston pushes a block onto a wire step (above the lower wire), which cuts the step;
+pulling it back joins the line again. Mumbo Jumbo's helper piston gates one repeater's
+output to the center piston this way, three times per cycle
+([[analyses/3x3-piston-door-mumbo-jumbo]]). **V** (dataset replay and ablation)
 
 ## Census
 

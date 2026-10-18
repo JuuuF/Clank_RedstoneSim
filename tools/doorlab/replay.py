@@ -342,14 +342,22 @@ def check_markers(
     when the doorway is in that state there: every cell solid for "Closed", every cell
     empty for "Opened" (``door``), or, for contraptions whose rest state is not an empty
     hole (a staircase), the frame equals the build's frame and the build is that state
-    (the other marker shows a different frame). ``since``: the first tick of the run of
+    (the end states' frames must differ: a doorway that never moves proves nothing).
+    ``since``: the first tick of the run of
     identical frames that ends at the marker."""
     rows = frames(rec, cells)
     build = rows[0]
     ends = {t: n for t, n in markers.items() if n.lower() in END_STATES}
-    # Which end state is the build? The one whose marker frame equals the build frame.
-    build_state = next(
-        (n.lower() for t, n in sorted(ends.items()) if t <= rec.end_tick and rows[t] == build), None
+    # Which end state is the build? The one whose marker frame equals the build frame,
+    # provided the end states differ at all (a doorway that never changes is no proof).
+    distinct = len({rows[t] for t in ends if t <= rec.end_tick}) > 1
+    build_state = (
+        next(
+            (n.lower() for t, n in sorted(ends.items()) if t <= rec.end_tick and rows[t] == build),
+            None,
+        )
+        if distinct
+        else None
     )
     results = []
     for tick, name in sorted(markers.items()):

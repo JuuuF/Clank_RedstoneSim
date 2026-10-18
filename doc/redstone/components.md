@@ -129,6 +129,13 @@ Evidence labels: [[redstone/README#Scope and trust]].
   still moving queues nothing (its push check fails); the block's landing updates it and it
   extends one tick after the landing, if still powered. A pulse that ends before the
   landing is lost (an extender then pushes one block less). V [[R-026-moving-block-blocks-piston]]
+- **Same-tick order:** two pistons powered in the same tick run their block events in the
+  order they were updated. In a double extender, rear first: both move one cell and the
+  front piston's own event is dropped (a `moving_piston` is at its position); front first:
+  the front extends and the rear's push fails on it (an extended piston cannot be pushed),
+  the rear stays in while powered. One change that powers both (a wire line) orders them
+  by its update order, which depends on the build's orientation.
+  V [[R-027-double-extender-order]], G EXP-072
 - **Lost update:** held only by quasi-connectivity through a block beside its head cell, a
   piston gets no update when that block turns off while the head is still moving (the
   moving head does not pass updates on): it retracts when the head lands, one tick late.

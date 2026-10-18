@@ -11,7 +11,8 @@ A lever needs a player, which the server does not have: each wall lever with rec
 pulls is replaced by a repeater pointing into the lever's block (it powers that block
 strongly and updates the blocks around it, as the lever does, 2 ticks later) with a
 redstone block behind it that the pulls put and remove; a repeater needs a sturdy block
-below, so glass goes there if it is air. Both sides run that same build. Other recorded
+below, so glass goes there if it is air. Both sides run that same build. Recorded
+``/setblock`` edits (``at T set …``) run as the same command on both sides; other recorded
 edits are not supported.
 
 Usage (from the repository root)::
@@ -72,6 +73,11 @@ def build_scenario(path: Path, name: str, ticks: int | None = None) -> Scenario:
     replaced: dict[Pos, str] = {}
     lever_on: dict[Pos, bool] = {}
     for tick, action in edits:
+        if action.kind == "setblock" and action.state and not action.payload:
+            # A recorded /setblock (e.g. a redstone block switching a stand-in input):
+            # both sides run the same command.
+            flips.setdefault(tick, []).append((rel(action.pos), action.state))
+            continue
         state = states.get(action.pos)
         if action.kind != "use" or state is None or state.block.id != "minecraft:lever":
             raise SystemExit(

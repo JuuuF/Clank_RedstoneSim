@@ -42,18 +42,25 @@ double extender); a sticky piston at 5 4 0 (facing north) slides B between 5 4 �
 4. tick 28: P2 retracts and takes P1 back down; P1 extends again at 31 and at 37 pulls C
    down into the floor (5 4 −2). Open at 37.
 
-The helper piston 4 3 −3 pushes a wool block in and out three times (9, 24, 30) next to
-the wire 5 3 −5: each move reshapes that wire (a solid block beside it changes where it
-connects). The causal links show that line (5 3 −5, 5 4 −4) is what retracts the raised
-P1 at 25 (through the floor block beside it), so the helper is part of the timing of the
-opening's middle step; its exact logic is not worked out yet (backlog).
+The helper piston 4 3 −3 is a **wire cutter**. It pushes a wool block into 4 3 −5 three
+times (out 9–21, 24–27, 30–37). There the wool sits on top of the wire 4 2 −5, which
+cuts that wire's step up to 5 3 −5 (a solid block above the lower wire breaks a wire
+step). The line 5 3 −5 → 5 4 −4 ends at the iron block 5 4 −3, beside the block above
+P1, so it can power P1 by quasi-connectivity. The repeater 4 2 −4 under the cut powers
+4 2 −5 from tick 13. With the helper out, that signal goes north instead of up. Without
+the helper (ablation), it climbs the step at 13 (5 4 −4 at power 13) and P1 does not pull
+B down at 14: the first event that differs, and the door ends wrong. When the helper
+retracts (21–24, 27–30), the step joins up again: that is when the line powers the
+raised P1 (25, the causal links). So the helper gates when one repeater's output reaches
+P1. Found 2026-10-18 by removing it and comparing the wire powers (backlog D1, closed).
 
 **Lessons.** (1) The center-and-bottom problem of a flush 3x3 is solved with a double
 extender under the center and one sideways floor piston: C is placed by a spit and B is
 slid under it, then both go up together. (2) Short pulses can be made mechanically: a
 piston moving the **block that powers** another piston gives an exact one-tick pulse.
 (3) A raised piston that lands next to power extends by itself (landing check), which
-saves a wire to it.
+saves a wire to it. (4) A piston can switch a wire line on and off by pushing a block
+above a wire step (a wire cutter): it gates one signal without a repeater lock.
 
 <!-- generated -->
 

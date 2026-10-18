@@ -4,6 +4,9 @@ Open questions, hypotheses and the roadmap of the redstone knowledge base
 ([[redstone/README]]). Take the highest open item; when it is answered, move it to "Done"
 with the record that answered it.
 
+The piston-door track (reverse-engineering the dataset's designs) keeps its own open items
+D1–D8 in [[redstone/doors/README]], "Status and roadmap".
+
 ## Roadmap
 
 1. **Foundations** (every circuit depends on them)

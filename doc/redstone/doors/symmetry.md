@@ -53,12 +53,24 @@ changes which branch reaches its piston first. Six orientations keep R first, tw
 Moving the build (8 translations) never changed it: the race is decided by direction,
 not by position.
 
+**The input device is part of the race.** The floor lever is the line's source: a pull
+updates the lever's neighbors and then its block's neighbors, in direction order. With
+the lever replaced by a repeater into the same block (switched by a redstone block, the
+stand-in `run_world` uses for the server), the door works **in all eight orientations**;
+with the lever set by `/setblock` (no update of the block's neighbors) it never moves.
+So the jam needs a player's pull, and the sandboxed server has no player: this finding
+is verified in the simulator only (the lever's `pull` is ported from `LeverBlock.pull` /
+`updateNeighbours`). The rule behind it is game-verified on its own: in a double
+extender powered in one tick, rear first works and front first jams
+([[../records/R-027-double-extender-order]], EXP-072). The locational case below is
+server-verified (EXP-070).
+
 **Design rule.** Do not let two pistons of one mechanism be triggered by the same
 change in the same tick when their order matters; give the one that must go first a
 tick of lead (a repeater), or power the other one only through the first one's motion
 (landing check). A design that relies on update order should be tested in all
 orientations it may be built in (`symmetry`). **V** (dataset replay; minimal
-reproduction: backlog D2)
+reproduction [[../records/R-027-double-extender-order]], game EXP-072)
 
 ### Locational doors
 

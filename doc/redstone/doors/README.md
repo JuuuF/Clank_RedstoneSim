@@ -22,6 +22,9 @@ read-only and experiments work on copies.
 | [[analyses/README]] | One page per door: generated facts (frames, groups, pistons, power) and hand-written explanations; the Zhus / monchiCARP comparison |
 | [[patterns]] | Mechanisms found in the corpus (singles, floor storage, extenders, spits, power switches, QC, landing checks, sliders, slime) with counts, and design principles |
 | [[symmetry]] | Counterfactual: every door turned, mirrored and moved; directional and locational designs |
+| [[mechanism]] | Mechanism and controller: a door's contract (pulses per piston + same-tick order), tested by driving the stripped mechanism with editor pulses |
+| [[robustness]] | Counterfactuals per block (remove, glass, repeater delay), the combined trim, input timing (every gap between the two pulls) and the two-cycle test |
+| [[demonstration]] | The whole pipeline on the project's own 3x3 flush door (`door_3x3`), compared with Mumbo Jumbo's |
 
 ## Tools
 
@@ -39,3 +42,53 @@ read-only and experiments work on copies.
 | `transform`, `symmetry` | 1, 3 | a world turned / mirrored / moved as a whole; does every copy do the same? |
 | `patterns` | 3 | the mechanism census ([[patterns]]) |
 | `inventory` | — | `python -m tools.doorlab.inventory`: writes `experiments/doors/inventory.json` and [[inventory]] |
+| `mechanism` | 3 | the mechanism / controller split, the contract, the stripped door ([[mechanism]]) |
+| `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` ([[robustness]]) |
+| `inputs` | 3 | every gap between the two input flips; `--repeat`: the designed cycle twice ([[robustness]]) |
+
+`experiments/doors/door_3x3/` (`annotate.py`, `lab.py`) runs every tool on the project's
+own door; its results and derived worlds are committed there. Results for the dataset's
+designs stay in `.sandbox/doors/` (not committed).
+
+## Status and roadmap
+
+The mission's deliverables (2026-10-18):
+
+| # | Deliverable | Where | State |
+|---|---|---|---|
+| 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
+| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanation for Mumbo Jumbo's 3x3 and the Zhus / monchiCARP pair |
+| 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 3 verified (G1–G3), 2 implied by the corpus, 3 untested (G4, G6, G7) |
+| 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19 |
+| 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, design principles |
+| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done; game checks EXP-068, EXP-070, EXP-071 |
+| 7 | A demonstrated analysis / construction | [[demonstration]] | the pipeline on `door_3x3`; trimmed builds (EXP-071) |
+| 8 | Roadmap | this section | — |
+
+Open items (D-numbers are cited from the pages):
+
+- ~~D1~~ Mumbo Jumbo's helper piston (4 3 −3) is a wire cutter: it puts a block above a
+  wire step and so gates when one repeater's output reaches P1
+  ([[analyses/3x3-piston-door-mumbo-jumbo]]). Closed.
+- ~~D2~~ The same-tick double-extender race: [[../records/R-027-double-extender-order]],
+  game EXP-072 (match). Closed; the vault lamp door's own jam needs a player's lever pull,
+  which the server tool cannot give (simulator only).
+- **D3** Why LegDen's 7x7 and 8x8 stop (the game does the same, EXP-068): find the
+  first piston event that differs from the creator's intended sequence.
+- **D4** Mechanism split refinements ([[mechanism]]): slime-carried redstone blocks
+  belong to the mechanism; stacked pistons need side power (an editor pulse also
+  quasi-powers the piston below); then a same-tick order in the contract.
+- **D5** Guide claims G4, G6, G7 ([[guide-5x5]]): build and measure them.
+- **D6** Input safety ([[robustness]]): several doors jam permanently on a too-short gap
+  between the pulls (Mumbo Jumbo: gaps 2–9). Put a lockout like `door_3x3`'s in front of
+  one of them, using its contract as the specification.
+- **D7** Server checks of the remaining trimmed builds: `run_world` needs stand-ins for
+  floor levers and buttons (Lutal, Kwipla).
+- ~~D8~~ Nile's seamless glass door alternates between two rest states (a glass block
+  behind the doorway moves one cell and back, cycle by cycle): game EXP-073 (match).
+  Closed.
+- **D9** Purplers' enchanting-table door recycles one redstone dust through droppers, the
+  ground and a hopper; the simulator has no item entities ([[../../differences]]), so
+  the dust is lost after the first cycle and later cycles in the simulator are not
+  evidence ([[robustness]]). Needs item entities, or a check of how far the first cycle
+  is affected.

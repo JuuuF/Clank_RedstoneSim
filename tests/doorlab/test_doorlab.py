@@ -6,17 +6,30 @@ not committed: they are skipped elsewhere):
 
 - round trip: the canonical form (layer 1) of a world rebuilt from its canonical form is
   identical, and the rebuilt world simulates tick by tick like the original;
-- replay: the world's own markers ("Closed", "Opened") agree with the doorway's frames.
+- replay: the world's own markers ("Closed", "Opened") agree with the doorway's frames;
+- counterfactuals: the mechanism/controller split, input timing, the two-cycle test,
+  single-block ablation and the combined trim give the known answers on the 2x2 door.
 """
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
 import pytest
 
-from tools.doorlab import canonical, corpus, interactions, replay, symmetry, transform
+from tools.doorlab import (
+    ablation,
+    canonical,
+    corpus,
+    inputs,
+    interactions,
+    mechanism,
+    replay,
+    symmetry,
+    transform,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 DOOR_2X2 = ROOT / "examples" / "circuits" / "piston_door_2x2.redsim.json"
@@ -132,6 +145,56 @@ def test_transform_inverts() -> None:
     moved, sym = transform.transform(canon, 0, False, (3, -5))
     assert sym.pos((4, 1, 0)) == (7, 1, -5)
     assert len(moved["blocks"]) == len(canon["blocks"])
+
+
+def _door_world(tmp_path: Path) -> Path:
+    """The 2x2 door as a door-lab world: sections, two lever pulls, markers."""
+    session = _door_session(tmp_path)
+    canon = canonical.from_document(session.doc)
+    canon["annotations"]["markers"] = {"10": "Opened", "30": "Closed"}
+    lever = canon["timeline"]["actions"][0]["pos"]
+    canon["annotations"]["sections"] = {
+        "input": {"color": "#3fa9f5", "positions": [lever]},
+        "output": {"color": "#7ed321", "positions": [list(c) for c in CELLS_2X2]},
+    }
+    path = tmp_path / "2x2 door by test.redsim.json"
+    path.write_text(json.dumps(canonical.to_save(canon)))
+    return path
+
+
+def test_mechanism_split_2x2(tmp_path: Path) -> None:
+    """The four door pistons, driven by editor pulses alone, move the door identically;
+    they are powered in the build (closed door), so their first pulse starts at 0."""
+    result = mechanism.check(_door_world(tmp_path))
+    assert result["same_frames"]
+    assert result["mechanism_pistons"] == 4
+    assert {(p["start"], p["length"]) for p in result["contract"]} == {(0, 6), (24, None)}
+    assert result["blocks_after"] < result["blocks_before"]
+
+
+def test_input_timing_and_repeat_2x2(tmp_path: Path) -> None:
+    path = _door_world(tmp_path)
+    result = inputs.run(path, 6)
+    assert result["designed_gap"] == 18
+    assert result["clean_from"] == 1  # any gap: the door just follows the lever
+    again = inputs.repeat(path)
+    assert again["doorway_same"] and again["rest_same"]
+
+
+def test_ablation_and_trim_2x2(tmp_path: Path) -> None:
+    path = _door_world(tmp_path)
+    result = ablation.run(path)
+    by_change = result["summary"]
+    assert by_change["remove piston"] == {"breaks": 4}
+    assert by_change["remove lever"] == {"breaks": 1}
+    assert by_change["remove piston_head"] == {"inert": 4}
+    trim = ablation.trim(path, result["results"])
+    assert trim["kept_after_all"] == []
+    assert trim["blocks_after"] < trim["blocks_before"]
+    # The trimmed build replays inert: every remaining block as in the original.
+    base = replay.record(canonical.rebuild(canonical.from_file(path)))
+    rec = replay.record(canonical.rebuild(trim["trimmed"]))
+    assert rec.changes == base.changes
 
 
 def test_symmetry_2x2(tmp_path: Path) -> None:

@@ -163,6 +163,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-024-analog-carry-lines]] | Two analog wire lines with glass diodes give every carry of 4 bits at once | [[timing]], [[circuits]] | verified |
 | [[R-025-piston-door-timing]] | A repeater into the upper of two stacked pistons masks the lower one's quasi-connectivity; a quasi-connected hold through a moving head misses its off update until the head lands; a piston set down next to power extends one tick after landing | [[components]], [[circuits]] | verified (game: EXP-059) |
 | [[R-026-moving-block-blocks-piston]] | A powered piston facing a moving block queues nothing and extends 1 tick after the block lands; a pulse that ends first is lost (the 5x5 guide's PF.1) | [[components]], [[doors/guide-5x5]] | verified |
+| [[R-027-double-extender-order]] | Two pistons powered in one tick run in update order; a double extender works rear-first and jams front-first (the vault lamp door's orientation dependence) | [[components]], [[doors/symmetry]] | verified |
 
 ## Status
 

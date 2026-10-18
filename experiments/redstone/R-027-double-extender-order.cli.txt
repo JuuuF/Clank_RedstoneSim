@@ -1,0 +1,30 @@
+new size 24 force
+note "R-027: a horizontal double extender whose two pistons are powered in the same tick: the order of their updates decides the outcome (doc/redstone/doors/symmetry.md, the vault lamp door). R = rear sticky piston, F = front sticky piston, X = the block in front of F. Each piston is powered by a redstone block set beside it (not beside the other one); both are set between the same two ticks, in the order given"
+# (a) R updated first, (b) F updated first: the same build twice
+place 2 1 0 sticky_piston facing=east
+place 3 1 0 sticky_piston facing=east
+set 4 1 0 stone
+label Ra 2 1 0
+label Fa 3 1 0
+label Xa 4 1 0
+place 2 1 6 sticky_piston facing=east
+place 3 1 6 sticky_piston facing=east
+set 4 1 6 stone
+label Rb 2 1 6
+label Fb 3 1 6
+label Xb 4 1 6
+settle
+target new rear_first "(a) R's power first, then F's (same tick): R pushes F and X one cell (3..4, landed at 5); F's own block event finds a moving block and is dropped, so F rests unextended one cell east and X is one cell east: a single stage"
+target rear_first do at 2 set 2 1 -1 redstone_block
+target rear_first do at 2 set 3 1 -1 redstone_block
+target rear_first expect @Ra extended=true at 3
+target rear_first expect @Fa+1,0,0 block=sticky_piston at 5
+target rear_first expect @Fa+1,0,0 extended=false during 5..20
+target rear_first expect @Xa+1,0,0 block=stone during 5..20
+target new front_first "(b) F's power first, then R's: F extends and pushes X (3..4, landed at 5); R's push then fails (F is an extended piston, immovable) and R stays retracted while powered until something updates it"
+target front_first do at 2 set 3 1 5 redstone_block
+target front_first do at 2 set 2 1 5 redstone_block
+target front_first expect @Fb extended=true during 3..20
+target front_first expect @Rb extended=false during 0..20
+target front_first expect @Xb+1,0,0 block=stone during 5..20
+check
