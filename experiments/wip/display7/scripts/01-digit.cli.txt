@@ -1,0 +1,239 @@
+new size 32 force
+note "WIP 01 (works, 7/7): the lamp digit alone (4x7, two lamps per segment, facing south), each segment fed by an ideal pulse at its feed wire @Fa..@Fg (z=7, behind the digit). a, g, d: a repeater behind each lamp, fed by a wire behind those; b, c, e, f: a wire behind the upper lamp on a block behind the lower one (the wire powers both). Targets seg_a..seg_g: each lights only its own two lamps."
+set 9 1 10 black_concrete
+set 9 2 10 black_concrete
+set 9 3 10 black_concrete
+set 9 4 10 black_concrete
+set 9 5 10 black_concrete
+set 9 6 10 black_concrete
+set 9 7 10 black_concrete
+set 9 8 10 black_concrete
+set 9 9 10 black_concrete
+set 10 1 10 black_concrete
+set 10 2 10 black_concrete
+set 10 3 10 redstone_lamp
+set 10 4 10 redstone_lamp
+set 10 5 10 black_concrete
+set 10 6 10 redstone_lamp
+set 10 7 10 redstone_lamp
+set 10 8 10 black_concrete
+set 10 9 10 black_concrete
+set 11 1 10 black_concrete
+set 11 2 10 redstone_lamp
+set 11 3 10 black_concrete
+set 11 4 10 black_concrete
+set 11 5 10 redstone_lamp
+set 11 6 10 black_concrete
+set 11 7 10 black_concrete
+set 11 8 10 redstone_lamp
+set 11 9 10 black_concrete
+set 12 1 10 black_concrete
+set 12 2 10 redstone_lamp
+set 12 3 10 black_concrete
+set 12 4 10 black_concrete
+set 12 5 10 redstone_lamp
+set 12 6 10 black_concrete
+set 12 7 10 black_concrete
+set 12 8 10 redstone_lamp
+set 12 9 10 black_concrete
+set 13 1 10 black_concrete
+set 13 2 10 black_concrete
+set 13 3 10 redstone_lamp
+set 13 4 10 redstone_lamp
+set 13 5 10 black_concrete
+set 13 6 10 redstone_lamp
+set 13 7 10 redstone_lamp
+set 13 8 10 black_concrete
+set 13 9 10 black_concrete
+set 14 1 10 black_concrete
+set 14 2 10 black_concrete
+set 14 3 10 black_concrete
+set 14 4 10 black_concrete
+set 14 5 10 black_concrete
+set 14 6 10 black_concrete
+set 14 7 10 black_concrete
+set 14 8 10 black_concrete
+set 14 9 10 black_concrete
+set 11 7 9 stone
+place 11 8 9 repeater out=south
+set 11 7 8 stone
+place 11 8 8 redstone_wire
+set 12 7 9 stone
+place 12 8 9 repeater out=south
+set 12 7 8 stone
+place 12 8 8 redstone_wire
+set 11 4 9 stone
+place 11 5 9 repeater out=south
+set 11 4 8 stone
+place 11 5 8 redstone_wire
+set 12 4 9 stone
+place 12 5 9 repeater out=south
+set 12 4 8 stone
+place 12 5 8 redstone_wire
+set 11 1 9 stone
+place 11 2 9 repeater out=south
+set 11 1 8 stone
+place 11 2 8 redstone_wire
+set 12 1 9 stone
+place 12 2 9 repeater out=south
+set 12 1 8 stone
+place 12 2 8 redstone_wire
+set 13 6 9 stone
+place 13 7 9 redstone_wire
+set 13 6 8 stone
+place 13 7 8 redstone_wire
+set 13 3 9 stone
+place 13 4 9 redstone_wire
+set 13 3 8 stone
+place 13 4 8 redstone_wire
+set 10 3 9 stone
+place 10 4 9 redstone_wire
+set 10 3 8 stone
+place 10 4 8 redstone_wire
+set 10 6 9 stone
+place 10 7 9 redstone_wire
+set 10 6 8 stone
+place 10 7 8 redstone_wire
+set 10 8 8 stone
+set 10 8 7 stone
+set 13 8 8 stone
+set 13 8 7 stone
+set 10 5 8 stone
+set 10 5 7 stone
+set 13 5 8 stone
+set 13 5 7 stone
+set 11 7 7 stone
+place 11 8 7 redstone_wire
+set 13 6 7 stone
+place 13 7 7 redstone_wire
+set 13 3 7 stone
+place 13 4 7 redstone_wire
+set 11 1 7 stone
+place 11 2 7 redstone_wire
+set 10 3 7 stone
+place 10 4 7 redstone_wire
+set 10 6 7 stone
+place 10 7 7 redstone_wire
+set 11 4 7 stone
+place 11 5 7 redstone_wire
+label Fa 11 8 7
+label Fb 13 7 7
+label Fc 13 4 7
+label Fd 11 2 7
+label Fe 10 4 7
+label Ff 10 7 7
+label Fg 11 5 7
+settle
+target new seg_a "segment a alone"
+target seg_a do pulse @Fa at 2 for 10
+target seg_a expect 11 8 10 lit=true at 8
+target seg_a expect 12 8 10 lit=true at 8
+target seg_a expect 13 6 10 lit=false at 8
+target seg_a expect 13 7 10 lit=false at 8
+target seg_a expect 13 3 10 lit=false at 8
+target seg_a expect 13 4 10 lit=false at 8
+target seg_a expect 11 2 10 lit=false at 8
+target seg_a expect 12 2 10 lit=false at 8
+target seg_a expect 10 3 10 lit=false at 8
+target seg_a expect 10 4 10 lit=false at 8
+target seg_a expect 10 6 10 lit=false at 8
+target seg_a expect 10 7 10 lit=false at 8
+target seg_a expect 11 5 10 lit=false at 8
+target seg_a expect 12 5 10 lit=false at 8
+target new seg_b "segment b alone"
+target seg_b do pulse @Fb at 2 for 10
+target seg_b expect 11 8 10 lit=false at 8
+target seg_b expect 12 8 10 lit=false at 8
+target seg_b expect 13 6 10 lit=true at 8
+target seg_b expect 13 7 10 lit=true at 8
+target seg_b expect 13 3 10 lit=false at 8
+target seg_b expect 13 4 10 lit=false at 8
+target seg_b expect 11 2 10 lit=false at 8
+target seg_b expect 12 2 10 lit=false at 8
+target seg_b expect 10 3 10 lit=false at 8
+target seg_b expect 10 4 10 lit=false at 8
+target seg_b expect 10 6 10 lit=false at 8
+target seg_b expect 10 7 10 lit=false at 8
+target seg_b expect 11 5 10 lit=false at 8
+target seg_b expect 12 5 10 lit=false at 8
+target new seg_c "segment c alone"
+target seg_c do pulse @Fc at 2 for 10
+target seg_c expect 11 8 10 lit=false at 8
+target seg_c expect 12 8 10 lit=false at 8
+target seg_c expect 13 6 10 lit=false at 8
+target seg_c expect 13 7 10 lit=false at 8
+target seg_c expect 13 3 10 lit=true at 8
+target seg_c expect 13 4 10 lit=true at 8
+target seg_c expect 11 2 10 lit=false at 8
+target seg_c expect 12 2 10 lit=false at 8
+target seg_c expect 10 3 10 lit=false at 8
+target seg_c expect 10 4 10 lit=false at 8
+target seg_c expect 10 6 10 lit=false at 8
+target seg_c expect 10 7 10 lit=false at 8
+target seg_c expect 11 5 10 lit=false at 8
+target seg_c expect 12 5 10 lit=false at 8
+target new seg_d "segment d alone"
+target seg_d do pulse @Fd at 2 for 10
+target seg_d expect 11 8 10 lit=false at 8
+target seg_d expect 12 8 10 lit=false at 8
+target seg_d expect 13 6 10 lit=false at 8
+target seg_d expect 13 7 10 lit=false at 8
+target seg_d expect 13 3 10 lit=false at 8
+target seg_d expect 13 4 10 lit=false at 8
+target seg_d expect 11 2 10 lit=true at 8
+target seg_d expect 12 2 10 lit=true at 8
+target seg_d expect 10 3 10 lit=false at 8
+target seg_d expect 10 4 10 lit=false at 8
+target seg_d expect 10 6 10 lit=false at 8
+target seg_d expect 10 7 10 lit=false at 8
+target seg_d expect 11 5 10 lit=false at 8
+target seg_d expect 12 5 10 lit=false at 8
+target new seg_e "segment e alone"
+target seg_e do pulse @Fe at 2 for 10
+target seg_e expect 11 8 10 lit=false at 8
+target seg_e expect 12 8 10 lit=false at 8
+target seg_e expect 13 6 10 lit=false at 8
+target seg_e expect 13 7 10 lit=false at 8
+target seg_e expect 13 3 10 lit=false at 8
+target seg_e expect 13 4 10 lit=false at 8
+target seg_e expect 11 2 10 lit=false at 8
+target seg_e expect 12 2 10 lit=false at 8
+target seg_e expect 10 3 10 lit=true at 8
+target seg_e expect 10 4 10 lit=true at 8
+target seg_e expect 10 6 10 lit=false at 8
+target seg_e expect 10 7 10 lit=false at 8
+target seg_e expect 11 5 10 lit=false at 8
+target seg_e expect 12 5 10 lit=false at 8
+target new seg_f "segment f alone"
+target seg_f do pulse @Ff at 2 for 10
+target seg_f expect 11 8 10 lit=false at 8
+target seg_f expect 12 8 10 lit=false at 8
+target seg_f expect 13 6 10 lit=false at 8
+target seg_f expect 13 7 10 lit=false at 8
+target seg_f expect 13 3 10 lit=false at 8
+target seg_f expect 13 4 10 lit=false at 8
+target seg_f expect 11 2 10 lit=false at 8
+target seg_f expect 12 2 10 lit=false at 8
+target seg_f expect 10 3 10 lit=false at 8
+target seg_f expect 10 4 10 lit=false at 8
+target seg_f expect 10 6 10 lit=true at 8
+target seg_f expect 10 7 10 lit=true at 8
+target seg_f expect 11 5 10 lit=false at 8
+target seg_f expect 12 5 10 lit=false at 8
+target new seg_g "segment g alone"
+target seg_g do pulse @Fg at 2 for 10
+target seg_g expect 11 8 10 lit=false at 8
+target seg_g expect 12 8 10 lit=false at 8
+target seg_g expect 13 6 10 lit=false at 8
+target seg_g expect 13 7 10 lit=false at 8
+target seg_g expect 13 3 10 lit=false at 8
+target seg_g expect 13 4 10 lit=false at 8
+target seg_g expect 11 2 10 lit=false at 8
+target seg_g expect 12 2 10 lit=false at 8
+target seg_g expect 10 3 10 lit=false at 8
+target seg_g expect 10 4 10 lit=false at 8
+target seg_g expect 10 6 10 lit=false at 8
+target seg_g expect 10 7 10 lit=false at 8
+target seg_g expect 11 5 10 lit=true at 8
+target seg_g expect 12 5 10 lit=true at 8
+check
