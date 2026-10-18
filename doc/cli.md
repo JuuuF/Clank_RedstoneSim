@@ -296,7 +296,7 @@ tests, or flip the real input (`at T use @LEVER`) when the input is a lever or b
 | Command | What it does |
 |---|---|
 | `place POS BLOCK` | Like a player placing the block: needs air and support; the game's placement rules fill in what you did not give (wire connections, a lamp lit next to power, a repeater locked by a side repeater, a door's upper half), and a written `delay`, `mode`, `open`, `powered` (lever) or `note` is set by right-clicking (section 4.3). **The normal way to build components.** |
-| `set POS BLOCK [nbt JSON]` | Like the `/setblock` command: replaces anything, no support needed, no placement rules (a lamp set next to power stays off until something updates it, exactly as in Minecraft). For terrain, for block-entity data, for states placement would not give. |
+| `set POS BLOCK [nbt JSON]` | Like the `/setblock` command: replaces anything, no support needed, no placement rules (a lamp set next to power stays off until something updates it, exactly as in Minecraft). For terrain, for block-entity data, for states placement would not give.; a lever `set` on or off updates only its own neighbors, not those of the block it is attached to (a torch on that block does not react): flip levers with `use` |
 | `break POS` | A player breaking it (creative: no drops); neighbors update. |
 | `use POS [look DIR]` | A right click: lever, button, repeater delay, comparator mode, door, … |
 | `fill POS POS BLOCK`, `clear POS POS` | `/fill` over a box (at most 32768 blocks). |
