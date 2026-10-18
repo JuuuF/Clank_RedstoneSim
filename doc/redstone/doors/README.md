@@ -60,7 +60,7 @@ The mission's deliverables (2026-10-19):
 |---|---|---|---|
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
 | 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanation for Mumbo Jumbo's 3x3 and the Zhus / monchiCARP pair |
-| 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 3 verified (G1–G3), 2 implied by the corpus, 3 untested (G4, G6, G7) |
+| 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19 |
 | 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, design principles |
 | 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-074 |
@@ -86,7 +86,7 @@ Open items (D-numbers are cited from the pages):
 - **D4** Mechanism split refinements ([[mechanism]]): slime-carried redstone blocks
   belong to the mechanism; stacked pistons need side power (an editor pulse also
   quasi-powers the piston below); then a same-tick order in the contract.
-- **D5** Guide claims G4, G6, G7 ([[guide-5x5]]): build and measure them.
+- **D5** Guide claims G6, G7 ([[guide-5x5]]): build and measure them (G4 is R-015, verified).
 - **D6** Input safety ([[robustness]]): every dataset door jams on a too-short gap
   between the flips (Mumbo Jumbo: gaps 2–9, of which 3–6 one more cycle does not
   repair). Put a lockout like `door_3x3`'s in front of one of them, using its contract
