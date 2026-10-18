@@ -76,6 +76,10 @@ What the ablation shows:
   conducting blocks above the floor can each be glass without changing the doorway.
   They hold wire, give pistons something to stand on, or are decoration. The rest are
   the power paths (quasi-connectivity blocks, blocks that repeaters power).
+- **Layer 2 predicts the harmless ones exactly.** A conductor that never receives power
+  in the designed run, cuts no wire step and is not an immovable stopper never broke
+  any door when turned to glass: 0 of 359 ([[representation]]). The wire cutters break
+  11 of 12 times. Of the powered ones only 270 of 736 matter.
 - **Slack is small in the compact doors and large in the showpieces.** The trim removes
   all individually inert blocks together and re-checks each combination. It never
   found two removals that conflict: every inert block was also removable with all the

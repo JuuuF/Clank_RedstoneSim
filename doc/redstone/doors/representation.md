@@ -116,3 +116,27 @@ by engine step**, and around each block event the moving-block entities are comp
   tick for tick: one design, two builds ([[analyses/README]]).
 - Three builds carry pending events at tick 0 (layer 1's `engine_runtime`); a
   blocks-only description of them would run differently.
+
+## Does layer 2 predict a change? (counterfactual accuracy, 2026-10-19)
+
+The ablation turned every conducting block above the floor into glass, one at a time:
+1112 variants in 16 doors ([[robustness]]). Before looking at the results, layer 2 sorts
+each block by the role it plays in the designed run:
+
+| role (layer 2) | glass breaks the door (or changes its timing) |
+|---|---|
+| receives power at some tick (`has_neighbor_signal` during the replay) | 270 of 736 |
+| never powered, but a wire cutter (wire under it, wire beside it) | 11 of 12 |
+| never powered, immovable (obsidian) | 1 of 5 |
+| none of these | **0 of 359** |
+
+So the model's "this block does not matter" is exact here: a third of the conductors can
+be told apart without running anything. The four never-powered obsidian blocks that
+can be glass are never pushed. The powered class is where layer 2 is not yet precise:
+it includes blocks that are powered but feed nothing, and blocks whose power has
+another path. On its own, the piston power trace (`replay`'s source of each extension)
+finds about half of the breaking conductors: 145 of the 204 conductors that delivered an
+extension's power break. The other 137 of the 282 that break are the 12 cutters and
+stoppers, and 125 powered blocks that never deliver an extension's power themselves.
+They must matter further upstream or for other components; this is not traced yet
+(backlog D12).

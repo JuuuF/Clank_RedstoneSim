@@ -109,6 +109,10 @@ Open items (D-numbers are cited from the pages):
   cells (Sacred 4, pal1 2, Sydney 12), because the second input cut the first sequence
   short, and no later cycle moves them back. Open: why exactly these blocks (which
   pulls are missing), and whether any input sequence repairs them.
+- **D12** Which powered conductors matter ([[representation]]): layer 2 predicts the
+  harmless glass replacements exactly (0 of 359 break), but only 270 of 736 powered
+  conductors matter. Trace power to every component (wire, torches, repeaters, lamps)
+  and find redundant paths, to predict the breaking ones too.
 - **D11** A door's real input contract: the safe gap is often far below the no-overlap gap
   (Sacred 21 vs 40, the seamless door 16 vs 43). Found so far ([[robustness]]): at the
   last bad gap, 7 doors lose extensions (power gone when the event runs), 3 push into a
