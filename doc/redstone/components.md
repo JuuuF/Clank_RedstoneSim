@@ -122,6 +122,16 @@ Evidence labels: [[redstone/README#Scope and trust]].
   queues its retract into the same block-event phase. Extended sticky pistons holding
   redstone blocks against each other's backs all retract in one tick (instant wire);
   re-extending takes 3 ticks a stage. V [[R-023-instant-piston-wire]], G EXP-058
+- **Landing check:** a piston moved into place by another piston checks its power when it
+  lands and, if powered (also by quasi-connectivity), extends one tick later. A powered
+  block beside the destination makes a self-timed trigger. V [[R-025-piston-door-timing]]
+- **Lost update:** held only by quasi-connectivity through a block beside its head cell, a
+  piston gets no update when that block turns off while the head is still moving (the
+  moving head does not pass updates on): it retracts when the head lands, one tick late.
+  V R-025
+- **Stacked pistons:** a repeater or observer pointing into the upper of two stacked
+  pistons updates it first; the lower one is quasi-powered too, but its push then fails on
+  the extended upper piston. V R-025
 
 ## Dropper, dispenser
 

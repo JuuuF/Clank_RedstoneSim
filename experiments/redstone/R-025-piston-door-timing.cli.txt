@@ -1,0 +1,57 @@
+new size 24 force
+note "R-025: pistons and quasi-connectivity timing in a piston door. (a) AU, AL stacked sticky pistons, repeater AR into AU; (b) P with direct repeater D and the block 7 2 0 beside its head cell fed by R; (c) K lifts Q next to the block 2 3 4 that YR powers"
+# (a) stacked sticky pistons, a repeater into the upper one's side
+place 1 1 0 sticky_piston facing=up
+place 1 2 0 sticky_piston facing=up
+set 1 3 0 stone
+set 1 1 1 stone
+place 1 2 1 repeater out=north
+label AL 1 1 0
+label AU 1 2 0
+label AR 1 2 1
+# (b) sticky piston P below a gap, block C two above; direct repeater D; QC block X next to the head cell, fed by repeater R
+place 6 1 0 sticky_piston facing=up
+set 6 3 0 stone
+place 6 1 1 repeater out=north
+set 7 2 0 stone
+set 8 1 0 stone
+place 8 2 0 repeater out=west
+label P 6 1 0
+label D 6 1 1
+label R 8 2 0
+# (c) lifter K pushes sticky piston Q up into 1 3 4, next to the block Y (2 3 4) that repeater YR powers; C two above
+place 1 1 4 sticky_piston facing=up
+place 1 2 4 sticky_piston facing=up
+set 1 5 4 stone
+place 1 1 5 repeater out=north
+set 2 3 4 stone
+set 3 2 4 stone
+place 3 3 4 repeater out=west
+label K 1 1 5
+label Q 1 2 4
+label YR 3 3 4
+settle
+target new masked "(a) the repeater updates the upper piston first; the lower one's quasi-connected push then fails"
+target masked do pulse @AR at 2 for 6
+target masked expect @AU extended=true at 4
+target masked expect @AL extended=false during 0..14
+target masked expect @AU extended=false at 12
+target new direct "(b) direct power only: retract when the repeater turns off (tick 6), block two above pulled down by 8"
+target direct do pulse @D at 2 for 1
+target direct expect @P extended=true at 4
+target direct expect @P block=moving_piston at 6
+target direct expect 6 2 0 block=stone at 8
+target new headqc "(b) direct + quasi-connected, both off in the same tick: the update reaches only the moving head; retract when the head lands (7), block by 9"
+target headqc do pulse @D at 2 for 1
+target headqc do pulse @R at 2 for 1
+target headqc expect @P extended=true at 6
+target headqc expect 6 2 0 block=piston_head at 6
+target headqc expect @P block=moving_piston at 7
+target headqc expect 6 2 0 block=stone at 9
+target new landing "(c) a piston set down next to a powered block extends one tick after landing"
+target landing do pulse @YR at 2 for 20
+target landing do pulse @K at 2 for 30
+target landing expect 1 3 4 extended=false at 6
+target landing expect 1 3 4 extended=true at 7
+target landing expect 1 4 4 block=stone at 26
+check

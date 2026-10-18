@@ -5,6 +5,7 @@ def S(x, y, z, b): L.append(f"set {x} {y} {z} {b}")
 def P(x, y, z, b, *pr): L.append(f"place {x} {y} {z} {b} {' '.join(pr)}".rstrip())
 DOOR = "smooth_stone"
 CTRL = False
+FAST = False
 
 def mechanics():
     # middle column (open state): A, B, C on the floor, M beside it, W pushes M west
@@ -15,14 +16,19 @@ def mechanics():
         for z in (-1, 1):
             S(x, 3, z, "stone")
     # drivers: B home, A, W, B up (BU)
-    S(1, 1, 1, "stone"); P(1, 2, 1, "repeater", "out=north")
+    if not FAST:                     # (FAST: the spit observer is placed last, see controller_fast)
+        S(1, 1, 1, "stone"); P(1, 2, 1, "repeater", "out=north")
     if not CTRL:
         P(0, 1, 0, "repeater", "out=east")
     S(3, 1, 1, "stone"); S(3, 2, 0, "stone"); P(3, 2, 1, "repeater", "out=north")
     S(-2, 2, 0, "stone")
     if not CTRL:
         S(-2, 1, 1, "stone"); P(-2, 2, 1, "repeater", "out=north")
-    P(-2, 3, 0, "redstone_wire"); S(-1, 2, 0, "stone"); P(-1, 3, 0, "repeater", "out=east")
+    P(-2, 3, 0, "redstone_wire"); S(-1, 2, 0, "stone")
+    if FAST:
+        P(-1, 3, 0, "redstone_wire")
+    else:
+        P(-1, 3, 0, "repeater", "out=east")
     S(0, 3, 0, "stone")
     # side columns, open: blocks in the wall pockets
     for y in (4, 5, 6):
@@ -110,28 +116,132 @@ def controller():
                  ("OBS", (1, 1, -1)), ("SPIT", (0, 2, 2)), ("LOCK", (4, 2, 1))):
         L.append(f"label {n} {p[0]} {p[1]} {p[2]}")
 
-def ctrl_target(name, R, F):
+def controller_fast(h0=8, bu_wire=False, final_wire=False):
+    """Stage 05+. B's hold is the floor block 0 3 0 (quasi-connectivity: B extends when M lands
+    under C); the spit observer sits behind B and watches a wire spur; W's lock is a delayed
+    copy of the input. Options: h0 = hold delay (8 or 6); bu_wire = the observer on A reaches
+    0 3 0 through wire only (one-way by a cut, not a repeater); final_wire = the final pull
+    reaches B home through wire (no front repeater)."""
+    def chain(cells, total):
+        # repeater delays (in steps of 2 ticks) for a chain of len(cells) summing to total ticks
+        n = len(cells); steps = total // 2
+        ds = [1] * n
+        i = 0
+        while sum(ds) < steps:
+            ds[i % n] = min(4, ds[i % n] + 1); i += 1
+        assert sum(ds) == steps, (cells, total)
+        return ds
+    for x in range(-7, 10):                      # trunk: wire on blocks, fed at @IN
+        S(x, 1, 5, "stone"); P(x, 2, 5, "redstone_wire")
+    for x in (-7, 9):                            # side spurs into the tower drivers
+        for z in (4, 3, 2):
+            S(x, 1, z, "stone"); P(x, 2, z, "redstone_wire")
+    for z in (4, 3, 2):                          # SPIT: spur watched by the observer behind B
+        S(1, 1, z, "stone"); P(1, 2, z, "redstone_wire")
+    hd = chain([4, 3, 1], h0)                    # HOLD: 2 repeaters, block, repeater -> 0 3 0
+    S(-2, 1, 4, "stone"); rep(-2, 2, 4, "north", hd[0])
+    S(-2, 1, 3, "stone"); rep(-2, 2, 3, "north", hd[1])
+    S(-2, 1, 2, "stone"); S(-2, 2, 2, "stone")
+    S(-2, 1, 1, "stone"); rep(-2, 2, 1, "north", hd[2])
+    S(3, 1, 4, "stone"); rep(3, 2, 4, "north", 1)   # W 2+2, driver 2 -> W at +6
+    S(3, 1, 3, "stone"); rep(3, 2, 3, "north", 1)
+    S(3, 2, 2, "stone")
+    H = h0                                          # B lets go at f+H (the falling spit ends at f+4)
+    wd = chain([4, 3, 2, 1], H + 2)                 # W lock: unlock at f+H+2 -> W off at f+H+4
+    for z, d in zip((4, 3, 2), wd):
+        S(5, 1, z, "stone"); rep(5, 2, z, "north", d)
+    S(5, 1, 1, "stone"); S(5, 2, 1, "stone"); S(4, 1, 1, "stone"); rep(4, 2, 1, "west", wd[3])
+    a_on = H + 6                                    # A: (1 3 0) is clear at f+H+4
+    a_len = 8 if bu_wire else 10                    # A holds until B raised has pulled C
+    for z, d in zip((4, 3, 2, 1), chain([4, 3, 2, 1], a_on - 2)):
+        rep(0, 1, z, "north", d)
+    P(0, 1, 0, "comparator", "out=east", "mode=subtract")
+    rd = chain(range(7), a_on + a_len - 2)
+    for z, d in zip((4, 3, 2, 1), rd[:4]):
+        rep(-5, 1, z, "north", d)
+    S(-5, 1, 0, "stone")
+    for x, d in zip((-4, -3, -2), rd[4:]):
+        rep(x, 1, 0, "east", d)
+    S(-1, 1, 0, "stone")
+    # front: observer on A; its pulse gives the final pull (B home) and B raised's push (0 3 0)
+    P(1, 1, -1, "observer", "out=north")
+    S(1, 1, -2, "stone")
+    if final_wire == "none":
+        pass        # B home lands on A's retraction and finds 0 3 0 powered (quasi-connectivity)
+    elif final_wire:
+        P(1, 2, -2, "redstone_wire"); P(1, 2, -1, "redstone_wire")   # into B home
+    else:
+        P(1, 2, -2, "redstone_wire"); P(1, 2, -1, "repeater", "out=south")
+    if bu_wire:
+        # wire at y=1 from the observer's output block west, up two steps to 0 3 0; the
+        # block 0 2 -2 cuts it off from the final-pull wire on top of the output block
+        if final_wire != "none":
+            S(0, 2, -2, "stone")
+        for x in (0, -1, -2):
+            P(x, 1, -2, "redstone_wire")
+        S(-2, 1, -1, "stone"); P(-2, 2, -1, "redstone_wire")
+    else:
+        for x in (0, -1, -2):
+            S(x, 1, -2, "stone"); P(x, 2, -2, "redstone_wire")
+        S(-2, 1, -1, "stone"); rep(-2, 2, -1, "south", 1)
+    P(1, 2, 1, "observer", "out=north")  # last: placed earlier, it sees its spur being built
+    for n, p in (("IN", (1, 2, 5)), ("SPIT", (1, 2, 1)), ("HOLD", (-2, 2, 1)), ("W", (3, 2, 1)),
+                 ("A", (0, 1, 0)), ("OBS", (1, 1, -1)), ("LOCK", (4, 2, 1))):
+        L.append(f"label {n} {p[0]} {p[1]} {p[2]}")
+
+def fail_targets():
+    """Input-timing limits: close pulses of 1..14 ticks, open gaps of 1..30 ticks."""
+    t = lambda n, s: L.append(f"target {n} {s}")
+    cells = [(x, y) for x in (0, 1, 2) for y in (4, 5, 6)]
+    for D in range(1, 15):
+        n = f"short{D}"
+        L.append(f'target new {n} "@IN on for {D} ticks, then a full cycle (fails for D < 7)"')
+        t(n, f"do pulse @IN at 10 for {D}"); t(n, "do pulse @IN at 80 for 40")
+        for x, y in cells:
+            t(n, f"expect {x} {y} 0 block=air at 78")
+            t(n, f"expect {x} {y} 0 block={DOOR} at 95")
+            t(n, f"expect {x} {y} 0 block=air at 150")
+    for G in range(1, 31):
+        n = f"gap{G}"
+        L.append(f'target new {n} "closed, @IN off for {G} ticks, closed again, then open (fails for 2, 9-13, 18-24)"')
+        t(n, "do pulse @IN at 10 for 50"); t(n, f"do pulse @IN at {61 + G} for {130 - 61 - G}")
+        for x, y in cells:
+            t(n, f"expect {x} {y} 0 block={DOOR} at 129")
+            t(n, f"expect {x} {y} 0 block=air at 170")
+
+def ctrl_target(name, R, F, closed=18, opened=40):
     t = lambda s: L.append(f"target {name} {s}")
-    L.append(f'target new {name} "@IN on {R}..{F}: closed by {R + 18}, open by {F + 40}"')
+    L.append(f'target new {name} "@IN on {R}..{F}: closed by {R + closed}, open by {F + opened}"')
     t(f"do pulse @IN at {R} for {F - R}")
     for x in (0, 1, 2):
         for y in (4, 5, 6):
-            t(f"expect {x} {y} 0 block={DOOR} at {R + 18}")
-            t(f"expect {x} {y} 0 block=air at {F + 40}")
-    t(f"expect 1 3 0 block={DOOR} at {F + 40}")
-    t(f"expect 2 3 0 block={DOOR} at {F + 40}")
+            t(f"expect {x} {y} 0 block={DOOR} at {R + closed}")
+            t(f"expect {x} {y} 0 block=air at {F + opened}")
+    t(f"expect 1 3 0 block={DOOR} at {F + opened}")
+    t(f"expect 2 3 0 block={DOOR} at {F + opened}")
 
 if __name__ == "__main__":
     stage = sys.argv[1]
     L.append("new size 40 force")
     CTRL = stage != "mech"
+    FAST = stage == "fast"
     mechanics()
-    if CTRL:
+    if FAST:
+        opts = dict(a.split("=") for a in sys.argv[2:] if "=" in a)
+        controller_fast(int(opts.get("h0", 8)), opts.get("bu") == "wire",
+                        {"wire": True, "none": "none"}.get(opts.get("final"), False))
+    elif CTRL:
         controller()
     L.append("settle")
     if stage == "ctrl":
         L.insert(1, 'note "3x3 flush door, stage 3: controller; @IN on = closed (test input)"')
         ctrl_target("cycle", 10, 70)
+        L.append("check")
+    if stage == "fast":
+        L.insert(1, 'note "3x3 flush door, stage 5: faster controller; @IN on = closed (test input)"')
+        ctrl_target("cycle", 10, 70, 14, 36)
+        if "fails" in sys.argv:
+            fail_targets()
         L.append("check")
     if stage == "mech":
         L.insert(1, 'note "3x3 flush door, stage 2: all mechanics, driven by ideal pulses at the driver repeaters"')

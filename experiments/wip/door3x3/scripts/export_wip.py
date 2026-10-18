@@ -20,8 +20,8 @@ def save(name, text, note):
     print(name, [ln for ln in out.splitlines() if ln.startswith(("check:", "error", "FAIL"))])
 
 
-def gen(stage):
-    return subprocess.run([sys.executable, os.path.join(HERE, "door.py"), stage],
+def gen(*args):
+    return subprocess.run([sys.executable, os.path.join(HERE, "door.py"), *args],
                           capture_output=True, text=True, check=True).stdout
 
 
@@ -53,3 +53,14 @@ save("04-controller-first.redsim.json", gen("ctrl"),
      "pulse (subtracting comparator @A). Front: observer @OBS watches A; its pulse gives B's "
      "raised push (via the floor block 0 3 0) and the final pull. Closed 16 ticks after @IN "
      "rises, clear 37 ticks after it falls.")
+save("05-fast-controller.redsim.json", gen("fast", "h0=6", "bu=wire", "final=none"),
+     "WIP 05 (works): the faster controller; power @IN to close. B's hold is the floor block 0 3 0 "
+     "(quasi-connectivity: B extends when M lands under C, and B home extends for the final pull when "
+     "A sets it down); the spit observer sits behind B; W's driver is locked by a delayed copy. "
+     "Closed 11 ticks after @IN rises, clear 26 ticks after it falls (stage 04: 16 and 37).")
+save("05b-input-timing-fails.redsim.json", gen("fast", "h0=6", "bu=wire", "final=none", "fails"),
+     "WIP 05b (FAILS on purpose, 26 of 45 targets pass): the 05 door with too-short inputs. short1..short6: "
+     "a close pulse under 7 ticks (the side pistons spit their blocks, or the middle column stops "
+     "half-way); gap2, gap9..13, gap18..24: the input off for too short a time while closed "
+     "(B's quasi-connected hold returns without an update, or the open stops with a piston head in "
+     "the doorway). Load a failing target and seek to tick 78 or 129 to see the stuck state.")

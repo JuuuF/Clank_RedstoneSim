@@ -160,6 +160,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-022-rotated-modules]] | Library modules pasted in any rotation keep their contracts | [[circuits]] | verified |
 | [[R-023-instant-piston-wire]] | Sticky-piston chains that collapse in one tick: instant transmission of one edge | [[timing]], [[components]] Piston | verified |
 | [[R-024-analog-carry-lines]] | Two analog wire lines with glass diodes give every carry of 4 bits at once | [[timing]], [[circuits]] | verified |
+| [[R-025-piston-door-timing]] | A repeater into the upper of two stacked pistons masks the lower one's quasi-connectivity; a quasi-connected hold through a moving head misses its off update until the head lands; a piston set down next to power extends one tick after landing | [[components]], [[circuits]] | verified (simulator) |
 
 ## Status
 

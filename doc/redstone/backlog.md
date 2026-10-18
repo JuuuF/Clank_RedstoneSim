@@ -33,6 +33,7 @@ with the record that answered it.
    - [x] R-017 wire update order: position-dependent races (Q6)
    - [x] R-023 instant piston wire: chains that collapse in one tick (Q11)
    - [x] R-024 analog carry lines: every carry of 4 bits at once (Q15)
+   - [x] R-025 piston timing in a door: masked quasi-connectivity, lost update through a moving head, landing check
 4. **Primitives** ([[circuits]])
    - [x] gates: NOT, OR, NOR, AND (torch, comparator), NAND
    - [x] XOR (balanced, crossing-free layout); XNOR = XOR + NOT
@@ -50,7 +51,7 @@ with the record that answered it.
    - [x] 4-bit DAC: binary to strength, balanced (`dac4`)
    - [x] 4x1 RAM from a literal crossbar (`ram4`)
    - [x] lookup table: hex 7-segment decoder and ADC (`seg7`, `adc4`)
-5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [ ] a 3x3 flush door (Q18; the 2x2 door is flush already).
+5. **Compositions:** [x] binary 4-to-16 decoder (`bin_decoder16`); [x] full adder and 4-bit ripple-carry adder (`full_adder`, `adder4`); [x] 4-bit counter; [x] 2x2 piston door; [x] monostable; [x] combination lock + door; [x] button-toggled door; [x] sequencer, crossing; [x] flying machine; [x] double piston extender; [x] item sorter; [x] timed door (worked requirement, [[workflow]]); [x] 3x3 flush door (`door_3x3`, Q18, R-025).
 
 ## Open questions
 
@@ -60,7 +61,7 @@ with the record that answered it.
 | Q14 | Glitch-free multi-input changes in the full adder: balance the CIN paths (S 6, COUT 4 ticks) with the A/B paths (8/8) without slowing the carry | adders feeding edge-triggered logic | later |
 | Q15 | A fast carry. **Found (R-024):** two analog wire lines with glass diodes give all carries of 4 bits 2 ticks after the injections. **Paused (2026-10-18):** the per-bit core works with levers (S at 10 ticks planned, `experiments/wip/fast_adder/02`, `03`); the input logic (not-A, not-B, NOR, notH delays) and the A, B, S wires do not yet fit the 3-wide periodic slice: the best router layouts leave 2-3 of 11 wires unrouted. Next ideas: inject K from the north through a torch block fed by two repeaters A', B' (no long X wire south); a negotiated-congestion router; or a wider slice by giving each bit 4 wires of line and splitting into 3-bit blocks. State and tools: `experiments/wip/fast_adder/README.md` | 32-bit arithmetic, ALUs | paused |
 | Q17 | Both edges instant: the instant wire carries only its rising edge (re-arming takes 3 ticks a stage). Two chains cannot be combined at the output without memory; a latch that switches in 0 ticks (0-tick piston moves, R-018) at the end could take a rising-edge chain and a falling-edge chain | instant signals that also end at once | later |
-| Q18 | A 3x3 flush door. The 8 outer blocks are easy (sides pulled sideways, top up, bottom down into the floor); the **center** must travel 2 cells, and plain sticky pistons cannot do it: a piston pulls only the block it touches, a pocket it pulls into is then blocked by that block (pull block 1 into a 2-deep pocket, pull the piston back, re-extend and pull again: the first block now sits between the piston and the center), and after the others have moved the center can only be reached by a head entering the doorway. Candidates: a slime or honey link (center and top move together; visible in the door), a block swapper below the floor (move the bottom block sideways out of the column, then a double extender pulls the center down 2), or a thick wall whose pockets turn (move a block out of the row before pulling the next) | the most requested big door | later |
+| Q21 | An input-safe and faster 3x3 door. `door_3x3` needs its input on ≥ 25 and off ≥ 7 ticks (a stone button sticks it). Idea: a lockout repeater between the input torch and the trunk, locked by two subtracting comparators (rear the input 28 ticks late, side the input: locked while an open runs; and the other way for a close); the side input must not be weaker than the rear, or the comparator leaks 1 and locks for good. Faster open (28 ticks now): the remaining waits are one tick each where a step waits for a landing on the 2-tick repeater grid; self-timed triggers (observers on W, A) could remove them | doors with buttons | later |
 | Q20 | A 7-segment lamp display for `seg7`: 7 lines into a digit of lamps (3 per segment; wires on top of lamps light them; adjacent segments' wires must not touch, cut steps with blocks); glitch-free outputs (latch the segments after the settle time) | showing numbers | next |
 
 ## Hypotheses waiting for a test
@@ -97,3 +98,4 @@ with the record that answered it.
 | Q11: yes for one edge: extended sticky pistons holding redstone blocks against each other's backs collapse in one tick (any length; 17 blocks a stage with wire); re-arming 3 ticks a stage | [[timing]], [[components]] | [[R-023-instant-piston-wire]] |
 | Q16: an instant-wire module: head pushes the first block away, stages joined by 14-wire lines, tail uncuts a wire step; 0 ticks on, 3·(stages + 2) off; failure cases short pulses and early re-triggers | [[circuits]] | `instant_wire` targets |
 | Q19: a 16-word lookup table: decoder16's lines as rows (nested corners), a tap crossbar as the OR plane; `seg7` (hex 7-segment decoder) and `adc4` (strength to bits) | [[circuits]] | `seg7`, `adc4` targets |
+| Q18: a 3x3 flush door: the center goes down two cells in two steps through a gap made by a third piston; B's hold and the final pull by quasi-connectivity through a floor block, W's asymmetric timing by a repeater lock | [[circuits]] | `door_3x3` targets, [[R-025-piston-door-timing]] |
