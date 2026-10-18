@@ -18,9 +18,26 @@ Worlds to open in the editor (`redsim FILE`) or inspect with `redsim-cli FILE â€
 | `05-north-deck-partial.redsim.json` | unfinished, not functional | second router attempt: the input logic (not-A, not-B, X = NOR(A,B), G_n, the delay repeaters for notH) on a deck above the XOR north of the lines; routed in physical coordinates with each wire tagged by its bit (the first router mixed up wires of neighbouring bits). NAB into the G block, part of X, S and A are routed; X to the K repeater, G_n, notH and B are not (the deck around z -3..-6 is too crowded for the greedy router) |
 | `06-north-deck-own-slice-partial.redsim.json` | unfinished, not functional | third layout: the G torch now hangs on the cap block above c3 inside its own slice (in 03-05 it hung on the next slice's corner, which crammed the G block, the NAB end and G_n into the column that also carries the notH line); S's start, the notH line along the H-torch blocks and their caps are placed by hand. 8 of 11 routes; NAB, A into the NOR block and notH still collide |
 | `07-round2-derived-nH.redsim.json` | works (162/162) | round 2 (2026-10-18): the H inputs need no logic of their own: a wire line over the G torch's and the X torch's above-blocks (each strongly powered while its torch is on) carries not-propagate = G or K, then a delay repeater and two descents into the H torch blocks. Per bit only nG (NAND) and nX (OR) remain as inputs (levers) |
+| `08-round2-back-logic-fails.redsim.json` | **fails** (89/288), kept on purpose | input logic for the even bits at the back (A, B into the X torch's block from two sides; not-A / not-B torches on blocks the A and B lines end in; nG over the core), odd bits on levers. The nG descent at the front touches the nH line (see below) |
 
 Try: `redsim-cli 03-relocated-injections.redsim.json check`, or
 `redsim-cli 03b-strong-levers-fail.redsim.json --dry-run -c "target sum load 101100110011000111:11101; run 16; waves @S0 @S1 @S2 @S3 ticks 0..16"`.
+
+## Round 2 (2026-10-18): what is left
+
+- **Solved:** the H inputs need no logic of their own (07): not-propagate = G or K is the OR of
+  the G torch's and the X torch's above-blocks, so one wire line over both carries it.
+- **The wall:** that line lies at y=7 in column x0+2 of every slice over z -8..4. At y=7 there,
+  every other column touches some slice's nH line, so no other net can change level inside
+  that range. nG must reach the G torch's block from its north side (x0+3,5,-2), in the
+  crowded front region where the nH descents of the next slice also run (08 fails exactly
+  there).
+- **Ideas not tried yet:** (1) tap G and K at y=5 instead (a wire north of the G torch, one east
+  of the X torch, both are powered by the torch), with glass above the torches, which frees
+  y=6..7 over the core; (2) join the two H targets at y=4 (they are one net), which frees the
+  front at y=5..6; (3) feed the G torch's block through a repeater from the north (+2 ticks
+  for all bits); (4) alternate the bits' input logic between the back and the front (each
+  side then has every other slice free); (5) a router with these rules.
 
 ## What the router taught me
 

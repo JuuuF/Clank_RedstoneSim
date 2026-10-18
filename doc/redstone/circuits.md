@@ -54,14 +54,16 @@ checks its contract (`tests/cli/test_research.py` runs them all), the world it b
 | one output per strength 0–15 (a counter or fill display, a selector) | [[#Signal-strength decoder]] |
 | turn 4 bits into a strength 0–15 | [[#4-bit DAC]] |
 | one output per 4-bit number (addresses, displays) | [[#Binary decoder]] |
-| a 4-bit number on a 7-segment display (the segment lines) | [[#Lookup table]] (`seg7`) |
+| a 4-bit number on a 7-segment display | the segment lines: [[#Lookup table]] (`seg7`); with a lamp digit: [[#7-segment display]] |
 | a strength as 4 bits; any function of 4 bits | [[#Lookup table]] (`adc4`, the generator) |
 | add binary numbers | [[#Full adder]] (one bit), [[#4-bit adder]] (copies chained) |
 | two signal paths must cross | [[#Crossing]] |
-| a signal far away with no delay (40+ blocks in 0 ticks) | [[#Instant wire]] |
+| a signal far away with no delay (40+ blocks in 0 ticks) | [[#Instant wire]] (rising edge); both edges: [[#Instant wire, both edges]] |
 | move a structure by itself | [[#Flying machine]] |
 | push a block two cells and pull it back | [[#Double piston extender]] |
 | sort items out of a hopper line | [[#Item sorter]] |
+| a door: 2x2 / 3x3 flush | [[#2x2 piston door]], [[#3x3 flush door]] (input-safe) |
+| a sequence that must not be interrupted by a fast-changing input | [[#Lockout]] in front of it (each level held at least D + 6 ticks) |
 
 ## Index
 
