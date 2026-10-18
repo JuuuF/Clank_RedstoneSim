@@ -11,7 +11,7 @@ links and maps (`redsim-cli … show`), and says what is verified.
 | [[3x3-piston-door-mumbo-jumbo]] | **yes** | double extender under the center; the spit made by pulling away the powering block ("power switch"); landing check |
 | [[3x3-piston-door-zhus]], [[3x3-piston-door-monchicarp]] | **yes** (below) | the same design built twice |
 | [[3x3-piston-door-rubik]] | facts | |
-| [[3x3-piston-door-sacredredstone]] | facts | the build has a comparator tick and two piston events pending at tick 0 |
+| [[3x3-piston-door-sacredredstone]] | **yes** | the whole door in one plane (48 blocks, the smallest); an observer-chain controller; a corner block blinks for 8 ticks because a lamp flickers within a tick (R-028, game EXP-075/076). The build has a comparator tick and two piston events pending at tick 0 |
 | [[3x3-spiral-piston-door-purplers]] | facts | |
 | [[3x3-spiral-vault-door-lutal]] | facts | 9 extra output cells (the spiral) |
 | [[3x3-seamless-glass-door-nile]] | facts | built closed; pending piston event at tick 0; orientation-dependent from tick 59 (still works), [[../symmetry]] |

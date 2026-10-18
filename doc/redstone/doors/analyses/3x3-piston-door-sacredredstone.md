@@ -4,7 +4,67 @@ World: `piston_doors/3x3 piston door by SacredRedstone.redsim.json` (not committ
 
 ## How it works
 
-(to be written)
+(Hand-written 2026-10-19 from the replay, `why` traces and the ablation;
+[[../robustness]], [[../metrics]].)
+
+**The whole door is one vertical plane.** Every piston, observer, repeater, lamp and
+door block is at x = 4, in the wall of the doorway; only the lever sticks out (x = 3).
+That is why it is the smallest door in the dataset: a 2 × 8 × 7 box, 48 blocks above
+the floor, and the trim finds no block whose removal changes nothing.
+
+**Open, the nine blocks form a ring around the doorway, in the same plane:** two above
+(y 9), two north (z −2), three south (z 2), two below (y 5). Closing moves each one cell
+in; the center column is filled from below. Most moves are 2-tick observer pulses into
+sticky pistons, which push and leave the block (spits, [[../patterns]]).
+
+Closing (lever on at 2; ticks of the doorway):
+
+| tick | what moves |
+|---|---|
+| 3 | the lever's block powers the two top pistons directly: the top-left block down; a two-piston stack lowers its second piston and pushes the top-center block down |
+| 8 | the two north blocks, pushed in by the pistons two cells out (z −3) |
+| 13 | the two upper south blocks |
+| 14 | the piston under the center (4 4 0) pushes the first lower block up one |
+| 18 | the lower south corner (4 6 1) |
+| 19–23 | the lowered top piston, powered by quasi-connectivity (a repeater powers the cell above it), pushes the top-center block down into the center and pulls it back. For ticks 21–22 its head is a door block: the doorway is first fully closed then |
+| 20 | the second lower block shifts under the center column (piston 4 5 2) |
+| 24 | the piston under the center pushes the column of two up: the center is filled; fully closed from 26 |
+| 30–38 | the lower south corner is pulled out and pushed back in (below) |
+
+Opening (lever off at 43) runs the stages back, with the same corner blink, and is
+done at 85.
+
+**The controller is a chain of observers.** 27 of the 39 extensions are powered by
+observers, directly or through a block (some by quasi-connectivity). The observers
+watch what earlier stages change (the bottom row's the center piston, the corner's a
+lamp), so a stage starts the next one 2 ticks later; four repeaters (delays 1–4) sit
+in the chain. The bottom row
+(y 4) is one such chain: observers at z −2, −1 and 1 around the center piston, all
+facing north.
+
+**The corner blink is a 0-tick lamp flicker.** The corner piston (4 6 3) is powered by
+an observer (4 5 3) that watches a redstone lamp (4 4 3). The lamp is lit through a
+wool block by the bottom chain's observer at 4 4 1, which pulses every time the center
+piston moves. One pulse ends at 22 and the next starts at 26: 4 ticks, exactly the
+lamp's turn-off delay. At tick
+26 the lamp's own scheduled turn-off (from 22) runs before the observer's new pulse
+(scheduled at 24) relights it: the lamp goes off and on within one tick. No frame
+shows it, but the corner observer sees two changes and fires (`why` from 4 5 3 at 28;
+the rule: [[../../records/R-028-lamp-flicker]]).
+Its piston pulls the corner block out at 28. The lamp's real turn-off at 36 fires the
+observer again and pushes the block back at 38. The door still ends right, but it is
+fully closed at 26–29, open at one corner for 8 ticks, and settled only at 40. The
+same happens in the opening (59, 69, 79). The game does the same: the whole door
+matches the simulator at every tick (EXP-075).
+
+Lessons:
+
+- A single-plane layout is the most compact way to build a 3x3 flush door: storage,
+  pistons and logic share the doorway's wall.
+- A lamp used as a pulse stretcher can flicker within a tick when two pulses come
+  exactly its delay apart. An observer on it sees the flicker, though no frame does.
+- "Fully closed" is not "done": Sacred's doorway is first full at tick 21 with a piston
+  head in it, and the door settles at 40 ([[../metrics]] reports both).
 
 <!-- generated -->
 

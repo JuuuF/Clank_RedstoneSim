@@ -1,0 +1,52 @@
+new size 16 force
+note "R-028: a redstone lamp whose power goes and comes back exactly 4 ticks later (its turn-off delay) turns off and on within one tick when the new power comes from an observer: the lamp's turn-off was scheduled first and runs first. No tick shows it, but an observer watching the lamp fires (SacredRedstone's 3x3 door, doc/redstone/doors/analyses). In each copy, observer O watches block X and powers lamp L; observer W watches L. X is set at 2 and changed again 6 ticks (a), 5 ticks (b) or 7 ticks (c) later; (d) the same gap as (a) with a repeater as L's power"
+# (a) X at 2 and 8: O pulses 4..5 and 10..11; L's turn-off (scheduled at 6 for 10) runs before O's turn-on (scheduled at 8 for 10)
+place 2 1 0 observer facing=west
+set 3 1 0 redstone_lamp
+place 3 1 1 observer facing=north
+label Xa 1 1 0
+label La 3 1 0
+label Wa 3 1 1
+# (b) X at 2 and 7: O is on again at 9, before L's turn-off at 10: L stays lit
+place 2 1 4 observer facing=west
+set 3 1 4 redstone_lamp
+place 3 1 5 observer facing=north
+label Lb 3 1 4
+label Wb 3 1 5
+# (c) X at 2 and 9: L is really off at 10, on again at 11
+place 2 1 8 observer facing=west
+set 3 1 8 redstone_lamp
+place 3 1 9 observer facing=north
+label Lc 3 1 8
+label Wc 3 1 9
+# (d) the same gap, but L is powered by a repeater (delay 1) that a redstone block at R
+# switches: on at 4, off at 6 (L's turn-off scheduled for 10), on again at 10. A repeater
+# schedules its ticks at a higher priority than the lamp: it runs first, L stays lit
+place 1 1 -4 repeater out=east
+set 2 1 -4 redstone_lamp
+place 2 1 -3 observer facing=north
+label Rd 0 1 -4
+label Ld 2 1 -4
+label Wd 2 1 -3
+settle
+target new flicker "(a) L is lit at every tick from 4 to 15, yet W fires three times (L on at 4, the flicker at 10, L off at 16); (b) L lit 4..14, W fires twice; (c) L is off for one tick at 10, W fires three times; (d) L stays lit, W fires only for L turning on"
+target flicker do at 2 set 1 1 0 stone
+target flicker do at 8 set 1 1 0 air
+target flicker do at 2 set 1 1 4 stone
+target flicker do at 7 set 1 1 4 air
+target flicker do at 2 set 1 1 8 stone
+target flicker do at 9 set 1 1 8 air
+target flicker do at 2 set 0 1 -4 redstone_block
+target flicker do at 4 set 0 1 -4 air
+target flicker do at 8 set 0 1 -4 redstone_block
+target flicker expect @La lit=true during 4..15
+target flicker expect @Wa powered=true during 6..7
+target flicker expect @Wa powered=false during 8..11
+target flicker expect @Wa powered=true during 12..13
+target flicker expect @Lb lit=true during 4..14
+target flicker expect @Wb powered=false during 8..15
+target flicker expect @Lc lit=false at 10
+target flicker expect @Wc powered=true during 12..13
+target flicker expect @Ld lit=true during 4..20
+target flicker expect @Wd powered=false during 8..20
+check

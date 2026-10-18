@@ -164,6 +164,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-025-piston-door-timing]] | A repeater into the upper of two stacked pistons masks the lower one's quasi-connectivity; a quasi-connected hold through a moving head misses its off update until the head lands; a piston set down next to power extends one tick after landing | [[components]], [[circuits]] | verified (game: EXP-059) |
 | [[R-026-moving-block-blocks-piston]] | A powered piston facing a moving block queues nothing and extends 1 tick after the block lands; a pulse that ends first is lost (the 5x5 guide's PF.1) | [[components]], [[doors/guide-5x5]] | verified |
 | [[R-027-double-extender-order]] | Two pistons powered in one tick run in update order; a double extender works rear-first and jams front-first (the vault lamp door's orientation dependence) | [[components]], [[doors/symmetry]] | verified |
+| [[R-028-lamp-flicker]] | A lamp re-powered by an observer exactly 4 ticks after losing power turns off and on within one tick; an observer on it fires (Sacred's corner blink); a repeater re-power does not flicker | [[components]], [[doors/analyses/3x3-piston-door-sacredredstone]] | verified |
 
 ## Status
 

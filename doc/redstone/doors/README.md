@@ -59,7 +59,7 @@ The mission's deliverables (2026-10-19):
 | # | Deliverable | Where | State |
 |---|---|---|---|
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
-| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanation for Mumbo Jumbo's 3x3 and the Zhus / monchiCARP pair |
+| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanation for Mumbo Jumbo's 3x3, the Zhus / monchiCARP pair and SacredRedstone's 3x3 |
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19 |
 | 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, design principles |

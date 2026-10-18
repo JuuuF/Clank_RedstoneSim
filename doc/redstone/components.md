@@ -10,6 +10,10 @@ Evidence labels: [[redstone/README#Scope and trust]].
 - Reads: power from any side (a powered block, wire pointing into it or under it, any
   adjacent source). V [[R-002-what-powers-a-block]]
 - Timing: on at once, off 4 ticks after its power goes. V [[R-001-response-times]]
+- **Re-powered exactly 4 ticks later by an observer** (or another normal-priority tick),
+  it turns off and on within one tick: its turn-off was scheduled first and runs first.
+  No tick shows it, but an observer watching the lamp fires. A repeater's re-power at
+  that tick runs first (higher priority): no flicker. V [[R-028-lamp-flicker]]
 - Gives: nothing (not a source; it does not conduct power). S
 
 ## Redstone wire
