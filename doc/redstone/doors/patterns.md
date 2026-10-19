@@ -185,3 +185,21 @@ do not open fully, see [[inventory]]).
    piston toggles with 2-tick pulses (push and leave, then pull back). A press while the
    button is still down (20 ticks for stone, 30 for wood) does nothing, so a button door
    is safe for that long and only then can be jammed. **V** (two button doors)
+10. **Edge-pulse toggles do not self-correct.** A piston that gets the same short pulse
+    on both lever edges spits its block in when the cell is empty and pulls it out when
+    it is full: it has no absolute position. A lost pulse (a too-short gap) inverts the
+    block for good: every later cycle pulls it out on closing and pushes it in on
+    opening (Sacred's and Sydney600mc's doors, Rubik's, pal1_'s). Level-driven pistons,
+    held while a line is on, come back after one more input (Mumbo Jumbo's door,
+    Purplers' vault lamp, sliding door and staircase). A second deliberately short cycle
+    re-syncs a toggle door (Sacred, Rubik), not a column that has accumulated blocks
+    (pal1_, Sydney600mc). **V** (jam and repair sweeps, [[robustness]])
+11. **The safe gap is one event pair.** Per door, one first-sequence move and one
+    second-sequence action set the minimum gap: a push that must land before the second
+    flip's cut (a drop spits the block: Mumbo Jumbo, Purplers' vault lamp, Zhus /
+    monchiCARP, Lutal), a short pulse that must still be on one tick after a lowered or
+    carried piston lands (R-026: Rubik, pal1_, Sydney600mc, Purplers' spiral), or a tail
+    event / veto block the second sequence runs into (Nile's seamless, Sacred, Kwipla,
+    ashevoy, the staircase). The no-overlap gap waits for the last move of all; the safe
+    gap waits only for the move the second sequence touches. **V** (`inputs --explain`,
+    16 doors, [[robustness]])
