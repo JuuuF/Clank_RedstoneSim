@@ -77,3 +77,50 @@ The trade-off is the one [[patterns]] names: Mumbo Jumbo's controller is compact
 fast but trusts its user to wait; `door_3x3` spends ticks and blocks on a lockout that
 makes every input timing safe. A lockout in front of Mumbo Jumbo's mechanism, built to
 its 14-pulse contract ([[mechanism]]), would combine both (backlog D6).
+
+## A lockout in front of a dataset door (D6, 2026-10-19)
+
+Mumbo Jumbo's 3x3 ([[analyses/3x3-piston-door-mumbo-jumbo]]) jams at every gap 2–9
+between its two lever flips ([[robustness]]: safe gap 10, no-overlap gap 10). The
+library's [[../circuits#Lockout]] was put between its lever and its controller, on a copy
+in `.sandbox/doors/explain/3x3-piston-door-mumbo-jumbo/lockout/` (a third-party design:
+`lockout.redsim.json`, `build.cli.txt`, `lab.py`; never committed):
+
+- **Where.** The wall lever at 3 2 −1 powered the wool block 4 2 −1, which the repeater
+  4 2 −2 and the wire 4 3 −1 read. The lever is replaced by the lockout's output
+  repeater (facing east, into that block): the module `examples/circuits/lockout.cli.txt`
+  translated by (−4, 1, −5) so that its OUT (7 1 4) lands on 3 2 −1, one layer at y = 2
+  over x −4..3, z −5..1, with a stone under each of its 28 components (the door's floor
+  ends at x = 4). The lever moves to −5 2 −1 (on the floor, west of the lockout's input
+  wire A at −4 2 −1) and the timeline's two flips use it; the input section too.
+- **Hold.** The six lock repeaters at delay 1: D = 6, each output level held at least
+  D + 6 = 12 ticks ≥ the door's no-overlap gap 10. (The library default D = 24 would
+  hold 30 and cost 18 ticks more per cycle for nothing.)
+- **The door is unchanged.** Piston events and doorway frames are those of the original
+  6 ticks later (the lockout's latency), except the first move of each half, which
+  comes 5 ticks later: the repeater output changes within a tick, a lever between two
+  (EXP-074), so the center piston's spit is at 7–9 instead of 2–3, and P1's pull at 19
+  instead of 14; the spit still happens (push at 7, dropped at 9). Closed 16 ticks after
+  the lever instead of 10, open 30 instead of 24; markers moved to 18 and 46.
+- **Input safety.** `inputs.run` over gaps 1–70, with `recover` and `repeat`:
+
+  | | sweep (gap 1 first) | recovery | two cycles |
+  |---|---|---|---|
+  | original | `#........####…` (clean from 10) | `#1wwww111###…` | same |
+  | with the lockout | `######…` (clean from 1) | `######…` | same |
+
+  Every gap is clean: a second flip within the hold is applied when the hold ends, so
+  the controller never sees a level shorter than 12 ticks.
+- **Cost.** 87 → 144 blocks above the floor (+57: the module's 29 blocks, 28 floor
+  stones, the lever's stone, minus the old lever), box 3×9×7 (189) → 11×9×7 (693); +6
+  ticks each way. The floor stones are the price of a one-layer module next to a door
+  whose floor stops at its wall; inside a wall or under the floor they would be free.
+- **Game check.** EXP-077: the designed cycle followed by a close at 80 and an open 5
+  ticks later (a gap that jams the original), run whole on the 26.3 server with
+  `run_world` (the floor lever's stand-in checked exact first): **match** at every tick
+  of 170 (261 blocks, 144 watched; [[../../experiments/index]]). The lockout's hold and
+  the door behind it behave in the game as the simulator says.
+
+What the demonstration adds to [[mechanism]]'s contract: the contract says what pulses
+the mechanism needs; the input sweep says what gap the controller needs; the lockout's
+hold is set from the second number, and the door's own controller is kept as it is.

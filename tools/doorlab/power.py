@@ -95,6 +95,7 @@ class Read:
     alt: int  #: the best signal the asker gets from its other inputs at that moment
     context: str = ""  #: update (a neighbor update), event (a piston's block event), tick
     extended: bool = False  #: a piston asker that is extended at the read
+    sources: tuple[Pos, ...] = ()  #: for a conductor target: the neighbors giving it signal
 
     @property
     def decisive(self) -> bool:
@@ -126,6 +127,7 @@ class Read:
             "decisive": self.decisive,
             "context": self.context,
             "extended": self.extended,
+            "sources": [list(p) for p in self.sources],
         }
 
 
@@ -226,6 +228,12 @@ def trace_reads(document: Any, end_tick: int | None = None) -> list[Read]:
             asker, kind, context = asker_of(level, pos)
             alt = alternatives(level, asker, kind, pos)
             asker_state = level.get_block_state(asker)
+            conductor = bool(state.is_redstone_conductor(level, pos))
+            sources: tuple[Pos, ...] = ()
+            if conductor:
+                sources = tuple(
+                    offset(pos, d) for d in ALL if level.get_direct_signal(offset(pos, d), d) > 0
+                )
             reads.append(
                 Read(
                     tick=tick_now[0],
@@ -234,11 +242,12 @@ def trace_reads(document: Any, end_tick: int | None = None) -> list[Read]:
                     target=pos,
                     origin=origin.get(pos, pos),
                     target_block=interactions.block_id(state),
-                    conductor=bool(state.is_redstone_conductor(level, pos)),
+                    conductor=conductor,
                     value=value,
                     alt=alt,
                     context=context,
                     extended=kind.startswith("piston") and bool(asker_state.get(EXTENDED)),
+                    sources=sources,
                 )
             )
         finally:
@@ -261,6 +270,89 @@ def trace_reads(document: Any, end_tick: int | None = None) -> list[Read]:
     finally:
         Level.signal_probe = previous
     return reads
+
+
+def mechanism_pistons(path: Any) -> set[Pos]:
+    """The pistons that move door blocks or other pistons (roles door and stack)."""
+    from tools.doorlab import analysis
+
+    a = analysis.analyze(path)
+    return {tuple(p["pos"]) for p in a["pistons"] if p["role"] in ("door", "stack")}
+
+
+def read_graph(
+    reads: list[Read], level: Level | None = None, rec: replay.Recording | None = None
+) -> dict[Pos, set[Pos]]:
+    """Who feeds whom, time collapsed: a conductor's sources feed it, a read target feeds
+    its asker (a quasi-connectivity asker is the piston itself). Positions are the cells
+    read, so a moved block's cells are separate nodes. With the build (``level``) and the
+    run (``rec``), the links that are not signal reads are added: wire to wire (the
+    incoming-wire rule), the cell an observer watches to the observer, a comparator's
+    side inputs and the container it measures, and a piston to every cell it moved a
+    block from or to."""
+    from redsim.world.blocks.diode import facing as diode_facing
+    from redsim.world.properties import FACING
+
+    graph: dict[Pos, set[Pos]] = {}
+
+    def link(a: Pos, b: Pos) -> None:
+        graph.setdefault(a, set()).add(b)
+
+    for r in reads:
+        link(r.target, r.asker)
+        for src in r.sources:
+            link(src, r.target)
+    if level is not None:
+        for pos, state in list(level.blocks.items()):
+            name = interactions.block_id(state)
+            if name == "redstone_wire":
+                above_conducts = level.get_block_state(above(pos)).is_redstone_conductor(
+                    level, above(pos)
+                )
+                for h in HORIZONTAL:
+                    n = offset(pos, h)
+                    ns = level.get_block_state(n)
+                    if interactions.block_id(ns) == "redstone_wire":
+                        link(n, pos)
+                    elif ns.is_redstone_conductor(level, n):
+                        if (
+                            not above_conducts
+                            and interactions.block_id(level.get_block_state(above(n)))
+                            == "redstone_wire"
+                        ):
+                            link(above(n), pos)
+                    elif interactions.block_id(level.get_block_state(below(n))) == "redstone_wire":
+                        link(below(n), pos)
+            elif name == "observer":
+                link(offset(pos, state.get(FACING)), pos)
+            elif name == "comparator":
+                front = diode_facing(state)
+                for side in (front.clockwise(), front.counter_clockwise()):
+                    link(offset(pos, side), pos)
+                behind = offset(pos, front)
+                link(behind, pos)
+                link(offset(behind, front), pos)  # a container measured through a block
+    if rec is not None:
+        for event in rec.events:
+            for m in event.moved:
+                link(event.piston, m.origin)
+                link(event.piston, m.dest)
+    return graph
+
+
+def reaches(graph: dict[Pos, set[Pos]], start: set[Pos], sinks: set[Pos]) -> bool:
+    """Is some sink reachable from the start cells along the read graph?"""
+    seen = set(start)
+    todo = list(start)
+    while todo:
+        p = todo.pop()
+        if p in sinks:
+            return True
+        for q in graph.get(p, ()):
+            if q not in seen:
+                seen.add(q)
+                todo.append(q)
+    return False
 
 
 def cells_of(rec: replay.Recording, pos: Pos) -> list[Pos]:
@@ -504,6 +596,8 @@ def predict(path: Any, positions: list[Pos]) -> dict[Pos, str]:
     rec = replay.record(doc)
     reads = trace_reads(doc)
     doc.seek_tick(0)
+    graph = read_graph(reads, doc.level, rec)
+    sinks = mechanism_pistons(path)
     queued: dict[Pos, list[int]] = {}
     for r in reads:
         if r.queues and r.conductor:
@@ -516,6 +610,9 @@ def predict(path: Any, positions: list[Pos]) -> dict[Pos, str]:
             parts.append(role)
         if p in queued:
             parts.append("queues @" + _runs(sorted(set(queued[p]))))
+        if parts:
+            cells = set(cells_of(rec, p))
+            parts.append("reaches mechanism" if reaches(graph, cells, sinks) else "dead end")
         parts += [
             r for r in structural_roles(doc.level, rec, p) if r in ("stopper", "support", "falling")
         ]
@@ -527,7 +624,7 @@ def verdict(role: str) -> str:
     """The predicted class: ``read`` (some reader's input changes), ``stopper``,
     ``support`` or ``none``."""
     if "@" in role:
-        return "read"
+        return "read" if "reaches mechanism" in role else "dead end"
     for key in ("stopper", "support", "falling"):
         if key in role:
             return key
@@ -562,7 +659,9 @@ def main() -> None:
             if args.list:
                 for p in cells:
                     res = glass[p]
-                    wrong = (verdict(role_of[p]) != "none") != (_outcome(res) != "inert")
+                    wrong = (verdict(role_of[p]) in ("read", "stopper", "support", "falling")) != (
+                        _outcome(res) == "breaks"
+                    )
                     mark = "  <-- wrong" if wrong else ""
                     print(f"  {p[0]} {p[1]} {p[2]}: {role_of[p]} -> {res}{mark}")
             if args.reads:
@@ -601,7 +700,7 @@ def _table(score: Counter[tuple[str, str]]) -> str:
     """Per predicted class: how many variants broke the door, changed only other blocks
     (internal) or changed nothing (inert)."""
     parts = []
-    for key in ("read", "stopper", "support", "falling", "none"):
+    for key in ("read", "dead end", "stopper", "support", "falling", "none"):
         n = sum(v for (k, _), v in score.items() if k == key)
         if n:
             parts.append(

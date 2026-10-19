@@ -191,6 +191,21 @@ first differing tick, taught a rule:
   sand block that falls (Nile's vault); a part that could not stand on glass (none in the
   corpus, checked with `can_survive`).
 
-Open (D12, next step): the reach from a reader whose input changed to a mechanism piston,
-to turn "changes something" into "breaks the door"; the same probe can answer the input
-question of [[robustness]] (which first-sequence reads the second input cuts).
+**The reach (D13, first step, 2026-10-19).** `power.read_graph` joins the reads into a
+time-collapsed graph (a conductor's sources feed it, a read target feeds its asker, wire
+feeds wire by the incoming-wire rule, a watched cell feeds its observer, a comparator's
+sides and the container it measures feed it, a piston feeds every cell it moved a block
+from or to), and `predict` asks whether a block whose readers change can reach a
+mechanism piston (roles door and stack) along it:
+
+| layer 2 says | variants | break the door | change other blocks only | change nothing |
+|---|---|---|---|---|
+| readers change and the change reaches the mechanism | 280 | 236 | 36 | 8 |
+| readers change, dead end | 67 | 44 | 23 | 0 |
+
+So the signal graph explains most of it, and not all: 44 dead ends still break. What the
+graph does not hold are **update links**: a block that changes next to a quasi-connected
+piston (a note block that turns on, a landing block, a retracting head) delivers the
+update that makes the piston read power it already had. Those are the next relation to
+add (the probe's ``context`` says which reads happened in a neighbor update; the trace
+knows the update's source). Until then "reaches the mechanism" is a hint, not a verdict.

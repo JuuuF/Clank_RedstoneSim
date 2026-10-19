@@ -277,7 +277,8 @@ them. `--repair --gap G` then tries every second-cycle gap 1–40.
   4 5 0 / 4 5 1 were pushed up the center column and the later cycles push more in
   (4 7 0, 4 6 0): an **accumulation**. Repair: a second cycle with gap 4 or 5 (the same
   jam again) brings the whole build back: the toggles miss a pulse once more and are in
-  phase again.
+  phase again. **Game-verified**: the jam timeline (lever at 2, 7, 127, 247) run whole
+  on the 26.3 server matches the simulator at every one of its 370 ticks (EXP-078).
 - **pal1, gap 6** (2 gold blocks off): both center blocks end up the column (5 6 −3,
   5 5 −3): the jammed cycle missed the stack's push at 13 and the pulls at 54 / 64; the
   later cycles pull them one cell and push them back up. No second-cycle gap 1–40 repairs.
