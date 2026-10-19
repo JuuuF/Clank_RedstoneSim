@@ -38,6 +38,12 @@ The habits that matter most:
 - Repeaters, comparators and observers face their input: write **`out=DIRECTION`**.
 - Leave a `note` saying what you built and what is left.
 
+**The owner's working rules** (game parity, docs as memory, git, quota, the server,
+`data/` and third-party designs, and which brief belongs to which work) are in
+**[doc/agents/README.md](doc/agents/README.md)**: read it before any longer task. The
+research brief is the root `PROMPT.md`; the piston-door brief is
+[doc/redstone/doors/mission.md](doc/redstone/doors/mission.md).
+
 Working on the simulator's code instead: start at [doc/README.md](doc/README.md); the
 CLI's own code is explained in [doc/cli-internals.md](doc/cli-internals.md). Every change
 to simulated behavior must match the game exactly (ported from the decompiled source,

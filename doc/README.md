@@ -19,6 +19,7 @@ example world: [[tour]].
 
 ## Navigation
 
+- **Working rules for agents (start here before a longer task):** [[agents/README]]
 - **Command line (agents and people):** [[cli]] · [[cli-reference]] · [[cli-internals]]
 - **Redstone engineering knowledge base** (how redstone behaves and how to build with it,
   from experiments): [[redstone/README]] · [[cheatsheet]] · [[timing]] · [[signals]] · [[components]] ·
@@ -68,6 +69,7 @@ example world: [[tour]].
   [[ui-direction]]); replaces the first Minecraft-style fly controls.
 - Wiki pages are hints; the source and the game are proof (ADR-011).
 - Docs are the project's long-term memory (ADR-012).
+- All standing instructions, with their dates and reasons: [[agents/README]].
 
 ## Open questions for the owner
 

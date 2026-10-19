@@ -416,7 +416,7 @@ Do not declare a mechanic fully understood merely because one simple example wor
 
 ## 12. Immediate Instructions (continuing agents)
 
-Phase One (Section 3) is done; its results are written down. Do not re-inspect the whole repository. Resume:
+Phase One (Section 3) is done; its results are written down. Do not re-inspect the whole repository. The owner's standing rules for every agent (with dates and reasons) are in `doc/agents/README.md`. Resume:
 
 1. Read `doc/redstone/README.md` (index, evidence labels, experiment method, status) and `doc/redstone/backlog.md` (roadmap, open questions). Skim `doc/redstone/cheatsheet.md` (one page). Load the project skill `redsim-cli` (`.claude/skills/redsim-cli/SKILL.md`, 39 lines) instead of reading `doc/cli.md` in full.
 2. Run the smoke test: `~/anaconda3/envs/redsim/bin/python -m pytest tests/cli/test_research.py -q` (about 20 s; every experiment and circuit script must pass).

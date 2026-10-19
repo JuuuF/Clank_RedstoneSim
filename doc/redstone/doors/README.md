@@ -1,8 +1,9 @@
 # Piston doors: reverse-engineering the dataset
 
 The second research track of the knowledge base ([[../README]]): learning piston-door
-engineering from human designs. The mission is `data/redstone_learning/PROMPT.md` (not
-committed, like the worlds); this folder is where its results live. Minecraft Java 26.3.
+engineering from human designs. The mission is [[mission]] (the owner gave it as
+`data/redstone_learning/PROMPT.md`, not committed, like the worlds); this folder is
+where its results live. Working rules: [[../../agents/README]]. Minecraft Java 26.3.
 
 **The dataset** is `data/redstone_learning/`: 19 worlds (third-party designs imported by
 the owner, not committed) in four folders (`piston_doors`, `piston_doors_with_slime`,
@@ -16,6 +17,7 @@ read-only and experiments work on copies.
 
 | Page | What it holds |
 |---|---|
+| [[mission]] | The mission's brief (tracked copy of the owner's `data/redstone_learning/PROMPT.md`); section 13 is the status and handoff |
 | [[inventory]] | The catalog: every world, its creator, doorway, parts, timeline, replay summary (generated) |
 | [[guide-5x5]] | MYuen222's 5x5 guide: the engineering process (layout → sequence → powering → input → wiring), its vocabulary, its claims and their test status |
 | [[representation]] | The three layers (canonical world, interactions, knowledge) and how they are validated |
