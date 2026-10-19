@@ -61,9 +61,9 @@ The mission's deliverables (2026-10-19):
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
 | 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanation for Mumbo Jumbo's 3x3, the Zhus / monchiCARP pair and SacredRedstone's 3x3 |
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
-| 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19 |
-| 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, design principles |
-| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-074 |
+| 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19; layer 2 predicts the harmless glass replacements exactly (0 of 359 break) |
+| 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, 9 design principles (timing, slack, input safety, how doors jam) |
+| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation (remove, glass, delay, piston turns) and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-076 |
 | 7 | A demonstrated analysis / construction | [[demonstration]], [[metrics]] | the pipeline on `door_3x3`; trimmed builds (EXP-071); the optimization goals measured for all 20 builds, with the dominance per doorway size |
 | 8 | Roadmap | this section | — |
 
