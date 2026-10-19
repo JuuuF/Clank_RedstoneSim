@@ -174,7 +174,10 @@ do not open fully, see [[inventory]]).
    flips (9–38 ticks) and jams below it. Waiting until the first sequence's last
    block has landed before the second sequence's first push (the no-overlap gap) is
    always enough; most doors tolerate less, and the tolerance has to be measured. A
-   lockout makes any gap safe (`door_3x3`). **V** (input sweep, 17 doors)
+   lockout makes any gap safe (`door_3x3`; the library lockout in front of Mumbo Jumbo's
+   door, EXP-077). Nile's 5x5 vault has one built in: a piston head across the trigger's
+   path makes it ignore a flip for 12 ticks ([[analyses/5x5-vault-door-nile]]). **V**
+   (input sweep, 17 doors)
 8. **How a door jams.** At the shortest bad gap, the second input either loses
    extensions (their power is gone when the event runs), pushes into a piston that is
    still extended, or only changes the order of events. A jam that lasts is door

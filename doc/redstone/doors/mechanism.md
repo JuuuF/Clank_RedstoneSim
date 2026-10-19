@@ -84,9 +84,10 @@ re-run; the rows that did not change still differ for the reasons below.
 
 Some doors with such ticks still come out identical (Kwipla, Lutal): there the two
 pistons do not interact. The doors that differ without one fail for reasons of the
-simple split: in the sliding 4x4 and Nile's vault 5x5 the redstone blocks that ride in the
-slime assemblies are kept now, and the doors still differ from ticks 5 and 8: their
-first strokes depend on the order of extensions inside a tick (Purplers' sliding door
+simple split: in the sliding 4x4 the redstone blocks that ride in the slime assemblies are kept now
+(in Nile's vault none rides: its path-clearing helper pistons are classed as controller,
+[[analyses/5x5-vault-door-nile]]), and the two doors still differ from ticks 5 and 8:
+the sliding door's first strokes depend on the order of extensions inside a tick (Purplers' sliding door
 pushes two front skins with plain pistons earlier in the same tick's queue so that the
 cores count 11 blocks, [[analyses/4x4-sliding-piston-door-purplers]]), which editor
 pulses, queued in position order, do not reproduce: the contract needs an

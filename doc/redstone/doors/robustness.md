@@ -251,15 +251,15 @@ second), with what it ran into. The binding constraint per door (ticks after the
 | Kwipla | 25 | the stack 1 6 1 returns two ticks earlier (the observer clock moves in 2-tick steps) and lands in the same tick as the inner pulls 0 6 −1 / 0 6 0 / 0 5 0 | the inner pulls at flip2+9 must precede the stack's return | same-tick order |
 | Ashevoy | 38 | the chain push 0 18 −2 at flip2+4 moves other blocks than at the safe gap | the first sequence's last landing at flip1+41 | tail landing |
 | staircase | 10 | the lane-0 lifter 0 2 0 is cut at flip2+16 while its push (flip1+23, landing +25) is landing: a drop spits the sandstone at 0 4 0 (the tool's first odd event, the step piston −2 3 −2 at flip2+2, is harmless: it pre-empts a stair push and that lane ends clean; corrected from the staircase's page) | the last lift's landing at flip1+25 | push dropped |
-| Nile's vault | 13 | no piston event differs: the leftover is a controller state (one block off, the doorway works) | — | controller state |
+| Nile's vault | 13 | no event of the second sequence runs at all: a piston head stands across the trigger's path from 4 to 14 (held by two observers, then a delay-3 repeater), so a flip at gaps 1–12 is ignored, the door stays closed and the next flip opens it (the lever's state is then inverted: the "block off" of the sweep). A **built-in input lockout**, found on the door's page ([[analyses/5x5-vault-door-nile]]); the tool's event matching saw only the events that happen | the trigger path cleared at flip1+13 | built-in lockout |
 
 So the "real input contract" is one pair of events per door: in 6 doors the second flip's
 power cut reaches a piston whose push has not landed (a drop spits the block: the cut
 must come at landing + 1 or later); in 4 the opening's short pulse must still be on one
 tick after a lowered or carried piston lands (R-026: a piston that lands next to power
 acts one tick after landing); in the others a tail event of the first sequence (a tidy
-pull, a landing, a stack's return) must precede the second sequence's first move. The
-no-overlap gap is an upper bound because it waits for the last move of all; the safe
+pull, a landing, a stack's return) must precede the second sequence's first move; Nile's
+vault ignores early flips outright with a built-in lockout. The no-overlap gap is an upper bound because it waits for the last move of all; the safe
 gap waits only for the move the second sequence touches. The tool's "first odd event"
 is a lead, not the verdict: in the staircase it is harmless and the binding event comes
 14 ticks later (found by reading the page's replay), so each row above was checked
