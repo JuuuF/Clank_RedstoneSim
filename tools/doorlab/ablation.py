@@ -6,7 +6,8 @@ with its own timeline:
 - ``remove``: the block becomes air (its block entity goes too);
 - ``glass``: a solid block that conducts becomes glass (same shape for pistons and
   light, but it carries no power), to find the blocks that carry signals;
-- ``delay``: a repeater gets each other delay (1-4).
+- ``delay``: a repeater gets each other delay (1-4);
+- ``turn`` (``--turn``, run on its own): a retracted piston gets each other facing.
 
 Each variant is classified against the original replay:
 
@@ -43,6 +44,7 @@ from typing import Any
 from redsim.core.direction import HORIZONTAL, Direction
 from redsim.core.pos import offset
 from redsim.world import blocks
+from redsim.world.properties import FACING
 from tools.doorlab import canonical, corpus, interactions, replay, transform
 
 Pos = tuple[int, int, int]
@@ -121,7 +123,25 @@ def _conducts(state: Any) -> bool:
     return bool(state.is_redstone_conductor(level, (0, 0, 0)))
 
 
-def run(path: Any, limit: int | None = None) -> dict[str, Any]:
+def turn_variants(canon: dict[str, Any], floor_y: int) -> list[tuple[str, Pos, str | None]]:
+    """Each retracted piston above the floor set to each of its other five facings."""
+    out: list[tuple[str, Pos, str | None]] = []
+    for x, y, z, state in canon["blocks"]:
+        if y <= floor_y or interactions.block_id(state) not in ("piston", "sticky_piston"):
+            continue
+        if "extended=true" in state:
+            continue
+        current = blocks.parse_state(state).get(FACING)
+        for d in Direction:
+            if d is not current:
+                out.append((f"turn {d.serialized}", (x, y, z), state.replace(
+                    f"facing={current.serialized}", f"facing={d.serialized}"
+                )))  # fmt: skip
+    return out
+
+
+def run(path: Any, limit: int | None = None, turns: bool = False) -> dict[str, Any]:
+    """Every variant (``turns``: only the piston turns) replayed and classified."""
     started = time.perf_counter()
     canon = canonical.from_file(path)
     floor_y = transform.floor_of(canon)
@@ -132,7 +152,7 @@ def run(path: Any, limit: int | None = None) -> dict[str, Any]:
     markers = {int(t): n for t, n in canon["annotations"].get("markers", {}).items()}
     states = {tuple(b[:3]): b[3] for b in canon["blocks"]}
     results = []
-    todo = variants_of(canon, floor_y)[:limit]
+    todo = (turn_variants if turns else variants_of)(canon, floor_y)[:limit]
     for kind, pos, state in todo:
         rec = replay.record(canonical.rebuild(_variant(canon, pos, state)))
         results.append(
@@ -264,6 +284,9 @@ def main() -> None:
     parser.add_argument(
         "--predict", action="store_true", help="with --out: score layer 2's glass roles"
     )
+    parser.add_argument(
+        "--turn", action="store_true", help="only the piston turns (written as SLUG-turn.json)"
+    )
     args = parser.parse_args()
     for name in args.worlds:
         path = corpus.find(name)
@@ -278,8 +301,13 @@ def main() -> None:
                 for k in ("powered", "cutter", "immovable", "none")
             ))  # fmt: skip
             continue
-        r = run(path)
+        r = run(path, turns=args.turn)
         print(f"{r['world']}: {r['variants']} variants in {r['seconds']}s: {r['totals']}")
+        if args.turn:
+            if args.out:
+                with open(f"{args.out}/{r['world']}-turn.json", "w") as handle:
+                    json.dump(r, handle, indent=1)
+            continue
         for key, counts in r["summary"].items():
             print(f"  {key}: {counts}")
         if args.trim:

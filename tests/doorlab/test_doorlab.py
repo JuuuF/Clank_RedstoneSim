@@ -207,6 +207,19 @@ def test_input_timing_and_repeat_2x2(tmp_path: Path) -> None:
     assert again["doorway_same"] and again["rest_same"]
 
 
+def test_ignored_button_presses() -> None:
+    # A second press while the button is still down is no input: those gaps are
+    # "ignored", not jams; clean gaps stay clean.
+    result = {"results": [{"gap": g, "result": r} for g, r in enumerate(
+        ["stuck", "clean", "stuck", "stuck", "clean"], start=1
+    )]}  # fmt: skip
+    inputs.label_ignored(result, 3)
+    assert [r["result"] for r in result["results"]] == [
+        "ignored", "clean", "stuck", "stuck", "clean"
+    ]  # fmt: skip
+    assert result["line"] == "-#..#"
+
+
 def test_ablation_and_trim_2x2(tmp_path: Path) -> None:
     path = _door_world(tmp_path)
     result = ablation.run(path)

@@ -165,6 +165,8 @@ do not open fully, see [[inventory]]).
    still extended, or only changes the order of events. A jam that lasts is door
    blocks left behind: the cut-short sequence never moves them back, and later cycles
    run around them ([[robustness]]). **V**
-9. **A button door's controller has its own state.** A too-early second press can put
-   it out of step with the door; one more press brings both back (Kwipla's 4x4). A
-   lever door's state follows the lever. **V** (one door)
+9. **A button door keeps its state in the mechanism, and a button ignores early
+   presses.** Kwipla's 4x4 remembers open / closed in a redstone block that a sticky
+   piston toggles with 2-tick pulses (push and leave, then pull back). A press while the
+   button is still down (20 ticks for stone, 30 for wood) does nothing, so a button door
+   is safe for that long and only then can be jammed. **V** (two button doors)

@@ -44,7 +44,7 @@ read-only and experiments work on copies.
 | `patterns` | 3 | the mechanism census ([[patterns]]) |
 | `inventory` | — | `python -m tools.doorlab.inventory`: writes `experiments/doors/inventory.json` and [[inventory]] |
 | `mechanism` | 3 | the mechanism / controller split, the contract, the stripped door ([[mechanism]]) |
-| `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` (keeps supports); `--predict`: layer 2's role of each glass variant against the result ([[robustness]], [[representation]]) |
+| `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` (keeps supports); `--turn` (piston facings); `--predict`: layer 2's role of each glass variant against the result ([[robustness]], [[representation]]) |
 | `inputs` | 3 | every gap between the two input flips; `--recover`: one more designed cycle after each gap that did not end clean; `--repeat`: the designed cycle twice ([[robustness]]) |
 | `metrics` | 3 | `python -m tools.doorlab.metrics`: the objectives per door and the dominance per doorway size; writes `experiments/doors/metrics.json` and [[metrics]] |
 
@@ -104,7 +104,7 @@ Open items (D-numbers are cited from the pages):
   evidence ([[robustness]]). Needs item entities, or a game run of the first cycle.
   `run_world` has no exact stand-in for its button yet: the button sits on a dropper,
   and observers watching the dropper see the stand-in's swap (EXP-074).
-- **D10** Lasting jams ([[robustness]]): after 79 of 272 too-short gaps the doorway stays
+- **D10** Lasting jams ([[robustness]]): after 79 of 224 too-short gaps the doorway stays
   wrong through one or two more inputs. Found so far: a few door blocks stay in wrong
   cells (Sacred 4, pal1 2, Sydney 12), because the second input cut the first sequence
   short, and no later cycle moves them back. Open: why exactly these blocks (which

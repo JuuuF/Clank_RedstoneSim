@@ -55,6 +55,30 @@ def _two_flips(canon: dict[str, Any]) -> bool:
     return len(actions) == 2 and actions[0]["pos"] == actions[1]["pos"]
 
 
+def press_ticks(canon: dict[str, Any]) -> int:
+    """How long the input stays on after a use if it is a button (0 for a lever): a
+    second use within that time does nothing (``ButtonBlock.useWithoutItem``)."""
+    from redsim.world import blocks
+    from redsim.world.blocks.attached import ButtonBlock
+
+    pos = tuple(canon["timeline"]["actions"][0]["pos"])
+    text = next((b[3] for b in canon["blocks"] if tuple(b[:3]) == pos), None)
+    block = blocks.parse_state(text).block if text else None
+    return block.ticks_to_stay_pressed if isinstance(block, ButtonBlock) else 0
+
+
+def label_ignored(result: dict[str, Any], press: int) -> dict[str, Any]:
+    """Mark the gaps at which the second use comes while the button is still pressed:
+    it is no input at all (``ignored``, ``-`` in the line), whatever the door does."""
+    for r in result["results"]:
+        if r["gap"] < press and r["result"] != "clean":
+            r["result"] = "ignored"
+    result["press_ticks"] = press
+    chars = {"clean": "#", "door ok": "+", "stuck": ".", "ignored": "-"}
+    result["line"] = "".join(chars[r["result"]] for r in result["results"])
+    return result
+
+
 def run(path: Any, max_gap: int = 40) -> dict[str, Any]:
     canon = canonical.from_file(path)
     actions = canon["timeline"]["actions"]
@@ -87,16 +111,21 @@ def run(path: Any, max_gap: int = 40) -> dict[str, Any]:
     stale = sorted(
         p for p in set(reference) | set(rec.start) if reference.get(p) != rec.start.get(p)
     )
-    return {
-        "world": corpus.parse_name(path).slug,
-        "designed_gap": designed,
-        "rest_differs_from_build": [
-            [*p, rec.start.get(p, replay.AIR), reference.get(p, replay.AIR)] for p in stale
-        ],
-        "clean_from": clean_from,
-        "results": results,
-        "line": "".join({"clean": "#", "door ok": "+", "stuck": "."}[r["result"]] for r in results),
-    }
+    return label_ignored(
+        {
+            "world": corpus.parse_name(path).slug,
+            "designed_gap": designed,
+            "rest_differs_from_build": [
+                [*p, rec.start.get(p, replay.AIR), reference.get(p, replay.AIR)] for p in stale
+            ],
+            "clean_from": clean_from,
+            "results": results,
+            "line": "".join(
+                {"clean": "#", "door ok": "+", "stuck": "."}[r["result"]] for r in results
+            ),
+        },
+        press_ticks(canon),
+    )
 
 
 def recover(path: Any, result: dict[str, Any]) -> dict[str, Any]:
@@ -109,8 +138,9 @@ def recover(path: Any, result: dict[str, Any]) -> dict[str, Any]:
     leave out of step with the door. It **works again** when the doorway is in a normal
     rest frame although some other block stays off. Adds ``recovers`` (1 or 2, the
     inputs needed, or None) and ``works_again`` to the gap's entry and
-    ``recover_line`` to ``result``: ``#`` clean, ``1`` / ``2`` recovers after that many
-    inputs, ``w`` works again, ``x`` the doorway is still wrong.
+    ``recover_line`` to ``result``: ``#`` clean, ``-`` ignored (a button still pressed),
+    ``1`` / ``2`` recovers after that many inputs, ``w`` works again, ``x`` the doorway
+    is still wrong.
     """
     canon = canonical.from_file(path)
     actions = canon["timeline"]["actions"]
@@ -130,7 +160,7 @@ def recover(path: Any, result: dict[str, Any]) -> dict[str, Any]:
     normal = [_final(rec) for rec in normal_runs]
     frames = {replay.frames(rec, cells)[-1] for rec in normal_runs}
     for r in result["results"]:
-        if r["result"] == "clean":
+        if r["result"] in ("clean", "ignored"):
             continue
         r["recovers"], r["works_again"] = None, False
         bad = [start, start + r["gap"]]
@@ -143,6 +173,8 @@ def recover(path: Any, result: dict[str, Any]) -> dict[str, Any]:
     result["recover_line"] = "".join(
         "#"
         if r["result"] == "clean"
+        else "-"
+        if r["result"] == "ignored"
         else str(r["recovers"])
         if r["recovers"]
         else "w"
