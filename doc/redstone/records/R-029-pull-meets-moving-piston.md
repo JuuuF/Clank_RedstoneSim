@@ -40,10 +40,11 @@
   and leaves the block; the pull one tick after the landing takes it. With R-026 (a
   push into a moving block is refused until it lands): **a moving block is untouchable
   for pistons in both directions**, and a stack that fetches a rider must wait for the
-  rider's own motion to end: push at t, the rider's retraction 21–23 here, the fetch at
-  25 = landing + 2 (the pull one tick after the landing tick: at 24 the base is set back
-  at the end of the entity's last tick and a pull queued at 24 runs after it; measured
-  here only at 22 (fails) and 25 (works); 23 and 24 are the boundary to measure next).
+  rider's own motion to end: the rider retracts at 21 and its base is a moving piston
+  through 23; a pull at 22 or 23 leaves it, a pull at 24 or 25 takes it (22 and 25
+  game-verified, 23 and 24 simulator only, same script with S's block removed at 22 /
+  23). So the first pull that works is at retraction + 3, the tick after the base is
+  back, exactly as R-026's push one tick after the landing.
 - **Where it matters:** Lutal's hub (delay 4 exact), Rubik's center (delay 3 breaks),
   Purplers' spiral (gap 11: the opening pulse lands inside the center piston's own
   retraction, [[../doors/robustness]] D11), the staircase's lifters.
