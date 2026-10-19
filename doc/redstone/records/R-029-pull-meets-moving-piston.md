@@ -34,16 +34,16 @@
 25  (b) S retracts: pulled R 5 3 0 -> 5 2 0
 ```
 
-- **Game check:** EXP-079: the whole world run on the 26.3 server with `run_world`
-  (recorded edits), 40 ticks, 4 watched blocks: **match**.
+- **Game check:** EXP-079 and EXP-080: both worlds run on the 26.3 server with
+  `run_world` (recorded edits), 40 ticks, 4 watched blocks each: **match**.
 - **Conclusion:** a sticky piston's pull that meets a block still moving pulls nothing
   and leaves the block; the pull one tick after the landing takes it. With R-026 (a
   push into a moving block is refused until it lands): **a moving block is untouchable
   for pistons in both directions**, and a stack that fetches a rider must wait for the
   rider's own motion to end: the rider retracts at 21 and its base is a moving piston
-  through 23; a pull at 22 or 23 leaves it, a pull at 24 or 25 takes it (22 and 25
-  game-verified, 23 and 24 simulator only, same script with S's block removed at 22 /
-  23). So the first pull that works is at retraction + 3, the tick after the base is
+  through 23; a pull at 22 or 23 leaves it, a pull at 24 or 25 takes it (all four
+  game-verified: EXP-079 for 22 / 25, EXP-080 for 23 / 24, the same script with S's
+  block removed at 22 / 23, `experiments/redstone/R-029b-pull-boundary.redsim.json`). So the first pull that works is at retraction + 3, the tick after the base is
   back, exactly as R-026's push one tick after the landing.
 - **Where it matters:** Lutal's hub (delay 4 exact), Rubik's center (delay 3 breaks),
   Purplers' spiral (gap 11: the opening pulse lands inside the center piston's own
