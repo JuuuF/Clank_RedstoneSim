@@ -32,13 +32,13 @@ The 5x5 guide's process puts the **piston layout** first and the **wiring** last
 | `3x3-piston-door-sacredredstone` | 11 | 37 | 5 ticks | differs from 13 |
 | `3x3-spiral-piston-door-purplers` | 11 | 24 | 13 ticks | differs from 10 |
 | `3x4-piston-door-pal1` | 16 | 32 | 7 ticks | differs from 10 |
-| `3x3-flush-enchanting-table-door-purplers` | 27 | 98 | 6 ticks | differs from 3 |
+| `3x3-flush-enchanting-table-door-purplers` | 27 | 98 | 6 ticks | **identical** (since the carried blocks stay, below; was: differs from 3) |
 | `5x5-vault-door-nile` | 29 | 48 | 22, 24, 29 | differs from 8 |
-| `3x3-seamless-glass-door-nile` | 33 | 61 | none | differs from 10 |
+| `3x3-seamless-glass-door-nile` | 33 | 61 | none | differs from 40 (was 10) |
 | `5x5-vault-lamp-door-purplers` | 46 | 52 | none | differs from 23 |
 | `4x4-sliding-piston-door-purplers` | 12 | 12 | none | differs from 5 |
-| `1-wide-hidden-staircase-purplers` | 13 | 18 | none | differs from 13 |
-| `5x5-glass-piston-door-ashevoy` | 131 | 252 | 11 ticks | differs from 16 |
+| `1-wide-hidden-staircase-purplers` | 13 | 18 | none | **identical** (was: differs from 13) |
+| `5x5-glass-piston-door-ashevoy` | 131 | 252 | 11 ticks | differs from 68 (was 16) |
 | `7x7-piston-door-legden`, `8x8-…` | 129, 152 | 390, 348 | 36, 24 ticks | differ from 2 (the builds stop, EXP-068) |
 
 ### Mumbo Jumbo's contract
@@ -75,10 +75,22 @@ order, 2 2 −4 pushes the block up instead and the doorway runs differently fro
 contract is a pulse schedule plus a same-tick order**, and part of a controller's
 design is choosing components whose tick phase gives that order.
 
+**D4, first half (2026-10-19): the mechanism carries blocks.** `strip` now keeps every
+block a mechanism piston moves, whatever its role (`mechanism.carried`: the tokens moved
+by door and stack pistons, from the replay). That made the staircase and the
+enchanting-table door identical (their "door" pistons carry pistons and power parts) and
+moved the seamless door's divergence from tick 10 to tick 40, ashevoy's from 16 to 68. The table above is the
+re-run; the rows that did not change still differ for the reasons below.
+
 Some doors with such ticks still come out identical (Kwipla, Lutal): there the two
 pistons do not interact. The doors that differ without one fail for reasons of the
-simple split: in the sliding 4x4 and Nile's vault 5x5 the redstone blocks ride in the
-slime assemblies (they are mechanism, not controller); an editor pulse on a piston also
+simple split: in the sliding 4x4 and Nile's vault 5x5 the redstone blocks that ride in the
+slime assemblies are kept now, and the doors still differ from ticks 5 and 8: their
+first strokes depend on the order of extensions inside a tick (Purplers' sliding door
+pushes two front skins with plain pistons earlier in the same tick's queue so that the
+cores count 11 blocks, [[analyses/4x4-sliding-piston-door-purplers]]), which editor
+pulses, queued in position order, do not reproduce: the contract needs an
+extend-before-extend order too; an editor pulse on a piston also
 quasi-powers a piston directly below it (it powers the position the lower piston's
 quasi-connectivity asks from), which stacked mechanisms like Rubik's notice; the
 staircase's "door" pistons depend on pistons the split calls helpers. Backlog D4 has the

@@ -89,9 +89,12 @@ Open items (D-numbers are cited from the pages):
   piston's event runs, 24 and 6 because the push line holds a block that is still
   moving. The 7x7's first is at tick 75: the column pusher −4 2 −1 fires after two
   12-block pushes in the same tick moved blocks out of its column.
-- **D4** Mechanism split refinements ([[mechanism]]): slime-carried redstone blocks
-  belong to the mechanism; stacked pistons need side power (an editor pulse also
-  quasi-powers the piston below); then a same-tick order in the contract.
+- **D4** Mechanism split refinements ([[mechanism]]): first half done 2026-10-19 (the
+  stripped door keeps every block a mechanism piston carries: the staircase and the
+  enchanting-table door now replay identically, the seamless door diverges at 40 instead
+  of 10). Open: a same-tick order of extensions in the contract (the sliding door's
+  front skins before its cores), and side power for stacked pistons (an editor pulse
+  also quasi-powers the piston below).
 - **D5** Guide claims G6, G7 ([[guide-5x5]]): build and measure them (G4 is R-015, verified).
 - **D6** Input safety ([[robustness]]): every dataset door jams on a too-short gap
   between the flips (Mumbo Jumbo: gaps 2–9; after 3–6 one or two more flips leave

@@ -104,14 +104,35 @@ def order_constraints(a: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
-def strip(canon: dict[str, Any], a: dict[str, Any], pulses: list[dict[str, Any]]) -> dict[str, Any]:
-    """The build without its controller, driven by the contract's pulses."""
+def carried(canon: dict[str, Any], a: dict[str, Any]) -> set[Pos]:
+    """The built cells of every block a mechanism piston moves (D4): a redstone block
+    riding in a slime assembly is part of the mechanism, whatever its role."""
+    rec = replay.record(canonical.rebuild(canon))
+    mechanism = {tuple(p["pos"]) for p in a["pistons"] if p["role"] in MECHANISM_ROLES}
+    tokens, moved_by = analysis.track(rec)
+    out: set[Pos] = set()
+    for index, ids in moved_by.items():
+        if rec.events[index].piston in mechanism:
+            out |= {tokens[i].start for i in ids}
+    return out
+
+
+def strip(
+    canon: dict[str, Any],
+    a: dict[str, Any],
+    pulses: list[dict[str, Any]],
+    keep: set[Pos] | frozenset[Pos] = frozenset(),
+) -> dict[str, Any]:
+    """The build without its controller, driven by the contract's pulses. ``keep``: cells
+    that stay whatever their role (the blocks the mechanism carries, ``carried``)."""
     out = copy.deepcopy(canon)
     keep_pistons = {tuple(p["pos"]) for p in a["pistons"] if p["role"] in MECHANISM_ROLES}
     drop: set[Pos] = set()
     for x, y, z, state in out["blocks"]:
         pos = (x, y, z)
         role = interactions.role(state)
+        if pos in keep:
+            continue
         if role in CONTROLLER_ROLES:
             drop.add(pos)
         elif role == "piston" and pos not in keep_pistons:
@@ -170,7 +191,7 @@ def check(path: Any) -> dict[str, Any]:
     canon = canonical.from_file(path)
     a = analysis.analyze(path)
     pulses = extract(a)
-    stripped = strip(canon, a, pulses)
+    stripped = strip(canon, a, pulses, carried(canon, a))
     rec = replay.record(canonical.rebuild(stripped))
     cells = [tuple(c) for c in a["doorway"]["cells"]]
     frames = replay.frames(rec, cells)
