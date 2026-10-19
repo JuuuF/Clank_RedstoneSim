@@ -14,6 +14,7 @@ Evidence labels: [[redstone/README#Scope and trust]].
   it turns off and on within one tick: its turn-off was scheduled first and runs first.
   No tick shows it, but an observer watching the lamp fires. A repeater's re-power at
   that tick runs first (higher priority): no flicker. V [[R-028-lamp-flicker]]
+- A sticky piston's pull that meets a block still moving (a riding piston retracting, a block in flight) pulls nothing and leaves the block where it is; a pull one tick after the landing takes it. Stack delays that fetch a rider are exact because of this (Lutal's hub, Rubik's center). V [[R-029-pull-meets-moving-piston]]
 - Gives: nothing (not a source; it does not conduct power). S
 
 ## Redstone wire

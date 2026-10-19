@@ -65,7 +65,7 @@ The mission's deliverables (2026-10-19):
 | # | Deliverable | Where | State |
 |---|---|---|---|
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
-| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanations for 12: Mumbo Jumbo's, Zhus's / monchiCARP's, SacredRedstone's, Rubik's and Nile's seamless 3x3s, Purplers' spiral and Lutal's vault, Kwipla's and Sydney600mc's 4x4s, Purplers' sliding 4x4 and vault lamp door (2026-10-19) |
+| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanations (with one-change experiments in `.sandbox/doors/explain/`) for **all 19** (2026-10-19/20) |
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay`, `power` | done; lossless round trip and identical replay for all 19; layer 2 records who reads whose power and predicts the glass changes by a local counterfactual (281 of 282 breaking ones, "none" exact); the reach to the mechanism is a hint (D13) |
 | 5 | Pattern library with sources | [[patterns]], [[creators]] | 13 mechanisms with the worlds that use them, a per-world census, 11 design principles (timing, slack, input safety, how doors jam, edge-pulse toggles, the one-event-pair safe gap); the corpus by creator |

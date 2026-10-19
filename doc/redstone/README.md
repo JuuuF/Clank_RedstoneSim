@@ -165,6 +165,7 @@ Pitfalls found while doing this (also in [[cli]] section 13):
 | [[R-026-moving-block-blocks-piston]] | A powered piston facing a moving block queues nothing and extends 1 tick after the block lands; a pulse that ends first is lost (the 5x5 guide's PF.1) | [[components]], [[doors/guide-5x5]] | verified |
 | [[R-027-double-extender-order]] | Two pistons powered in one tick run in update order; a double extender works rear-first and jams front-first (the vault lamp door's orientation dependence) | [[components]], [[doors/symmetry]] | verified |
 | [[R-028-lamp-flicker]] | A lamp re-powered by an observer exactly 4 ticks after losing power turns off and on within one tick; an observer on it fires (Sacred's corner blink); a repeater re-power does not flicker | [[components]], [[doors/analyses/3x3-piston-door-sacredredstone]] | verified |
+| [[R-029-pull-meets-moving-piston]] | A sticky piston's pull that meets a block still moving (a riding piston that is retracting) pulls nothing and leaves it; one tick after the block lands the pull takes it (R-026 for pulls; Lutal's and Rubik's stack delays are exact for this reason) | [[components]] | verified |
 
 ## Status
 
