@@ -250,17 +250,20 @@ second), with what it ran into. The binding constraint per door (ticks after the
 | Sacred | 21 | the lever's second flip retracts the top piston 4 10 −1 at flip2+1 and, one tick early, pulls the center block up with it instead of leaving it | the lowered top piston's last pull-back at flip1+22 | tail event changes what is pulled |
 | Kwipla | 25 | the stack 1 6 1 returns two ticks earlier (the observer clock moves in 2-tick steps) and lands in the same tick as the inner pulls 0 6 −1 / 0 6 0 / 0 5 0 | the inner pulls at flip2+9 must precede the stack's return | same-tick order |
 | Ashevoy | 38 | the chain push 0 18 −2 at flip2+4 moves other blocks than at the safe gap | the first sequence's last landing at flip1+41 | tail landing |
-| staircase | 10 | the step piston −2 3 −2 at flip2+2 extends where it must be vetoed by a block in its way | the step placed at flip1+8..10 | a veto block must be in place |
+| staircase | 10 | the lane-0 lifter 0 2 0 is cut at flip2+16 while its push (flip1+23, landing +25) is landing: a drop spits the sandstone at 0 4 0 (the tool's first odd event, the step piston −2 3 −2 at flip2+2, is harmless: it pre-empts a stair push and that lane ends clean; corrected from the staircase's page) | the last lift's landing at flip1+25 | push dropped |
 | Nile's vault | 13 | no piston event differs: the leftover is a controller state (one block off, the doorway works) | — | controller state |
 
-So the "real input contract" is one pair of events per door: in 5 doors the second flip's
+So the "real input contract" is one pair of events per door: in 6 doors the second flip's
 power cut reaches a piston whose push has not landed (a drop spits the block: the cut
 must come at landing + 1 or later); in 4 the opening's short pulse must still be on one
 tick after a lowered or carried piston lands (R-026: a piston that lands next to power
 acts one tick after landing); in the others a tail event of the first sequence (a tidy
-pull, a landing, a stack's return) must precede the second sequence's first move, or a
-veto block must be in place. The no-overlap gap is an upper bound because it waits for
-the last move of all; the safe gap waits only for the move the second sequence touches.
+pull, a landing, a stack's return) must precede the second sequence's first move. The
+no-overlap gap is an upper bound because it waits for the last move of all; the safe
+gap waits only for the move the second sequence touches. The tool's "first odd event"
+is a lead, not the verdict: in the staircase it is harmless and the binding event comes
+14 ticks later (found by reading the page's replay), so each row above was checked
+against the door's events.
 
 ### Why lasting jams last (D10, 2026-10-19)
 

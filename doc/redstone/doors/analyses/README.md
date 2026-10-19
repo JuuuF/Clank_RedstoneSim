@@ -23,7 +23,7 @@ links and maps (`redsim-cli … show`), and says what is verified.
 | [[5x5-glass-piston-door-ashevoy]] | facts | the largest piston count of the 5x5s (171); 17-piston extender chains |
 | [[5x5-vault-door-nile]] | facts | slime; opens and closes in 9 ticks |
 | [[5x5-vault-lamp-door-purplers]] | **yes** | funnel door: 16 singles, 8 double extenders, a triple extender lowering a lamp lit by a carried redstone block; opens in 2 ticks (all 25 cells); the top line switched by a redstone block spat within tick 3; lifted-wool comparator / repeater timers; **jams in 2 of 8 orientations** (R-027, EXP-074) |
-| [[1-wide-hidden-staircase-purplers]] | facts | not a door: a staircase; "Opened" = stairs out |
+| [[1-wide-hidden-staircase-purplers]] | **yes** | not a door: a staircase hidden in a floor, "Opened" = stairs out; four row swaps (recess · shaft · store) with lifters, two fillers are sticky pistons that lift after a landing check; one clock edge fanned out by a ladder of repeater delays, a 2+4 hold chain brings the stairs back last; the bad gaps 8–9 drop the last lift; the frames cannot tell a stair from a filler |
 | [[7x7-piston-door-legden]], [[8x8-piston-door-legden]] | facts | do not open fully in the replay, which matches the 26.3 server (EXP-068): the build itself stops, the same at every position and orientation tried. 69 / 40 extensions move nothing: lost 0-tick pulses (36 / 25) and pushes into moving blocks (24 / 6) (backlog D3) |
 
 ## Zhus's and monchiCARP's 3x3: one design, two builds

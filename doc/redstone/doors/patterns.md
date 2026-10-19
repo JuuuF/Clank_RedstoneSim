@@ -196,10 +196,10 @@ do not open fully, see [[inventory]]).
     (pal1_, Sydney600mc). **V** (jam and repair sweeps, [[robustness]])
 11. **The safe gap is one event pair.** Per door, one first-sequence move and one
     second-sequence action set the minimum gap: a push that must land before the second
-    flip's cut (a drop spits the block: Mumbo Jumbo, Purplers' vault lamp, Zhus /
-    monchiCARP, Lutal), a short pulse that must still be on one tick after a lowered or
-    carried piston lands (R-026: Rubik, pal1_, Sydney600mc, Purplers' spiral), or a tail
-    event / veto block the second sequence runs into (Nile's seamless, Sacred, Kwipla,
-    ashevoy, the staircase). The no-overlap gap waits for the last move of all; the safe
+    flip's cut (a drop spits the block: Mumbo Jumbo, Purplers' vault lamp and staircase,
+    Zhus / monchiCARP, Lutal), a short pulse that must still be on one tick after a
+    lowered or carried piston lands (R-026: Rubik, pal1_, Sydney600mc, Purplers' spiral),
+    or a tail event the second sequence runs into (Nile's seamless, Sacred, Kwipla,
+    ashevoy). The no-overlap gap waits for the last move of all; the safe
     gap waits only for the move the second sequence touches. **V** (`inputs --explain`,
     16 doors, [[robustness]])
