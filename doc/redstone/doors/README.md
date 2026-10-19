@@ -22,6 +22,7 @@ read-only and experiments work on copies.
 | [[guide-5x5]] | MYuen222's 5x5 guide: the engineering process (layout → sequence → powering → input → wiring), its vocabulary, its claims and their test status |
 | [[representation]] | The three layers (canonical world, interactions, knowledge) and how they are validated |
 | [[analyses/README]] | One page per door: generated facts (frames, groups, pistons, power) and hand-written explanations; the Zhus / monchiCARP comparison |
+| [[creators]] | The corpus by creator (generated): each creator's worlds, what each demonstrates (census counts, analysis notes), and technique → creators |
 | [[patterns]] | Mechanisms found in the corpus (singles, floor storage, extenders, spits, power switches, QC, landing checks, sliders, slime) with counts, and design principles |
 | [[symmetry]] | Counterfactual: every door turned, mirrored and moved; directional and locational designs |
 | [[mechanism]] | Mechanism and controller: a door's contract (pulses per piston + same-tick order), tested by driving the stripped mechanism with editor pulses |
@@ -44,6 +45,7 @@ read-only and experiments work on copies.
 | `compare` | 3 | two builds up to rotation/mirror at three levels, and their behavior |
 | `transform`, `symmetry` | 1, 3 | a world turned / mirrored / moved as a whole; does every copy do the same? |
 | `patterns` | 3 | the mechanism census ([[patterns]]) |
+| `creators` | — | `python -m tools.doorlab.creators`: writes [[creators]] from the inventory, the census and the analyses index |
 | `inventory` | — | `python -m tools.doorlab.inventory`: writes `experiments/doors/inventory.json` and [[inventory]] |
 | `mechanism` | 3 | the mechanism / controller split, the contract, the stripped door ([[mechanism]]) |
 | `power` | 2 (dynamic) | who reads whose power: every positive signal read of the run with its asker (from the call stack), its alternatives and context, following moved blocks (`Level.signal_probe`); the glass counterfactual at every tick boundary; `--predict` scores it against the ablation ([[representation]]) |
