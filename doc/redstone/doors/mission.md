@@ -313,65 +313,74 @@ Do not stop at a plan, an architecture proposal, or a list of possible future ta
 
 **Guiding principle: Understand the geometry before the wiring, the mechanics before the abstraction, and the evidence before the conclusion. Preserve the actual Minecraft world, and make every abstraction explainable, testable, and traceable to its source.**
 
-## 13. Status and handoff (updated 2026-10-19)
+## 13. Status and handoff (updated 2026-10-19, evening)
 
 **Start here:** `doc/redstone/doors/README.md` is the live state: the pages, the tools, the
-deliverables table and the open items D1–D12. Records of mechanics: `doc/redstone/records/`
-(R-026 moving blocks stop pistons, R-027 double-extender order, R-028 lamp flicker);
-game checks: `doc/experiments/index.md` EXP-068–EXP-076. Work is on branch
-`research/piston-doors`, fast-forwarded into `main` after every passing commit.
+deliverables table and the open items (D4, D6, D9, D13; D1–D3, D7, D8, D10–D12 closed).
+Records of mechanics: `doc/redstone/records/` (R-026 moving blocks stop pistons, R-027
+double-extender order, R-028 lamp flicker); game checks: `doc/experiments/index.md`
+EXP-068–EXP-076 (EXP-077 the lockout, EXP-078 the jam check, if those runs finished: see
+the index). Work is on branch `research/piston-doors`, fast-forwarded into `main` after
+every passing commit.
 
 **Done (deliverables 1–8, all with evidence):**
 
 1. Inventory: `experiments/doors/inventory.json`, `doc/redstone/doors/inventory.md` (19 worlds).
 2. Analyses: generated facts for all 19 (`doc/redstone/doors/analyses/`); hand-written
-   explanations for Mumbo Jumbo's 3x3, Zhus / monchiCARP, SacredRedstone's 3x3.
-3. The 5x5 guide: `guide-5x5.md` (process, vocabulary; claims G1–G4 verified, G6 blocked
-   (the build is only in the guide's images), G7 not built).
-4. Representation: `representation.md`; `tools/doorlab/` canonical (lossless), interactions,
-   replay (piston events, power sources, failure reasons). Layer 2 predicts the harmless
-   glass replacements exactly (0 of 359 break).
-5. Patterns: `patterns.md` (12 mechanisms, census, 9 design principles).
-6. Tests: `tests/doorlab/`; `symmetry.md` (orientations, translations), `mechanism.md`
-   (contracts), `robustness.md` (ablation: remove / glass / delay / piston turns, trims,
-   input sweep 1–70 with recovery, two cycles).
-7. Demonstration: `demonstration.md` (the project's own `experiments/doors/door_3x3/`, safe
-   at any input gap); `metrics.md` (size, speed, components, robustness for all 20 builds,
-   dominance per doorway size, no combined score).
+   explanations (each with one-change experiments in `.sandbox/doors/explain/SLUG/`) for
+   12 doors: Mumbo Jumbo, Zhus / monchiCARP, SacredRedstone, Rubik, Nile's seamless,
+   Purplers' spiral, Lutal's vault, Kwipla, Sydney600mc, Purplers' sliding 4x4 and vault
+   lamp door; the five others (ashevoy, pal1_, the enchanting-table door, Nile's 5x5
+   vault, the staircase) were in progress when this was written: check
+   `analyses/README.md` ("Explained" column).
+3. The 5x5 guide: `guide-5x5.md` (G1–G4 verified; G6 and G7 blocked: their builds exist
+   only as the docx images, `media/image23.png` / `image32.png`).
+4. Representation: `representation.md`; `tools/doorlab/` canonical (lossless),
+   interactions, replay, **power** (who reads whose power: the simulator's
+   `Level.signal_probe`, the reads with their askers, alternatives and context; the
+   glass counterfactual at every tick boundary predicts 281 of 282 breaking glass
+   changes, "none" exact).
+5. Patterns: `patterns.md` (13 mechanisms incl. carried power, 11 design principles incl.
+   edge-pulse toggles and the one-event-pair safe gap).
+6. Tests: `tests/doorlab/`; `symmetry.md`, `mechanism.md`, `robustness.md` (ablation, trims,
+   input sweep with recovery, two cycles, **the real input contract** (`inputs --explain`),
+   **lasting jams** (`inputs --jam`, `--repair`)).
+7. Demonstration: `demonstration.md` (`door_3x3`; D6, a lockout in front of Mumbo Jumbo's
+   door, was being built by a fork when this was written: see the page's last section);
+   `metrics.md`.
 8. Roadmap: the README's open items.
 
-**Main findings so far:** timing is a set of exact delays and every piston and its facing
-matters in the compact doors, while slack is structural (52–91% of the conductors could
-be glass; trims remove 0–60 blocks, game-verified). No dataset door guards its input:
-safe gaps 9–38 ticks; the no-overlap gap is an upper bound in all 17; jams lose
-extensions, push into extended pistons, or reorder; lasting jams leave door blocks
-behind. A button ignores a press while it is down. Same-tick races make some doors
-orientation-dependent (the vault lamp door jams at 90°, in the game too); Nile's seamless
-door is location-dependent and alternates between two rest states. Sacred's door depends
-on a lamp that flickers within a tick.
+**Main findings (this session):** a conductor's role follows the block a piston moves (a
+wire-cutter wool, a log over a note block, a wool on slime); a wire step has two carriers;
+a read does not name its asker (a piston's direct read and the QC read of the piston
+below it are one call); mid-tick reads decide pistons (the QC update problem); the safe
+gap is one event pair per door (a push that must land before the cut, a short pulse that
+must cover landing + 1, a tail event or a veto block); lasting jams are edge-pulse
+toggles moved in anti-phase or blocks accumulated in a column, and a second deliberately
+short cycle re-syncs a toggle door.
 
 **Tools** (`python -m tools.doorlab.<tool>`, `PYTHONPATH=src:.`): `inventory`, `report`,
 `analysis`, `patterns`, `symmetry`, `mechanism`, `ablation` (`--trim`, `--turn`,
-`--predict`), `inputs` (`--out`, `--recover`, `--repeat`), `metrics`. Server:
-`python -m tools.gameserver.run_world WORLD` (its input stand-in is checked against the
-real input in the simulator first: read its "behaves as the input" line). Results for
-third-party designs go to `.sandbox/doors/` and `.sandbox/worlds/` (never committed); only
-the project's own designs and aggregate data and docs are committed.
+`--predict`), `power` (`--predict --out .sandbox/doors/ablation`, `--list`, `--reads`,
+`--json`), `inputs` (`--out`, `--recover`, `--repeat`, `--explain [--gap]`, `--jam --gap`,
+`--repair --gap`), `metrics`. Server: `python -m tools.gameserver.run_world WORLD` (the
+world's own timeline; write a variant timeline with `canonical.to_save` first).
 
 **Rules and traps learned** (the general rules: [[../../agents/README]]):
 
-- Do not investigate LegDen's 7x7 and 8x8: the owner is removing them from the pool.
-- Never edit the dataset worlds or the owner's `[broken sim]` files; never change the
-  simulator to make an experiment pass (game parity).
-- One server run at a time (the world lock); queue runs in one shell, not by waiting on
-  another run's first output line.
-- A background wait must not `pgrep -f` a pattern that its own command line contains (it
-  matches itself and never ends). In zsh, split a variable with `${=VAR}`.
-- Search the knowledge base by mechanism, not only by block name, before a new record
-  (R-015 already covered pushed observers).
+- Do not investigate LegDen's 7x7 and 8x8 (now in `data/redstone_learning/broken_doors/`).
+- Never edit the dataset worlds; never change the simulator to make an experiment pass.
+- One server run at a time; a background wait must not `pgrep -f` its own pattern.
+- `python -I` ignores `PYTHONPATH`; a long tool run's prints are block-buffered: write to a
+  file, and start it with the harness's background mode (plain `sleep` is blocked).
+- A function stored as a class attribute binds `self` when read through an instance: the
+  probe is read on the class (`Level.signal_probe`).
+- Forks (sub-agents) work well for one door's explanation each, briefed with the page
+  format, the tools and the sandbox folder; the quota can kill them mid-way, and a
+  SendMessage resumes them. They must not commit; review and commit yourself.
 - Check a claim against the data before writing it; prefer "inferred" over a guess.
 
-**Next priorities:** D12 (which powered conductors matter), D11 (a door's real input
-contract), D10 (why lasting jams last), hand-written explanations of the vault lamp door,
-the sliding door, Lutal's vault and Kwipla's 4x4, D6 (a lockout in front of a dataset
-door), then D4, D9 (items), G7.
+**Next priorities:** D13 (the reach from a reader whose input changes to the mechanism,
+to turn "changes something" into "breaks the door"), the remaining explanations if the
+forks did not finish, D6's game check (EXP-077) if not run, D4 (mechanism split
+refinements), D9 (items), G6 / G7 (need the guide's builds as worlds).
