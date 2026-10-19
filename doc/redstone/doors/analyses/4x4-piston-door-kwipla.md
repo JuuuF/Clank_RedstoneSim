@@ -9,7 +9,7 @@ World: `piston_doors/4x4 piston door by Kwipla.json` (not committed). Analysis b
 Every tick below is from the simulator; what is only inferred from the geometry says so.
 Not run on the game server, except the trimmed build of EXP-074, which matched.)
 
-A 4x4 door in the plane x = 0 (cells y 8..11, z −3..0), built open, 32 pistons, 16 iron
+A 4x4 door in the plane x = 0 (cells y 8..11, z −3..0), built open, 28 pistons ([[../metrics]]), 16 iron
 door blocks, in a 10 × 9 × 12 box (158 blocks above the floor, 142 of them needed,
 [[../robustness]]). Two stone buttons stand on the floor on both sides of the wall
 (−4 7 −4 and 5 7 −4) and join one wire ring; the run presses the west one at 1 and 37.

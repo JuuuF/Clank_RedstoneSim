@@ -228,6 +228,74 @@ What the sweep shows (2026-10-19):
   (the two-cycle test shows it is needed again 30 ticks into the second cycle, D9).
 
 
+### What the second flip waits for (D11, 2026-10-19)
+
+`python -m tools.doorlab.inputs --explain WORLD` replays the last bad gap (the safe gap − 1)
+and the safe gap and finds the first piston event that is in one run and not in the
+other (each event matched at the same tick, the first sequence, or one tick later, the
+second), with what it ran into. The binding constraint per door (ticks after the flips):
+
+| door | safe gap | the event that breaks at safe − 1 | the first-sequence move it waits for | kind |
+|---|---|---|---|---|
+| Mumbo Jumbo | 10 | the center piston 5 3 −2 is cut at flip2+1 while pushing B and C (drop → spit) | its own push at flip1+8, landing at +10 | push dropped |
+| vault lamp | 10 | the south carrier's front 0 6 2 is cut at flip2+2 while pushing the redstone block | its push at flip1+9, landing +11 | push dropped |
+| Zhus, monchiCARP | 11 | the top piston 3 7 0 / 2 7 −4 is cut at flip2+6 while pushing | the column push by 3 2 0 at flip1+11 and the top piston's own push at +15/16 | push dropped |
+| Lutal | 17 | the hub piston 4 5 −5: at the safe gap the second flip's retract meets its push and spits (flip2+7), one tick earlier it retracts after the landing and the lantern ends two cells off | the hub stack's push at flip1+13 | spit must coincide |
+| Rubik | 20 | the lowered center piston −9 −56 −4 extends at flip1+23 (one tick after landing, R-026) and the second sequence's 2-tick pulse must still be on then; at safe − 1 it is "unpowered" | the stack's lowering at flip1+20 | pulse must cover landing+1 |
+| pal1 | 20 | the same: 5 3 −3 lowered at flip1+20, its extension at +23 unpowered | the lowering | pulse must cover landing+1 |
+| Sydney600mc | 19 | the stacks' pulled-back side pistons extend at flip1+24 (4 of them unpowered at safe − 1) | the stacks' return | pulse must cover landing+1 |
+| Purplers' spiral | 12 | the center piston −1 2 0 retracts at 14–16 and its event runs at 17; the first opening pulse (flip2+4..5) is over by then at gap 11 (gaps 9–10 merge the pulses harmlessly: the non-monotonic window) | its own retraction | pulse must cover landing+1 |
+| sliding door | 9 | the east carried piston 5 3 −1 is told to retract at flip2+1 while it is still being carried (its event is skipped) | the first stroke at flip1+9, landing +11 | moved piston not landed |
+| seamless | 16 | the inchworm's first push 2 1 −3 at flip2+8 runs in the same tick as the tidy pulls of 0..2 10 −3 at flip1+23, which take its power away (unpowered); one tick later it pushes | the last tidy pull at flip1+23 | tail event changes the power |
+| Sacred | 21 | the lever's second flip retracts the top piston 4 10 −1 at flip2+1 and, one tick early, pulls the center block up with it instead of leaving it | the lowered top piston's last pull-back at flip1+22 | tail event changes what is pulled |
+| Kwipla | 25 | the stack 1 6 1 returns two ticks earlier (the observer clock moves in 2-tick steps) and lands in the same tick as the inner pulls 0 6 −1 / 0 6 0 / 0 5 0 | the inner pulls at flip2+9 must precede the stack's return | same-tick order |
+| Ashevoy | 38 | the chain push 0 18 −2 at flip2+4 moves other blocks than at the safe gap | the first sequence's last landing at flip1+41 | tail landing |
+| staircase | 10 | the step piston −2 3 −2 at flip2+2 extends where it must be vetoed by a block in its way | the step placed at flip1+8..10 | a veto block must be in place |
+| Nile's vault | 13 | no piston event differs: the leftover is a controller state (one block off, the doorway works) | — | controller state |
+
+So the "real input contract" is one pair of events per door: in 5 doors the second flip's
+power cut reaches a piston whose push has not landed (a drop spits the block: the cut
+must come at landing + 1 or later); in 4 the opening's short pulse must still be on one
+tick after a lowered or carried piston lands (R-026: a piston that lands next to power
+acts one tick after landing); in the others a tail event of the first sequence (a tidy
+pull, a landing, a stack's return) must precede the second sequence's first move, or a
+veto block must be in place. The no-overlap gap is an upper bound because it waits for
+the last move of all; the safe gap waits only for the move the second sequence touches.
+
+### Why lasting jams last (D10, 2026-10-19)
+
+`python -m tools.doorlab.inputs --jam --gap G WORLD` runs the jam and two more designed
+cycles and follows every door block (layer 3 tokens): which blocks end in a wrong cell,
+which designed moves the jammed cycle did not make, and what the later cycles do with
+them. `--repair --gap G` then tries every second-cycle gap 1–40.
+
+- **Sacred, gap 5** (4 smooth stone off): the two south blocks 4 8 2 / 4 7 2 missed one
+  pulse and are thereafter moved in **anti-phase**: pulled out when the door closes
+  (tick 140) and pushed in when it opens (258). Their pistons get the same 2-tick observer
+  pulse on both lever edges, which spits the block in when the cell is empty and pulls it
+  out when it is full: a **toggle**, with no absolute position. The two lower blocks
+  4 5 0 / 4 5 1 were pushed up the center column and the later cycles push more in
+  (4 7 0, 4 6 0): an **accumulation**. Repair: a second cycle with gap 4 or 5 (the same
+  jam again) brings the whole build back: the toggles miss a pulse once more and are in
+  phase again.
+- **pal1, gap 6** (2 gold blocks off): both center blocks end up the column (5 6 −3,
+  5 5 −3): the jammed cycle missed the stack's push at 13 and the pulls at 54 / 64; the
+  later cycles pull them one cell and push them back up. No second-cycle gap 1–40 repairs.
+- **Sydney600mc, gap 3** (14 iron blocks off): the opening edge is swallowed by observers
+  still in their closing pulse, so whole groups miss their pulses; afterwards the side
+  blocks move in anti-phase (pulled out at 130–142 on the closing flip, pushed in at
+  248–258 on the opening one) and the top row stays one cell down. No second-cycle gap
+  1–40 repairs.
+- **Rubik, gap 5**: repaired by a second cycle with gap 10, 11, 12 or 18.
+
+Lesson: **edge-pulse toggles do not self-correct.** A piston driven by one pulse on both
+edges moves its block to the other cell each time; a lost pulse inverts the block for
+good, and every normal cycle keeps it inverted. Level-driven pistons (held while a line
+is on: Mumbo Jumbo, the vault lamp door, the sliding door, the staircase) come back
+after one more input ([[#input-timing]]). A second deliberately short cycle can re-sync
+a toggle door (Sacred, Rubik) but not a column that has accumulated blocks (pal1,
+Sydney).
+
 ## Two cycles
 
 `inputs --repeat` runs the designed cycle twice, the second from the rest state the

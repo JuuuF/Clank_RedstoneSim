@@ -18,7 +18,7 @@ links and maps (`redsim-cli … show`), and says what is verified.
 | [[3x3-flush-enchanting-table-door-purplers]] | facts | |
 | [[3x4-piston-door-pal1]] | facts | no input section |
 | [[4x4-piston-door-kwipla]] | **yes** | one-bit memory (a redstone block toggled by a sticky piston) turns one button into close / open; observer chains as the clock, two delay-4 repeaters giving push / pull pairs 8 ticks apart; furnaces as immovable caps that veto a wrongly timed lift (counterfactual-verified) |
-| [[4x4-piston-door-sydney600mc]] | facts | same grouping as Kwipla's: 4 up, 4 down, 2×4 sideways in 2 moves |
+| [[4x4-piston-door-sydney600mc]] | **yes** | Kwipla's mechanism three blocks deep: a lever door using both edges of one level (observer chains, hoppers as lockable relays, a one-item dropper / hopper timer giving the 7-tick stack pulse, a lifted observer as off-edge detector); the parked door block carries power to the moved pistons; the hopper caps the column; the safe gap is set by the stacks' return, quick flips lose edges to busy observers |
 | [[4x4-sliding-piston-door-purplers]] | **yes** | two 12-block slime / honey assemblies per half (skins of quartz), carried pistons for the second stroke, floor and ceiling retracted first to break adhesion, a controller of moving redstone blocks (spit chains, QC update relays); 5 one-change experiments |
 | [[5x5-glass-piston-door-ashevoy]] | facts | the largest piston count of the 5x5s (171); 17-piston extender chains |
 | [[5x5-vault-door-nile]] | facts | slime; opens and closes in 9 ticks |

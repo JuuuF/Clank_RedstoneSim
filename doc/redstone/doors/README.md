@@ -62,7 +62,7 @@ The mission's deliverables (2026-10-19):
 | # | Deliverable | Where | State |
 |---|---|---|---|
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
-| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanations for 8: Mumbo Jumbo's 3x3, the Zhus / monchiCARP pair, SacredRedstone's 3x3, Lutal's vault, Kwipla's 4x4, Purplers' sliding 4x4 and vault lamp door (2026-10-19) |
+| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanations for 12: Mumbo Jumbo's, Zhus's / monchiCARP's, SacredRedstone's, Rubik's and Nile's seamless 3x3s, Purplers' spiral and Lutal's vault, Kwipla's and Sydney600mc's 4x4s, Purplers' sliding 4x4 and vault lamp door (2026-10-19) |
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19; layer 2 predicts the harmless glass replacements exactly (0 of 359 break) |
 | 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, 9 design principles (timing, slack, input safety, how doors jam) |
@@ -107,11 +107,10 @@ Open items (D-numbers are cited from the pages):
   evidence ([[robustness]]). Needs item entities, or a game run of the first cycle.
   `run_world` has no exact stand-in for its button yet: the button sits on a dropper,
   and observers watching the dropper see the stand-in's swap (EXP-074).
-- **D10** Lasting jams ([[robustness]]): after 79 of 224 too-short gaps the doorway stays
-  wrong through one or two more inputs. Found so far: a few door blocks stay in wrong
-  cells (Sacred 4, pal1 2, Sydney 12), because the second input cut the first sequence
-  short, and no later cycle moves them back. Open: why exactly these blocks (which
-  pulls are missing), and whether any input sequence repairs them.
+- ~~D10~~ Lasting jams ([[robustness]] "Why lasting jams last"): the blocks left behind
+  are moved in anti-phase by every later cycle (edge-pulse toggles do not self-correct)
+  or accumulate in a storage column; a second deliberately short cycle re-syncs Sacred's
+  and Rubik's doors, nothing in 1–40 repairs pal1's and Sydney's. Closed 2026-10-19.
 - ~~D12~~ Which powered conductors matter ([[representation]]): `power.py` records who
   reads whose power (the simulator's `Level.signal_probe`) and predicts a glass change by
   a local counterfactual at every tick boundary (plus a retracted piston's update read):
@@ -122,8 +121,7 @@ Open items (D-numbers are cited from the pages):
 - **D13** The reach from a reader whose input changes to the mechanism, to turn "changes
   something" (59 of 347) into "breaks the door"; the same probe can answer D11 (which
   first-sequence reads the second input cuts).
-- **D11** A door's real input contract: the safe gap is often far below the no-overlap gap
-  (Sacred 21 vs 40, the seamless door 16 vs 43). Found so far ([[robustness]]): at the
-  last bad gap, 7 doors lose extensions (power gone when the event runs), 3 push into a
-  still-extended piston, 7 fail nothing and only reorder. Open: per door, which
-  first-sequence moves the second must wait for.
+- ~~D11~~ A door's real input contract ([[robustness]] "What the second flip waits
+  for"): one event pair per door; 5 doors wait for a push to land before the cut (a drop
+  spits), 4 for a short pulse to still be on one tick after a lowered piston lands
+  (R-026), the rest for a tail event or a veto block. Closed 2026-10-19.
