@@ -7,7 +7,8 @@ where its results live. Working rules: [[../../agents/README]]. Minecraft Java 2
 
 **The dataset** is `data/redstone_learning/`: 19 worlds (third-party designs imported by
 the owner, not committed) in four folders (`piston_doors`, `piston_doors_with_slime`,
-`other_piston_contraptions`, `guides`), each with an `input` section (the lever), an
+`other_piston_contraptions`, `guides`; since 2026-10-19 LegDen's 7x7 and 8x8 sit in a
+fifth, `broken_doors`, out of the pool by the owner's rule), each with an `input` section (the lever), an
 `output` section (the door cells), a two-action timeline (lever on, lever off) and
 markers naming the states ("Closing", "Closed", "Opening", "Opened"). See
 [[inventory]] for the catalog. The designs are never changed: every tool opens them
@@ -66,10 +67,10 @@ The mission's deliverables (2026-10-19):
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
 | 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanations for 12: Mumbo Jumbo's, Zhus's / monchiCARP's, SacredRedstone's, Rubik's and Nile's seamless 3x3s, Purplers' spiral and Lutal's vault, Kwipla's and Sydney600mc's 4x4s, Purplers' sliding 4x4 and vault lamp door (2026-10-19) |
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
-| 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19; layer 2 predicts the harmless glass replacements exactly (0 of 359 break) |
-| 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, 9 design principles (timing, slack, input safety, how doors jam) |
-| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation (remove, glass, delay, piston turns) and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, two cycles for 19; game checks EXP-068, EXP-070–EXP-076 |
-| 7 | A demonstrated analysis / construction | [[demonstration]], [[metrics]] | the pipeline on `door_3x3`; trimmed builds (EXP-071); the optimization goals measured for all 20 builds, with the dominance per doorway size |
+| 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay`, `power` | done; lossless round trip and identical replay for all 19; layer 2 records who reads whose power and predicts the glass changes by a local counterfactual (281 of 282 breaking ones, "none" exact); the reach to the mechanism is a hint (D13) |
+| 5 | Pattern library with sources | [[patterns]], [[creators]] | 13 mechanisms with the worlds that use them, a per-world census, 11 design principles (timing, slack, input safety, how doors jam, edge-pulse toggles, the one-event-pair safe gap); the corpus by creator |
+| 6 | Round-trip / replay / counterfactual tests | `tests/doorlab/`, [[symmetry]], [[mechanism]], [[robustness]] | done: ablation (remove, glass, delay, piston turns) and trim of 16 doors, input sweep (gaps 1–70) with recovery for 17, the real input contract (`--explain`) for 16, lasting jams (`--jam`, `--repair`), two cycles for 19; game checks EXP-068, EXP-070–EXP-078 |
+| 7 | A demonstrated analysis / construction | [[demonstration]], [[metrics]] | the pipeline on `door_3x3`; trimmed builds (EXP-071); the library lockout in front of Mumbo Jumbo's door makes every gap safe (D6, EXP-077); the optimization goals measured for all 20 builds, with the dominance per doorway size |
 | 8 | Roadmap | this section | — |
 
 Open items (D-numbers are cited from the pages):
