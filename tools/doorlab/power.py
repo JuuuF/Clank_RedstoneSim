@@ -56,6 +56,7 @@ from typing import Any
 
 from redsim.core.direction import ALL, HORIZONTAL, Direction
 from redsim.core.pos import above, below, offset
+from redsim.sim import trace as tr
 from redsim.sim.level import Level
 from redsim.world.blocks.falling import FallingBlock
 from redsim.world.blocks.piston import PistonStructureResolver, piston_facing
@@ -96,6 +97,7 @@ class Read:
     context: str = ""  #: update (a neighbor update), event (a piston's block event), tick
     extended: bool = False  #: a piston asker that is extended at the read
     sources: tuple[Pos, ...] = ()  #: for a conductor target: the neighbors giving it signal
+    update_from: Pos | None = None  #: an update read: the cell whose change caused the update
 
     @property
     def decisive(self) -> bool:
@@ -128,6 +130,7 @@ class Read:
             "context": self.context,
             "extended": self.extended,
             "sources": [list(p) for p in self.sources],
+            "update_from": None if self.update_from is None else list(self.update_from),
         }
 
 
@@ -229,6 +232,11 @@ def trace_reads(document: Any, end_tick: int | None = None) -> list[Read]:
             alt = alternatives(level, asker, kind, pos)
             asker_state = level.get_block_state(asker)
             conductor = bool(state.is_redstone_conductor(level, pos))
+            update_from = None
+            if context == "update":
+                cause = level.trace.get(level.trace.current_cause)
+                if cause is not None and cause.kind == tr.NEIGHBOR_UPDATE:
+                    update_from = cause.detail.get("source_pos")
             sources: tuple[Pos, ...] = ()
             if conductor:
                 sources = tuple(
@@ -248,6 +256,7 @@ def trace_reads(document: Any, end_tick: int | None = None) -> list[Read]:
                     context=context,
                     extended=kind.startswith("piston") and bool(asker_state.get(EXTENDED)),
                     sources=sources,
+                    update_from=update_from,
                 )
             )
         finally:
@@ -288,8 +297,9 @@ def read_graph(
     read, so a moved block's cells are separate nodes. With the build (``level``) and the
     run (``rec``), the links that are not signal reads are added: wire to wire (the
     incoming-wire rule), the cell an observer watches to the observer, a comparator's
-    side inputs and the container it measures, and a piston to every cell it moved a
-    block from or to."""
+    side inputs and the container it measures, a piston to every cell it moved a
+    block from or to, and the cell whose change caused an update read to the reader
+    (the update link: a quasi-connected piston notices its power only when updated)."""
     from redsim.world.blocks.diode import facing as diode_facing
     from redsim.world.properties import FACING
 
@@ -302,6 +312,8 @@ def read_graph(
         link(r.target, r.asker)
         for src in r.sources:
             link(src, r.target)
+        if r.update_from is not None:
+            link(tuple(r.update_from), r.asker)  # the update that made the asker read
     if level is not None:
         for pos, state in list(level.blocks.items()):
             name = interactions.block_id(state)

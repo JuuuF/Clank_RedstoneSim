@@ -200,12 +200,18 @@ mechanism piston (roles door and stack) along it:
 
 | layer 2 says | variants | break the door | change other blocks only | change nothing |
 |---|---|---|---|---|
-| readers change and the change reaches the mechanism | 280 | 236 | 36 | 8 |
-| readers change, dead end | 67 | 44 | 23 | 0 |
+| readers change and the change reaches the mechanism (signal links only) | 280 | 236 | 36 | 8 |
+| readers change, dead end (signal links only) | 67 | 44 | 23 | 0 |
+| reaches the mechanism, with **update links** (the cell whose change caused an update read feeds the reader) | 302 | 244 | 50 | 8 |
+| dead end, with update links | 45 | 36 | 9 | 0 |
 
-So the signal graph explains most of it, and not all: 44 dead ends still break. What the
-graph does not hold are **update links**: a block that changes next to a quasi-connected
-piston (a note block that turns on, a landing block, a retracting head) delivers the
-update that makes the piston read power it already had. Those are the next relation to
-add (the probe's ``context`` says which reads happened in a neighbor update; the trace
-knows the update's source). Until then "reaches the mechanism" is a hint, not a verdict.
+So the graph explains most of it and not all: 36 dead ends still break with update
+links (which add 8 breaking variants to the reach and 14 harmless ones). The update
+link is what a quasi-connected piston lives on: a note block that turns on, a landing
+block or a retracting head next to it delivers the update that makes it read power it
+already had; the probe's ``context`` marks such reads and the trace's neighbor-update
+record names the cell that changed. What is still missing is the rest of the update
+world: shape updates (observers watching moving pistons, note blocks as BUDs), wire
+shapes changed by moved blocks, and the timing that a time-collapsed graph throws away.
+"Reaches the mechanism" is a hint, not a verdict; the counterfactual's "readers change"
+is the verdict layer 2 can give.

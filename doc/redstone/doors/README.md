@@ -122,10 +122,12 @@ Open items (D-numbers are cited from the pages):
   its asker (quasi-connectivity), mid-tick reads decide pistons. Closed 2026-10-19.
 - **D13** The reach from a reader whose input changes to the mechanism, to turn "changes
   something" (59 of 347) into "breaks the door". First step done ([[representation]]):
-  a time-collapsed signal graph (reads, wire to wire, observers, comparators, piston
-  moves) puts 236 of the 280 breaking variants in reach and leaves 44 as dead ends that
-  break anyway. Missing: update links (a block changing next to a quasi-connected piston
-  delivers its update); the probe's `context` and the trace have them.
+  a time-collapsed graph of signal links (reads, wire to wire, observers, comparators,
+  piston moves) and update links (the cell whose change caused an update read) puts 244
+  of the 280 breaking variants in reach and leaves 36 dead ends that break anyway.
+  Missing: shape updates (observers, note-block BUDs), wire shapes changed by moved
+  blocks, and timing. Diminishing returns: the counterfactual's "readers change" is the
+  usable verdict.
 - ~~D11~~ A door's real input contract ([[robustness]] "What the second flip waits
   for"): one event pair per door; 5 doors wait for a push to land before the cut (a drop
   spits), 4 for a short pulse to still be on one tick after a lowered piston lands
