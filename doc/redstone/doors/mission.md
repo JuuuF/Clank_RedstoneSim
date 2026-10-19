@@ -313,10 +313,11 @@ Do not stop at a plan, an architecture proposal, or a list of possible future ta
 
 **Guiding principle: Understand the geometry before the wiring, the mechanics before the abstraction, and the evidence before the conclusion. Preserve the actual Minecraft world, and make every abstraction explainable, testable, and traceable to its source.**
 
-## 13. Status and handoff (updated 2026-10-19, evening)
+## 13. Status and handoff (updated 2026-10-19, 19:45)
 
 **Start here:** `doc/redstone/doors/README.md` is the live state: the pages, the tools, the
-deliverables table and the open items (D4, D6, D9, D13; D1–D3, D7, D8, D10–D12 closed).
+deliverables table and the open items (D4 second half, D9, D13; D1–D3, D6–D8, D10–D12
+closed).
 Records of mechanics: `doc/redstone/records/` (R-026 moving blocks stop pistons, R-027
 double-extender order, R-028 lamp flicker); game checks: `doc/experiments/index.md`
 EXP-068–EXP-076 (EXP-077 the lockout, EXP-078 the jam check, if those runs finished: see
@@ -328,11 +329,11 @@ every passing commit.
 1. Inventory: `experiments/doors/inventory.json`, `doc/redstone/doors/inventory.md` (19 worlds).
 2. Analyses: generated facts for all 19 (`doc/redstone/doors/analyses/`); hand-written
    explanations (each with one-change experiments in `.sandbox/doors/explain/SLUG/`) for
-   12 doors: Mumbo Jumbo, Zhus / monchiCARP, SacredRedstone, Rubik, Nile's seamless,
-   Purplers' spiral, Lutal's vault, Kwipla, Sydney600mc, Purplers' sliding 4x4 and vault
-   lamp door; the five others (ashevoy, pal1_, the enchanting-table door, Nile's 5x5
-   vault, the staircase) were in progress when this was written: check
-   `analyses/README.md` ("Explained" column).
+   14 doors: Mumbo Jumbo, Zhus / monchiCARP, SacredRedstone, Rubik, Nile's seamless,
+   Purplers' spiral, Lutal's vault, Kwipla, Sydney600mc, pal1_, Purplers' sliding 4x4,
+   vault lamp door and staircase; the three others (ashevoy, the enchanting-table door,
+   Nile's 5x5 vault) were being written by forks when this was written: check
+   `analyses/README.md` ("Explained" column) and `git status` for a half-written page.
 3. The 5x5 guide: `guide-5x5.md` (G1–G4 verified; G6 and G7 blocked: their builds exist
    only as the docx images, `media/image23.png` / `image32.png`).
 4. Representation: `representation.md`; `tools/doorlab/` canonical (lossless),
@@ -345,19 +346,21 @@ every passing commit.
 6. Tests: `tests/doorlab/`; `symmetry.md`, `mechanism.md`, `robustness.md` (ablation, trims,
    input sweep with recovery, two cycles, **the real input contract** (`inputs --explain`),
    **lasting jams** (`inputs --jam`, `--repair`)).
-7. Demonstration: `demonstration.md` (`door_3x3`; D6, a lockout in front of Mumbo Jumbo's
-   door, was being built by a fork when this was written: see the page's last section);
-   `metrics.md`.
+7. Demonstration: `demonstration.md` (`door_3x3`; D6: the library lockout in front of
+   Mumbo Jumbo's door makes every gap 1–70 safe, game-checked EXP-077); `metrics.md`;
+   `creators.md` (the corpus by creator, generated).
 8. Roadmap: the README's open items.
 
-**Main findings (this session):** a conductor's role follows the block a piston moves (a
+**Main findings (this session):** game checks EXP-077 (the lockout) and EXP-078 (Sacred's
+jam and its anti-phase, 370 ticks) match. A conductor's role follows the block a piston moves (a
 wire-cutter wool, a log over a note block, a wool on slime); a wire step has two carriers;
 a read does not name its asker (a piston's direct read and the QC read of the piston
 below it are one call); mid-tick reads decide pistons (the QC update problem); the safe
 gap is one event pair per door (a push that must land before the cut, a short pulse that
 must cover landing + 1, a tail event or a veto block); lasting jams are edge-pulse
 toggles moved in anti-phase or blocks accumulated in a column, and a second deliberately
-short cycle re-syncs a toggle door.
+short cycle re-syncs a toggle door. The mechanism split keeps the blocks the mechanism
+carries (D4 first half): 6 doors now replay identically from their contract.
 
 **Tools** (`python -m tools.doorlab.<tool>`, `PYTHONPATH=src:.`): `inventory`, `report`,
 `analysis`, `patterns`, `symmetry`, `mechanism`, `ablation` (`--trim`, `--turn`,
@@ -380,7 +383,8 @@ world's own timeline; write a variant timeline with `canonical.to_save` first).
   SendMessage resumes them. They must not commit; review and commit yourself.
 - Check a claim against the data before writing it; prefer "inferred" over a guess.
 
-**Next priorities:** D13 (the reach from a reader whose input changes to the mechanism,
-to turn "changes something" into "breaks the door"), the remaining explanations if the
-forks did not finish, D6's game check (EXP-077) if not run, D4 (mechanism split
-refinements), D9 (items), G6 / G7 (need the guide's builds as worlds).
+**Next priorities:** the three remaining explanations if the forks did not finish; D4's
+second half (a same-tick order of extensions in the contract, side power for stacked
+pistons); D13 (the reach is a hint: 244 of 280 breaking glass variants in reach, 36 dead
+ends break; shape updates and timing are missing); D9 (items); G6 / G7 (need the guide's
+builds as worlds).
