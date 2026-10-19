@@ -5,7 +5,7 @@ Open questions, hypotheses and the roadmap of the redstone knowledge base
 with the record that answered it.
 
 The piston-door track (reverse-engineering the dataset's designs) keeps its own open items
-D1–D8 in [[redstone/doors/README]], "Status and roadmap".
+D1–D13 in [[redstone/doors/README]], "Status and roadmap" (D4, D9, D13 open on 2026-10-19).
 
 ## Roadmap
 
