@@ -46,6 +46,7 @@ read-only and experiments work on copies.
 | `patterns` | 3 | the mechanism census ([[patterns]]) |
 | `inventory` | — | `python -m tools.doorlab.inventory`: writes `experiments/doors/inventory.json` and [[inventory]] |
 | `mechanism` | 3 | the mechanism / controller split, the contract, the stripped door ([[mechanism]]) |
+| `power` | 2 (dynamic) | who reads whose power: every positive signal read of the run with its asker (from the call stack), its alternatives and context, following moved blocks (`Level.signal_probe`); the glass counterfactual at every tick boundary; `--predict` scores it against the ablation ([[representation]]) |
 | `ablation` | 3 | one change per block (remove, glass, delay), classified breaks / timing / internal / inert; `--trim` (keeps supports); `--turn` (piston facings); `--predict`: layer 2's role of each glass variant against the result ([[robustness]], [[representation]]) |
 | `inputs` | 3 | every gap between the two input flips; `--recover`: one more designed cycle after each gap that did not end clean; `--repeat`: the designed cycle twice ([[robustness]]) |
 | `metrics` | 3 | `python -m tools.doorlab.metrics`: the objectives per door and the dominance per doorway size; writes `experiments/doors/metrics.json` and [[metrics]] |
@@ -61,7 +62,7 @@ The mission's deliverables (2026-10-19):
 | # | Deliverable | Where | State |
 |---|---|---|---|
 | 1 | Machine-readable inventory with creators | `experiments/doors/inventory.json`, [[inventory]] | done (19 worlds) |
-| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanation for Mumbo Jumbo's 3x3, the Zhus / monchiCARP pair and SacredRedstone's 3x3 |
+| 2 | Evidence-backed door analyses | [[analyses/README]] | facts for all 19; hand-written explanations for 8: Mumbo Jumbo's 3x3, the Zhus / monchiCARP pair, SacredRedstone's 3x3, Lutal's vault, Kwipla's 4x4, Purplers' sliding 4x4 and vault lamp door (2026-10-19) |
 | 3 | 5x5 guide understanding | [[guide-5x5]] | process, vocabulary, 8 claims: 4 verified (G1–G4), 2 implied by the corpus, 2 untested (G6, G7) |
 | 4 | Canonical representation + interaction model | [[representation]], `canonical`, `interactions`, `replay` | done; lossless round trip and identical replay for all 19; layer 2 predicts the harmless glass replacements exactly (0 of 359 break) |
 | 5 | Pattern library with sources | [[patterns]] | 12 mechanisms with the worlds that use them, a per-world census, 9 design principles (timing, slack, input safety, how doors jam) |
@@ -111,10 +112,16 @@ Open items (D-numbers are cited from the pages):
   cells (Sacred 4, pal1 2, Sydney 12), because the second input cut the first sequence
   short, and no later cycle moves them back. Open: why exactly these blocks (which
   pulls are missing), and whether any input sequence repairs them.
-- **D12** Which powered conductors matter ([[representation]]): layer 2 predicts the
-  harmless glass replacements exactly (0 of 359 break), but only 270 of 736 powered
-  conductors matter. Trace power to every component (wire, torches, repeaters, lamps)
-  and find redundant paths, to predict the breaking ones too.
+- ~~D12~~ Which powered conductors matter ([[representation]]): `power.py` records who
+  reads whose power (the simulator's `Level.signal_probe`) and predicts a glass change by
+  a local counterfactual at every tick boundary (plus a retracted piston's update read):
+  281 of the 282 breaking glass changes are predicted, "none" stays exact (1 of 761), and
+  59 predicted changes never reach the doorway. Found on the way: a conductor's role
+  follows the block a piston moves, a wire step has two carriers, a read does not name
+  its asker (quasi-connectivity), mid-tick reads decide pistons. Closed 2026-10-19.
+- **D13** The reach from a reader whose input changes to the mechanism, to turn "changes
+  something" (59 of 347) into "breaks the door"; the same probe can answer D11 (which
+  first-sequence reads the second input cuts).
 - **D11** A door's real input contract: the safe gap is often far below the no-overlap gap
   (Sacred 21 vs 40, the seamless door 16 vs 43). Found so far ([[robustness]]): at the
   last bad gap, 7 doors lose extensions (power gone when the event runs), 3 push into a

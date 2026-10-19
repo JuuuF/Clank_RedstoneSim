@@ -74,8 +74,10 @@ LegDen's doors hundreds). **V**
 ### Slime and honey assemblies
 
 Slime moves everything touching it except honey (R-009): a slime/honey pair carries a
-whole door column sideways in one push. Purplers' sliding 4x4 slides each half (8 blocks)
-two cells with 4 pistons; Nile's 5x5 vault uses slime too. Census column "slime/honey
+whole door column sideways in one push. Purplers' sliding 4x4 slides each half (8 door
+cells; the moved half is 24 blocks in two 12-block assemblies, slime over honey, with
+quartz skins) two cells in two strokes, the second by pistons the assembly carries
+along ([[analyses/4x4-sliding-piston-door-purplers]]); Nile's 5x5 vault uses slime too. Census column "slime/honey
 moved". **V**
 
 ### A moving block stops a piston
@@ -100,6 +102,19 @@ A piston pushes a block onto a wire step (above the lower wire), which cuts the 
 pulling it back joins the line again. Mumbo Jumbo's helper piston gates one repeater's
 output to the center piston this way, three times per cycle
 ([[analyses/3x3-piston-door-mumbo-jumbo]]). **V** (dataset replay and ablation)
+
+### Carried power: a conductor matters where a piston puts it
+
+A plain block a piston moves can carry a signal at its destination: in Nile's 5x5 vault
+an oak log pushed over a note block passes a wire's power down to the note block at tick
+4 ([[analyses/5x5-vault-door-nile]]); in Purplers' sliding door a wool riding on the
+slime assembly delivers a carried redstone block's power to a wire at its landing cell
+([[analyses/4x4-sliding-piston-door-purplers]]); Mumbo Jumbo's cutter wool (above) is
+the same idea with a wire step. Found by the glass counterfactual
+([[representation]]): each of these blocks is harmless where it is built. A step has a
+second carrier besides the cutter: the block under the upper wire, which glass cuts the
+other way (the lower wire then looks below its neighbor instead of above it). **V**
+(dataset replay and ablation, 2026-10-19)
 
 ## Census
 

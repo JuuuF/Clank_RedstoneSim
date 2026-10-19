@@ -120,25 +120,77 @@ by engine step**, and around each block event the moving-block entities are comp
 ## Does layer 2 predict a change? (counterfactual accuracy, 2026-10-19)
 
 The ablation turned every conducting block above the floor into glass, one at a time:
-1112 variants in 16 doors ([[robustness]]). Before looking at the results, layer 2 sorts
-each block by the role it plays in the designed run (`ablation.glass_roles`;
-`python -m tools.doorlab.ablation --predict --out .sandbox/doors/ablation WORLD` scores
-the saved results):
+1112 variants in 16 doors ([[robustness]]). Layer 2 is asked to say, before any variant
+runs, which of them matter. Two generations of the answer:
 
-| role (layer 2) | glass breaks the door (or changes its timing) |
-|---|---|
-| receives power at some tick (`has_neighbor_signal` during the replay) | 270 of 736 |
-| never powered, but a wire cutter (wire under it, wire beside it) | 11 of 12 |
-| never powered, immovable (obsidian) | 1 of 5 |
-| none of these | **0 of 359** |
+**Static roles** (`ablation.glass_roles`, the first attempt): a block that receives power
+at some tick may matter (270 of 736 did), a never-powered wire cutter (11 of 12), a
+never-powered obsidian (1 of 5), none of these: **0 of 359**. Exact on the harmless side,
+blind inside the powered class.
 
-So the model's "this block does not matter" is exact here: a third of the conductors can
-be told apart without running anything. The four never-powered obsidian blocks that
-can be glass are never pushed. The powered class is where layer 2 is not yet precise:
-it includes blocks that are powered but feed nothing, and blocks whose power has
-another path. On its own, the piston power trace (`replay`'s source of each extension)
-finds about half of the breaking conductors: 145 of the 204 conductors that delivered an
-extension's power break. The other 137 of the 282 that break are the 12 cutters and
-stoppers, and 125 powered blocks that never deliver an extension's power themselves.
-They must matter further upstream or for other components; this is not traced yet
-(backlog D12).
+**Who reads whom** (`tools/doorlab/power.py`; `python -m tools.doorlab.power --predict
+--out .sandbox/doors/ablation WORLD…` scores the saved results, `--list` prints every
+block, `--reads` adds the read roles). The simulator got a probe (`Level.signal_probe`,
+not game logic: every signal read that returns more than 0, with the level's state) and
+the lab records the designed run with it: for each read the component whose code asked
+(found on the call stack: a piston's `getNeighborSignal`, wire's muted block signal, a
+diode's input, a torch's block; a read of a cell that is not one of the asker's neighbors
+is a quasi-connectivity read), what else the asker could read at that moment, and the
+context (a neighbor update, a piston's block event, a scheduled tick). Reads follow a
+block when a piston moves it. What layer 2 then *predicts* is a **local counterfactual at
+every tick boundary**: the block swapped for glass, every component that reads it
+(its six neighbors, the pistons and droppers one below them) recomputes its own input
+with its own rule (a piston: what it would do now, extend / blocked / retract / nothing;
+wire: its target strength; a diode: its input; a torch: its block; the rest:
+`hasNeighborSignal`), plus one read that boundaries cannot see (below). The result:
+
+| layer 2 says | variants | break the door | change other blocks only | change nothing |
+|---|---|---|---|---|
+| some component reads a different input with the block as glass (at a tick boundary, or a retracted piston's update read that nothing else made positive) | 347 | 280 | 59 | 8 |
+| an immovable block a push failed on, or that a sticky piston's retraction or a slime block would otherwise move | 3 | 0 | 3 | 0 |
+| a falling block (sand) | 1 | 1 | 0 | 0 |
+| none of these | 761 | **1** | 250 | 510 |
+
+281 of the 282 breaking glass changes are predicted (the one missed: an obsidian above a
+piston in the sliding door that is never powered at a boundary), and "none" is as exact
+as before. The 59 "reads → other blocks only" are real: a component's input does change,
+and the change never reaches the doorway; telling those apart needs the reach from a
+reader to the mechanism (open, below). The 250 "none → other blocks only" are mostly the
+variant's own block being moved (glass instead of wool in the moving records), not an
+effect.
+
+The intermediate read roles are kept (`power.roles`, `--reads`): a block read decisively
+by some component (223 of 283 broke), read but never without an alternative (0 of 13),
+powered but read by nothing (2 of 349), a wire cutter (24 of 26), a step carrier (32 of
+80). They are what the counterfactual replaced, and each wrong prediction, replayed to its
+first differing tick, taught a rule:
+
+- **A conductor's role follows the block, not the cell.** Mumbo Jumbo's wire-cutter wool
+  is harmless where it is built and cuts the step where the helper piston puts it; in
+  Nile's 5x5 vault an oak log pushed over a note block carries a wire's power down to it
+  at tick 4; in Purplers' sliding door a wool riding on the slime delivers a carried
+  redstone block's power to a wire at its landing cell. Static roles must be evaluated at
+  every cell the block occupies (`power.cells_of`).
+- **A wire step has two carriers.** The block above the lower wire is the cutter (known);
+  the block under the upper wire is the step: the lower wire reads the upper one only if
+  that block conducts (`getIncomingWireSignal` looks above a conducting neighbor and
+  below any other). It matters only downward: the upper wire reads the lower one through
+  the air above the lower wire, whatever the block is. Static "step" fires 80 times, 32 of
+  which matter; the wire recomputation needs no such rule.
+- **A read does not name its asker.** A piston reading the block above it and the
+  quasi-connectivity read of the piston below that one are the same call; only the call
+  stack tells them apart (`power.asker_of`). Judged for the wrong piston, Zhus's 2 7 −7
+  looked redundant (the wire two above would power the upper piston) and broke.
+- **Mid-tick reads decide pistons.** In Nile's seamless door a piston that lands at tick
+  58 is updated while one block alone powers it; the other source arrives later in the
+  tick without updating a quasi-connected piston (the update problem), so the landing
+  read is what queues the extension. Tick-boundary states show no difference; the probe
+  does. Boolean readers ignore 15 against 14: a level difference only matters to wire.
+- **Glass changes more than conduction.** An obsidian that a sticky piston's retraction
+  or a slime block would move as glass (the enchanting-table door, the sliding door); a
+  sand block that falls (Nile's vault); a part that could not stand on glass (none in the
+  corpus, checked with `can_survive`).
+
+Open (D12, next step): the reach from a reader whose input changed to a mechanism piston,
+to turn "changes something" into "breaks the door"; the same probe can answer the input
+question of [[robustness]] (which first-sequence reads the second input cuts).

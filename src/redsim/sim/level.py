@@ -19,8 +19,8 @@ Lighting, sounds, particles, game events, entities and client synchronization ar
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable, Iterator
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from redsim.core.direction import ALL, HORIZONTAL, Direction
 from redsim.core.pos import Pos, offset
@@ -87,6 +87,12 @@ class TickerWrapper:
 
 class Level:
     """Block storage plus the server-side update machinery."""
+
+    #: Not game logic: an observer of the signal reads, for tools (``tools.doorlab.power``
+    #: traces which component reads which block's power). When set (on the class, so that
+    #: restored snapshots keep it), ``_get_signal`` calls it with
+    #: ``(level, pos, direction, state, value)`` for every read that returns more than 0.
+    signal_probe: ClassVar[Callable[..., None] | None] = None
 
     def __init__(
         self,
@@ -438,7 +444,10 @@ class Level:
         state = self.get_block_state(pos)
         signal = state.get_signal(self, pos, direction)
         if state.is_redstone_conductor(self, pos):
-            return max(signal, self.get_direct_signal_to(pos))
+            signal = max(signal, self.get_direct_signal_to(pos))
+        probe = Level.signal_probe  # read on the class: a plain function, not bound
+        if signal and probe is not None:
+            probe(self, pos, direction, state, signal)
         return signal
 
     def has_signal(self, pos: Pos, direction: Direction) -> bool:

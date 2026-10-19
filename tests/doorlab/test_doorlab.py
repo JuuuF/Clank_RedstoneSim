@@ -294,3 +294,28 @@ def test_symmetry_2x2(tmp_path: Path) -> None:
     rec = replay.record(canonical.rebuild(turned))
     assert rec.changes != original.changes
     assert symmetry._turned_changes(original, sym, transform.floor_of(canon)) == rec.changes
+
+
+def test_power_reads_and_glass_prediction_2x2(tmp_path: Path) -> None:
+    from tools.doorlab import power
+
+    path = _door_world(tmp_path)
+    doc = canonical.rebuild(canonical.from_file(path))
+    reads = power.trace_reads(doc)
+    # The pistons read their power from the lever's block; the probe names the asker
+    # (a piston), the cell read, and whether another input gave the same signal.
+    kinds = {r.kind for r in reads}
+    assert "piston" in kinds
+    assert all(r.value > 0 and r.alt >= 0 for r in reads)
+    assert all(r.origin == r.target for r in reads)  # nothing moves a conductor here
+    # The glass counterfactual: every glass change the ablation found to break the door
+    # (or its timing) is predicted, and the "none" verdict never breaks it.
+    result = ablation.run(path)
+    glass = {tuple(r["pos"]): r["result"] for r in result["results"] if r["change"] == "glass"}
+    verdicts = {p: power.verdict(role) for p, role in power.predict(path, list(glass)).items()}
+    assert glass
+    for p, res in glass.items():
+        if res in ("breaks", "timing"):
+            assert verdicts[p] != "none", (p, res)
+        if verdicts[p] == "none":
+            assert res in ("inert", "internal"), (p, res)
