@@ -30,6 +30,7 @@ read-only and experiments work on copies.
 | [[robustness]] | Counterfactuals per block (remove, glass, repeater delay), the combined trim, input timing (every gap between the two pulls) and the two-cycle test |
 | [[metrics]] | The optimization goals measured per door (size, components, speed, robustness), kept separate; which doors another door of the same size dominates |
 | [[demonstration]] | The whole pipeline on the project's own 3x3 flush door (`door_3x3`), compared with Mumbo Jumbo's |
+| [[own-3x3-design]] | Design study for an own slimeless 3x3 door (2026-10-20): edge columns, the center-column problem, a gravity-block idea and why it fails, the recommended floor-storage build |
 
 ## Tools
 
