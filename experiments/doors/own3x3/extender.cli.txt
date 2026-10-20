@@ -1,0 +1,23 @@
+# Vertical double extender under a doorway cell, sand as the middle block.
+# A (0 2 0) sticky up, B (0 3 0) sticky up, block (0 4 0), sand (0 5 0) = floor level.
+# Doorway cells are y 6, 7 (bottom, middle). Levers power A and B separately.
+place 0 2 0 sticky_piston facing=up
+place 0 3 0 sticky_piston facing=up
+place 0 4 0 stone
+place 0 5 0 sand
+place 1 2 0 stone
+place 2 2 0 lever face=wall facing=east
+place 1 4 0 stone
+place 2 4 0 lever face=wall facing=east
+label LA 2 2 0 "lever A"
+label LB 2 4 0 "lever B"
+label C5 0 5 0 "floor"
+label C6 0 6 0 "bottom cell"
+label C7 0 7 0 "middle cell"
+settle
+at 2 use @LA
+at 8 use @LB
+at 30 use @LB
+at 40 use @LA
+run until 70
+changes @C5 @C6 @C7

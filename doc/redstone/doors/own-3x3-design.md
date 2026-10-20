@@ -28,7 +28,7 @@ lever on the back of the wall powers all six through conductors; no timing neede
   middle block goes down and the bottom block moves aside in the floor
   ([[patterns]] "Floor storage", `door_3x3`'s M east, Mumbo Jumbo's), 4–5 pistons.
 
-### Idea tried on paper: a gravity block as the middle cell
+### Idea tried: a gravity block as the middle cell (simulator-checked, see below)
 
 Make the middle cell sand pushed up from the floor by a vertical double extender
 (A sticky at y = −3, B sticky at y = −2, block at y = −1, sand at y = 0 when open;
@@ -47,6 +47,22 @@ Two sands accumulate by one cell per cycle. The simulator does simulate falling 
 still be tested: pull the block at y = 0 sideways into the floor with a seventh floor
 piston, and the sand falls to y = 0 on its own. That is the same count as floor
 storage (the corpus's choice) and buys nothing.
+
+### The check (`experiments/doors/own3x3/extender.cli.txt`, 02:39)
+
+The column alone, levers on A (tick 2 on, 40 off) and B (8 on, 30 off); cells named by
+y, the floor is y 5, the doorway's bottom and middle cells y 6 and y 7:
+
+| Tick | y 5 (floor) | y 6 (bottom) | y 7 (middle) | Event |
+|---|---|---|---|---|
+| 5 | stone | sand | air | A extended: B, stone and sand up one |
+| 11 | B's head | stone | sand | B extended: **closed** |
+| 33 | stone | air | air | B retracted: stone pulled down, sand still at y 7 for a moment |
+| 39 | stone | **sand** | air | the sand fell (6 ticks after the stone landed) |
+| 43 | stone | sand | air | A retracted: B back, the stone stays on the floor |
+
+Open state: the sand sits in the bottom cell. The idea is dead unless a seventh floor
+piston takes the stone aside before the sand falls, which is floor storage again.
 
 ## What to build next (the recommendation)
 
