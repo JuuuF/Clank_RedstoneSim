@@ -10,12 +10,13 @@ The rules are short; the state of the work is never here but in the pages they p
 
 ## Where to start
 
-The repository holds two briefs; don't mix them up.
+The repository holds three briefs; don't mix them up.
 
 | Work | Brief | Live state |
 |---|---|---|
 | The simulator itself (porting, editor, CLI) | [[../README]] and [[../project-state]] | [[../project-state]], [[../roadmap]] |
 | Redstone research: knowledge base, circuit library, contraptions | `PROMPT.md` (repository root; "use it as your main prompt", owner, 2026-10-16) | `PROMPT.md` "What exists now" and "TODO for the next agent"; [[../redstone/README]], [[../redstone/backlog]] |
+| The contraption graph (follow-up to the doors mission) | [[../redstone/doors/graph-mission]] (written 2026-10-20 at the owner's request) | its section 8 |
 | Piston-door reverse engineering | [[../redstone/doors/mission]] (the owner gave it as `data/redstone_learning/PROMPT.md`; "Do not use the root-level PROMPT.md: that's not for your task", 2026-10-18) | [[../redstone/doors/README]] ("Status and roadmap", open items D1–D12) and the mission's section 13 |
 
 For the root research mission: read `PROMPT.md` §12 (resume steps), §13 (efficiency

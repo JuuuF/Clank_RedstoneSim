@@ -19,6 +19,7 @@ read-only and experiments work on copies.
 | Page | What it holds |
 |---|---|
 | [[mission]] | The mission's brief (tracked copy of the owner's `data/redstone_learning/PROMPT.md`); section 13 is the status and handoff |
+| [[graph-mission]] | Follow-up brief (2026-10-20): one typed, time-aware graph per door across the three layers, with abstractions from the explanations; section 8 is its status |
 | [[inventory]] | The catalog: every world, its creator, doorway, parts, timeline, replay summary (generated) |
 | [[guide-5x5]] | MYuen222's 5x5 guide: the engineering process (layout → sequence → powering → input → wiring), its vocabulary, its claims and their test status |
 | [[representation]] | The three layers (canonical world, interactions, knowledge) and how they are validated |
