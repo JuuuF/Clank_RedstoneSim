@@ -390,3 +390,10 @@ side power for stacked pistons, the role classes the forks flagged); R-029's bou
 (pulls at landing and landing + 1); D13 (the reach is a hint: 244 of 280 breaking glass variants in reach, 36 dead
 ends break; shape updates and timing are missing); D9 (items); G6 / G7 (need the guide's
 builds as worlds).
+
+**Addendum (2026-10-20, 02:40).** The owner asked for an own slimeless 3x3 door in a
+20-minute window after the mission. No validated build fit; [[own-3x3-design]] holds the
+design study: edge columns (6 pistons), the center-column problem, a gravity-block
+idea checked in the simulator (`experiments/doors/own3x3/extender.cli.txt`: the sand
+strands in the bottom cell because a slimeless double extender leaves its block
+behind), and the recommended floor-storage build with the lab steps to validate it.
