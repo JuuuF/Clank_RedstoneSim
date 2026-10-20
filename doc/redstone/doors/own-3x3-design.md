@@ -48,7 +48,7 @@ still be tested: pull the block at y = 0 sideways into the floor with a seventh 
 piston, and the sand falls to y = 0 on its own. That is the same count as floor
 storage (the corpus's choice) and buys nothing.
 
-### The check (`experiments/doors/own3x3/extender.cli.txt`, 02:39)
+### The check (`experiments/doors/own3x3/extender.cli.txt`, world `extender.redsim.json`, 02:39)
 
 The column alone, levers on A (tick 2 on, 40 off) and B (8 on, 30 off); cells named by
 y, the floor is y 5, the doorway's bottom and middle cells y 6 and y 7:
